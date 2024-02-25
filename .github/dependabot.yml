@@ -1,0 +1,61 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  # Package manager to use
+  - package-ecosystem: 'npm'
+
+    # Location of package manifests
+    directory: '/'
+
+    # Branch to create pull requests against
+    target-branch: 'dependencies'
+
+    # Commit message preferences
+    commit-message:
+      # Specifies a prefix for all commit messages that update dependencies in
+      # the Production dependency group.
+      prefix: 'build(deps)'
+
+      # Specifies a prefix for all commit messages that update dependencies in
+      # the Development dependency group.
+      prefix-development: 'build(deps-dev)'
+
+      # Specifies that any prefix is followed by a list of the dependencies
+      # updated in the commit.
+      include: 'scope'
+
+    # When to check for updates
+    schedule:
+      # How often to check for updates
+      interval: 'weekly'
+
+      # Time of day to check for updates (hh:mm)
+      time: '09:00'
+
+      # Timezone for time of day (zone identifier)
+      timezone: 'Europe/Paris'
+
+  # Package manager to use
+  - package-ecosystem: 'github-actions'
+
+    # Location of package manifests. NB: The directory must be set to "/" to
+    # check for workflow files in .github/workflows.
+    directory: '/'
+
+    # Branch to create pull requests against
+    target-branch: 'dependencies'
+
+    # When to check for updates
+    schedule:
+      # How often to check for updates
+      interval: 'weekly'
+
+      # Time of day to check for updates (hh:mm)
+      time: '09:00'
+
+      # Timezone for time of day (zone identifier)
+      timezone: 'Europe/Paris'
