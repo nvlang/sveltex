@@ -38,6 +38,7 @@
   "author": "N. V. Lang <npm@nvlang.dev>",
   "license": "MIT",
   "dependencies": {
+    "dompurify": "^3.0.9",
     "marked": "^12.0.0",
     "svelte-preprocess": "^5.1.3",
     "tslib": "^2.6.2"
