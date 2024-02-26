@@ -65,15 +65,6 @@ const Configuration: UserConfig = {
         'type-case': [RuleConfigSeverity.Error, 'always', 'lower-case'],
 
         /**
-         * In `type(scope): subject`, `subject` must always be capitalized.
-         */
-        'subject-case': [
-            RuleConfigSeverity.Error,
-            'always',
-            ['sentence-case', 'start-case', 'pascal-case', 'upper-case'],
-        ],
-
-        /**
          * The header, i.e., `type(scope): subject`, must always be less than 50
          * characters long in total.
          */
