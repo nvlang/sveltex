@@ -6,6 +6,7 @@
   "author": "N. V. Lang <npm@nvlang.dev>",
   "license": "MIT",
   "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
   "packageManager": "pnpm@8.14.1",
   "scripts": {
     "start": "node build/src/main.js",
