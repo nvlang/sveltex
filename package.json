@@ -3,7 +3,22 @@
   "version": "0.0.1",
   "description": "MDX-like Svelte preprocessor with extensive TeX support.",
   "type": "module",
+  "author": "N. V. Lang <npm@nvlang.dev>",
+  "license": "MIT",
   "packageManager": "pnpm@8.14.1",
+  "scripts": {
+    "start": "node build/src/main.js",
+    "clean": "rimraf coverage build tmp",
+    "prebuild": "pnpm run lint",
+    "build": "tsc -p tsconfig.json",
+    "build:watch": "tsc -w -p tsconfig.json",
+    "build:release": "pnpm run clean && tsc -p tsconfig.release.json",
+    "lint": "eslint . --ext .ts --ext .mts",
+    "test": "jest --coverage",
+    "format": "prettier --write .",
+    "test:watch": "jest --watch",
+    "prepare": "husky"
+  },
   "devDependencies": {
     "@commitlint/config-conventional": "^18.6.2",
     "@commitlint/types": "^18.6.1",
@@ -26,21 +41,6 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
-  "scripts": {
-    "start": "node build/src/main.js",
-    "clean": "rimraf coverage build tmp",
-    "prebuild": "pnpm run lint",
-    "build": "tsc -p tsconfig.json",
-    "build:watch": "tsc -w -p tsconfig.json",
-    "build:release": "pnpm run clean && tsc -p tsconfig.release.json",
-    "lint": "eslint . --ext .ts --ext .mts",
-    "test": "jest --coverage",
-    "format": "prettier --write .",
-    "test:watch": "jest --watch",
-    "prepare": "husky"
-  },
-  "author": "N. V. Lang <npm@nvlang.dev>",
-  "license": "MIT",
   "dependencies": {
     "cosmiconfig": "^9.0.0",
     "dompurify": "^3.0.9",
