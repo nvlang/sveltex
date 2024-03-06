@@ -42,6 +42,7 @@ export default tseslint.config(
         },
         rules: {
             'tsdoc/syntax': 'warn',
+            '@typescript-eslint/no-inferrable-types': 'off',
         },
     },
     {
