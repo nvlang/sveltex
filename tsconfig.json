@@ -35,5 +35,5 @@
     // Performance
     "skipLibCheck": true // recommended
   },
-  "include": ["src", "tests", "*.ts"]
+  "include": ["src", "tests", "*.ts", "*.js"]
 }
