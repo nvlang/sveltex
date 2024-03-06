@@ -22,6 +22,14 @@ export default tseslint.config(
     {
         // TypeScript files
         files: ['**/*.ts'],
+        /**
+         * For some reason I kept getting errors from this file, so as a temporary workaround I
+         * simply added it to the ignore list.
+         *
+         * @see
+         * https://typescript-eslint.io/troubleshooting/#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
+         */
+        ignores: ['src/index.d.ts'],
         extends: [
             eslint.configs.recommended,
             ...tseslint.configs.stylisticTypeChecked,
@@ -48,7 +56,6 @@ export default tseslint.config(
     {
         // JavaScript files
         files: ['**/*.js'],
-        ignores: ['**/eslint.config.js'],
         ...tseslint.configs.disableTypeChecked,
     },
     {
