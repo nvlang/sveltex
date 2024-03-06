@@ -33,7 +33,24 @@
     "sourceMap": true,
 
     // Performance
-    "skipLibCheck": true // recommended
+    "skipLibCheck": true, // recommended
+
+    // Aliases
+    "baseUrl": ".",
+    "paths": {
+      "$src": ["src/index.ts"],
+      "$src/*": ["src/*"],
+      "$classes": ["src/classes/index.ts"],
+      "$classes/*": ["src/classes/*"],
+      "$types": ["src/types/index.d.ts"],
+      "$types/*": ["src/types/*"],
+      "$type-guards": ["src/type-guards/index.ts"],
+      "$type-guards/*": ["src/type-guards/*"],
+      "$utils": ["src/utils/index.ts"],
+      "$utils/*": ["src/utils/*"],
+      "$data": ["src/data/index.ts"],
+      "$data/*": ["src/data/*"]
+    }
   },
   "include": ["src", "tests", "*.ts", "*.js"]
 }
