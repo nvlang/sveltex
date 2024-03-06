@@ -49,7 +49,9 @@
       "$utils": ["src/utils/index.ts"],
       "$utils/*": ["src/utils/*"],
       "$data": ["src/data/index.ts"],
-      "$data/*": ["src/data/*"]
+      "$data/*": ["src/data/*"],
+      "$config": ["src/config/index.ts"],
+      "$config/*": ["src/config/*"]
     }
   },
   "include": ["src", "tests", "*.ts", "*.js"]
