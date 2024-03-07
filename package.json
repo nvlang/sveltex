@@ -48,6 +48,7 @@
     "typescript-eslint": "^7.1.1"
   },
   "dependencies": {
+    "chalk": "^5.3.0",
     "cosmiconfig": "^9.0.0",
     "dompurify": "^3.0.9",
     "find-cache-dir": "^5.0.0",
