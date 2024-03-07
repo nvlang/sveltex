@@ -43,6 +43,7 @@
     "ts-essentials": "^9.4.1",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.8",
     "typescript": "^5.4.2",
     "typescript-eslint": "^7.1.1"
   },
