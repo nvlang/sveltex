@@ -11,6 +11,9 @@ dependencies:
   cosmiconfig:
     specifier: ^9.0.0
     version: 9.0.0(typescript@5.4.2)
+  diff:
+    specifier: ^5.2.0
+    version: 5.2.0
   dompurify:
     specifier: ^3.0.9
     version: 3.0.9
@@ -37,6 +40,9 @@ devDependencies:
   '@commitlint/types':
     specifier: ^19.0.3
     version: 19.0.3
+  '@types/diff':
+    specifier: ^5.0.9
+    version: 5.0.9
   '@types/dompurify':
     specifier: ^3.0.5
     version: 3.0.5
@@ -1034,6 +1040,10 @@ packages:
       '@types/node': 20.11.25
     dev: true
 
+  /@types/diff@5.0.9:
+    resolution: {integrity: sha512-RWVEhh/zGXpAVF/ZChwNnv7r4rvqzJ7lYNSmZSVTxjV0PBLf6Qu7RNg+SUtkpzxmiNkjCx0Xn2tPp7FIkshJwQ==}
+    dev: true
+
   /@types/dompurify@3.0.5:
     resolution: {integrity: sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg==}
     dependencies:
@@ -1929,6 +1939,11 @@ packages:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
     engines: {node: '>=0.3.1'}
     dev: true
+
+  /diff@5.2.0:
+    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
+    engines: {node: '>=0.3.1'}
+    dev: false
 
   /dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
