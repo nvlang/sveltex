@@ -46,6 +46,9 @@ devDependencies:
   '@types/dompurify':
     specifier: ^3.0.5
     version: 3.0.5
+  '@types/estree':
+    specifier: ^1.0.5
+    version: 1.0.5
   '@types/jest':
     specifier: ^29.5.12
     version: 29.5.12
