@@ -23,6 +23,9 @@ dependencies:
   jsdom:
     specifier: ^24.0.0
     version: 24.0.0
+  magic-string:
+    specifier: ^0.30.8
+    version: 0.30.8
   marked:
     specifier: ^12.0.1
     version: 12.0.1
