@@ -63,6 +63,7 @@
     "magic-string": "^0.30.8",
     "marked": "^12.0.1",
     "svelte-preprocess": "^5.1.3",
+    "ts-deepmerge": "^7.0.0",
     "tslib": "^2.6.2",
     "uuid": "^9.0.1",
     "yaml": "^2.4.1"
