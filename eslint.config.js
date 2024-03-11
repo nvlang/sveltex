@@ -1,5 +1,5 @@
 import eslint from '@eslint/js';
-import jestPlugin from 'eslint-plugin-jest';
+import vitest from 'eslint-plugin-vitest';
 import prettierConfig from 'eslint-config-prettier';
 import tsdocPlugin from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
@@ -45,7 +45,6 @@ export default tseslint.config(
         },
         plugins: {
             '@typescript-eslint': tseslint.plugin,
-            jest: jestPlugin,
             tsdoc: tsdocPlugin,
         },
         rules: {
@@ -59,9 +58,13 @@ export default tseslint.config(
         ...tseslint.configs.disableTypeChecked,
     },
     {
-        // Jest test files
-        files: ['tests/**'],
-        ...jestPlugin.configs['flat/recommended'],
+        // Vitest test files
+        files: ['tests/**/*.{test,spec}.ts'],
+        plugins: { vitest },
+        rules: vitest.configs.recommended.rules,
+        languageOptions: {
+            globals: vitest.environments.env.globals,
+        },
     },
     prettierConfig,
 );
