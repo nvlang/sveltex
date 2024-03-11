@@ -8,6 +8,7 @@
     "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
     "declaration": true,
     "declarationMap": true,
+    "resolveJsonModule": true,
 
     // Basic settings
     "rootDir": ".",
