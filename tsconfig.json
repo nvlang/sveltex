@@ -54,7 +54,11 @@
       "$data": ["src/data/index.ts"],
       "$data/*": ["src/data/*"],
       "$config": ["src/config/index.ts"],
-      "$config/*": ["src/config/*"]
+      "$config/*": ["src/config/*"],
+      "$processor": ["src/processor/index.ts"],
+      "$processor/*": ["src/processor/*"],
+      "$tests": ["tests/index.ts"],
+      "$tests/*": ["tests/*"]
     }
   },
   "include": ["src", "tests", "*.ts", "*.js"]
