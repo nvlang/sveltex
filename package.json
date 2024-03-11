@@ -8,6 +8,22 @@
   "packageManager": "pnpm@8.14.1",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
+  "keywords": [
+    "svelte",
+    "marked",
+    "mdx",
+    "markdown",
+    "tex",
+    "latex",
+    "math",
+    "preprocess",
+    "preprocessor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nvlang/sveltex"
+  },
+  "homepage": "https://sveltex.dev",
   "scripts": {
     "start": "node dist/src/main.js",
     "clean": "rimraf coverage dist tmp",
