@@ -9,7 +9,7 @@
 
     // Basic settings
     "rootDir": ".",
-    "outDir": "build",
+    "outDir": "dist",
     "importHelpers": true,
 
     // Type-checking

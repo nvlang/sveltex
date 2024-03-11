@@ -9,7 +9,7 @@ export default tseslint.config(
         ignores: [
             '.DS_Store',
             'node_modules',
-            '/build',
+            'dist',
             '/package',
             '.env',
             '.env.*',
