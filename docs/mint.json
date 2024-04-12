@@ -2,7 +2,6 @@
   "$schema": "https://mintlify.com/schema.json",
   "name": "SvelTeX",
   "feedback": {
-    "thumbsRating": true,
     "suggestEdit": true,
     "raiseIssue": true
   },
@@ -10,38 +9,81 @@
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
   },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/nvlang/sveltex"
+  },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#128297",
+    "primary": "#ea580c",
     "light": "#fb923c",
-    "dark": "#074e5b",
+    "dark": "#431407",
     "background": {
       "light": "#fff",
-      "dark": "#0a0a0a"
+      "dark": "#171717"
     }
   },
-
-  "topbarLinks": [
+  "tabs": [
     {
-      "name": "GitHub",
-      "url": "https://github.com/nvlang/sveltex"
+      "name": "Advanced",
+      "url": "advanced"
+    },
+    {
+      "name": "Examples",
+      "url": "https://www.latex-project.org"
     }
   ],
   "navigation": [
     {
       "group": "Get Started",
-      "pages": ["introduction", "quickstart", "development"]
+      "pages": ["introduction", "installation", "development"]
     },
     {
       "group": "Essentials",
       "pages": [
         "essentials/markdown",
         "essentials/code",
-        "essentials/images",
-        "essentials/settings",
-        "essentials/navigation",
-        "essentials/reusable-snippets"
+        "essentials/tex",
+        "essentials/advanced-tex",
+        "essentials/general"
       ]
+    },
+    {
+      "group": "Markdown",
+      "pages": [
+        "advanced/markdown/configure-backend",
+        "advanced/markdown/custom-components",
+        "advanced/markdown/theming"
+      ]
+    },
+    {
+      "group": "Code",
+      "pages": [
+        "advanced/code/configure-backend",
+        "advanced/code/custom-components",
+        "advanced/code/theming"
+      ]
+    },
+    {
+      "group": "TeX (Node.js)",
+      "pages": [
+        "advanced/tex-nodejs/configure-backend",
+        "advanced/tex-nodejs/custom-components",
+        "advanced/tex-nodejs/theming"
+      ]
+    },
+    {
+      "group": "TeX (texlive)",
+      "pages": [
+        "advanced/tex-texlive/configure-backend",
+        "advanced/tex-texlive/custom-components",
+        "advanced/tex-texlive/css-variables",
+        "advanced/tex-texlive/caching"
+      ]
+    },
+    {
+      "group": "Miscellaneous",
+      "pages": ["advanced/misc/verbatim-environments"]
     }
   ],
   "footerSocials": {

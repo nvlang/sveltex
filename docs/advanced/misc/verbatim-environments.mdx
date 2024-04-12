@@ -1,0 +1,35 @@
+---
+title: 'Verbatim Environments'
+description: 'Preprocess content of select components'
+icon: 'brackets-curly'
+---
+
+Sometimes you might want to preprocess the content of a specific component only.
+For example, maybe you have a component `Code` in which you want to be able to
+include characters that might confuse the Svelte parser (like `{` or `}`)
+without having to manually escape them. In that case, you can add an entry to
+the `verbatimEnvironments` array of the Sveltex configuration as follows:
+
+```ts sveltex.config.ts
+export const sveltex = await sveltexPreprocessor({
+    general: {
+        verbatimEnvironments: {
+            Code: {
+                processInner: 'code',
+                forwardAllAttributes: true,
+            },
+            Verbatim: {
+                processInner: {
+                    escapeBraces: true,
+                    escapeBackticks: true,
+                },
+            },
+        },
+    },
+    markdown: {
+        code: {
+            backend: 'highlight.js',
+        },
+    },
+});
+```

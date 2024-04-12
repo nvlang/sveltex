@@ -1,35 +1,27 @@
-import { Processed } from 'svelte/compiler';
-import { marked } from 'marked';
-import createDOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
+/**
+ * A flexible Svelte preprocessor with extensive LaTeX support.
+ * @packageDocumentation
+ */
 
-// Initialize DOMPurify
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window);
+export { sveltex, Sveltex } from '$processor';
 
-// Custom preprocessor for `.sveltex` files
-const markdownPreprocessor = {
-    markup: async ({
-        content,
-        filename,
-    }: {
-        content: string;
-        filename?: string;
-    }): Promise<Processed> => {
-        if (!filename || !filename.endsWith('.sveltex')) {
-            return { code: content };
-        }
+export type {
+    AdvancedTexBackend,
+    AdvancedTexConfiguration,
+    CodeBackend,
+    CodeConfiguration,
+    MarkdownBackend,
+    MarkdownConfiguration,
+    TexBackend,
+    TexConfiguration,
+} from '$types';
 
-        // Convert Markdown to HTML
-        let html = await marked(content);
+export {
+    AdvancedTexHandler,
+    CodeHandler,
+    MarkdownHandler,
+    TexHandler,
+    VerbatimHandler,
+} from '$handlers';
 
-        // Sanitize HTML
-        html = DOMPurify.sanitize(html);
-
-        return { code: `<div class="sveltex-output">${html}</div>` };
-    },
-};
-
-export default function preprocessSveltex() {
-    return markdownPreprocessor;
-}
+export { TexComponent } from '$utils';

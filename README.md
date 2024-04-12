@@ -7,5 +7,5 @@
 
 Set the following repository secrets:
 
--   `NPM_TOKEN`: Log in to [npmjs.com](https://www.npmjs.com) and go to *Access
-    Tokens > Generate New Token > Granular Access Token*
+-   `NPM_TOKEN`: Log in to [npmjs.com](https://www.npmjs.com) and go to _Access
+    Tokens > Generate New Token > Granular Access Token_

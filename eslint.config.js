@@ -3,6 +3,7 @@ import vitest from 'eslint-plugin-vitest';
 import prettierConfig from 'eslint-config-prettier';
 import tsdocPlugin from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
+import playwright from 'eslint-plugin-playwright';
 
 export default tseslint.config(
     {
@@ -17,11 +18,13 @@ export default tseslint.config(
             'pnpm-lock.yaml',
             'package-lock.json',
             'yarn.lock',
+            'external',
+            'examples',
         ],
     },
     {
         // TypeScript files
-        files: ['**/*.ts'],
+        files: ['{src,tests}/**/*.ts', '{src,tests}/**/*.d.ts'],
         /**
          * For some reason I kept getting errors from this file, so as a temporary workaround I
          * simply added it to the ignore list.
@@ -29,7 +32,7 @@ export default tseslint.config(
          * @see
          * https://typescript-eslint.io/troubleshooting/#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
          */
-        ignores: ['src/index.d.ts'],
+        // ignores: ['src/index.d.ts'],
         extends: [
             eslint.configs.recommended,
             ...tseslint.configs.stylisticTypeChecked,
@@ -61,10 +64,16 @@ export default tseslint.config(
         // Vitest test files
         files: ['tests/**/*.{test,spec}.ts'],
         plugins: { vitest },
-        rules: vitest.configs.recommended.rules,
+        rules: vitest.configs.recommended.rules, // vitest.configs.recommended.rules,
         languageOptions: {
             globals: vitest.environments.env.globals,
         },
+    },
+    {
+        // Playwright test files
+        files: ['e2e/**/*.{test,spec}.ts'],
+        plugins: { playwright },
+        rules: playwright.configs.recommended.rules,
     },
     prettierConfig,
 );

@@ -1,0 +1,50 @@
+
+<script>
+import { onMount } from 'svelte';
+const f = 3;
+
+import { onMount as __onMount } from 'svelte';
+__onMount(async () => {
+    try {
+        document.getElementById('svg-container')?.insertAdjacentHTML('beforeend', await (await fetch('sveltex/tex/something.svg')).text());
+    } catch (error) {
+        console.error('Failed to load SVG:', error);
+    }
+});
+</script>
+
+<style>
+.something {
+    --red: #ff00ff;
+    color: rgb(88, 88, 255);
+    background-color: #282828;
+}
+</style>
+
+<div class="something">
+
+# Welcome to SvelteKit
+
+<div id="svg-container"></div>
+
+Visit [kit.svelte.dev](https://kit.svelte.dev) to read the documentation.
+
+**something** fdsfdsds
+
+***fdsdsadsadsdsadsadsadsa
+
+```ts
+let a = { b: 3 };
+```
+fds
+something $x$ $$x$$ SOMETHING else here dsdsdsdsdsadsakiopik90i90k90k90kop
+
+<tex ref="something">
+\begin{tikzpicture}
+    \draw (0,0) circle (3);
+    \draw (0,-1) circle (1.8);
+    \draw[var(--red), thick] (0,0) rectangle (3, 3);
+\end{tikzpicture}
+</tex>
+
+</div>

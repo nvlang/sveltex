@@ -4,8 +4,8 @@ description: 'Learn how to preview changes locally'
 ---
 
 <Info>
-  **Prerequisite** You should have installed Node.js (version 18.10.0 or
-  higher).
+    **Prerequisite** You should have installed Node.js (version 18.10.0 or
+    higher).
 </Info>
 
 Step 1. Install Mintlify on your OS:
@@ -22,7 +22,8 @@ yarn global add mintlify
 
 </CodeGroup>
 
-Step 2. Go to the docs are located (where you can find `mint.json`) and run the following command:
+Step 2. Go to the docs are located (where you can find `mint.json`) and run the
+following command:
 
 ```bash
 mintlify dev
@@ -32,13 +33,15 @@ The documentation website is now available at `http://localhost:3000`.
 
 ### Custom Ports
 
-Mintlify uses port 3000 by default. You can use the `--port` flag to customize the port Mintlify runs on. For example, use this command to run in port 3333:
+Mintlify uses port 3000 by default. You can use the `--port` flag to customize
+the port Mintlify runs on. For example, use this command to run in port 3333:
 
 ```bash
 mintlify dev --port 3333
 ```
 
-You will see an error like this if you try to run Mintlify in a port that's already taken:
+You will see an error like this if you try to run Mintlify in a port that's
+already taken:
 
 ```md
 Error: listen EADDRINUSE: address already in use :::3000
@@ -46,7 +49,8 @@ Error: listen EADDRINUSE: address already in use :::3000
 
 ## Mintlify Versions
 
-Each CLI is linked to a specific version of Mintlify. Please update the CLI if your local website looks different than production.
+Each CLI is linked to a specific version of Mintlify. Please update the CLI if
+your local website looks different than production.
 
 <CodeGroup>
 
@@ -63,14 +67,14 @@ yarn global upgrade mintlify
 ## Deployment
 
 <Tip>
-  Unlimited editors available under the [Startup
-  Plan](https://mintlify.com/pricing)
+    Unlimited editors available under the [Startup
+    Plan](https://mintlify.com/pricing)
 </Tip>
 
 You should see the following if the deploy successfully went through:
 
 <Frame>
-  <img src="/images/checks-passed.png" style={{ borderRadius: '0.5rem' }} />
+    <img src="/images/checks-passed.png" style={{ borderRadius: '0.5rem' }} />
 </Frame>
 
 ## Troubleshooting
@@ -95,4 +99,5 @@ Repeat step 3.
   </Accordion>
 </AccordionGroup>
 
-Curious about what changed in a CLI version? [Check out the CLI changelog.](/changelog/command-line)
+Curious about what changed in a CLI version?
+[Check out the CLI changelog.](/changelog/command-line)

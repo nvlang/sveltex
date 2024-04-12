@@ -13,13 +13,20 @@
       }
     },
     {
+      "files": ["*.jsonc"],
+      "options": {
+        "trailingComma": "none",
+        "tabWidth": 2
+      }
+    },
+    {
       "files": ["pnpm-lock.yaml"],
       "options": {
         "printWidth": 130
       }
     }
   ],
-  "printWidth": 100,
+  "printWidth": 80,
   "proseWrap": "always",
   "semi": true,
   "singleQuote": true,

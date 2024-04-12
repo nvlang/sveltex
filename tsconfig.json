@@ -5,6 +5,7 @@
     "module": "NodeNext",
     "lib": ["ESNext"],
     "moduleResolution": "NodeNext",
+
     "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
     "declaration": true,
     "declarationMap": true,
@@ -12,7 +13,7 @@
 
     // Basic settings
     "rootDir": ".",
-    "outDir": "dist",
+    "outDir": "./dist",
     "importHelpers": true,
 
     // Type-checking
@@ -36,16 +37,16 @@
     "sourceMap": true,
 
     // Performance
-    "skipLibCheck": true, // recommended
+    // "skipLibCheck": true, // recommended
 
     // Aliases
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
       "$src": ["src/index.ts"],
       "$src/*": ["src/*"],
       "$classes": ["src/classes/index.ts"],
       "$classes/*": ["src/classes/*"],
-      "$types": ["src/types/index.d.ts"],
+      "$types": ["src/types/index.ts"],
       "$types/*": ["src/types/*"],
       "$type-guards": ["src/type-guards/index.ts"],
       "$type-guards/*": ["src/type-guards/*"],
@@ -57,9 +58,34 @@
       "$config/*": ["src/config/*"],
       "$processor": ["src/processor/index.ts"],
       "$processor/*": ["src/processor/*"],
+      "$handlers": ["src/handlers/index.ts"],
+      "$handlers/*": ["src/handlers/*"],
       "$tests": ["tests/index.ts"],
-      "$tests/*": ["tests/*"]
+      "$tests/*": ["tests/*"],
+      "$globals": ["src/globals/index.ts"],
+      "$globals/*": ["src/globals/*"]
     }
+    // "types": ["sveltex-preprocess"]
   },
-  "include": ["src", "tests", "*.ts", "*.js"]
+  // "ts-node": {
+  //   // "swc": true
+  // },
+  "include": [
+    "src",
+    "tests",
+    "examples",
+    "*.config.ts",
+    "*.config.js",
+    "package.json"
+    // , "external/MathjaxOptions.d.ts"
+    // , "external/mathjax.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "node_modules/**/*",
+    "src/types/fixes/mathjax",
+    "dist",
+    "coverage",
+    "examples"
+  ]
 }
