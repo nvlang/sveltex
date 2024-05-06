@@ -1,16 +1,15 @@
 // Types
+import type { Processed } from '$types/Sveltex.js';
 import type {
-    AdvancedTexBackend,
     BackendChoices,
-    CodeBackend,
     FullSveltexConfiguration,
-    Location,
-    MarkdownBackend,
-    Processed,
     SveltexConfiguration,
-    TexBackend,
-    TexConfiguration,
-} from '$types';
+} from '$types/SveltexConfiguration.js';
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
+import type { Location } from '$types/utils/Ast.js';
 import type {
     MarkupPreprocessor,
     Preprocessor,
@@ -19,26 +18,17 @@ import type {
 
 // Internal dependencies
 import { getDefaultSveltexConfig } from '$config';
-import {
-    AdvancedTexHandler,
-    CodeHandler,
-    MarkdownHandler,
-    TexHandler,
-    VerbatimHandler,
-} from '$handlers';
-import { missingDeps, packageManager } from '$utils/globals.js';
-import {
-    escapeMustacheTags,
-    escapeVerb,
-    log,
-    mergeConfigs,
-    parse,
-    prettifyError,
-    pushRangeIf,
-    unescape,
-    walk,
-} from '$utils';
+import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { CodeHandler } from '$handlers/CodeHandler.js';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
+import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
 import { TexComponent } from '$utils/TexComponent.js';
+import { parse, pushRangeIf, walk } from '$utils/ast.js';
+import { log, prettifyError } from '$utils/debug.js';
+import { escapeMustacheTags, escapeVerb, unescape } from '$utils/escape.js';
+import { missingDeps, packageManager } from '$utils/globals.js';
+import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
 import MagicString from 'magic-string';
