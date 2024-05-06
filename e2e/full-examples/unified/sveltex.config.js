@@ -1,12 +1,12 @@
 import { sveltex } from 'sveltex-preprocess';
 import rehypeSlug from 'rehype-slug';
 
-export const sveltexPreprocessor = await sveltex(
-    'unified',
-    'starry-night',
-    'katex',
-    'local',
-);
+export const sveltexPreprocessor = await sveltex({
+    markdownBackend: 'unified',
+    codeBackend: 'starry-night',
+    texBackend: 'katex',
+    advancedTexBackend: 'local',
+});
 
 await sveltexPreprocessor.configure({
     markdown: { rehypePlugins: [rehypeSlug] },

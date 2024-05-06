@@ -74,7 +74,6 @@ export type BBox =
     | TexDim
     | PaperSize;
 
-export type EnquotedPath = `'${string}'` | `"${string}"`;
 export type Flag = `--${string}`;
 export type FilepathWithExtension = `${string}.${string}`;
 

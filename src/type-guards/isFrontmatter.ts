@@ -1,4 +1,5 @@
-import { Frontmatter } from '$types';
+// Types
+import type { Frontmatter } from '$types';
 
 export function isFrontmatter(obj: unknown): obj is Frontmatter {
     if (obj === undefined || obj === null || typeof obj !== 'object') {

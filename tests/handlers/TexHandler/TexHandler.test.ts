@@ -1,10 +1,10 @@
 import { suite, describe, it, expect, vi } from 'vitest';
-import { TexHandler, createTexHandler } from '$handlers';
-import { missingDeps } from '$src/globals/index.js';
+import { TexHandler } from '$handlers';
+import { missingDeps } from '$utils/globals.js';
 
 suite("TexHandler<'none'>", async () => {
-    const handler = await createTexHandler('none');
-    describe("createTexHandler('none')", () => {
+    const handler = await TexHandler.create('none');
+    describe("TexHandler.create('none')", () => {
         it('returns instance of TexHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -45,10 +45,10 @@ suite("TexHandler<'none'>", async () => {
 });
 
 suite("TexHandler<'custom'>", async () => {
-    const handler = await createTexHandler('custom', {
+    const handler = await TexHandler.create('custom', {
         process: (input: string) => input,
     });
-    describe("createTexHandler('custom', ...)", () => {
+    describe("TexHandler.create('custom', ...)", () => {
         it('returns instance of TexHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -56,7 +56,7 @@ suite("TexHandler<'custom'>", async () => {
         });
 
         it('accepts optional processor and configuration properties', async () => {
-            const handler = await createTexHandler('custom', {
+            const handler = await TexHandler.create('custom', {
                 process: (input: string) => input,
                 processor: {},
                 configure: () => {
@@ -114,50 +114,58 @@ suite("TexHandler<'custom'>", async () => {
 });
 
 suite('TexHandler error handling', () => {
-    describe("createTexHandler('mathjax-full') with mathjax-full mocked to throw error", () => {
+    describe("TexHandler.create('mathjax-full') with mathjax-full mocked to throw error", () => {
         vi.mock('mathjax-full/js/handlers/html.js', () => {
             throw new Error('MathJax not found');
         });
         it('pushes "mathjax-full" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createTexHandler('mathjax-full'),
+                TexHandler.create('mathjax-full'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('mathjax-full');
         });
     });
 
-    describe("createTexHandler('mathjax-node') with mathjax-node mocked to throw error", () => {
+    describe("TexHandler.create('mathjax-node') with mathjax-node mocked to throw error", () => {
         vi.mock('mathjax-node', () => {
             throw new Error('MathJax not found');
         });
         it('pushes "mathjax-node" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createTexHandler('mathjax-node'),
+                TexHandler.create('mathjax-node'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('mathjax-node');
         });
     });
 
-    describe("createTexHandler('katex') with katex mocked to throw error", () => {
+    describe("TexHandler.create('katex') with katex mocked to throw error", () => {
         vi.mock('katex', () => {
             throw new Error('KaTeX not found');
         });
         it('pushes "katex" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createTexHandler('katex'),
+                TexHandler.create('katex'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('katex');
         });
     });
 
-    describe("createTexHandler('custom')", () => {
+    describe("TexHandler.create('custom')", () => {
         it('throws error if second parameter is missing', async () => {
             await expect(() =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                createTexHandler('custom', undefined!),
+                TexHandler.create('custom', undefined!),
             ).rejects.toThrowError(
-                'Called createTexHandler("custom", custom) without a second parameter.',
+                'Called TexHandler.create("custom", custom) without a second parameter.',
             );
+        });
+    });
+
+    describe("TexHandler.create('unsupported')", () => {
+        it('should throw error', async () => {
+            await expect(() =>
+                TexHandler.create('unsupported' as 'none'),
+            ).rejects.toThrowError();
         });
     });
 });

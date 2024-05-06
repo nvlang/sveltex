@@ -1,12 +1,12 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect } from 'vitest';
-import { TexHandler, createTexHandler } from '$handlers';
+import { TexHandler } from '$handlers';
 import { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 
 suite("TexHandler<'mathjax-full'>", async () => {
-    const handler = await createTexHandler('mathjax-full');
+    const handler = await TexHandler.create('mathjax-full');
 
-    describe("createTexHandler('mathjax-full')", () => {
+    describe("TexHandler.create('mathjax-full')", () => {
         it('returns instance of TexHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -31,7 +31,7 @@ suite("TexHandler<'mathjax-full'>", async () => {
             });
 
             it('should throw error if MathJax did not return a valid node', async () => {
-                const handler = await createTexHandler('mathjax-full');
+                const handler = await TexHandler.create('mathjax-full');
                 handler.processor = {
                     convert: () => null,
                 } as unknown as MathDocument<unknown, unknown, unknown>;

@@ -1,25 +1,25 @@
 /* eslint-disable tsdoc/syntax */
 // import type { OutputJax } from 'mathjax-full/ts/core/OutputJax.js';
 
-export interface MathjaxConfig {
-    options: MathjaxOptions;
+export interface MathjaxConfiguration {
+    options?: MathjaxOptions | undefined;
 
     /**
      * The configuration for the SVG output processor.
      */
-    svg: MathjaxSvgOutputProcessorOptions;
+    svg?: MathjaxSvgOutputProcessorOptions | undefined;
 
     /**
      * The configuration for the CommonHTML output processor.
      */
-    chtml: MathjaxChtmlOutputProcessorOptions;
+    chtml?: MathjaxChtmlOutputProcessorOptions | undefined;
 
     /**
      * The configuration for the TeX input processor.
      */
-    tex: MathjaxTexInputProcessorOptions;
+    tex?: MathjaxTexInputProcessorOptions | undefined;
 
-    mml: MathjaxMathmlInputProcessorOptions;
+    mml?: MathjaxMathmlInputProcessorOptions | undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

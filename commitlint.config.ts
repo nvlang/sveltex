@@ -1,4 +1,7 @@
+// Types
 import type { UserConfig } from '@commitlint/types';
+
+// External dependencies
 import { RuleConfigSeverity } from '@commitlint/types';
 
 /**

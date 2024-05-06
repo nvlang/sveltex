@@ -1,19 +1,22 @@
+// Types
 import type {
-    TexDimUnit,
-    TexDim,
-    Coordinate,
     BoundingBox,
+    Coordinate,
     DinIsoPaperSize,
     NorthAmericanPaperSize,
     PaperSize,
+    TexDim,
+    TexDimUnit,
     TexDimUnitless,
     TexDimWithUnit,
 } from '$types';
+
+// Internal dependencies
 import {
-    isNumber,
-    isNonNullObject,
-    isString,
     isArray,
+    isNonNullObject,
+    isNumber,
+    isString,
 } from '$type-guards/utils.js';
 
 export function isTexDimUnitless(value: unknown): value is TexDimUnitless {

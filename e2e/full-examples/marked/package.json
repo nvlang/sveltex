@@ -25,6 +25,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@types/unist": "^2.0.10"
+    "@types/unist": "^2.0.10",
+    "marked-gfm-heading-id": "^3.1.3"
   }
 }

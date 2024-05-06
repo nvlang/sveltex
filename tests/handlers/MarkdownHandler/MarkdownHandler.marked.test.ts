@@ -1,12 +1,12 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import { MarkdownHandler, createMarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers';
 import { Marked } from 'marked';
 
 suite("MarkdownHandler<'marked'>", async () => {
-    const handler = await createMarkdownHandler('marked');
+    const handler = await MarkdownHandler.create('marked');
 
-    describe("createMarkdownHandler('marked')", () => {
+    describe("MarkdownHandler.create('marked')", () => {
         it('returns instance of MarkdownHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();

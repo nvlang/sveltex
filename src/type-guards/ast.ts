@@ -6,7 +6,8 @@
  * intended behavior of this module.
  */
 
-import {
+// Types
+import type {
     BaseNode,
     BaseNode_ESTree,
     BaseNode_v4,

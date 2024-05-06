@@ -14,9 +14,8 @@ import type {
 } from '$types';
 
 // Internal dependencies
-import { AST_API_FAMILIAR, SVELTE_MAJOR_VERSION } from '$utils/env.js';
-import { escapeWhitespace } from '$utils/log.js';
-import { notRelevantChildrenKeys, otherChildrenProps_v4 } from '$data';
+import { SVELTE_MAJOR_VERSION } from '$utils/globals.js';
+import { escapeWhitespace } from '$utils/debug.js';
 import {
     hasRange,
     hasStartEnd,
@@ -31,6 +30,55 @@ import {
 
 // External dependencies
 import { parse as svelteParse } from 'svelte/compiler';
+
+/**
+ * One of the differences between the parser from Svelte 5 (when the `modern`
+ * option is set to `true`) and the parser from Svelte 4 is that, with the
+ * latter, there are some nodes which may contain children nodes in properties
+ * other than `children`. This is the case the nodes of type `IfBlock`,
+ * `EachBlock`, and `AwaitBlock`.
+ */
+const otherChildrenProps_v4: Record<string, string[]> = {
+    IfBlock: ['else'],
+    // ElseBlock: [],
+    EachBlock: ['else'],
+    // KeyBlock: [],
+    AwaitBlock: ['pending', 'then', 'catch'],
+    // PendingBlock: [], ThenBlock: [], CatchBlock: [],
+};
+
+/**
+ * Keys which either never point to children nodes, or which point to children
+ * nodes which we are not interested in.
+ */
+const notRelevantChildrenKeys = new Set([
+    'type',
+    'expression',
+    'attributes',
+    'start',
+    'end',
+    'loc',
+    'name',
+]);
+
+/**
+ * Utility function to push the start and end positions of a node to an array
+ * of ranges if the node is of a certain type. Useful as a callback for the
+ * {@link walk | `walk`} function.
+ */
+export function pushRangeIf(type: string, ranges: Location[], content: string) {
+    /**
+     * Pushes the start and end positions of `node` to
+     * {@link textRanges | `textRanges`} iff `node.type === type`.
+     *
+     * @param node - The node to process.
+     */
+    return (node: BaseNode) => {
+        if (node.type === type) {
+            ranges.push(getLocation(node, content));
+        }
+    };
+}
 
 /**
  * Converts a range given with line-column numbers to a location object.
@@ -69,20 +117,18 @@ export function getLocation(
     source?: string | string[],
     version: number | undefined = SVELTE_MAJOR_VERSION,
 ): Location {
-    if (AST_API_FAMILIAR) {
-        if (version === 5 && isBaseNode_v5(node)) {
-            return {
-                start: node.start,
-                end: node.end,
-            };
-        }
+    if (version === 5 && isBaseNode_v5(node)) {
+        return {
+            start: node.start,
+            end: node.end,
+        };
+    }
 
-        if (version === 4 && isBaseNode_v4(node)) {
-            return {
-                start: node.start,
-                end: node.end,
-            };
-        }
+    if (version === 4 && isBaseNode_v4(node)) {
+        return {
+            start: node.start,
+            end: node.end,
+        };
     }
 
     if (hasStartEnd(node)) {
@@ -132,6 +178,9 @@ export function getLocation(
     );
 }
 
+/**
+ * Get the children of a node.
+ */
 export function getChildren(
     node: BaseNode,
     version: number | undefined = SVELTE_MAJOR_VERSION,
@@ -172,9 +221,9 @@ export function getChildren(
 }
 
 /**
- * Recursively
+ * Recursively walks
  * ({@link https://en.wikipedia.org/wiki/Depth-first_search | depth-first})
- * walks through a Svelte
+ * through a Svelte
  * {@link https://en.wikipedia.org/wiki/Abstract_syntax_tree | AST} and performs
  * an action on each node.
  *
@@ -240,28 +289,56 @@ export function stringifyAst(node: BaseNode, indent: number = 2): string {
     return lines.join('\n');
 }
 
+/**
+ * Parse a Svelte file and return its AST.
+ * @param content - The content of the Svelte file.
+ * @param filename - The name of the file.
+ * @returns The AST of the Svelte file.
+ * @throws If the content could not be parsed.
+ * @remarks This function is a wrapper around the `parse` function from the
+ * Svelte compiler. It is used to ensure that the correct version of the AST is
+ * returned, regardless of the version of the Svelte compiler used.
+ * @see https://svelte.dev/docs#svelte_compile
+ */
 // We use type assertions here because we can only have one version of Svelte
 // installed at a time as our `svelte` dev dependency, so that either this or
 // the other call to `parse` would throw a type error otherwise. This is also
 // why we exclude this from coverage.
 /* eslint-disable */
-/* v8 ignore next 18 */
-export function parse(content: string, filename?: string): BaseNode {
+/* v8 ignore next 35 */
+export function parse(
+    content: string,
+    filename?: string,
+): {
+    ast: BaseNode;
+    scriptPresent?: boolean | undefined;
+    stylePresent?: boolean | undefined;
+} {
     if (SVELTE_MAJOR_VERSION >= 5 && SVELTE_MAJOR_VERSION < 7) {
-        return svelteParse(content, {
-            filename,
-            modern: true,
-        } as any) as unknown as BaseNode_v5;
-    } else if (SVELTE_MAJOR_VERSION <= 4) {
-        return (
-            svelteParse(content, {
+        return {
+            ast: svelteParse(content, {
                 filename,
-            } as any) as unknown as Ast_v4
-        ).html;
+                modern: true,
+            } as any) as unknown as BaseNode_v5,
+        };
     } else {
-        return svelteParse(content, {
-            filename,
-        } as any) as unknown as BaseNode;
+        const opts = filename ? { filename } : {};
+        if (SVELTE_MAJOR_VERSION <= 4) {
+            const ast_v4 = svelteParse(content, {
+                ...opts,
+            }) as unknown as Ast_v4;
+            return {
+                ast: ast_v4.html,
+                scriptPresent: ast_v4['instance'] !== undefined,
+                stylePresent: ast_v4['css'] !== undefined,
+            };
+        } else {
+            return {
+                ast: svelteParse(content, {
+                    ...opts,
+                }) as unknown as BaseNode,
+            };
+        }
     }
 }
 /* eslint-enable */

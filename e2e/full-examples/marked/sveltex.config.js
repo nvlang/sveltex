@@ -1,12 +1,12 @@
 import { sveltex } from 'sveltex-preprocess';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 
-export const sveltexPreprocessor = await sveltex(
-    'marked',
-    'none',
-    'none',
-    'none',
-);
+export const sveltexPreprocessor = sveltex({
+    markdownBackend: 'marked',
+    codeBackend: 'none',
+    texBackend: 'none',
+    advancedTexBackend: 'local',
+});
 
 await sveltexPreprocessor.configure({
     markdown: {
@@ -18,5 +18,13 @@ await sveltexPreprocessor.configure({
             silent: false,
         },
         extensions: [gfmHeadingId()],
+    },
+    advancedTex: {
+        // caching: false,
+        components: {
+            tex: {
+                documentClass: '\\documentclass[tikz]{standalone}',
+            },
+        },
     },
 });

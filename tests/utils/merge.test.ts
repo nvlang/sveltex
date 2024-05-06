@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeConfigs } from '$utils';
+import { mergeConfigs } from '$utils/merge.js';
 import { range } from '$tests';
 
 function nested(

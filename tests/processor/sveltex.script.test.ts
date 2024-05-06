@@ -1,31 +1,24 @@
-import { describe, it, expect, vi, suite, beforeEach } from 'vitest';
-import { sveltex } from '$processor';
+import { sveltex } from '$sveltex-preprocess';
+import { spy } from '$tests/fixtures.js';
+import mockFs from 'mock-fs';
 import { Processed } from 'svelte/compiler';
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    suite,
+    vi,
+} from 'vitest';
 
-let writeFileSyncCallStack: [string, string, string][] = [];
-
-vi.mock('node:fs', async (orig: () => Promise<object>) => ({
-    ...(await orig()),
-    writeFileSync: vi
-        .fn()
-        .mockImplementation(
-            (path: string, content: string, encoding: string) => {
-                writeFileSyncCallStack.push([path, content, encoding]);
-            },
-        ),
-}));
-
-const consoleInfoSpy = vi
-    .spyOn(console, 'info')
-    .mockImplementation(() => undefined);
-const consoleWarnSpy = vi
-    .spyOn(console, 'warn')
-    .mockImplementation(() => undefined);
-const consoleErrorSpy = vi
-    .spyOn(console, 'error')
-    .mockImplementation(() => undefined);
-
-const sp = await sveltex('none', 'none', 'none', 'local');
+const sp = await sveltex({
+    markdownBackend: 'none',
+    codeBackend: 'none',
+    texBackend: 'none',
+    advancedTexBackend: 'local',
+});
 
 await sp.configure({
     advancedTex: {
@@ -35,35 +28,152 @@ await sp.configure({
     },
 });
 
-suite('Sveltex', () => {
+suite('Sveltex', async () => {
+    // const { log, spawnCliInstruction, writeFile } =
+    await spy(['writeFile', 'spawnCliInstruction', 'log'], true);
+    beforeAll(() => {
+        mockFs({});
+    });
+    afterAll(() => {
+        mockFs.restore();
+        vi.restoreAllMocks();
+    });
     beforeEach(() => {
-        writeFileSyncCallStack = [];
-        consoleInfoSpy.mockClear();
-        consoleWarnSpy.mockClear();
-        consoleErrorSpy.mockClear();
+        vi.clearAllMocks();
+    });
+
+    describe('Sveltex.script', () => {
+        it('should noop if no filename was provided', () => {
+            const scriptOut = sp.script({
+                content: '',
+                attributes: {},
+                markup: '',
+            });
+            expect(scriptOut).toEqual(undefined);
+        });
+        it('should noop if no filename with non-sveltex extension was provided', () => {
+            const scriptOut = sp.script({
+                content: '',
+                attributes: {},
+                markup: '',
+                filename: 'test.svelte',
+            });
+            expect(scriptOut).toEqual(undefined);
+        });
     });
 
     describe('Sveltex.markup + Sveltex.script', () => {
-        it('correctly stores info in texComponentsMap', async () => {
+        it('works (basic)', async () => {
             const markupOut = await sp.markup({
-                content: '<tex>x</tex>',
-                filename: 'test.sveltex',
+                content: '<tex ref="something">x</tex>',
+                filename: 'test-basic.sveltex',
             });
             expect((markupOut as Processed).code).toEqual(
-                '<figure id="2azgFtbWfieP3uQaD41I2wi1B7Ckn12JcHetlahfjRo"></figure>',
+                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>',
             );
-            expect(sp.texComponentsMap.size).toEqual(1);
-            expect(sp.texComponentsMap.get('test.sveltex')?.length).toEqual(1);
+            expect(
+                Object.keys(sp.advancedTexHandler.texComponents).length,
+            ).toEqual(1);
+            expect(
+                sp.advancedTexHandler.texComponents['test-basic.sveltex']
+                    ?.length,
+            ).toEqual(1);
 
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
-                markup: '<tex>x</tex>',
+                markup: '<tex ref="something">x</tex>',
+                filename: 'test-basic.sveltex',
+            });
+            expect((scriptOut as Processed).code).toEqual(
+                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\n",
+            );
+
+            sp.advancedTexHandler.texComponents = {};
+        });
+
+        it('works (no tex components)', async () => {
+            const markupOut = await sp.markup({
+                content: 'something',
+                filename: 'test-basic.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\n</script>\nsomething',
+            );
+            expect(
+                Object.keys(sp.advancedTexHandler.texComponents).length,
+            ).toEqual(0);
+            expect(
+                sp.advancedTexHandler.texComponents['test-basic.sveltex'],
+            ).toBeUndefined();
+
+            expect(
+                await sp.script({
+                    content: '',
+                    attributes: {},
+                    markup: 'something',
+                    filename: 'test-basic.sveltex',
+                }),
+            ).toBeUndefined();
+            sp.advancedTexHandler.texComponents = {};
+        });
+
+        it('works', async () => {
+            const markupOut = await sp.markup({
+                content:
+                    '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>',
+                filename: 'test.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_as_valueless_attribute} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
+            );
+            expect(
+                Object.keys(sp.advancedTexHandler.texComponents).length,
+            ).toEqual(1);
+            expect(
+                sp.advancedTexHandler.texComponents['test.sveltex']?.length,
+            ).toEqual(1);
+
+            const scriptOut = await sp.script({
+                content: '',
+                attributes: {},
+                markup: '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>',
                 filename: 'test.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport { onMount as __sveltex_onMount } from 'svelte';\n__sveltex_onMount(async () => {\n    try {\ndocument.getElementById('2azgFtbWfieP3uQaD41I2wi1B7Ckn12JcHetlahfjRo')?.insertAdjacentHTML('beforeend', (await fetch('sveltex/2azgFtbWfieP3uQaD41I2wi1B7Ckn12JcHetlahfjRo.svg')).text());\n    } catch (err) {\n        console.error('[sveltex error]', err);\n    }\n});\n",
+                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\n",
             );
+
+            sp.advancedTexHandler.texComponents = {};
+        });
+
+        it('works (coffeescript)', async () => {
+            const markupOut = await sp.markup({
+                content:
+                    '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>',
+                filename: 'test.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_as_valueless_attribute} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
+            );
+            expect(
+                Object.keys(sp.advancedTexHandler.texComponents).length,
+            ).toEqual(1);
+            expect(
+                sp.advancedTexHandler.texComponents['test.sveltex']?.length,
+            ).toEqual(1);
+
+            const scriptOut = await sp.script({
+                content: '',
+                attributes: { lang: 'coffeescript' },
+                markup: '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>',
+                filename: 'test.sveltex',
+            });
+            expect((scriptOut as Processed).code).toEqual(
+                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\n```\n",
+            );
+
+            sp.advancedTexHandler.texComponents = {};
         });
     });
 });

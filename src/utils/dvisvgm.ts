@@ -1,32 +1,45 @@
+// Types
 import type {
+    BBox,
+    BitmapFormat,
+    BoundingBox,
     CliInstruction,
     DvisvgmOptions,
-    EnquotedPath,
-    Flag,
     FilepathWithExtension,
+    Flag,
+    TexDim,
 } from '$types';
-import { isString } from '$src/type-guards/utils.js';
+
+// Internal dependencies
+import { getDefaultDvisvgmOptions } from '$config';
 import {
     isBoundingBox,
     isPaperSize,
+    isString,
     isTexDim,
     isTexDimUnitless,
-} from '$type-guards/dvisvgm.js';
-import type { BBox, BoundingBox, TexDim, BitmapFormat } from '$types';
-import { defaultDvisvgmOptions } from '$src/config/defaults.js';
-import { mergeWithoutUndefinedOverrides } from '$utils';
+} from '$type-guards';
+import { ensureWithinRange, mergeWithoutUndefinedOverrides } from '$utils';
 
-function ensureWithinRange(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
-}
-
+/**
+ * Convert a {@link BitmapFormat | `BitmapFormat`} to a string that can be
+ * passed to the `--bitmap-format` flag of the `dvisvgm` command.
+ *
+ * @internal
+ */
 export function bitmapFormatToFlagValue(bitmapFormat: BitmapFormat): string {
     if (isString(bitmapFormat)) {
         return bitmapFormat;
     }
-    return `${bitmapFormat[0]}:${String(ensureWithinRange(bitmapFormat[1], 0, 100).toFixed(0))}`;
+    return `${bitmapFormat[0]}:${String(ensureWithinRange(bitmapFormat[1], [0, 100]).toFixed(0))}`;
 }
 
+/**
+ * Convert a {@link BBox | `BBox`} to a string that can be passed to the
+ * `--bbox` flag of the `dvisvgm` command.
+ *
+ * @internal
+ */
 export function bboxToFlagValue(bbox: BBox): string {
     if (isTexDim(bbox)) {
         if (isTexDimUnitless(bbox)) {
@@ -45,7 +58,13 @@ export function bboxToFlagValue(bbox: BBox): string {
     return bbox;
 }
 
-function boundingBoxToString(bbox: BoundingBox): string {
+/**
+ * Convert a {@link BoundingBox | `BoundingBox`} to a string that can be used in
+ * the `--bbox` flag of the `dvisvgm` command.
+ *
+ * @internal
+ */
+export function boundingBoxToString(bbox: BoundingBox): string {
     return [
         bbox.topLeft.x,
         bbox.topLeft.y,
@@ -56,70 +75,54 @@ function boundingBoxToString(bbox: BoundingBox): string {
         .join(',');
 }
 
-function texDimToString(texDim: TexDim): string {
+/**
+ * Convert a {@link TexDim | `TexDim`} to a string that can be used in the
+ * `--bbox` flag of the `dvisvgm` command.
+ *
+ * @internal
+ */
+export function texDimToString(texDim: TexDim): string {
     if (isTexDimUnitless(texDim)) {
         return String(texDim);
     }
     return `${String(texDim[0])}${texDim[1]}`;
 }
 
-export function sanitizePath(path: string): EnquotedPath {
-    if (
-        (path.startsWith("'") && path.endsWith("'")) ||
-        (path.startsWith('"') && path.endsWith('"'))
-    ) {
-        return path as EnquotedPath;
-    }
-    return `"${path}"`;
-}
-
-export function unquotePath(path: string): string {
-    if (
-        (path.startsWith("'") && path.endsWith("'")) ||
-        (path.startsWith('"') && path.endsWith('"'))
-    ) {
-        return path.slice(1, -1);
-    }
-    return path;
-}
-
-// export function completeRecord<I extends object, F extends I>(
-//     incomplete: I | undefined,
-//     undefineds: F,
-//     nulls?: F,
-// ): F {
-//     const completeWithUndefineds = mergeWithoutUndefinedOverrides(
-//         undefineds,
-//         incomplete ?? {},
-//     );
-//     if (nulls) {
-//         const complete = completeWithUndefineds as Record<string, unknown>;
-//         for (const [key, value] of Object.entries(nulls)) {
-//             if (complete[key] === undefined || complete[key] === null) {
-//                 complete[key] = value;
-//             }
-//         }
-//         return complete as F;
-//     }
-//     return completeWithUndefineds;
-// }
-
+/**
+ * Build a {@link CliInstruction | `CliInstruction`} to convert a DVI or PDF file
+ * to SVG using `dvisvgm`.
+ *
+ * @param dvisvgmOptions - Options for the conversion.
+ * @param outputPath - The path to the output SVG file.
+ * @param texPath - The path to the input TeX file.
+ * @param inputType - The type of the input file (DVI or PDF).
+ * @returns A `CliInstruction` to convert the DVI or PDF file to SVG.
+ *
+ * @remarks
+ * Options which are `undefined` will be set to their default value as specified
+ * by Sveltex; options which are `null` will be omitted from the instruction,
+ * meaning that their default value as specified by `dvisvgm` will be used
+ *
+ * @internal
+ */
 export function buildDvisvgmInstruction({
     dvisvgmOptions,
     outputPath,
     texPath,
     inputType,
 }: {
+    dvisvgmOptions?: DvisvgmOptions | undefined;
     outputPath: FilepathWithExtension;
     texPath: FilepathWithExtension;
     inputType: 'dvi' | 'pdf';
-    dvisvgmOptions?: DvisvgmOptions;
 }): CliInstruction {
     const fullDvisvgmOptions = mergeWithoutUndefinedOverrides(
-        defaultDvisvgmOptions,
+        getDefaultDvisvgmOptions(),
         dvisvgmOptions ?? {},
     );
 
+    // The args array to pass to the `spawn` function. We initialize it with an
+    // empty array.
     const args: (FilepathWithExtension | Flag)[] = [];
 
     // If the intermediary filetype is PDF, we need to pass the `--pdf` flag
@@ -138,7 +141,7 @@ export function buildDvisvgmInstruction({
     }
 
     // Set --exact-bbox flag, if applicable
-    if (exactBbox !== null && (exactBbox || inputType === 'dvi')) {
+    if (exactBbox !== null && exactBbox && inputType === 'dvi') {
         args.push('--exact-bbox');
     }
 
@@ -288,7 +291,7 @@ export function buildDvisvgmInstruction({
             args.push('--precision=0');
         } else {
             args.push(
-                `--precision=${ensureWithinRange(precision, 1, 6).toFixed(0)}`,
+                `--precision=${ensureWithinRange(precision, [1, 6]).toFixed(0)}`,
             );
         }
     }
@@ -301,7 +304,7 @@ export function buildDvisvgmInstruction({
         if (zip === true) {
             args.push('--zip');
         } else {
-            args.push(`--zip=${String(ensureWithinRange(zip, 1, 9))}`);
+            args.push(`--zip=${String(ensureWithinRange(zip, [1, 9]))}`);
         }
     }
 

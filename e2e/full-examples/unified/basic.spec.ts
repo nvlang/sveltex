@@ -13,7 +13,6 @@ import { test, expect } from '@playwright/test';
  * - 3003 - micromark
  * - 3004 - unified
  */
-
 test('unified', async ({ page }) => {
     await page.goto('http://localhost:3004/');
 
@@ -44,4 +43,7 @@ test('unified', async ({ page }) => {
     await expect(
         page.getByRole('heading', { name: 'Welcome to SvelteKit' }),
     ).toHaveAttribute('id', 'welcome-to-sveltekit');
+
+    // Expect there to be a strong "something" within a paragraph on the page
+    await expect(page.getByText('something')).toBeVisible();
 });

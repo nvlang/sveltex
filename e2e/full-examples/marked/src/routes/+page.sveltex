@@ -1,7 +1,15 @@
-# Welcome to SvelteKit
 
+<script>
+</script>
 
-Visit [kit.svelte.dev](https://kit.svelte.dev) to read the documentation
+test1 *italic* test2
 
+<tex ref="something">
+\begin{tikzpicture}
+    \draw (0,0) circle (3);
+    \draw (0,-1) circle (1.8);
+    \draw[var(--red), thick] (0,0) rectangle (3, 3);
+\end{tikzpicture}
+</tex>
 
-
+test3 **bold** test4

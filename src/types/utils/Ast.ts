@@ -11,9 +11,23 @@ export interface BaseNode extends Record<string, unknown> {
  * This interface describes the location of a node in an AST. It's used by
  * SvelTeX internally, and is not trying to extend any type from the Svelte API
  * or the `@types/estree` package.
+ *
+ * @remarks
+ * The `start` property is understood to be inclusive, whereas the `end`
+ * property is understood to be exclusive. In other words, given a string
+ * `'0123'` and a `Location` object `{ start: 0, end: 2 }`, the `Location` would
+ * refer to the substring `'01'`.
  */
 export interface Location {
+    /**
+     * The index of the first character of the substring to which this
+     * `Location` object refers.
+     */
     start: number;
+    /**
+     * The index of the character immediately following the last character of
+     * the substring to which this `Location` object refers.
+     */
     end: number;
 }
 

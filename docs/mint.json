@@ -21,8 +21,26 @@
     "background": {
       "light": "#fff",
       "dark": "#171717"
+    },
+    "anchors": {
+      "from": "#7c2d12",
+      "to": "#7c2d12"
     }
   },
+  "anchors": [
+    {
+      "name": "NPM",
+      "url": "https://npmjs.com/package/sveltex-preprocess",
+      "icon": "npm",
+      "iconType": "brands"
+    },
+    {
+      "name": "JSR",
+      "url": "https://jsr.io/@nvlang/sveltex",
+      "icon": "brackets-curly",
+      "iconType": "solid"
+    }
+  ],
   "tabs": [
     {
       "name": "Advanced",
@@ -36,7 +54,7 @@
   "navigation": [
     {
       "group": "Get Started",
-      "pages": ["introduction", "installation", "development"]
+      "pages": ["introduction", "installation", "overview"]
     },
     {
       "group": "Essentials",

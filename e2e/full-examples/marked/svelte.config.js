@@ -6,9 +6,12 @@ import { sveltexPreprocessor } from './sveltex.config.js';
 const config = {
     // Consult https://kit.svelte.dev/docs/integrations#preprocessors
     // for more information about preprocessors
-    preprocess: [vitePreprocess(), sveltexPreprocessor],
+    preprocess: [sveltexPreprocessor, vitePreprocess()],
 
-    extensions: ['.svelte', '.sveltex'],
+    extensions: [
+        '.svelte',
+        ...sveltexPreprocessor.configuration.general.extensions,
+    ],
 
     kit: {
         // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.

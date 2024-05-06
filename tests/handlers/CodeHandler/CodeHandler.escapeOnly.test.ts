@@ -1,13 +1,14 @@
 import { suite, describe, it, expect, vi } from 'vitest';
 
-import { createCodeHandler, CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers';
+import { consoles } from '$utils/debug.js';
 
-vi.spyOn(console, 'error').mockImplementation(() => undefined);
+vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
 suite("CodeHandler<'escapeOnly'>", async () => {
-    const handler = await createCodeHandler('escapeOnly');
+    const handler = await CodeHandler.create('escapeOnly');
 
-    describe("createCodeHandler('escapeOnly')", () => {
+    describe("CodeHandler.create('escapeOnly')", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -26,7 +27,8 @@ suite("CodeHandler<'escapeOnly'>", async () => {
                 const output = await handler.process('a <b> {c}', {
                     lang: 'plaintext',
                 });
-                const expected = 'a &lt;b&gt; &lbrace;c&rbrace;';
+                const expected =
+                    '<pre><code class="language-plaintext">\na &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
         });

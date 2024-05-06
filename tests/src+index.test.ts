@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-const src = await import('$src');
+const src = await import('$sveltex-preprocess');
 
 describe('src+index', () => {
     it('is an object', () => {
@@ -10,9 +10,5 @@ describe('src+index', () => {
 
     it('exports `sveltex`', () => {
         expect(src).toHaveProperty('sveltex');
-    });
-
-    it('exports `Sveltex`', () => {
-        expect(src).toHaveProperty('Sveltex');
     });
 });

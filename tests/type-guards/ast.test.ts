@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
 import {
     hasStartEnd_LineColumn,
     hasStartEnd_Offset,
     isFragment_v5,
 } from '$type-guards/ast.js';
+import { describe, expect, it } from 'vitest';
 
 describe('hasStartEnd_Offset', () => {
     it('should return true for an object with start and end properties of type StartEnd_Offset', () => {

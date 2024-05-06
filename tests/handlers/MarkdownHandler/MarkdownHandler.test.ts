@@ -1,16 +1,11 @@
 import { suite, describe, it, expect, vi } from 'vitest';
-import {
-    shouldParseAsInline,
-    markdownBlockRegex,
-    MarkdownHandler,
-    createMarkdownHandler,
-} from '$handlers';
-import { missingDeps } from '$src/globals/index.js';
+import { MarkdownHandler } from '$handlers';
+import { missingDeps } from '$utils/globals.js';
 
 suite('MarkdownHandler', () => {
     describe('backendIs()', () => {
         it('should work', async () => {
-            const handler = await createMarkdownHandler('none');
+            const handler = await MarkdownHandler.create('none');
             expect(handler.backendIs('none')).toBe(true);
             expect(handler.backendIs('custom')).toBe(false);
             expect(handler.backendIs('markdown-it')).toBe(false);
@@ -20,30 +15,32 @@ suite('MarkdownHandler', () => {
         });
     });
 
-    describe('shouldParseAsInline()', () => {
+    describe('MarkdownHandler.shouldParseAsInline()', () => {
         it('should return true for inline markdown', () => {
-            expect(shouldParseAsInline('**strong** *em*')).toBe(true);
+            expect(MarkdownHandler.shouldParseAsInline('**strong** *em*')).toBe(
+                true,
+            );
         });
 
         it('should return false for block markdown', () => {
-            expect(shouldParseAsInline('a\n\nb')).toBe(false);
+            expect(MarkdownHandler.shouldParseAsInline('a\n\nb')).toBe(false);
         });
     });
 
-    describe('markdownBlockRegex', () => {
+    describe('MarkdownHandler.markdownBlockRegex', () => {
         it('should match multiple newlines', () => {
             const input = '\n\n';
-            expect(markdownBlockRegex.test(input)).toBe(true);
+            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
         });
 
         it('should match headings', () => {
             const input = '# Heading';
-            expect(markdownBlockRegex.test(input)).toBe(true);
+            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
         });
 
         it('should match setext heading', () => {
             const input = 'Heading\n---';
-            expect(markdownBlockRegex.test(input)).toBe(true);
+            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
         });
     });
 
@@ -79,71 +76,79 @@ suite('MarkdownHandler', () => {
 });
 
 suite('MarkdownHandler error handling', () => {
-    describe("createMarkdownHandler('marked') with marked mocked to throw error", () => {
+    describe("MarkdownHandler.create('marked') with marked mocked to throw error", () => {
         vi.mock('marked', () => {
             throw new Error('marked not found');
         });
         it('pushes "marked" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createMarkdownHandler('marked'),
+                MarkdownHandler.create('marked'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('marked');
         });
     });
 
-    describe("createMarkdownHandler('markdown-it') with markdown-it mocked to throw error", () => {
+    describe("MarkdownHandler.create('markdown-it') with markdown-it mocked to throw error", () => {
         vi.mock('markdown-it', () => {
             throw new Error('markdown-it not found');
         });
         it('pushes "markdown-it" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createMarkdownHandler('markdown-it'),
+                MarkdownHandler.create('markdown-it'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('markdown-it');
         });
     });
 
-    describe("createMarkdownHandler('micromark') with micromark mocked to throw error", () => {
+    describe("MarkdownHandler.create('micromark') with micromark mocked to throw error", () => {
         vi.mock('micromark', () => {
             throw new Error('micromark not found');
         });
         it('pushes "micromark" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createMarkdownHandler('micromark'),
+                MarkdownHandler.create('micromark'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('micromark');
         });
     });
 
-    describe("createMarkdownHandler('unified') with unified mocked to throw error", () => {
+    describe("MarkdownHandler.create('unified') with unified mocked to throw error", () => {
         vi.mock('unified', () => {
             throw new Error('unified not found');
         });
         it('pushes "unified" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createMarkdownHandler('unified'),
+                MarkdownHandler.create('unified'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('unified');
         });
     });
 
-    describe("createMarkdownHandler('custom')", () => {
+    describe("MarkdownHandler.create('custom')", () => {
         it('throws error if second parameter is missing', async () => {
             await expect(() =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                createMarkdownHandler('custom', undefined!),
+                MarkdownHandler.create('custom', undefined!),
             ).rejects.toThrowError(
-                'Called createMarkdownHandler("custom", custom) without a second parameter.',
+                'Called MarkdownHandler.create("custom", custom) without a second parameter.',
             );
         });
 
         it("should set `configure` to noop by default if backend is 'custom'", async () => {
-            const handler = await createMarkdownHandler('custom', {
+            const handler = await MarkdownHandler.create('custom', {
                 process: () => 'output',
             });
             expect(handler.configure).toBeTypeOf('function');
             // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
             expect(await handler.configure({})).toBeUndefined();
+        });
+    });
+
+    describe("MarkdownHandler.create('unsupported')", () => {
+        it('should throw error', async () => {
+            await expect(() =>
+                MarkdownHandler.create('unsupported' as 'none'),
+            ).rejects.toThrowError();
         });
     });
 });

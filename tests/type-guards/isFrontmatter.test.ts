@@ -1,4 +1,4 @@
-import { isFrontmatter } from '$type-guards';
+import { isFrontmatter } from '$type-guards/isFrontmatter.js';
 import { describe, it, expect } from 'vitest';
 
 describe('isFrontmatter', () => {

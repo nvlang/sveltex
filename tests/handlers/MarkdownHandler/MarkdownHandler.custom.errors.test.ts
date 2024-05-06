@@ -1,10 +1,6 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import {
-    MarkdownHandler,
-    createMarkdownHandler,
-    shouldParseAsInline,
-} from '$handlers';
+import { MarkdownHandler } from '$handlers';
 
 import { Marked, type MarkedOptions, type MarkedExtension } from 'marked';
 
@@ -31,16 +27,18 @@ suite("MarkdownHandler<'custom'>", () => {
     };
     const customProcess = async (
         markdown: string,
-        inline: boolean = !shouldParseAsInline(markdown),
+        { inline }: { inline?: boolean | undefined } | undefined = {
+            inline: !MarkdownHandler.shouldParseAsInline(markdown),
+        },
         markdownHandler: MarkdownHandler<'custom'>,
     ) => {
         return inline
             ? await (markdownHandler.processor as Marked).parseInline(markdown)
             : await (markdownHandler.processor as Marked).parse(markdown);
     };
-    describe('createMarkdownHandler()', () => {
+    describe('MarkdownHandler.create()', () => {
         it('returns instance of MarkdownHandler', async () => {
-            const handler = await createMarkdownHandler('custom', {
+            const handler = await MarkdownHandler.create('custom', {
                 processor: customProcessor,
                 process: customProcess,
                 configure: customConfigure,
@@ -50,13 +48,13 @@ suite("MarkdownHandler<'custom'>", () => {
             expect(handler).toBeInstanceOf(MarkdownHandler);
         });
 
-        describe("createTexHandler('custom')", () => {
+        describe("TexHandler.create('custom')", () => {
             it('throws error if second parameter is missing', async () => {
                 await expect(() =>
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    createMarkdownHandler('custom', undefined!),
+                    MarkdownHandler.create('custom', undefined!),
                 ).rejects.toThrowError(
-                    'Called createMarkdownHandler("custom", custom) without a second parameter.',
+                    'Called MarkdownHandler.create("custom", custom) without a second parameter.',
                 );
             });
         });

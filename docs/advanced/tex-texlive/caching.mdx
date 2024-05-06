@@ -4,7 +4,8 @@ description: 'Faster DX for advanced TeX blocks'
 icon: 'gear'
 ---
 
-SvelTeX uses caching to reduce build times, with special focus on HMR.
+SvelTeX uses caching for advanced TeX content to reduce build times and improve
+HMR support.
 
 ## General approach
 
@@ -25,12 +26,7 @@ apply:
 ```js sveltex.config.js
 import { sveltex } from 'sveltex-preprocess';
 
-export const sveltexPreprocessor = await sveltex(
-    'none',
-    'none',
-    'none',
-    'local',
-);
+export const sveltexPreprocessor = await sveltex({ advancedTexBackend: 'local' })
 
 await sveltexPreprocessor.configure({
     advancedTex: {
@@ -76,22 +72,8 @@ export default config;
     <CodeGroup>
         ```json cache.json
         {
-            // Record to keep track of hashes of files.
-            // - key = filepath
-            // - val = hash of file that key points to
-            "hashes": {},
-            // Record to keep track of the hashes of the "source files" of given
-            // PDF and SVG files. By source file we mean, in the case of a
-            // PDF/DVI, the TeX file that was used to generate it, and, in the
-            // case of a SVG file, the PDF/DVI file that was used to generate it.
-            // - key = filepath
-            // - val = hash of source file of file that key points to
-            "sources": {},
-            // Array containing filepaths of files that are "up for deletion".
-            // New filepaths are pushed to the end, and once the array reaches a
-            // certain size, the first filepath in the array is deleted,
-            // alongside the file it points to.
-            "__delete": []
+            "int": {},
+            "svg": {}
         }
         ```
 

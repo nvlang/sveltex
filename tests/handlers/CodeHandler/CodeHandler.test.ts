@@ -1,15 +1,16 @@
 import { suite, describe, it, expect, vi } from 'vitest';
-import { CodeHandler, createCodeHandler } from '$handlers';
-import { missingDeps } from '$src/globals/index.js';
-import { defaultCodeConfiguration } from '$src/config/defaults.js';
+import { CodeHandler } from '$handlers';
+import { missingDeps } from '$utils/globals.js';
+import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { consoles } from '$utils/debug.js';
 
-vi.spyOn(console, 'error').mockImplementation(() => undefined);
+vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
 suite("CodeHandler<'custom'>", async () => {
-    const handler = await createCodeHandler('custom', {
+    const handler = await CodeHandler.create('custom', {
         process: (input: string) => input,
     });
-    describe("createCodeHandler('custom', ...)", () => {
+    describe("CodeHandler.create('custom', ...)", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -17,7 +18,7 @@ suite("CodeHandler<'custom'>", async () => {
         });
 
         it('accepts optional processor and configuration properties', async () => {
-            const handler = await createCodeHandler('custom', {
+            const handler = await CodeHandler.create('custom', {
                 process: (input: string) => input,
                 processor: {},
                 configure: () => {
@@ -29,14 +30,18 @@ suite("CodeHandler<'custom'>", async () => {
             expect(handler).not.toBeNull();
             expect(handler).toBeInstanceOf(CodeHandler);
             expect(handler.processor).toEqual({});
-            expect(handler.configuration).toEqual(defaultCodeConfiguration);
+            expect(handler.configuration.wrapClassPrefix).toEqual(
+                getDefaultCodeConfiguration('custom').wrapClassPrefix,
+            );
         });
     });
 
     describe('codeHandler', () => {
         describe('process()', () => {
             it('should work', async () => {
-                expect(await handler.process('x')).toEqual('x');
+                expect(await handler.process('x', {})).toEqual(
+                    '<pre><code>\nx\n</code></pre>',
+                );
             });
         });
 
@@ -69,25 +74,25 @@ suite("CodeHandler<'custom'>", async () => {
 });
 
 suite('CodeHandler error handling', () => {
-    describe("createCodeHandler('highlight.js') with highlight.js mocked to throw error", () => {
+    describe("CodeHandler.create('highlight.js') with highlight.js mocked to throw error", () => {
         vi.mock('highlight.js', () => {
             throw new Error('highlight.js not found');
         });
         it('pushes "highlight.js" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createCodeHandler('highlight.js'),
+                CodeHandler.create('highlight.js'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('highlight.js');
         });
     });
 
-    describe("createCodeHandler('starry-night') with starry-night mocked to throw error", () => {
+    describe("CodeHandler.create('starry-night') with starry-night mocked to throw error", () => {
         vi.mock('@wooorm/starry-night', () => {
             throw new Error('Starry night not found');
         });
         it('pushes "starry-night" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createCodeHandler('starry-night'),
+                CodeHandler.create('starry-night'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('@wooorm/starry-night');
             expect(missingDeps).toContain('hast-util-find-and-replace');
@@ -95,26 +100,34 @@ suite('CodeHandler error handling', () => {
         });
     });
 
-    describe("createCodeHandler('prismjs') with prismjs mocked to throw error", () => {
+    describe("CodeHandler.create('prismjs') with prismjs mocked to throw error", () => {
         vi.mock('prismjs', () => {
             throw new Error('PrismJS not found');
         });
         it('pushes "prismjs" to missingDeps and then throws error', async () => {
             await expect(() =>
-                createCodeHandler('prismjs'),
+                CodeHandler.create('prismjs'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('prismjs');
         });
     });
 
-    describe("createCodeHandler('custom')", () => {
+    describe("CodeHandler.create('custom')", () => {
         it('throws error if second parameter is missing', async () => {
             await expect(() =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                createCodeHandler('custom', undefined!),
+                CodeHandler.create('custom', undefined!),
             ).rejects.toThrowError(
-                'Called createCodeHandler("custom", custom) without a second parameter.',
+                'Called CodeHandler.create("custom", custom) without a second parameter.',
             );
+        });
+    });
+
+    describe("CodeHandler.create('unsupported')", () => {
+        it('throws error', async () => {
+            await expect(() =>
+                CodeHandler.create('unsupported' as 'none'),
+            ).rejects.toThrowError();
         });
     });
 });

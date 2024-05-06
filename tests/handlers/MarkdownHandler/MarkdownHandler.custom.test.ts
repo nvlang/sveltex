@@ -1,10 +1,6 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import {
-    MarkdownHandler,
-    createMarkdownHandler,
-    shouldParseAsInline,
-} from '$handlers';
+import { MarkdownHandler } from '$handlers';
 
 import { Marked, type MarkedOptions, type MarkedExtension } from 'marked';
 
@@ -32,7 +28,7 @@ suite("MarkdownHandler<'custom'>", async () => {
     const customProcess = async (
         markdown: string,
         { inline }: { inline?: boolean | undefined } | undefined = {
-            inline: !shouldParseAsInline(markdown),
+            inline: !MarkdownHandler.shouldParseAsInline(markdown),
         },
         markdownHandler: MarkdownHandler<'custom'>,
     ) => {
@@ -40,13 +36,13 @@ suite("MarkdownHandler<'custom'>", async () => {
             ? await (markdownHandler.processor as Marked).parseInline(markdown)
             : await (markdownHandler.processor as Marked).parse(markdown);
     };
-    const handler = await createMarkdownHandler('custom', {
+    const handler = await MarkdownHandler.create('custom', {
         processor: customProcessor,
         process: customProcess,
         configure: customConfigure,
     });
 
-    describe("createMarkdownHandler('custom')", () => {
+    describe("MarkdownHandler.create('custom')", () => {
         it('returns instance of MarkdownHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();

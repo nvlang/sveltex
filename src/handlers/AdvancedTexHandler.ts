@@ -3,17 +3,20 @@ import type {
     AdvancedTexBackend,
     AdvancedTexConfiguration,
     AdvancedTexConfigureFn,
-    AdvancedTexHandlerFactories,
     AdvancedTexProcessFn,
     AdvancedTexProcessOptions,
     AdvancedTexProcessor,
     FullAdvancedTexConfiguration,
-    TexComponentConfig,
+    TexComponentConfiguration,
+    TexComponentImportInfo,
 } from '$types';
 
 // Internal dependencies
-import { defaultAdvancedTexConfiguration } from '$config';
-import { TexComponent, log } from '$utils';
+import { getDefaultAdvancedTexConfiguration } from '$config/defaults.js';
+import { TexComponent } from '$utils/TexComponent.js';
+import { SveltexCache } from '$utils/cache.js';
+import { log } from '$utils/debug.js';
+import { mergeConfigs } from '$utils/merge.js';
 import { Handler } from './Handler.js';
 
 export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
@@ -25,21 +28,17 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
     FullAdvancedTexConfiguration<B>,
     AdvancedTexHandler<B>
 > {
-    // override _configuration: FullAdvancedTexConfiguration<B>;
+    /**
+     * The cache object used by the handler. Definite assignment in
+     * {@link AdvancedTexHandler.create | `AdvancedTexHandler.create`}, hence
+     * the definite assignment assertion (given that the constructor of
+     * `AdvancedTexHandler` is private).
+     */
+    private _cache!: SveltexCache;
 
-    // override get configuration(): FullAdvancedTexConfiguration<B> {
-    //     return this._configuration;
-    // }
-
-    // override set configuration(configuration: AdvancedTexConfiguration<B>) {
-    //     this._configuration = mergeConfigs(this._configuration, configuration);
-    //     if (this.backendIs('local')) {
-    //         this.tccMap = this._configuration.components as Record<
-    //             string,
-    //             TexComponentConfig
-    //         >;
-    //     }
-    // }
+    public get cache(): SveltexCache {
+        return this._cache;
+    }
 
     /**
      * Process content.
@@ -60,21 +59,55 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
      * - key: component configuration name
      * - val: component configuration
      */
-    private _tccMap: Map<string, TexComponentConfig> = new Map<
+    private _tccMap: Map<string, TexComponentConfiguration<B>> = new Map<
         string,
-        TexComponentConfig
+        TexComponentConfiguration<B>
     >();
 
-    set tccMap(ttcs: Record<string, TexComponentConfig> | undefined) {
-        if (ttcs === undefined) return;
+    private _tccNames: string[] = [];
 
-        const components = new Map<string, TexComponentConfig>();
+    /**
+     * Copy of the {@link _tccNames | `_tccNames`} property.
+     *
+     * @remarks Mutating this array will not affect the `_tccNames` property.
+     */
+    public get tccNames(): string[] {
+        return [...this._tccNames];
+    }
+
+    private _tccAliases: string[] = [];
+
+    /**
+     * Copy of the {@link _tccAliases | `_tccAliases`} property.
+     *
+     * @remarks Mutating this array will not affect the `_tccAliases` property.
+     */
+    public get tccAliases(): string[] {
+        return [...this._tccAliases];
+    }
+
+    private readonly tccAliasToNameMap: Map<string, string> = new Map<
+        string,
+        string
+    >();
+
+    set tccMap(tccs: Record<string, TexComponentConfiguration<B>> | null) {
+        if (tccs === null) {
+            // Reset tccMap, tccNames, tccAliases, and tccAliasToNameMap
+            this._tccMap = new Map<string, TexComponentConfiguration<B>>();
+            this._tccNames = [];
+            this._tccAliases = [];
+            this.tccAliasToNameMap.clear();
+            return;
+        }
+
+        const components = new Map<string, TexComponentConfiguration<B>>();
 
         // Add "main" names of tex components
-        for (const [name, config] of Object.entries(ttcs)) {
+        for (const [name, config] of Object.entries(tccs)) {
             components.set(name, config);
-            if (!this.tccNames.includes(name)) {
-                this.tccNames.push(name);
+            if (!this._tccNames.includes(name)) {
+                this._tccNames.push(name);
             }
         }
 
@@ -82,7 +115,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
         const duplicates: string[] = [];
 
         // Add aliases, and check for duplicates
-        for (const [name, config] of Object.entries(ttcs)) {
+        for (const [name, config] of Object.entries(tccs)) {
             if (typeof config === 'object' && 'aliases' in config) {
                 for (const alias of config.aliases) {
                     if (alias !== name) {
@@ -90,8 +123,8 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                             duplicates.push(alias);
                         }
                         this.tccAliasToNameMap.set(alias, name);
-                        if (!this.tccAliases.includes(alias)) {
-                            this.tccAliases.push(alias);
+                        if (!this._tccAliases.includes(alias)) {
+                            this._tccAliases.push(alias);
                         }
                     }
                 }
@@ -100,7 +133,8 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
 
         // Log error about duplicates, if present
         [...new Set(duplicates)].forEach((alias) => {
-            log('error')(
+            log(
+                'error',
                 `Duplicate advanced TeX component name/alias "${alias}".`,
             );
         });
@@ -108,12 +142,12 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
         this._tccMap = components;
     }
 
-    get tccMap(): Map<string, TexComponentConfig> {
+    get tccMap(): Map<string, TexComponentConfiguration<B>> {
         return this._tccMap;
     }
 
     /**
-     * {@link Sveltex.texComponentsMap | `Sveltex.texComponentsMap`} of the
+     * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the
      * parent `Sveltex` instance.
      *
      * @remarks Important: This property should always set by the parent
@@ -137,7 +171,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
      * But, for this preprocessor to be able to add the code, it needs to know,
      * given a filename, for what SVG files it should add code to the `<script>`
      * tag to add their content to the corresponding `<figure>` tags. This
-     * precise need is fulfilled by this `texComponentsMap` property, which
+     * precise need is fulfilled by this `texComponents` property, which
      * `Sveltex.markup` writes to via `Sveltex.markup` →
      * `VerbatimHandler.process` → `AdvancedTexHandler.process`, and
      * `Sveltex.script` reads from directly.
@@ -150,14 +184,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
      * behavior is guaranteed by Svelte itself, see [Svelte
      * docs](https://svelte.dev/docs/svelte-compiler#preprocess))
      */
-    texComponentsMap?: Map<string, TexComponent[]>;
-
-    readonly tccNames: string[] = [];
-    readonly tccAliases: string[] = [];
-    private readonly tccAliasToNameMap: Map<string, string> = new Map<
-        string,
-        string
-    >();
+    texComponents: Record<string, TexComponentImportInfo[]>;
 
     /**
      * Resolves an alias to the name of the component it refers to. If the input
@@ -170,207 +197,229 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
     resolveTccAlias(alias: string): string {
         return (
             this.tccAliasToNameMap.get(alias) ??
-            (this.tccNames.includes(alias) ? alias : 'unknown')
+            (this._tccNames.includes(alias) ? alias : 'unknown')
         );
     }
 
-    // backendIs<Q extends AdvancedTexBackend | B>(
-    //     backend: Q,
-    // ): this is AdvancedTexHandler<Q> {
-    //     return this.backend === backend;
-    // }
-
-    // backendIsNot<Q extends AdvancedTexBackend | B>(
-    //     backend: Q,
-    // ): this is AdvancedTexHandler<Exclude<AdvancedTexBackend, Q>> {
-    //     return this.backend !== backend;
-    // }
-
-    // constructor({
-    //     backend,
-    //     process,
-    //     processor,
-    //     configure,
-    //     configuration,
-    // }: {
-    //     backend: B;
-    //     process: AdvancedTexProcessFn<B>;
-    //     processor: AdvancedTexProcessor;
-    //     configure: AdvancedTexConfigureFn<B>;
-    //     configuration: FullAdvancedTexConfiguration<B>;
-    // }) {
-    //     super({
-    //         backend,
-    //         process,
-    //         processor,
-    //         configure,
-    //         configuration,
-    //     });
-
-    //     // this._process = process;
-    //     // if (processor) this.processor = processor;
-    //     // this._configure = configure;
-    //     // this._configuration = defaultAdvancedTexConfiguration[
-    //     //     backend
-    //     // ] as FullAdvancedTexConfiguration<B>;
-    //     // if (configuration) this.configuration = configuration;
-    // }
-}
-
-/**
- * Object that maps the names of supported advanced tex processors to a factory that
- * creates a advanced tex handler of that type.
- */
-const advancedTexHandlerFactories: AdvancedTexHandlerFactories = {
     /**
-     * Creates a advanced tex handler that uses the `marked` advanced tex processor.
+     * Notes a tex component in a file.
+     *
+     * @param filename - The name of the file.
+     * @param tc - The tex component to note.
      */
-    local: () => {
-        const process = async (
-            tex: string,
-            options: AdvancedTexProcessOptions,
-            advancedTexHandler: AdvancedTexHandler<'local'>,
-        ) => {
-            if (tex.trim() === '') return '';
-            const name = advancedTexHandler.resolveTccAlias(
-                options.name ?? 'unknown',
-            );
-            const component = new TexComponent({
-                name,
-                config: advancedTexHandler.tccMap.get(name),
-                attributes: options.attributes,
-                texDocumentBody: tex,
-                ref: options.ref,
-                advancedTexHandler: advancedTexHandler,
-            });
-            await component.compile();
-            if (!advancedTexHandler.texComponentsMap?.has(options.filename)) {
-                advancedTexHandler.texComponentsMap?.set(options.filename, []);
-            }
-            const arr = advancedTexHandler.texComponentsMap?.get(
-                options.filename,
-            );
+    noteTcInFile(filename: string, tc: TexComponentImportInfo) {
+        if (
+            filename in this.texComponents &&
+            this.texComponents[filename] !== undefined
+        ) {
             if (
-                !arr?.includes(component) &&
-                arr?.find((c) => c.hash === component.hash) === undefined
+                !this.texComponents[filename]?.includes(tc) &&
+                !this.texComponents[filename]?.find(
+                    (c) => c.id === tc.id || c.path === tc.path,
+                )
             ) {
-                arr?.push(component);
+                // Add tex component to existing entry for file if it isn't
+                // already there.
+                this.texComponents[filename]?.push(tc);
             }
-            return component.figureElement.outerHTML;
-        };
-        const configure = (
-            _configuration: AdvancedTexConfiguration<'local'>,
-            advancedTexHandler: AdvancedTexHandler<'local'>,
-        ) => {
-            advancedTexHandler.tccMap =
-                advancedTexHandler.configuration.components;
-        };
-        return new AdvancedTexHandler<'local'>({
-            backend: 'local',
-            process,
-            processor: {},
-            configure,
-            configuration: defaultAdvancedTexConfiguration.local,
+        } else {
+            // Create new entry for file if it doesn't already exist
+            this.texComponents[filename] = [tc];
+        }
+    }
+
+    createTexComponent(
+        content: string,
+        options: AdvancedTexProcessOptions,
+    ): TexComponent<B> {
+        return TexComponent.create({
+            ...options,
+            tex: content,
+            advancedTexHandler: this,
         });
-    },
+    }
+
+    override get configure() {
+        return async (configuration: AdvancedTexConfiguration<B>) => {
+            const { cacheDirectory: oldCacheDirectory } = this.configuration;
+            await super.configure(configuration);
+            const { cacheDirectory: newCacheDirectory } = this.configuration;
+            if (oldCacheDirectory !== newCacheDirectory) {
+                // Reload cache if cache directory changes
+                this._cache = await SveltexCache.load(
+                    this.configuration.outputDirectory,
+                    newCacheDirectory,
+                );
+            }
+        };
+    }
+
     /**
-     * Creates a advanced tex handler that uses a custom advanced tex processor.
+     * The constructor is private to ensure that only the
+     * {@link AdvancedTexHandler.create | `AdvancedTexHandler.create`} method
+     * can be used to create instances of
+     * {@link AdvancedTexHandler | `AdvancedTexHandler`}.
      *
-     * @param processor - The custom advanced tex processor.
-     * @param process - A function that processes a advanced tex string.
-     * @param configure - A function that configures the advanced tex processor.
-     * @returns A promise that resolves to a advanced tex handler that uses the
-     * custom advanced tex processor.
-     *
-     * @experimental
+     * @internal
      */
-    custom: (processor, process, configure, configuration) => {
-        type Backend = 'custom';
-        return new AdvancedTexHandler<Backend>({
-            backend: 'custom',
+    private constructor({
+        backend,
+        process,
+        processor,
+        configure,
+        configuration,
+        texComponents,
+    }: {
+        backend: B;
+        process: AdvancedTexProcessFn<B>;
+        processor: AdvancedTexProcessor;
+        configure: AdvancedTexConfigureFn<B>;
+        configuration: FullAdvancedTexConfiguration<B>;
+        texComponents: Record<string, TexComponentImportInfo[]>;
+    }) {
+        super({
+            backend,
+            process,
+            processor,
+            configure,
+            configuration,
+        });
+        this.texComponents = texComponents;
+        this.configureNullOverrides = [
+            ['components', {}],
+            ['overrideConversionCommand', undefined],
+            ['overrideCompilationCommand', undefined],
+        ];
+    }
+
+    /**
+     * Creates an advanced tex handler of the specified type.
+     *
+     * @param backend - The type of the advanced tex processor to create.
+     * @returns A promise that resolves to a advanced tex handler of the specified type.
+     */
+    static async create<B extends Exclude<AdvancedTexBackend, 'custom'>>(
+        backend: B,
+    ): Promise<AdvancedTexHandler<B>>;
+
+    static async create<B extends 'custom'>(
+        backend: B,
+        {
             processor,
             process,
             configure,
             configuration,
-        });
-    },
+        }: {
+            processor?: AdvancedTexProcessor;
+            process: AdvancedTexProcessFn<'custom'>;
+            configure?: AdvancedTexConfigureFn<'custom'>;
+            configuration?: AdvancedTexConfiguration<'custom'>;
+        },
+    ): Promise<AdvancedTexHandler<B>>;
+
     /**
+     * Creates an advanced tex handler of the specified type.
      *
+     * @param backend - The type of the advanced tex processor to create.
+     * @returns A promise that resolves to a advanced tex handler of the specified type.
      */
-    none: () => {
-        return new AdvancedTexHandler<'none'>({
-            backend: 'none',
-            process: (tex: string) => tex,
-            configure: () => {
-                return;
-            },
-            processor: {},
-            configuration: {},
-        });
-    },
-};
-
-/**
- * Creates a advanced tex handler of the specified type.
- *
- * @param backend - The type of the advanced tex processor to create.
- * @returns A promise that resolves to a advanced tex handler of the specified type.
- */
-export async function createAdvancedTexHandler<
-    B extends Exclude<AdvancedTexBackend, 'custom'>,
->(backend: B): Promise<AdvancedTexHandler<B>>;
-
-export async function createAdvancedTexHandler<B extends 'custom'>(
-    backend: B,
-    {
-        processor,
-        process,
-        configure,
-        configuration,
-    }: {
-        processor?: AdvancedTexProcessor;
-        process: AdvancedTexProcessFn<'custom'>;
-        configure?: AdvancedTexConfigureFn<'custom'>;
-        configuration?: AdvancedTexConfiguration<'custom'>;
-    },
-): Promise<AdvancedTexHandler<B>>;
-
-/**
- * Creates a advanced tex handler of the specified type.
- *
- * @param backend - The type of the advanced tex processor to create.
- * @returns A promise that resolves to a advanced tex handler of the specified type.
- */
-export async function createAdvancedTexHandler<B extends AdvancedTexBackend>(
-    backend: B,
-    custom?: B extends 'custom'
-        ? {
-              processor?: AdvancedTexProcessor;
-              process: AdvancedTexProcessFn<'custom'>;
-              configure?: AdvancedTexConfigureFn<'custom'>;
-              configuration?: AdvancedTexConfiguration<'custom'>;
-          }
-        : never,
-) {
-    if (backend === 'custom') {
-        if (custom === undefined) {
-            throw new Error(
-                'Called createAdvancedTexHandler("custom", custom) without a second parameter.',
-            );
+    static async create<B extends AdvancedTexBackend>(
+        backend: B,
+        custom?: B extends 'custom'
+            ? {
+                  processor?: AdvancedTexProcessor;
+                  process: AdvancedTexProcessFn<'custom'>;
+                  configure?: AdvancedTexConfigureFn<'custom'>;
+                  configuration?: AdvancedTexConfiguration<'custom'>;
+              }
+            : never,
+    ) {
+        let ath;
+        switch (backend) {
+            case 'custom':
+                if (custom === undefined) {
+                    throw new Error(
+                        'Called AdvancedTexHandler.create("custom", custom) without a second parameter.',
+                    );
+                }
+                ath = new AdvancedTexHandler({
+                    backend: 'custom',
+                    processor: custom.processor ?? {},
+                    process: custom.process,
+                    configure: custom.configure ?? (() => undefined),
+                    configuration: mergeConfigs(
+                        getDefaultAdvancedTexConfiguration('custom'),
+                        custom.configuration ?? {},
+                    ),
+                    texComponents: {},
+                });
+                break;
+            case 'local':
+                {
+                    const process = async (
+                        tex: string,
+                        options: AdvancedTexProcessOptions,
+                        advancedTexHandler: AdvancedTexHandler<'local'>,
+                    ) => {
+                        const tc = TexComponent.create({
+                            ...options,
+                            tex,
+                            advancedTexHandler,
+                        });
+                        if (!options.selfClosing) {
+                            if (tex.trim() === '') return '';
+                            await tc.compile();
+                        }
+                        const importInfo = {
+                            id: tc.id,
+                            path: tc.out.sveltePath,
+                        };
+                        advancedTexHandler.noteTcInFile(
+                            options.filename,
+                            importInfo,
+                        );
+                        return tc.outputString;
+                    };
+                    const configure = (
+                        _configuration: AdvancedTexConfiguration<'local'>,
+                        advancedTexHandler: AdvancedTexHandler<'local'>,
+                    ) => {
+                        advancedTexHandler.tccMap =
+                            _configuration.components === null
+                                ? null
+                                : advancedTexHandler.configuration.components;
+                    };
+                    const configuration =
+                        getDefaultAdvancedTexConfiguration('local');
+                    ath = new AdvancedTexHandler({
+                        backend: 'local',
+                        process,
+                        processor: {},
+                        configure,
+                        configuration,
+                        texComponents: {},
+                    });
+                }
+                break;
+            case 'none':
+                ath = new AdvancedTexHandler({
+                    backend: 'none',
+                    process: (tex: string) => tex,
+                    configure: () => undefined,
+                    processor: {},
+                    configuration: getDefaultAdvancedTexConfiguration('none'),
+                    texComponents: {},
+                });
+                break;
+            default:
+                throw new Error(
+                    `Unsupported advanced tex backend: "${backend}".`,
+                );
         }
-        return advancedTexHandlerFactories.custom(
-            custom.processor ?? {},
-            custom.process,
-            custom.configure ??
-                (() => {
-                    return;
-                }),
-            custom.configuration ?? {},
+        ath._cache = await SveltexCache.load(
+            ath.configuration.outputDirectory,
+            ath.configuration.cacheDirectory,
         );
+        return ath;
     }
-    return advancedTexHandlerFactories[
-        /* eslint-disable-next-line
-        @typescript-eslint/no-unnecessary-type-assertion */
-        backend as Exclude<AdvancedTexBackend, 'custom'>
-    ]();
 }

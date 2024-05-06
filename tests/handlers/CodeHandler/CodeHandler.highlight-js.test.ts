@@ -1,16 +1,18 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect, vi } from 'vitest';
 
-import { createCodeHandler, CodeHandler } from '$handlers';
-import { defaultCodeConfiguration } from '$src/config/defaults.js';
+import { CodeHandler } from '$handlers';
+import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { consoles } from '$utils/debug.js';
+import { isFunction } from '$type-guards/utils.js';
 
-vi.spyOn(console, 'error').mockImplementation(() => undefined);
-vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
+vi.spyOn(consoles, 'warn').mockImplementation(() => undefined);
 
 suite("CodeHandler<'highlight.js'>", async () => {
-    const handler = await createCodeHandler('highlight.js');
+    const handler = await CodeHandler.create('highlight.js');
 
-    describe("createCodeHandler('highlight.js')", () => {
+    describe("CodeHandler.create('highlight.js')", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -27,7 +29,8 @@ suite("CodeHandler<'highlight.js'>", async () => {
 
             it('processes simple JS code correctly', async () => {
                 const output = await handler.process('let a', { lang: 'js' });
-                const expected = '<span class="hljs-keyword">let</span> a';
+                const expected =
+                    '<pre><code class="language-js">\n<span class="hljs-keyword">let</span> a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -43,36 +46,30 @@ suite("CodeHandler<'highlight.js'>", async () => {
                         expect(
                             await handler.process('```\n' + code + '\n```'),
                         ).toEqual(
-                            '<pre><code class="language-plaintext">\n' +
-                                (await handler.process(code, {
-                                    lang: 'plaintext',
-                                    inline: false,
-                                })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-plaintext">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                         expect(await handler.process('`' + code + '`')).toEqual(
-                            '<code class="language-plaintext">' +
-                                (await handler.process(code, {
-                                    lang: 'plaintext',
-                                    inline: true,
-                                })) +
-                                '</code>',
+                            expect.stringMatching(
+                                /^<code class="language-plaintext">[\w\W]*<\/code>$/,
+                            ),
                         );
                         expect(
                             await handler.process('```js\n' + code + '\n```'),
                         ).toEqual(
-                            '<pre><code class="language-js">\n' +
-                                (await handler.process(code, { lang: 'js' })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-js">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                         expect(
                             await handler.process(
                                 '```javascript\n' + code + '\n```',
                             ),
                         ).toEqual(
-                            '<pre><code class="language-javascript">\n' +
-                                (await handler.process(code, { lang: 'js' })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-javascript">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                     })();
                 }
@@ -82,7 +79,8 @@ suite("CodeHandler<'highlight.js'>", async () => {
                 const output = await handler.process('a <b> {c}', {
                     lang: 'plaintext',
                 });
-                const expected = 'a &lt;b&gt; &lbrace;c&rbrace;';
+                const expected =
+                    '<pre><code class="language-plaintext">\na &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -92,7 +90,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
                     { lang: 'js' },
                 );
                 const expected =
-                    '<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace;<span class="hljs-attr">prop</span>: number&rbrace;&gt;();';
+                    '<pre><code class="language-js">\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace;<span class="hljs-attr">prop</span>: number&rbrace;&gt;();\n</code></pre>';
                 expect(output).toEqual(expected);
             });
         });
@@ -106,11 +104,11 @@ suite("CodeHandler<'highlight.js'>", async () => {
             it('configures code correctly', async () => {
                 await handler.configure({ classPrefix: 'test_' });
                 expect(await handler.process('let a', { lang: 'js' })).toEqual(
-                    '<span class="test_keyword">let</span> a',
+                    '<pre><code class="language-js">\n<span class="test_keyword">let</span> a\n</code></pre>',
                 );
                 await handler.configure({ classPrefix: 'hljs-' });
                 expect(await handler.process('let a', { lang: 'js' })).toEqual(
-                    '<span class="hljs-keyword">let</span> a',
+                    '<pre><code class="language-js">\n<span class="hljs-keyword">let</span> a\n</code></pre>',
                 );
             });
 
@@ -134,12 +132,35 @@ suite("CodeHandler<'highlight.js'>", async () => {
         });
 
         describe('configuration', () => {
-            it('is default', () => {
+            it('is default', async () => {
+                const handler = await CodeHandler.create('highlight.js');
                 expect('configuration' in handler).toBe(true);
-                expect(handler.configuration).toEqual({
-                    classPrefix: 'hljs-',
-                    ...defaultCodeConfiguration,
-                });
+                const defaultCC = getDefaultCodeConfiguration('highlight.js');
+                expect(
+                    Object.entries(handler.configuration).filter(
+                        ([, v]) => !isFunction(v),
+                    ),
+                ).toEqual(
+                    Object.entries(defaultCC).filter(([, v]) => !isFunction(v)),
+                );
+                expect(
+                    handler.configuration.wrap({ wrapClassPrefix: 'test-' }),
+                ).toEqual(
+                    defaultCC.wrap({
+                        wrapClassPrefix: 'test-',
+                    }),
+                );
+                expect(
+                    handler.configuration.wrap({
+                        wrapClassPrefix: 'test-',
+                        inline: true,
+                    }),
+                ).toEqual(
+                    defaultCC.wrap({
+                        wrapClassPrefix: 'test-',
+                        inline: true,
+                    }),
+                );
             });
         });
     });

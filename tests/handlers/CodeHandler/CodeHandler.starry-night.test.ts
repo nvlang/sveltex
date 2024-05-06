@@ -1,14 +1,16 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { createCodeHandler, CodeHandler } from '$handlers';
-import { defaultCodeConfiguration } from '$src/config/defaults.js';
+import { CodeHandler } from '$handlers';
+import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { consoles } from '$utils/debug.js';
+import { isFunction } from '$type-guards/utils.js';
 
 suite.concurrent("CodeHandler<'starry-night'>", async () => {
-    const handler = await createCodeHandler('starry-night');
+    const handler = await CodeHandler.create('starry-night');
     await handler.configure({ languages: 'common' });
 
-    describe.concurrent("createCodeHandler('starry-night')", () => {
+    describe.concurrent("CodeHandler.create('starry-night')", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -25,7 +27,8 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
 
             it('processes simple JS code correctly', async () => {
                 const output = await handler.process('let a', { lang: 'js' });
-                const expected = '<span class="pl-k">let</span> a';
+                const expected =
+                    '<pre><code class="language-js">\n<span class="pl-k">let</span> a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -33,7 +36,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                 const output = await handler.process('let a', {
                     lang: undefined,
                 });
-                const expected = 'let a';
+                const expected = '<pre><code>\nlet a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -49,36 +52,30 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                         expect(
                             await handler.process('```\n' + code + '\n```'),
                         ).toEqual(
-                            '<pre><code class="language-plaintext">\n' +
-                                (await handler.process(code, {
-                                    lang: 'plaintext',
-                                    inline: false,
-                                })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-plaintext">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                         expect(await handler.process('`' + code + '`')).toEqual(
-                            '<code class="language-plaintext">' +
-                                (await handler.process(code, {
-                                    lang: 'plaintext',
-                                    inline: true,
-                                })) +
-                                '</code>',
+                            expect.stringMatching(
+                                /^<code class="language-plaintext">[\w\W]*<\/code>$/,
+                            ),
                         );
                         expect(
                             await handler.process('```js\n' + code + '\n```'),
                         ).toEqual(
-                            '<pre><code class="language-js">\n' +
-                                (await handler.process(code, { lang: 'js' })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-js">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                         expect(
                             await handler.process(
                                 '```javascript\n' + code + '\n```',
                             ),
                         ).toEqual(
-                            '<pre><code class="language-javascript">\n' +
-                                (await handler.process(code, { lang: 'js' })) +
-                                '\n</code></pre>',
+                            expect.stringMatching(
+                                /^<pre><code class="language-javascript">\n[\w\W]*\n<\/code><\/pre>$/,
+                            ),
                         );
                     })();
                 }
@@ -88,7 +85,8 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                 const output = await handler.process('a <b> {c}', {
                     lang: 'plaintext',
                 });
-                const expected = 'a &lt;b&gt; &lbrace;c&rbrace;';
+                const expected =
+                    '<pre><code class="language-plaintext">\na &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -98,22 +96,24 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                     { lang: 'js' },
                 );
                 const expected =
-                    '<span class="pl-k">const</span> <span class="pl-c1">a</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Map</span><span class="pl-k">&lt;</span>string, &lbrace;prop<span class="pl-k">:</span> number&rbrace;<span class="pl-k">&gt;</span>();';
+                    '<pre><code class="language-js">\n<span class="pl-k">const</span> <span class="pl-c1">a</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Map</span><span class="pl-k">&lt;</span>string, &lbrace;prop<span class="pl-k">:</span> number&rbrace;<span class="pl-k">&gt;</span>();\n</code></pre>';
                 expect(output).toEqual(expected);
             });
         });
 
         describe.sequential('configure()', () => {
             const consoleWarnMock = vi
-                .spyOn(console, 'warn')
+                .spyOn(consoles, 'warn')
                 .mockImplementation(() => undefined);
             const consoleErrorMock = vi
-                .spyOn(console, 'error')
+                .spyOn(consoles, 'error')
                 .mockImplementation(() => undefined);
+
             beforeEach(() => {
                 consoleWarnMock.mockClear();
                 consoleErrorMock.mockClear();
             });
+
             it('is a function', () => {
                 expect(handler.configure).toBeTypeOf('function');
                 expect(handler.configure).not.toBeNull();
@@ -122,29 +122,35 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
             it('configures code correctly', async () => {
                 expect(
                     await handler.process('\\example', { lang: 'tex' }),
-                ).toEqual('\\example');
+                ).toEqual(
+                    '<pre><code class="language-tex">\n\\example\n</code></pre>',
+                );
                 await handler.configure({
                     languages: ['text.tex.latex'],
                 });
                 expect(
                     await handler.process('\\example', { lang: 'tex' }),
-                ).toEqual('<span class="pl-c1">\\example</span>');
+                ).toEqual(
+                    '<pre><code class="language-tex">\n<span class="pl-c1">\\example</span>\n</code></pre>',
+                );
                 expect(
                     await handler.process('a ::= b', { lang: 'ebnf' }),
-                ).toEqual('a ::= b');
+                ).toEqual(
+                    '<pre><code class="language-ebnf">\na ::= b\n</code></pre>',
+                );
 
                 await handler.configure({ languages: 'all' });
                 expect(
                     await handler.process('a ::= b', { lang: 'ebnf' }),
                 ).toEqual(
-                    '<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>',
+                    '<pre><code class="language-ebnf">\n<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>\n</code></pre>',
                 );
                 // can't unload languages though...
                 await handler.configure({ languages: [] });
                 expect(
                     await handler.process('a ::= b', { lang: 'ebnf' }),
                 ).toEqual(
-                    '<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>',
+                    '<pre><code class="language-ebnf">\n<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>\n</code></pre>',
                 );
 
                 expect(consoleWarnMock).toHaveBeenCalledTimes(2);
@@ -159,10 +165,12 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
             });
 
             it('can add new languages', async () => {
-                const handler = await createCodeHandler('starry-night');
+                const handler = await CodeHandler.create('starry-night');
                 expect(
                     await handler.process('a ::= b', { lang: 'ebnf' }),
-                ).toEqual('a ::= b');
+                ).toEqual(
+                    '<pre><code class="language-ebnf">\na ::= b\n</code></pre>',
+                );
                 expect(consoleWarnMock).toHaveBeenCalledTimes(1);
                 expect(consoleWarnMock).toHaveBeenNthCalledWith(
                     1,
@@ -172,17 +180,19 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                 expect(
                     await handler.process('a ::= b', { lang: 'ebnf' }),
                 ).toEqual(
-                    '<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>',
+                    '<pre><code class="language-ebnf">\n<span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>\n</code></pre>',
                 );
             });
 
             it('can add new custom languages', async () => {
-                const handler = await createCodeHandler('starry-night');
+                const handler = await CodeHandler.create('starry-night');
                 expect(
                     await handler.process('something a', {
                         lang: 'custom-language',
                     }),
-                ).toEqual('something a');
+                ).toEqual(
+                    '<pre><code class="language-custom-language">\nsomething a\n</code></pre>',
+                );
                 expect(consoleWarnMock).toHaveBeenCalledTimes(1);
                 expect(consoleWarnMock).toHaveBeenNthCalledWith(
                     1,
@@ -209,7 +219,9 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
                     await handler.process('something a', {
                         lang: 'custom-language',
                     }),
-                ).toEqual('<span class="pl-k">something</span> a');
+                ).toEqual(
+                    '<pre><code class="language-custom-language">\n<span class="pl-k">something</span> a\n</code></pre>',
+                );
             });
         });
 
@@ -222,9 +234,34 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
 
         describe.concurrent('configuration', () => {
             it('is default', async () => {
-                const handler = await createCodeHandler('starry-night');
+                const handler = await CodeHandler.create('starry-night');
                 expect('configuration' in handler).toBe(true);
-                expect(handler.configuration).toEqual(defaultCodeConfiguration);
+                const defaultCC = getDefaultCodeConfiguration('starry-night');
+                expect(
+                    Object.entries(handler.configuration).filter(
+                        ([, v]) => !isFunction(v),
+                    ),
+                ).toEqual(
+                    Object.entries(defaultCC).filter(([, v]) => !isFunction(v)),
+                );
+                expect(
+                    handler.configuration.wrap({ wrapClassPrefix: 'test-' }),
+                ).toEqual(
+                    defaultCC.wrap({
+                        wrapClassPrefix: 'test-',
+                    }),
+                );
+                expect(
+                    handler.configuration.wrap({
+                        wrapClassPrefix: 'test-',
+                        inline: true,
+                    }),
+                ).toEqual(
+                    defaultCC.wrap({
+                        wrapClassPrefix: 'test-',
+                        inline: true,
+                    }),
+                );
             });
         });
     });

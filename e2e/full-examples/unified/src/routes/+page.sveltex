@@ -1,50 +1,43 @@
-
-<script>
-import { onMount } from 'svelte';
-const f = 3;
-
-import { onMount as __onMount } from 'svelte';
-__onMount(async () => {
-    try {
-        document.getElementById('svg-container')?.insertAdjacentHTML('beforeend', await (await fetch('sveltex/tex/something.svg')).text());
-    } catch (error) {
-        console.error('Failed to load SVG:', error);
-    }
-});
-</script>
-
 <style>
-.something {
-    --red: #ff00ff;
-    color: rgb(88, 88, 255);
-    background-color: #282828;
+:root {
+    --some-color: #ff00ff;
 }
 </style>
 
-<div class="something">
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
 
-# Welcome to SvelteKit
+text **bold** text *italic (asterisks)* text _italic (underscores)_ text
+[svelte.dev](https://kit.svelte.dev) text `inline code` text $x^{x}$ text
 
-<div id="svg-container"></div>
+$$ 1/n < \int_0^{1} x^{x}\ dx < n. $$
 
-Visit [kit.svelte.dev](https://kit.svelte.dev) to read the documentation.
-
-**something** fdsfdsds
-
-***fdsdsadsadsdsadsadsadsa
+text
 
 ```ts
 let a = { b: 3 };
 ```
-fds
-something $x$ $$x$$ SOMETHING else here dsdsdsdsdsadsakiopik90i90k90k90kop
+
+text
+
+
+
+text
 
 <tex ref="something">
 \begin{tikzpicture}
     \draw (0,0) circle (3);
-    \draw (0,-1) circle (1.8);
-    \draw[var(--red), thick] (0,0) rectangle (3, 3);
+    \draw[thin] (0,-1) circle (3.9);
+    \draw[var(--some-color), thick] (0,0) rectangle (3, 3);
 \end{tikzpicture}
 </tex>
 
-</div>
+text
+
+<tex ref="something" />
+
+text

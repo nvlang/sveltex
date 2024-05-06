@@ -9,12 +9,15 @@ import {
     type MockInstance,
 } from 'vitest';
 
-import { createCodeHandler, CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers';
+import { consoles } from '$utils/debug.js';
+import mockFs from 'mock-fs';
+mockFs({});
 
 suite("CodeHandler<'none'>", async () => {
-    const handler = await createCodeHandler('none');
+    const handler = await CodeHandler.create('none');
 
-    describe("createCodeHandler('none')", () => {
+    describe("CodeHandler.create('none')", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -30,21 +33,11 @@ suite("CodeHandler<'none'>", async () => {
             });
 
             it("doesn't escape anything", async () => {
-                const consoleErrorMock = vi
-                    .spyOn(console, 'error')
-                    .mockImplementation(() => undefined);
                 const output = await handler.process('a <b> {c}', {
                     lang: 'plaintext',
                 });
-                const expected = 'a <b> {c}';
+                const expected = '\na <b> {c}\n';
                 expect(output).toEqual(expected);
-                expect(consoleErrorMock).toHaveBeenCalledOnce();
-                expect(consoleErrorMock).toHaveBeenCalledWith(
-                    expect.stringContaining(
-                        'Error parsing code snippet (no delimiters could be found/matched): a <b> {c}',
-                    ),
-                );
-                consoleErrorMock.mockClear();
             });
         });
 
@@ -100,9 +93,10 @@ suite("CodeHandler<'none'>", async () => {
 
         describe('consumeDelims()', () => {
             let consoleErrorMock: MockInstance;
+
             beforeEach(() => {
                 consoleErrorMock = vi
-                    .spyOn(console, 'error')
+                    .spyOn(consoles, 'error')
                     .mockImplementation(() => undefined);
             });
             afterAll(() => {

@@ -50,12 +50,9 @@ Additionally, you can also provide a **custom** markdown backend.
         import { sveltex } from 'sveltex-preprocess';
         // import multimdTablePlugin from 'markdown-it-multimd-table';
 
-        export const sveltexPreprocessor = await sveltex(
-            'markdown-it', // Markdown backend
-            'none', // Code backend (syntax highlighting)
-            'none', // TeX backend
-            'none', // Advanced TeX backend
-        );
+        export const sveltexPreprocessor = await sveltex({
+            markdownBackend: 'markdown-it',
+        });
 
         await sveltexPreprocessor.configure({
             markdown: {
@@ -109,12 +106,9 @@ Additionally, you can also provide a **custom** markdown backend.
         import { sveltex } from 'sveltex-preprocess';
         // import { gfmHeadingId } from 'marked-gfm-heading-id';
 
-        export const sveltexPreprocessor = await sveltex(
-            'marked', // Markdown backend
-            'none', // Code backend (syntax highlighting)
-            'none', // TeX backend
-            'none', // Advanced TeX backend
-        );
+        export const sveltexPreprocessor = await sveltex({
+            markdownBackend: 'marked',
+        });
 
         await sveltexPreprocessor.configure({
             markdown: {
@@ -157,12 +151,9 @@ Additionally, you can also provide a **custom** markdown backend.
         ```js sveltex.config.js
         import { sveltex } from 'sveltex-preprocess';
 
-        export const sveltexPreprocessor = await sveltex(
-            'micromark', // Markdown backend
-            'none', // Code backend (syntax highlighting)
-            'none', // TeX backend
-            'none', // Advanced TeX backend
-        );
+        export const sveltexPreprocessor = await sveltex({
+            'micromark',
+        });
 
         await sveltexPreprocessor.configure({
             markdown: {
@@ -224,17 +215,14 @@ By way of example, here is how you might set up a custom markdown backend to use
 [Marked](https://github.com/markedjs/marked) if it weren't already supported:
 
 ```js sveltex.config.js
-import { sveltex, createMarkdownHandler } from 'sveltex-preprocess';
+import { sveltex, MarkdownHandler } from 'sveltex-preprocess';
 import { Marked } from 'marked';
 
-export const sveltexPreprocessor = await sveltex(
-    'custom', // Markdown backend
-    'none', // Code backend (syntax highlighting)
-    'none', // TeX backend
-    'none', // Advanced TeX backend
-);
+export const sveltexPreprocessor = await sveltex({
+    markdownBackend: 'custom',
+});
 
-sveltexPreprocessor.markdownHandler = await createMarkdownHandler(
+sveltexPreprocessor.markdownHandler = await MarkdownHandler.create(
     'custom',
     {
         configuration: { extensions: [], options: {} },
@@ -246,7 +234,7 @@ sveltexPreprocessor.markdownHandler = await createMarkdownHandler(
             if (config.extensions) {
                 markdownHandler.processor.use(...config.extensions);
             }
-            // after calling the `configure` function you provide, the
+            // Before calling the `configure` function you provide, the
             // MarkdownHandler class will always do the following:
             //     markdownHandler.configuration =
             //         mergeConfigs(markdownHandler.configuration, config);

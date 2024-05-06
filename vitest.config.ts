@@ -1,16 +1,17 @@
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import os from 'node:os';
+// import os from 'node:os';
 
 export default defineConfig({
     plugins: [tsconfigPaths()],
     test: {
         include: ['./tests/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
+        exclude: ['./e2e/**/*'],
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
             enabled: true,
-            processingConcurrency:
-                os.availableParallelism?.() ?? os.cpus().length,
+            // processingConcurrency:
+            //     os.availableParallelism?.() ?? os.cpus().length,
             exclude: [
                 '**/node_modules/**',
                 '**/tests/**',
@@ -24,7 +25,7 @@ export default defineConfig({
                 '**/src/types/**',
             ],
         },
-        // globals: true, // fixes VS Code Vitest extension issues (see https://github.com/vitest-dev/vscode/issues/47)
+        globals: true, // fixes VS Code Vitest extension issues (see https://github.com/vitest-dev/vscode/issues/47)
     },
     // logLevel: 'silent',
     // customLogger: {

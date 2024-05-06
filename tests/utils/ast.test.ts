@@ -124,7 +124,7 @@ suite('AST utilities', () => {
             });
         });
 
-        vi.unmock('$utils/env.js');
+        vi.unmock('$utils/globals.js');
     });
 
     describe('lineColToLocation', () => {
@@ -319,7 +319,7 @@ suite('AST utilities', () => {
         it('should parse Svelte content into an AST (v4)', () => {
             const content =
                 '<div>Hello, world!</div>\n{#if true}Hello, world!{/if}';
-            const ast = parse(content);
+            const ast = parse(content).ast;
             expect(ast).toEqual({
                 children: [
                     {
@@ -384,7 +384,7 @@ suite('AST utilities', () => {
         });
 
         it('should parse Svelte content into an AST (v6)', () => {
-            vi.mock('$utils/env.js', async (importOriginal) => {
+            vi.mock('$utils/globals.js', async (importOriginal) => {
                 const actual = await importOriginal();
                 if (typeof actual !== 'object') {
                     throw new Error('test error');
@@ -398,7 +398,7 @@ suite('AST utilities', () => {
                 '<div>Hello, world!</div>\n{#if true}Hello, world!{/if}';
             const ast = parse(content);
             expect(ast).toBeDefined(); // We currently have Svelte 4 installed, so we can't generate the actual v5 AST (more precisely, even though we're mocking the version, the actual AST will be the same as from the v4 test)
-            vi.unmock('$utils/env.js');
+            vi.unmock('$utils/globals.js');
         });
 
         it('should parse Svelte content into an AST (v100)', () => {

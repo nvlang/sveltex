@@ -1,67 +1,247 @@
 ---
 title: 'TeX'
-description: 'Add image, video, and other HTML elements'
+description: 'Choose your markdown ecosystem'
 icon: 'square-root-variable'
+mode: 'wide'
 ---
 
-<img
-    style={{ borderRadius: '0.5rem' }}
-    src="https://mintlify-assets.b-cdn.net/bigbend.jpg"
-/>
+SvelTeX natively supports the following backends to render "basic" TeX (listed
+in alphabetical order):
 
-## Image
+-   [KaTeX](https://katex.org): "The fastest math typesetting library for the
+    web."
+-   [MathJax](http://mathjax.org): "Beautiful and accessible math in all
+    browsers."
+    - [MathJax-full](https://github.com/mathjax/MathJax-src):
+    - [MathJax-node](https://github.com/mathjax/MathJax-node): API to call
+      MathJax from Node.js. At the time of writing, it uses MathJax v2, which is
+      a bit outdated (MathJax v3 is mature, and v4 is in beta).
 
-### Using Markdown
+Additionally, you can also provide a **custom** markdown backend.
 
-The [markdown syntax](https://www.markdownguide.org/basic-syntax/#images) lets
-you add images using the following code
+### Backend-specific setup
 
-```md
-![title](/path/image.jpg)
+<Tabs>
+<Tab title="Markdown-it">
+<Steps>
+    <Step title="Install the necessary dependencies">
+    <CodeGroup>
+        ```bash pnpm
+        pnpm add -D markdown-it
+        ```
+        ```bash bun
+        bun add -D markdown-it
+        ```
+        ```bash npm
+        npm add -D markdown-it
+        ```
+        ```bash yarn
+        yarn add -D markdown-it
+        ```
+    </CodeGroup>
+    </Step>
+    <Step title="Tell Sveltex to use Markdown-it and customize away!" >
+        ```js sveltex.config.js
+        import { sveltex } from 'sveltex-preprocess';
+        // import multimdTablePlugin from 'markdown-it-multimd-table';
+
+        export const sveltexPreprocessor = await sveltex({
+            markdownBackend: 'markdown-it',
+        });
+
+        await sveltexPreprocessor.configure({
+            markdown: {
+                options: {
+                    html: false,
+                    xhtmlOut: false,
+                    breaks: false,
+                    linkify: false,
+                    typographer: false,
+                    quotes: '“”‘’',
+                },
+                extensions: [
+                    // [
+                    //     multimdTablePlugin,
+                    //     {
+                    //         multiline: false,
+                    //         rowspan: false,
+                    //         headerless: false,
+                    //         multibody: true,
+                    //         autolabel: true,
+                    //     },
+                    // ],
+                ],
+            },
+        });
+        ```
+    </Step>
+
+</Steps>
+</Tab>
+<Tab title="Marked">
+<Steps>
+    <Step title="Install the necessary dependencies">
+    <CodeGroup>
+        ```bash pnpm
+        pnpm add -D marked
+        ```
+        ```bash bun
+        bun add -D marked
+        ```
+        ```bash npm
+        npm add -D marked
+        ```
+        ```bash yarn
+        yarn add -D marked
+        ```
+    </CodeGroup>
+    </Step>
+    <Step title="Tell SvelTeX to use Marked" >
+        ```js sveltex.config.js
+        import { sveltex } from 'sveltex-preprocess';
+        // import { gfmHeadingId } from 'marked-gfm-heading-id';
+
+        export const sveltexPreprocessor = await sveltex({
+            markdownBackend: 'marked',
+        });
+
+        await sveltexPreprocessor.configure({
+            markdown: {
+                options: {
+                    async: false,
+                    breaks: true,
+                    gfm: true,
+                    pedantic: false,
+                    silent: false,
+                },
+                extensions: [
+                    // gfmHeadingId()
+                ],
+            },
+        });
+        ```
+    </Step>
+
+</Steps>
+</Tab>
+<Tab title="Micromark">
+<Steps>
+    <Step title="Install the necessary dependencies">
+    <CodeGroup>
+        ```bash pnpm
+        pnpm add -D micromark
+        ```
+        ```bash bun
+        bun add -D micromark
+        ```
+        ```bash npm
+        npm add -D micromark
+        ```
+        ```bash yarn
+        yarn add -D micromark
+        ```
+    </CodeGroup>
+    </Step>
+    <Step title="Tell SvelTeX to use Micromark" >
+        ```js sveltex.config.js
+        import { sveltex } from 'sveltex-preprocess';
+
+        export const sveltexPreprocessor = await sveltex({
+            'micromark',
+        });
+
+        await sveltexPreprocessor.configure({
+            markdown: {
+                options: {
+                    gfm: true,
+                },
+                extensions: [],
+            },
+        });
+        ```
+    </Step>
+
+</Steps>
+</Tab>
+<Tab title="Unified">
+<Steps>
+    <Step title="Install the necessary dependencies">
+    <CodeGroup>
+        ```bash pnpm
+        pnpm add -D unified remark-parse remark-rehype rehype-stringify
+        ```
+        ```bash bun
+        bun add -D unified remark-parse remark-rehype rehype-stringify
+        ```
+        ```bash npm
+        npm add -D unified remark-parse remark-rehype rehype-stringify
+        ```
+        ```bash yarn
+        yarn add -D unified remark-parse remark-rehype rehype-stringify
+        ```
+    </CodeGroup>
+    </Step>
+    <Step title="Tell SvelTeX to use Unified" >
+        ```js sveltex.config.js
+        import { sveltex } from 'sveltex-preprocess';
+
+        export const sveltexPreprocessor = await sveltex(
+            'unified', // Markdown backend
+            'none', // Code backend (syntax highlighting)
+            'none', // TeX backend
+            'none', // Advanced TeX backend
+        );
+
+        await sveltexPreprocessor.configure({
+            markdown: {
+                options: {
+                    gfm: true,
+                },
+                extensions: [],
+            },
+        });
+        ```
+    </Step>
+
+</Steps>
+</Tab>
+<Tab title="Custom">
+By way of example, here is how you might set up a custom markdown backend to use
+[Marked](https://github.com/markedjs/marked) if it weren't already supported:
+
+```js sveltex.config.js
+import { sveltex, MarkdownHandler } from 'sveltex-preprocess';
+import { Marked } from 'marked';
+
+export const sveltexPreprocessor = await sveltex({
+    markdownBackend: 'custom',
+});
+
+sveltexPreprocessor.markdownHandler = await MarkdownHandler.create(
+    'custom',
+    {
+        configuration: { extensions: [], options: {} },
+        processor: new Marked(),
+        configure: (config, markdownHandler) => {
+            if (config.options) {
+                markdownHandler.processor.setOptions(config.options);
+            }
+            if (config.extensions) {
+                markdownHandler.processor.use(...config.extensions);
+            }
+            // Before calling the `configure` function you provide, the
+            // MarkdownHandler class will always do the following:
+            //     markdownHandler.configuration =
+            //         mergeConfigs(markdownHandler.configuration, config);
+        },
+        process: (markdown: string, inline: boolean, markdownHandler) => {
+            return inline
+                ? await markdownHandler.processor.parseInline(markdown)
+                : await markdownHandler.processor.parse(markdown);
+        },
+    }
+)
 ```
 
-Note that the image file size must be less than 5MB. Otherwise, we recommend
-hosting on a service like [Cloudinary](https://cloudinary.com/) or
-[S3](https://aws.amazon.com/s3/). You can then use that URL and embed.
-
-### Using Embeds
-
-To get more customizability with images, you can also use
-[embeds](/writing-content/embed) to add images
-
-```html
-<img height="200" src="/path/image.jpg" />
-```
-
-## Embeds and HTML elements
-
-<iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/4KzFe50RQkQ"
-    title="YouTube video player"
-    frameBorder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{ width: '100%', borderRadius: '0.5rem' }}
-></iframe>
-
-<br />
-
-<Tip>
-
-Mintlify supports
-[HTML tags in Markdown](https://www.markdownguide.org/basic-syntax/#html). This
-is helpful if you prefer HTML tags to Markdown syntax, and lets you create
-documentation with infinite flexibility.
-
-</Tip>
-
-### iFrames
-
-Loads another HTML page within the document. Most commonly used for embedding
-videos.
-
-```html
-<iframe src="https://www.youtube.com/embed/4KzFe50RQkQ"> </iframe>
-```
+</Tab>
+</Tabs>

@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-export { sveltex, Sveltex } from '$processor';
+export { sveltex } from './Sveltex.js';
 
 export type {
     AdvancedTexBackend,
@@ -14,14 +14,7 @@ export type {
     MarkdownConfiguration,
     TexBackend,
     TexConfiguration,
+    SveltexConfiguration,
 } from '$types';
 
-export {
-    AdvancedTexHandler,
-    CodeHandler,
-    MarkdownHandler,
-    TexHandler,
-    VerbatimHandler,
-} from '$handlers';
-
-export { TexComponent } from '$utils';
+export type { Sveltex } from './Sveltex.js';

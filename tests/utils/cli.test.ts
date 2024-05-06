@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { spawnCliInstruction } from '$utils/cli.js';
 
 describe('spawnCliInstruction', () => {
+    beforeAll(() => {
+        vi.restoreAllMocks();
+    });
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should spawn a CLI instruction and resolve with the exit code', async () => {
         const instr = {
             command: 'echo',

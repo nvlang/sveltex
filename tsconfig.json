@@ -1,91 +1,78 @@
 {
   "compilerOptions": {
-    // Versions and APIs
-    "target": "ESNext",
-    "module": "NodeNext",
-    "lib": ["ESNext"],
-    "moduleResolution": "NodeNext",
-
-    "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
+    "allowSyntheticDefaultImports": true,
+    // Best practices
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    // Performance
+    // "skipLibCheck": true, // recommended
+    // Aliases
+    "baseUrl": "./",
     "declaration": true,
     "declarationMap": true,
-    "resolveJsonModule": true,
-
-    // Basic settings
-    "rootDir": ".",
-    "outDir": "./dist",
-    "importHelpers": true,
-
-    // Type-checking
-    "strict": true,
-    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
     "exactOptionalPropertyTypes": true, // recommended
+    "forceConsistentCasingInFileNames": true, // recommended
+    "importHelpers": true,
+    "lib": ["ESNext"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
-
-    // Best practices
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "forceConsistentCasingInFileNames": true, // recommended
-    "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-
-    // Debugging
-    "sourceMap": true,
-
-    // Performance
-    // "skipLibCheck": true, // recommended
-
-    // Aliases
-    "baseUrl": "./",
+    "outDir": "./dist",
     "paths": {
-      "$src": ["src/index.ts"],
-      "$src/*": ["src/*"],
-      "$classes": ["src/classes/index.ts"],
-      "$classes/*": ["src/classes/*"],
-      "$types": ["src/types/index.ts"],
-      "$types/*": ["src/types/*"],
-      "$type-guards": ["src/type-guards/index.ts"],
-      "$type-guards/*": ["src/type-guards/*"],
-      "$utils": ["src/utils/index.ts"],
-      "$utils/*": ["src/utils/*"],
-      "$data": ["src/data/index.ts"],
-      "$data/*": ["src/data/*"],
       "$config": ["src/config/index.ts"],
       "$config/*": ["src/config/*"],
-      "$processor": ["src/processor/index.ts"],
-      "$processor/*": ["src/processor/*"],
       "$handlers": ["src/handlers/index.ts"],
       "$handlers/*": ["src/handlers/*"],
+      "$sveltex-preprocess": ["src/index.ts"],
       "$tests": ["tests/index.ts"],
       "$tests/*": ["tests/*"],
-      "$globals": ["src/globals/index.ts"],
-      "$globals/*": ["src/globals/*"]
-    }
+      "$type-guards": ["src/type-guards/index.ts"],
+      "$type-guards/*": ["src/type-guards/*"],
+      "$types": ["src/types/index.ts"],
+      "$types/*": ["src/types/*"],
+      "$types/utils": ["src/types/utils/index.ts"],
+      "$types/utils/*": ["src/types/utils/*"],
+      "$utils": ["src/utils/index.ts"],
+      "$utils/*": ["src/utils/*"]
+    },
     // "types": ["sveltex-preprocess"]
+    "resolveJsonModule": true,
+    // Basic settings
+    "rootDir": ".",
+    // Debugging
+    "sourceMap": true,
+    // Type-checking
+    "strict": true,
+    // Versions and APIs
+    "target": "ESNext"
   },
+  "exclude": [
+    "coverage",
+    "dist",
+    "e2e",
+    "examples",
+    "external",
+    "ideas",
+    "node_modules",
+    "static",
+    "tmp"
+  ],
   // "ts-node": {
   //   // "swc": true
   // },
   "include": [
+    "*.config.js",
+    "*.config.ts",
+    "package.json",
     "src",
     "tests",
-    "examples",
-    "*.config.ts",
-    "*.config.js",
-    "package.json"
-    // , "external/MathjaxOptions.d.ts"
-    // , "external/mathjax.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "node_modules/**/*",
-    "src/types/fixes/mathjax",
-    "dist",
-    "coverage",
-    "examples"
+    "src/Sveltex.ts"
   ]
 }

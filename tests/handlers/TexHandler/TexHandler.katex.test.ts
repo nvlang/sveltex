@@ -1,10 +1,10 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect } from 'vitest';
-import { TexHandler, createTexHandler } from '$handlers';
+import { TexHandler } from '$handlers';
 
 suite("TexHandler<'katex'>", async () => {
-    const handler = await createTexHandler('katex');
-    describe("createTexHandler('katex')", () => {
+    const handler = await TexHandler.create('katex');
+    describe("TexHandler.create('katex')", () => {
         it('returns instance of TexHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();

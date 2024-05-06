@@ -4,8 +4,8 @@ import {
     MarkdownBackend,
     TexBackend,
     sveltex,
-} from '$src';
-import { isArray } from '$src/type-guards/index.js';
+} from '$sveltex-preprocess';
+import { isArray } from '$type-guards';
 import { escapeWhitespace } from '$utils';
 import { it, expect } from 'vitest';
 
@@ -128,7 +128,12 @@ export async function generateTests(
         advancedTexBackends,
     ) as [MarkdownBackend, CodeBackend, TexBackend, AdvancedTexBackend][]) {
         const backendCombination: BackendCombination = `${markdown}-${code}-${tex}-${advancedTex}`;
-        const preprocessor = await sveltex(markdown, code, tex, advancedTex);
+        const preprocessor = await sveltex({
+            markdownBackend: markdown,
+            codeBackend: code,
+            texBackend: tex,
+            advancedTexBackend: advancedTex,
+        });
         const preprocess = async (
             input: string,
             filename: string = 'test.sveltex',

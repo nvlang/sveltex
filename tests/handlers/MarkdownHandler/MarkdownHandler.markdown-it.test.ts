@@ -1,13 +1,13 @@
 import { suite, describe, it, expect } from 'vitest';
 import multimdTablePlugin from 'markdown-it-multimd-table';
 
-import { MarkdownHandler, createMarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers';
 import MarkdownIt from 'markdown-it';
 
 suite("MarkdownHandler<'markdown-it'>", async () => {
-    const handler = await createMarkdownHandler('markdown-it');
+    const handler = await MarkdownHandler.create('markdown-it');
 
-    describe("createMarkdownHandler('markdown-it')", () => {
+    describe("MarkdownHandler.create('markdown-it')", () => {
         it('returns instance of MarkdownHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();

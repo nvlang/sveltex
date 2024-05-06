@@ -1,10 +1,11 @@
 // Types
-import type { ProcessFn, ConfigureFn, SimplerProcessFn } from '$types';
+import type { ConfigureFn, ProcessFn, SimplerProcessFn } from '$types';
 
 // Internal dependencies
 import { mergeConfigs } from '$utils';
 
 // External dependencies
+import { get as getProperty, set as setProperty } from 'radash';
 import rfdc from 'rfdc'; // "Really Fast Deep Clone"
 
 const deepClone = rfdc();
@@ -47,7 +48,7 @@ const deepClone = rfdc();
  *     B extends 'backend-1' | | 'backend-2' | 'none'
  * > extends Handler<
  *     B, // actual backend
- *     'backend-1' | | 'backend-2' | 'none', // possible backend
+ *     'backend-1' | 'backend-2' | 'none', // possible backends
  *     object, // processor
  *     object, // process options
  *     Configuration<B>, // configuration
@@ -143,7 +144,7 @@ export class Handler<
      * configuration of the handler. To change the configuration, use the
      * {@link Handler.configure | `configure`} method.
      */
-    get configuration() {
+    get configuration(): FullConfiguration {
         return deepClone(this._configuration);
     }
 
@@ -215,12 +216,23 @@ export class Handler<
                 this._configuration,
                 configuration,
             );
+            this.configureNullOverrides.forEach(([path, value]) => {
+                if (getProperty(configuration, path) === null) {
+                    this._configuration = setProperty(
+                        this._configuration,
+                        path,
+                        value,
+                    );
+                }
+            });
             await this._configure(
                 configuration,
                 this as unknown as ActualHandler,
             );
         };
     }
+
+    configureNullOverrides: [string, unknown][] = [];
 
     /**
      * Type guard to narrow the handler's backend.
@@ -310,10 +322,3 @@ export class Handler<
         this._configuration = deepClone(configuration);
     }
 }
-
-import flatCache from 'flat-cache';
-
-const cache = flatCache.load('sveltex-preprocess');
-
-cache.setKey('foo', 'bar');
-cache.save();
