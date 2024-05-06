@@ -1,4 +1,4 @@
-import { RawSourceMap } from 'source-map';
+import type { SourceMap } from 'magic-string';
 
 export interface Processed {
     /**
@@ -8,7 +8,7 @@ export interface Processed {
     /**
      * A source map mapping back to the original code
      */
-    map?: RawSourceMap;
+    map?: Omit<SourceMap, 'toString' | 'toUrl'>;
     /**
      * A list of additional files to watch for changes
      */
