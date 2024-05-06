@@ -10,6 +10,22 @@ suite('SveltexCache', async () => {
         mockFs.restore();
     });
     const { writeFile, log } = await spy(['writeFile', 'log'], true);
+
+    describe('misc', () => {
+        it('is serializable', async () => {
+            mockFs({});
+            const cache = await SveltexCache.load(
+                'exampleOutputDir',
+                'exampleCacheDir',
+            );
+            expect(() => JSON.stringify(cache)).not.toThrowError();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { cacheDirGlob, ...otherProps } = cache;
+            expect(JSON.parse(JSON.stringify(cache))).toEqual(otherProps);
+            vi.clearAllMocks();
+        });
+    });
+
     describe('save', () => {
         it('initializes cache correctly', async () => {
             mockFs({});

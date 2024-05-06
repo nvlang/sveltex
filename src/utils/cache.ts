@@ -1,10 +1,10 @@
-// import { LRUCache } from 'lru-cache';
-// import { existsSync, unlinkSync } from 'node:fs';
-
+// Internal dependencies
 import { defaultCacheDirectory } from '$config/defaults.js';
 import { writeFileEnsureDir } from '$utils/fs.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
+
+// External dependencies
 import { join, normalize, relative, resolve } from 'node:path';
 import { Glob } from 'glob';
 import { rimraf } from 'rimraf';
@@ -103,6 +103,17 @@ export class SveltexCache {
             );
             return 1;
         }
+    }
+
+    /**
+     * {@link Glob | `Glob`} objects are not serializable, so we need to ensure
+     * that if anyone tries to serialize a `SvelteCache` object (which Vite
+     * will), we exclude the `cacheDirGlob` property.
+     */
+    toJSON() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cacheDirGlob, ...otherProps } = this;
+        return otherProps;
     }
 
     async cleanup(): Promise<void> {
