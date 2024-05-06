@@ -12,8 +12,10 @@ examples
 external
 ideas
 node_modules
+playwright-report
 static
 tmp
+
 .VSCodeCounter
 
 #——————————————————————————————————————————————————————————#
