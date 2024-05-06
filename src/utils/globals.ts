@@ -1,6 +1,5 @@
-import { detectPackageManager } from '$utils/debug.js';
 // Internal dependencies
-import { log } from '$utils/debug.js';
+import { detectPackageManager, log } from '$utils/debug.js';
 
 // External dependencies
 import { VERSION } from 'svelte/compiler';
