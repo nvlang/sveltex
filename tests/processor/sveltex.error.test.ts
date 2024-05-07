@@ -1,9 +1,14 @@
 import { missingDeps } from '$utils/globals.js';
 import { sveltex } from '$sveltex-preprocess';
 import { consoles } from '$utils/debug.js';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, suite, vi } from 'vitest';
+import { spy } from '$tests/fixtures.js';
 
-describe('sveltex error handling', () => {
+suite('sveltex error handling', async () => {
+    await spy(['writeFile', 'log', 'mkdir'], true);
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
     it('catches errors', async () => {
         vi.mock('svelte/compiler', async (importOriginal) => {
             const actual = await importOriginal();

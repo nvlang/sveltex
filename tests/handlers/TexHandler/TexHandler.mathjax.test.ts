@@ -13,19 +13,19 @@ function fixture() {
 
 suite("TexHandler<'mathjax'>", async () => {
     fixture();
-    const handler = await TexHandler.create('mathjax');
-
     const { writeFile, log, existsSync } = await spy(
-        ['writeFile', 'log', 'existsSync'],
+        ['writeFile', 'mkdir', 'log', 'existsSync'],
         true,
     );
+
     afterAll(() => {
         vi.restoreAllMocks();
     });
 
     describe("TexHandler.create('mathjax')", () => {
         fixture();
-        it('returns instance of TexHandler', () => {
+        it('returns instance of TexHandler', async () => {
+            const handler = await TexHandler.create('mathjax');
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
             expect(handler).toBeInstanceOf(TexHandler);
@@ -64,11 +64,13 @@ suite("TexHandler<'mathjax'>", async () => {
         describe('process()', () => {
             fixture();
             it('should work, and output SVG by default', async () => {
+                const handler = await TexHandler.create('mathjax');
                 expect(await handler.process('x')).toEqual(xSvg);
                 expect(log).not.toHaveBeenCalled();
             });
 
             it('should be able to output CHTML', async () => {
+                const handler = await TexHandler.create('mathjax');
                 await handler.configure({ outputFormat: 'chtml' });
                 expect(await handler.process('x')).toEqual(xChtml);
                 await handler.configure({ outputFormat: 'svg' });
@@ -91,7 +93,8 @@ suite("TexHandler<'mathjax'>", async () => {
 
         describe('processor', () => {
             fixture();
-            it('is object', () => {
+            it('is object', async () => {
+                const handler = await TexHandler.create('mathjax');
                 expect(handler.processor).toBeTypeOf('object');
                 expect(handler.processor).not.toBeNull();
             });
@@ -99,18 +102,21 @@ suite("TexHandler<'mathjax'>", async () => {
 
         describe('configure()', () => {
             fixture();
-            it('is a function', () => {
+            it('is a function', async () => {
+                const handler = await TexHandler.create('mathjax');
                 expect(handler.configure).toBeTypeOf('function');
                 expect(handler.configure).not.toBeNull();
             });
 
             it('configures code correctly', async () => {
+                const handler = await TexHandler.create('mathjax');
                 await handler.configure({ outputFormat: 'svg' });
                 expect(await handler.process('x')).toEqual(xSvg);
                 expect(log).not.toHaveBeenCalled();
             });
 
             it('works with some base cases', async () => {
+                const handler = await TexHandler.create('mathjax');
                 await handler.configure({ outputFormat: 'svg' });
                 expect(handler.configuration.outputFormat).toEqual('svg');
                 await handler.configure({ outputFormat: 'chtml' });
@@ -204,7 +210,8 @@ suite("TexHandler<'mathjax'>", async () => {
             });
         });
 
-        it('should be serializable', () => {
+        it('should be serializable', async () => {
+            const handler = await TexHandler.create('mathjax');
             const serialized = JSON.stringify(handler);
             expect(serialized).toBeTypeOf('string');
             expect(serialized).not.toBeNull();

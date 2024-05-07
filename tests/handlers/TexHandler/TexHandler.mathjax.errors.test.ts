@@ -10,10 +10,11 @@ function fixture() {
 }
 
 suite("TexHandler<'mathjax'>", async () => {
-    await spy(['writeFile', 'log', 'existsSync'], true);
+    await spy(['writeFile', 'log', 'existsSync', 'mkdir'], true);
     afterAll(() => {
         vi.restoreAllMocks();
     });
+
     describe('error handling during stylesheet generation', () => {
         fixture();
         it('should gracefully deal with unexpected behavior from clean-css', async () => {

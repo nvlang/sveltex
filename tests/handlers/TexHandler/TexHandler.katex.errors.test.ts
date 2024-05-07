@@ -9,7 +9,7 @@ suite("TexHandler<'katex'>", async () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
-    const { log } = await spy(['writeFile', 'log'], true);
+    const { log } = await spy(['writeFile', 'log', 'mkdir'], true);
     afterAll(() => {
         vi.restoreAllMocks();
     });

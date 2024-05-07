@@ -16,9 +16,14 @@ import {
 } from '$sveltex-preprocess';
 import { range } from '$tests';
 import { SourceMapConsumer } from 'source-map';
-import { describe, expect, it, suite, vi } from 'vitest';
+import { afterAll, describe, expect, it, suite, vi } from 'vitest';
+import { spy } from '$tests/fixtures.js';
 
-suite.concurrent('Sveltex', () => {
+suite.concurrent('Sveltex', async () => {
+    await spy(['writeFile', 'log', 'existsSync', 'mkdir'], true);
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
     describe('misc', () => {
         it('should throw if backend is not recognized', async () => {
             await expect(() =>

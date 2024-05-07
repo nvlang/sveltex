@@ -1,4 +1,4 @@
-import { sveltex } from '$sveltex-preprocess';
+import { Sveltex, sveltex } from '$sveltex-preprocess';
 import { spy } from '$tests/fixtures.js';
 import mockFs from 'mock-fs';
 import { Processed } from 'svelte/compiler';
@@ -13,25 +13,26 @@ import {
     vi,
 } from 'vitest';
 
-const sp = await sveltex({
-    markdownBackend: 'none',
-    codeBackend: 'none',
-    texBackend: 'mathjax',
-    advancedTexBackend: 'local',
-});
-
-await sp.configure({
-    advancedTex: {
-        components: {
-            tex: { aliases: ['TeX'] },
-        },
-    },
-});
-
 suite('Sveltex', async () => {
     // const { log, spawnCliInstruction, writeFile } =
-    await spy(['writeFile', 'spawnCliInstruction', 'log'], true);
-    beforeAll(() => {
+    await spy(['writeFile', 'spawnCliInstruction', 'log', 'mkdir'], true);
+
+    let sp: Sveltex<'none', 'none', 'mathjax', 'local'>;
+
+    beforeAll(async () => {
+        sp = await sveltex({
+            markdownBackend: 'none',
+            codeBackend: 'none',
+            texBackend: 'mathjax',
+            advancedTexBackend: 'local',
+        });
+        await sp.configure({
+            advancedTex: {
+                components: {
+                    tex: { aliases: ['TeX'] },
+                },
+            },
+        });
         mockFs({});
     });
     afterAll(() => {

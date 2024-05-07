@@ -13,7 +13,7 @@ function fixture() {
 suite("TexHandler<'katex'>", async () => {
     fixture();
     const { writeFile, log, existsSync } = await spy(
-        ['writeFile', 'log', 'existsSync'],
+        ['writeFile', 'log', 'existsSync', 'mkdir'],
         true,
     );
     const handler = await TexHandler.create('katex');
