@@ -48,7 +48,7 @@ suite("TexHandler<'mathjax'>", async () => {
 
         it("doesn't generate CSS if the file already exists (even if it's not in generatedStylesheetPaths prop)", async () => {
             existsSync.mockReturnValueOnce(true);
-            await TexHandler.create('katex');
+            await TexHandler.create('mathjax');
             expect(writeFile).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
         });
