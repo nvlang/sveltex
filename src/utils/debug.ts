@@ -16,6 +16,7 @@ import { fs } from '$utils/fs.js';
 import { resolve } from 'node:path';
 import { inspect } from 'node:util';
 import pc from 'picocolors';
+import ora from 'ora';
 
 export type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
@@ -304,4 +305,29 @@ export function detectPackageManager(
     const pmFromLockFile = getPmFromLockfile(cwd);
     // Defaults to "npm" if no lock file or packageManager field is found
     return pmFromLockFile ?? 'npm';
+}
+
+export async function runWithSpinner(
+    action: (...args: unknown[]) => unknown,
+    messages: {
+        startMessage: string;
+        succeedMessage: (timeTaken: string) => string;
+        failMessage: (timeTaken: string, error: unknown) => string;
+    },
+): Promise<0 | 1> {
+    const start = time();
+    const spinner = ora(messages.startMessage).start();
+    try {
+        await action();
+        spinner.succeed(
+            pc.green(messages.succeedMessage(timeToString(timeSince(start)))),
+        );
+        return 0;
+    } catch (err) {
+        spinner.fail(
+            pc.red(messages.failMessage(timeToString(timeSince(start)), err)),
+        );
+        log('error', prettifyError(err) + '\n\n');
+        return 1;
+    }
 }

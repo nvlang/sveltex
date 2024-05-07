@@ -1,6 +1,5 @@
 // Internal dependencies
 import { defaultCacheDirectory } from '$config/defaults.js';
-import { writeFileEnsureDir } from '$utils/fs.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
 
@@ -77,7 +76,7 @@ export class SveltexCache {
                 int: {},
                 svg: {},
             };
-            await writeFileEnsureDir(pathToCacheJson, JSON.stringify(cache));
+            await fs.writeFileEnsureDir(pathToCacheJson, JSON.stringify(cache));
             return new SveltexCache(
                 outputDirectory,
                 cacheDirectory,

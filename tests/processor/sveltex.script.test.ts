@@ -16,7 +16,7 @@ import {
 const sp = await sveltex({
     markdownBackend: 'none',
     codeBackend: 'none',
-    texBackend: 'none',
+    texBackend: 'mathjax',
     advancedTexBackend: 'local',
 });
 
@@ -86,7 +86,7 @@ suite('Sveltex', async () => {
                 filename: 'test-basic.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\n",
+                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n",
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -141,7 +141,7 @@ suite('Sveltex', async () => {
                 filename: 'test.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\n",
+                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n",
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -170,7 +170,7 @@ suite('Sveltex', async () => {
                 filename: 'test.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\n```\n",
+                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n```\n",
             );
 
             sp.advancedTexHandler.texComponents = {};

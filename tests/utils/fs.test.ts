@@ -1,5 +1,5 @@
 import mockFs from 'mock-fs';
-import { writeFileEnsureDir } from '$utils/fs.js';
+import { fs } from '$utils/fs.js';
 import { describe, it, expect, vi, beforeEach, afterAll, suite } from 'vitest';
 import { spy } from '$tests/fixtures.js';
 
@@ -17,7 +17,7 @@ suite('filesystem utils (`src/utils/fs.ts`)', async () => {
     describe.each([
         ['/path/to/file.txt', 'Test data', '/path/to'],
         ['test.txt', 'data', '.'],
-    ])('writeFileEnsureDir', (testPath, testData, dir) => {
+    ])('fs.writeFileEnsureDir', (testPath, testData, dir) => {
         beforeEach(() => {
             vi.clearAllMocks();
             mockFs({});
@@ -25,7 +25,7 @@ suite('filesystem utils (`src/utils/fs.ts`)', async () => {
 
         it('writes file in an existing directory', async () => {
             existsSync.mockReturnValueOnce(true); // Pretend directory exists
-            await writeFileEnsureDir(testPath, testData);
+            await fs.writeFileEnsureDir(testPath, testData);
             if (dir !== '.') {
                 expect(existsSync).toHaveBeenCalledWith(dir);
             } else {
@@ -43,7 +43,7 @@ suite('filesystem utils (`src/utils/fs.ts`)', async () => {
 
         it('creates directory and writes file when directory does not exist', async () => {
             existsSync.mockReturnValueOnce(false); // Pretend directory does not exist
-            await writeFileEnsureDir(testPath, testData);
+            await fs.writeFileEnsureDir(testPath, testData);
             if (dir !== '.') {
                 expect(existsSync).toHaveBeenCalledWith(dir);
                 expect(mkdir).toHaveBeenCalledWith(dir, {

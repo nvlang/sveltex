@@ -251,3 +251,36 @@ export function splitContent(content: string): string[] {
     `;
     return content.match(regex) ?? [];
 }
+
+/**
+ * Ensures that the given path starts with a slash.
+ *
+ * @param path - The path to ensure starts with a slash.
+ * @returns The path, with a slash prepended if it didn't already start with
+ * one.
+ *
+ * @example
+ * ```ts
+ * ensureStartsWithSlash('path/to/file'); // '/path/to/file'
+ * ensureStartsWithSlash('/path/to/file'); // '/path/to/file'
+ * ```
+ */
+export function ensureStartsWithSlash(path: string): `/${string}` {
+    return path.startsWith('/') ? (path as `/${string}`) : `/${path}`;
+}
+
+/**
+ * Ensures that the given path doesn't start with a slash.
+ *
+ * @param path - The path to ensure doesn't start with a slash.
+ * @returns The path, with the leading slash removed if it started with one.
+ *
+ * @example
+ * ```ts
+ * ensureDoesNotStartWithSlash('path/to/file'); // 'path/to/file'
+ * ensureDoesNotStartWithSlash('/path/to/file'); // 'path/to/file'
+ * ```
+ */
+export function ensureDoesNotStartWithSlash(path: string): string {
+    return path.startsWith('/') ? path.slice(1) : path;
+}

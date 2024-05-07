@@ -9,13 +9,15 @@ export const fs = {
     rename,
     mkdir,
     writeFile,
+    ensureDir,
+    writeFileEnsureDir,
 };
 
 /**
  * Ensure that a directory exists, creating it (and any necessary intermediate
  * directories) if it does not.
  */
-export async function ensureDirSync(dir: string) {
+async function ensureDir(dir: string) {
     if (!fs.existsSync(dir)) {
         await fs.mkdir(dir, { recursive: true });
     }
@@ -30,12 +32,8 @@ export async function ensureDirSync(dir: string) {
  *
  * @remarks `'utf8'` encoding is used to write the file.
  */
-export async function writeFileEnsureDir(file: string, content: string) {
+async function writeFileEnsureDir(file: string, content: string) {
     const dir = dirname(file);
-
-    if (dir !== '.' && !fs.existsSync(dir)) {
-        await fs.mkdir(dir, { recursive: true });
-    }
-
+    if (dir !== '.') await ensureDir(dir);
     await fs.writeFile(file, content, 'utf8');
 }

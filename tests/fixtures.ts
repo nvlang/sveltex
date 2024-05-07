@@ -13,6 +13,8 @@ const mockableFunctions = [
     'rename',
     'mkdir',
     'readFileSync',
+    'ensureDir',
+    'writeFileEnsureDir',
 ] as const;
 
 function isMockable(target: unknown): target is Mockable {
@@ -65,6 +67,15 @@ export async function spy(
             break;
         case 'mkdir':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'mkdir');
+            break;
+        case 'ensureDir':
+            spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'ensureDir');
+            break;
+        case 'writeFileEnsureDir':
+            spyFn = vi.spyOn(
+                (await import('$utils/fs.js')).fs,
+                'writeFileEnsureDir',
+            );
             break;
         default: {
             if (isMockableArray(target)) {

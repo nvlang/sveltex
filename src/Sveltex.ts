@@ -33,6 +33,7 @@ import { mergeConfigs } from '$utils/merge.js';
 // External dependencies
 import MagicString from 'magic-string';
 import sorcery from 'sorcery';
+import { ensureStartsWithSlash } from '$utils/misc.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -131,9 +132,7 @@ export class Sveltex<
         // and uses it as a hook to fetch the SVG contents of the TeX components
         // and add them to the `<figure>` DOM elements that were created for
         // them.
-        let str = texComponents
-            .map((tcii) => TexComponent.importSvg(tcii))
-            .join('\n');
+        const lines = texComponents.map((tcii) => TexComponent.importSvg(tcii));
 
         // For info on the language aliases being used here, see
         // https://github.com/sveltejs/svelte-preprocess/blob/c2107e529da9438ea5b8060aa471119940896e40/src/modules/language.ts#L29-L39
@@ -147,6 +146,19 @@ export class Sveltex<
         // svelte-preprocess expects regular JS in the `<script>` tag, but we
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
+
+        if (this.texBackend === 'katex' || this.texBackend === 'mathjax') {
+            const read = (
+                this.texHandler as unknown as TexHandler<'katex' | 'mathjax'>
+            ).configuration.css.read;
+            if (read) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const path = this.texHandler.stylesheetPath!;
+                lines.push(`import '${ensureStartsWithSlash(path)}';`);
+            }
+        }
+
+        let str = lines.join('\n');
 
         if (['coffee', 'coffeescript'].includes(lang)) {
             // If the user is using CoffeeScript, we need to wrap the code in

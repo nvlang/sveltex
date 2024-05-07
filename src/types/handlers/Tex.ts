@@ -2,6 +2,7 @@
 import type { TexHandler } from '$handlers';
 import type { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 import type {
+    FirstTwoLevelsRequiredNotUndefined,
     MathjaxConfiguration,
     MathjaxConversionOptions,
     RequiredNonNullable,
@@ -13,7 +14,7 @@ import type {
 export type TexBackend =
     | 'katex'
     | 'mathjax-node'
-    | 'mathjax-full'
+    | 'mathjax'
     | 'custom'
     | 'none';
 
@@ -31,7 +32,7 @@ export type TexBackend =
  */
 export type TexProcessor<B extends TexBackend> = B extends 'katex'
     ? object
-    : B extends 'mathjax-full'
+    : B extends 'mathjax'
       ? MathDocument<unknown, unknown, unknown>
       : B extends 'mathjax-node'
         ? object
@@ -47,7 +48,7 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
  * @typeParam T - The type of the tex processor.
  * @returns Depending on `T`:
  * - `katex`: The module's `KatexOptions` type.
- * - `mathjax-full`: Type with an optional `outputFormat` property of type
+ * - `mathjax`: Type with an optional `outputFormat` property of type
  *   `'svg' | 'chtml'` and an optional `mathjaxConfiguration` property of type
  *   {@link MathjaxConfiguration | `MathjaxConfiguration`}.
  * - `mathjax-node`: Type with an optional `mathjaxNodeConfiguration` property
@@ -64,14 +65,16 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
  * `configure` function.
  */
 export type TexConfiguration<B extends TexBackend> = B extends 'katex'
-    ? Omit<import('katex').KatexOptions, 'displayMode'>
-    : B extends 'mathjax-full'
-      ? {
+    ? TexConfigurationBase & {
+          katex?: Omit<import('katex').KatexOptions, 'displayMode'> | undefined;
+      }
+    : B extends 'mathjax'
+      ? TexConfigurationBase & {
             outputFormat?: 'svg' | 'chtml' | undefined;
             mathjaxConfiguration?: MathjaxConfiguration | undefined;
         }
       : B extends 'mathjax-node'
-        ? {
+        ? TexConfigurationBase & {
               mathjaxNodeConfiguration?: import('mathjax-node').MathjaxNodeConfig;
               inputConfiguration?: Omit<
                   import('mathjax-node').TypesetInput,
@@ -84,12 +87,49 @@ export type TexConfiguration<B extends TexBackend> = B extends 'katex'
             ? Record<string, unknown>
             : never;
 
+export interface TexConfigurationBase {
+    css?: LocalCssConfiguration | undefined;
+}
+
+export interface LocalCssConfiguration {
+    /**
+     * @defaultValue `'src/sveltex'`
+     */
+    dir?: string | undefined;
+    /**
+     * @defaultValue `true`
+     */
+    write?: boolean | undefined;
+    /**
+     * Whether to import the CSS file to which {@link dir | `path`} points in
+     * the Svelte component.
+     *
+     * @defaultValue `true`
+     */
+    read?: boolean | undefined;
+}
+
+export interface CdnCssConfiguration {
+    type: 'cdn';
+    /**
+     * The URL of the CSS file to use.
+     */
+    url?: string | undefined;
+    /**
+     * Whether to import the CSS file to which {@link url | `url`} points in the
+     * Svelte component.
+     *
+     * @defaultValue `true`
+     */
+    read?: boolean | undefined;
+}
+
 /**
  * Return type of the
  * {@link TexHandler.configuration | `TexHandler.configuration`} getter.
  *
  * @typeParam B - The type of the tex processor.
- * @returns If {@link B | `B`} is `'mathjax-full'` or `'mathjax-node'`, return
+ * @returns If {@link B | `B`} is `'mathjax'` or `'mathjax-node'`, return
  * {@link TexConfiguration | `TexConfiguration<B>`} with all top-level
  * properties required and non-nullable. Otherwise, return
  * {@link TexConfiguration | `TexConfiguration<B>`} as-is.
@@ -98,9 +138,11 @@ export type TexConfiguration<B extends TexBackend> = B extends 'katex'
  * `configure` function.
  */
 export type FullTexConfiguration<B extends TexBackend> = B extends
-    | 'mathjax-full'
+    | 'mathjax'
     | 'mathjax-node'
-    ? RequiredNonNullable<TexConfiguration<B>>
+    | 'katex'
+    ? RequiredNonNullable<TexConfiguration<B>> &
+          FirstTwoLevelsRequiredNotUndefined<TexConfigurationBase>
     : TexConfiguration<B>;
 
 /**
@@ -141,7 +183,7 @@ export type TexConfigureFn<B extends TexBackend> =
         texHandler: TexHandler<B>,
     ) => void | Promise<void>;
 
-export type TexProcessOptions<B extends TexBackend> = B extends 'mathjax-full'
+export type TexProcessOptions<B extends TexBackend> = B extends 'mathjax'
     ? {
           inline?: boolean | undefined;
           options?: Partial<MathjaxConversionOptions> | undefined;

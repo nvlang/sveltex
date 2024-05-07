@@ -33,7 +33,7 @@ import { mergeConfigs } from '$utils/merge.js';
 import { sha256 } from '$utils/misc.js';
 
 // External dependencies
-import { ensureDirSync, fs, writeFileEnsureDir } from '$utils/fs.js';
+import { fs } from '$utils/fs.js';
 import { join, relative, resolve } from 'node:path';
 import ora from 'ora';
 import pc from 'picocolors';
@@ -536,11 +536,6 @@ export class TexComponent<A extends AdvancedTexBackend> {
             // ...and caching is enabled in the configuration...
             caching
         ) {
-            log(
-                'debug',
-                `Cache hit for "${this.keyPath}" (TeX compilation), with hash of .tex content being "${texHash}".`,
-            );
-
             // 3(A). ...then we can skip the compilation step. We can also skip
             // the conversion step, because it either succeeded before on the
             // same intermediate file, or failed before (in which case an error
@@ -555,7 +550,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
             // Write the escaped TeX content to a temporary TeX file (creating
             // any missing intermediate directories along the way, if
             // necessary).
-            await writeFileEnsureDir(texFilepath, compilableTexContent);
+            await fs.writeFileEnsureDir(texFilepath, compilableTexContent);
 
             // Declare convenience alias for `this.compileCmd`
             const compileCmd = this.compileCmd;
@@ -657,11 +652,6 @@ export class TexComponent<A extends AdvancedTexBackend> {
             // ...and caching is enabled in the configuration...
             caching
         ) {
-            log(
-                'debug',
-                `Cache hit for "${this.keyPath}" (PDF/DVI conversion), with hash of PDF/DVI content being "${intHash}".`,
-            );
-
             // 4(A). ...then we can skip the conversion step and return early;
             // though we still need to update `cache.json` with the new cache
             // object.
@@ -676,7 +666,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
             const convertCmd = this.convertCmd;
 
             // Create output directory if it doesn't exist
-            await ensureDirSync(this.out.dir);
+            await fs.ensureDir(this.out.dir);
 
             // Start timer
             const startSvg = time();

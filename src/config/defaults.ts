@@ -29,10 +29,39 @@ import { join, relative, resolve } from 'node:path';
  * Get the default configuration for a TeX backend.
  */
 export function getDefaultTexConfiguration<T extends TexBackend>(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _texBackend: T,
+    texBackend: T,
 ): FullTexConfiguration<T> {
-    return {} as FullTexConfiguration<T>;
+    const css = {
+        dir: 'src/sveltex',
+        write: true,
+        read: true,
+    };
+    switch (texBackend) {
+        case 'katex':
+            return {
+                css,
+                katex: {},
+            } as FullTexConfiguration<T>;
+        case 'mathjax':
+            return {
+                css,
+                outputFormat: 'svg',
+                mathjaxConfiguration: {
+                    chtml: {
+                        fontURL:
+                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                    },
+                },
+            } as FullTexConfiguration<T>;
+        case 'mathjax-node':
+            return {
+                css,
+                mathjaxNodeConfiguration: {},
+                inputConfiguration: {},
+            } as FullTexConfiguration<T>;
+        default:
+            return {} as FullTexConfiguration<T>;
+    }
 }
 
 /**

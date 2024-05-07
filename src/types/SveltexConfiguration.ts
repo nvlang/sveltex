@@ -150,7 +150,7 @@ export interface BackendChoices<
      *   - Make sure you have `mathjax-node` installed as a devDependency (or
      *     regular dependency).
      *   - Make sure you include the MathJax CSS file in your HTML file.
-     * - `'mathjax-full'` (latest MathJax):
+     * - `'mathjax'` (latest MathJax):
      *   - Make sure you have `mathjax-full` installed as a devDependency (or
      *     regular dependency).
      *   - Make sure you include the MathJax CSS file in your HTML file.
@@ -237,7 +237,7 @@ export interface SveltexConfiguration<
      *
      * - `katex`: [Docs](https://katex.org/docs/options.html) /
      *   [GitHub](https://github.com/KaTeX/KaTeX)
-     * - `mathjax-full` (latest): [Docs](https://docs.mathjax.org/en/latest/) /
+     * - `mathjax` (latest): [Docs](https://docs.mathjax.org/en/latest/) /
      *   [GitHub](https://github.com/mathjax/MathJax-src)
      * - `mathjax-node` (v2): [Docs](https://docs.mathjax.org/en/v2.7-latest/) /
      *   [GitHub](https://github.com/mathjax/MathJax-node)

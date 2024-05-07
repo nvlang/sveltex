@@ -37,8 +37,18 @@ suite("TexHandler<'none'>", async () => {
                 expect(handler.backendIs('none')).toBe(true);
                 expect(handler.backendIs('katex')).toBe(false);
                 expect(handler.backendIs('mathjax-node')).toBe(false);
-                expect(handler.backendIs('mathjax-full')).toBe(false);
+                expect(handler.backendIs('mathjax')).toBe(false);
                 expect(handler.backendIs('custom')).toBe(false);
+            });
+        });
+
+        describe('CSS', () => {
+            it('stylesheetName getter should return undefined', () => {
+                expect(handler.stylesheetName).toBeUndefined();
+            });
+
+            it('stylesheetPath getter should return undefined', () => {
+                expect(handler.stylesheetPath).toBeUndefined();
             });
         });
     });
@@ -106,7 +116,7 @@ suite("TexHandler<'custom'>", async () => {
                 expect(handler.backendIs('none')).toBe(false);
                 expect(handler.backendIs('katex')).toBe(false);
                 expect(handler.backendIs('mathjax-node')).toBe(false);
-                expect(handler.backendIs('mathjax-full')).toBe(false);
+                expect(handler.backendIs('mathjax')).toBe(false);
                 expect(handler.backendIs('custom')).toBe(true);
             });
         });
@@ -114,13 +124,13 @@ suite("TexHandler<'custom'>", async () => {
 });
 
 suite('TexHandler error handling', () => {
-    describe("TexHandler.create('mathjax-full') with mathjax-full mocked to throw error", () => {
+    describe("TexHandler.create('mathjax') with mathjax mocked to throw error", () => {
         vi.mock('mathjax-full/js/handlers/html.js', () => {
             throw new Error('MathJax not found');
         });
-        it('pushes "mathjax-full" to missingDeps and then throws error', async () => {
+        it('pushes "mathjax" to missingDeps and then throws error', async () => {
             await expect(() =>
-                TexHandler.create('mathjax-full'),
+                TexHandler.create('mathjax'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('mathjax-full');
         });

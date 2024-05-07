@@ -65,11 +65,11 @@ describe('Sveltex.create()', () => {
                 await sveltex({
                     markdownBackend: 'unified',
                     codeBackend: 'starry-night',
-                    texBackend: 'mathjax-full',
+                    texBackend: 'mathjax',
                     advancedTexBackend: 'local',
                 }),
         ).rejects.toThrowError(
-            'Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:\n\npnpm add -D unified remark-parse remark-rehype rehype-stringify @types/mdast @wooorm/starry-night hast-util-find-and-replace hast-util-to-html mathjax-full',
+            'Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:\n\npnpm add -D unified remark-parse remark-rehype rehype-stringify @types/mdast @wooorm/starry-night hast-util-find-and-replace hast-util-to-html mathjax',
         );
         expect(missingDeps).toEqual([
             'unified',
