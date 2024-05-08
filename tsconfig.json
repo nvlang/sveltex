@@ -67,12 +67,5 @@
   // "ts-node": {
   //   // "swc": true
   // },
-  "include": [
-    "*.config.js",
-    "*.config.ts",
-    "package.json",
-    "src",
-    "tests",
-    "src/Sveltex.ts"
-  ]
+  "include": ["*.config.js", "*.config.ts", "package.json", "src", "tests"]
 }
