@@ -53,7 +53,14 @@ export class TexHandler<B extends TexBackend> extends Handler<
     TexHandler<B>
 > {
     override get process() {
-        return (tex: string, options?: TexProcessOptions<B>['options']) => {
+        return async (
+            tex: string,
+            options?: TexProcessOptions<B>['options'],
+        ) => {
+            if (!this.stylesheetHasBeenGenerated) {
+                await this.generateStylesheet();
+            }
+
             const displayMath = tex.match(
                 re`^ (?: \$\$ (.*) \$\$ | \\\[ (.*) \\\] ) $ ${'su'}`,
             );
@@ -92,13 +99,23 @@ export class TexHandler<B extends TexBackend> extends Handler<
         };
     }
 
-    constructor({
+    private _generateStylesheet: (texHandler: this) => Promise<void> = () =>
+        Promise.resolve();
+    get generateStylesheet() {
+        return async () => {
+            await this._generateStylesheet(this);
+        };
+    }
+    private stylesheetHasBeenGenerated: boolean = false;
+
+    private constructor({
         backend,
         process,
         configure,
         configuration,
         processor,
         backendVersion,
+        generateStylesheet,
     }: {
         backend: B;
         process: TexProcessFn<B>;
@@ -106,6 +123,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
         configuration: TexConfiguration<B>;
         processor: TexProcessor<B>;
         backendVersion: StringIfMathjaxOrKatex<B>;
+        generateStylesheet?: (texHandler: TexHandler<B>) => Promise<void>;
     }) {
         super({
             backend,
@@ -118,6 +136,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
             processor,
         });
         this.backendVersion = backendVersion;
+        if (generateStylesheet) this._generateStylesheet = generateStylesheet;
     }
 
     get stylesheetName(): SylesheetNameOrPath<B> {
@@ -144,8 +163,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
         dir = ensureDoesNotStartWithSlash(dir);
         return join(dir, stylesheetName) as StringIfMathjaxOrKatex<B>;
     }
-
-    private generatedStylesheetPaths = new Set<string>();
 
     private backendVersion: StringIfMathjaxOrKatex<B>;
 
@@ -222,34 +239,17 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             }),
                         );
                     };
-                    const configure = async (
-                        _configuration: TexConfiguration<'katex'>,
+                    const generateStylesheet: (
                         texHandler: TexHandler<'katex'>,
-                    ) => {
+                    ) => Promise<void> = async (texHandler) => {
                         const stylesheetPath = texHandler.stylesheetPath;
-                        if (
-                            !stylesheetPath ||
-                            texHandler.generatedStylesheetPaths.has(
-                                stylesheetPath,
-                            )
-                        ) {
-                            return;
-                        }
                         if (texHandler.configuration.css.write) {
                             // If the CSS file already exists and the backend
                             // version is set, we don't need to fetch the CSS.
-                            // If the backend version weren't set, it would be
-                            // treated as `'latest'`, which doesn't tell us much
-                            // about whether or not the CSS file is up to date.
-                            if (
-                                fs.existsSync(stylesheetPath) &&
-                                texHandler.backendVersion
-                            ) {
-                                texHandler.generatedStylesheetPaths.add(
-                                    stylesheetPath,
-                                );
-                                return;
-                            }
+                            // If the backend version is `'latest'`, this
+                            // assumption is a bit flawed, but alas, it shall
+                            // suffice for now.
+                            if (fs.existsSync(stylesheetPath)) return;
 
                             const url = `https://cdn.jsdelivr.net/npm/katex@${texHandler.backendVersion}/dist/katex.min.css`;
 
@@ -286,11 +286,8 @@ export class TexHandler<B extends TexBackend> extends Handler<
                                         css,
                                     );
 
-                                    // Add the path to the set of generated
-                                    // stylesheet paths
-                                    texHandler.generatedStylesheetPaths.add(
-                                        stylesheetPath,
-                                    );
+                                    texHandler.stylesheetHasBeenGenerated =
+                                        true;
 
                                     spinner.succeed(
                                         pc.green(
@@ -334,9 +331,10 @@ export class TexHandler<B extends TexBackend> extends Handler<
                         backend: 'katex',
                         configuration: getDefaultTexConfiguration('katex'),
                         process,
-                        configure,
+                        configure: () => undefined,
                         processor: {},
                         backendVersion,
+                        generateStylesheet,
                     });
                     await th.configure({});
                     return th;
@@ -386,11 +384,86 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             prettifyError(err) + '\n\n',
                         );
                     }
+                    const generateStylesheet: (
+                        texHandler: TexHandler<'mathjax'>,
+                    ) => Promise<void> = async (texHandler) => {
+                        const stylesheetPath = texHandler.stylesheetPath;
+                        if (
+                            !stylesheetPath ||
+                            !texHandler.configuration.css.write
+                        ) {
+                            return;
+                        }
+                        // If the CSS file already exists and the backend
+                        // version is set, we don't need to fetch the CSS. If
+                        // the backend version is `'latest'`, this assumption is
+                        // a bit flawed, but alas, it shall suffice for now.
+                        if (fs.existsSync(stylesheetPath)) return;
+
+                        let css: string = '';
+                        const codeGen = await runWithSpinner(
+                            () => {
+                                css = adaptor.textContent(
+                                    texHandler.processor.outputJax.styleSheet(
+                                        texHandler.processor,
+                                    ) as LiteElement,
+                                );
+                            },
+                            {
+                                startMessage: `Generating MathJax stylesheet (${texHandler.configuration.outputFormat})`,
+                                succeedMessage: (t) =>
+                                    `Generated MathJax stylesheet (${texHandler.configuration.outputFormat}) in ${t}`,
+                                failMessage: (t) =>
+                                    `Error generating MathJax stylesheet (${texHandler.configuration.outputFormat}) after ${t}`,
+                            },
+                        );
+
+                        if (codeGen !== 0) return;
+
+                        let opt: Output;
+                        await runWithSpinner(
+                            () => {
+                                opt = new CleanCSS().minify(css);
+                                if (opt.errors.length > 0) {
+                                    throw new Error(
+                                        `clean-css raised the following error(s) during minification of MathJax's stylesheet (${texHandler.configuration.outputFormat}):\n- ${opt.errors.join(
+                                            '\n- ',
+                                        )}`,
+                                    );
+                                }
+                                css = opt.styles;
+                            },
+                            {
+                                startMessage: `Minifying MathJax stylesheet (${texHandler.configuration.outputFormat})`,
+                                succeedMessage: (t) =>
+                                    `Minified MathJax stylesheet (${texHandler.configuration.outputFormat}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${String(opt.stats.originalSize * 100)}% reduction) in ${t}`,
+                                failMessage: (t) =>
+                                    `Error minifying MathJax stylesheet (${texHandler.configuration.outputFormat}) after ${t}`,
+                            },
+                        );
+
+                        await runWithSpinner(
+                            async () => {
+                                await fs.writeFileEnsureDir(
+                                    stylesheetPath,
+                                    css,
+                                );
+                                texHandler.stylesheetHasBeenGenerated = true;
+                            },
+                            {
+                                startMessage: `Writing MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath}`,
+                                succeedMessage: (t) =>
+                                    `Wrote MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath} in ${t}`,
+                                failMessage: (t) =>
+                                    `Error writing MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath} after ${t}`,
+                            },
+                        );
+                    };
 
                     const handler = new TexHandler<'mathjax'>({
                         backend: 'mathjax',
                         backendVersion,
-                        configure: async (_configuration, handler) => {
+                        configure: (_configuration, handler) => {
                             handler.processor = mathjax.document('', {
                                 InputJax: new TeX(
                                     handler.configuration.mathjaxConfiguration.tex,
@@ -405,92 +478,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
                                               handler.configuration.mathjaxConfiguration.svg,
                                           ),
                             });
-                            const stylesheetPath = handler.stylesheetPath;
-                            if (
-                                handler.generatedStylesheetPaths.has(
-                                    stylesheetPath,
-                                )
-                            ) {
-                                return;
-                            }
-                            if (handler.configuration.css.write) {
-                                // If the CSS file already exists and the
-                                // backend version is set, we don't need to
-                                // fetch the CSS. If the backend version weren't
-                                // set, it would be treated as `'latest'`, which
-                                // doesn't tell us much about whether or not the
-                                // CSS file is up to date.
-                                if (
-                                    fs.existsSync(stylesheetPath) &&
-                                    handler.backendVersion
-                                ) {
-                                    handler.generatedStylesheetPaths.add(
-                                        stylesheetPath,
-                                    );
-                                    return;
-                                }
-
-                                let css: string = '';
-                                const codeGen = await runWithSpinner(
-                                    () => {
-                                        css = adaptor.textContent(
-                                            handler.processor.outputJax.styleSheet(
-                                                handler.processor,
-                                            ) as LiteElement,
-                                        );
-                                    },
-                                    {
-                                        startMessage: `Generating MathJax stylesheet (${handler.configuration.outputFormat})`,
-                                        succeedMessage: (t) =>
-                                            `Generated MathJax stylesheet (${handler.configuration.outputFormat}) in ${t}`,
-                                        failMessage: (t) =>
-                                            `Error generating MathJax stylesheet (${handler.configuration.outputFormat}) after ${t}`,
-                                    },
-                                );
-
-                                if (codeGen !== 0) return;
-
-                                let opt: Output;
-                                await runWithSpinner(
-                                    () => {
-                                        opt = new CleanCSS().minify(css);
-                                        if (opt.errors.length > 0) {
-                                            throw new Error(
-                                                `clean-css raised the following error(s) during minification of MathJax's stylesheet (${handler.configuration.outputFormat}):\n- ${opt.errors.join(
-                                                    '\n- ',
-                                                )}`,
-                                            );
-                                        }
-                                        css = opt.styles;
-                                    },
-                                    {
-                                        startMessage: `Minifying MathJax stylesheet (${handler.configuration.outputFormat})`,
-                                        succeedMessage: (t) =>
-                                            `Minified MathJax stylesheet (${handler.configuration.outputFormat}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${String(opt.stats.originalSize * 100)}% reduction) in ${t}`,
-                                        failMessage: (t) =>
-                                            `Error minifying MathJax stylesheet (${handler.configuration.outputFormat}) after ${t}`,
-                                    },
-                                );
-
-                                await runWithSpinner(
-                                    async () => {
-                                        await fs.writeFileEnsureDir(
-                                            stylesheetPath,
-                                            css,
-                                        );
-                                        handler.generatedStylesheetPaths.add(
-                                            stylesheetPath,
-                                        );
-                                    },
-                                    {
-                                        startMessage: `Writing MathJax stylesheet (${handler.configuration.outputFormat}) to ${stylesheetPath}`,
-                                        succeedMessage: (t) =>
-                                            `Wrote MathJax stylesheet (${handler.configuration.outputFormat}) to ${stylesheetPath} in ${t}`,
-                                        failMessage: (t) =>
-                                            `Error writing MathJax stylesheet (${handler.configuration.outputFormat}) to ${stylesheetPath} after ${t}`,
-                                    },
-                                );
-                            }
                         },
                         process: async (
                             tex,
@@ -517,6 +504,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             InputJax: new TeX(),
                             OutputJax: new SVG(),
                         }),
+                        generateStylesheet,
                     });
                     await handler.configure({
                         mathjaxConfiguration: {

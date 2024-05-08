@@ -33,7 +33,7 @@ suite("TexHandler<'mathjax'>", async () => {
         });
 
         it('generates CSS', async () => {
-            await TexHandler.create('mathjax');
+            await (await TexHandler.create('mathjax')).process('');
             expect(writeFile).toHaveBeenCalledTimes(1);
             expect(writeFile).toHaveBeenNthCalledWith(
                 1,
@@ -46,9 +46,35 @@ suite("TexHandler<'mathjax'>", async () => {
             expect(log).not.toHaveBeenCalled();
         });
 
-        it("doesn't generate CSS if the file already exists (even if it's not in generatedStylesheetPaths prop)", async () => {
+        it("doesn't generate CSS twice", async () => {
             existsSync.mockReturnValueOnce(true);
-            await TexHandler.create('mathjax');
+            const handler = await TexHandler.create('mathjax');
+            await handler.process('');
+            await handler.process('');
+            expect(writeFile).toHaveBeenCalledTimes(1);
+            expect(writeFile).toHaveBeenNthCalledWith(
+                1,
+                expect.stringMatching(
+                    /src\/sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/,
+                ),
+                expect.stringContaining('[jax='),
+                'utf8',
+            );
+            expect(log).not.toHaveBeenCalled();
+        });
+
+        it("doesn't generate CSS if the file already exists", async () => {
+            existsSync.mockReturnValueOnce(true);
+            await (await TexHandler.create('mathjax')).process('');
+            expect(writeFile).not.toHaveBeenCalled();
+            expect(log).not.toHaveBeenCalled();
+        });
+
+        it("doesn't generate CSS if `configuration.css.write` is false", async () => {
+            existsSync.mockReturnValueOnce(true);
+            const handler = await TexHandler.create('mathjax');
+            await handler.configure({ css: { write: false } });
+            await handler.process('');
             expect(writeFile).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
         });
@@ -140,7 +166,7 @@ suite("TexHandler<'mathjax'>", async () => {
                 versionMock.mockImplementationOnce(() => {
                     throw new Error(id);
                 });
-                await TexHandler.create('mathjax');
+                await (await TexHandler.create('mathjax')).process('');
                 expect(log).toHaveBeenCalledTimes(1);
                 expect(log).toHaveBeenNthCalledWith(
                     1,
@@ -165,7 +191,7 @@ suite("TexHandler<'mathjax'>", async () => {
                     .spyOn(consoles, 'error')
                     .mockImplementation(() => undefined);
                 writeFile.mockRejectedValueOnce(new Error(id));
-                await TexHandler.create('mathjax');
+                await (await TexHandler.create('mathjax')).process('');
                 expect(consoleErrorMock).toHaveBeenCalledTimes(1);
                 expect(consoleErrorMock).toHaveBeenNthCalledWith(
                     1,
@@ -197,7 +223,7 @@ suite("TexHandler<'mathjax'>", async () => {
                         });
                         return adaptor;
                     });
-                await TexHandler.create('mathjax');
+                await (await TexHandler.create('mathjax')).process('');
                 expect(consoleErrorMock).toHaveBeenCalledTimes(1);
                 expect(consoleErrorMock).toHaveBeenNthCalledWith(
                     1,

@@ -20,7 +20,7 @@ suite("TexHandler<'katex'>", async () => {
             vi.mocked(fetch).mockImplementationOnce(() => {
                 throw new Error(id);
             });
-            await TexHandler.create('katex');
+            await (await TexHandler.create('katex')).process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(
                 1,
@@ -32,7 +32,7 @@ suite("TexHandler<'katex'>", async () => {
                 ok: false,
                 status: 404,
             } as Response);
-            await TexHandler.create('katex');
+            await (await TexHandler.create('katex')).process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(
                 1,

@@ -38,7 +38,7 @@ suite("TexHandler<'mathjax'>", async () => {
                     }),
                 };
             });
-            await TexHandler.create('mathjax');
+            await (await TexHandler.create('mathjax')).process('');
             expect(consoleErrorMock).toHaveBeenCalledTimes(1);
             expect(consoleErrorMock).toHaveBeenNthCalledWith(
                 1,
