@@ -16,7 +16,7 @@ import { fs } from '$utils/fs.js';
 import { resolve } from 'node:path';
 import { inspect } from 'node:util';
 import pc from 'picocolors';
-import ora from 'ora';
+import ora, { Ora } from 'ora';
 
 export type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
@@ -308,7 +308,7 @@ export function detectPackageManager(
 }
 
 export async function runWithSpinner(
-    action: (...args: unknown[]) => unknown,
+    action: (spinner: Ora, startTime: bigint) => unknown,
     messages: {
         startMessage: string;
         succeedMessage: (timeTaken: string) => string;
@@ -318,7 +318,7 @@ export async function runWithSpinner(
     const start = time();
     const spinner = ora(messages.startMessage).start();
     try {
-        await action();
+        await action(spinner, start);
         spinner.succeed(
             pc.green(messages.succeedMessage(timeToString(timeSince(start)))),
         );
