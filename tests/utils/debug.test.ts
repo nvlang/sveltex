@@ -69,17 +69,32 @@ suite('debug', async () => {
         });
 
         it('should log to console.log if asked to, and leave message unstyled', () => {
-            log('log', 'log test');
+            log('log', 'log test', { object: true }, ['array'], 123, false);
             expect(consoleLogMock).toHaveBeenCalledTimes(1);
-            expect(consoleLogMock).toHaveBeenNthCalledWith(1, 'log test');
+            expect(consoleLogMock).toHaveBeenNthCalledWith(
+                1,
+                'log test',
+                {
+                    object: true,
+                },
+                ['array'],
+                123,
+                false,
+            );
         });
 
         it('should log to console.error if asked to, and color message red using picocolors', () => {
-            log('error', 'error test');
+            log('error', 'error test', { object: true }, ['array'], 123, false);
             expect(consoleErrorMock).toHaveBeenCalledTimes(1);
             expect(consoleErrorMock).toHaveBeenNthCalledWith(
                 1,
                 pc.red('error test'),
+                {
+                    object: true,
+                },
+                ['array'],
+                123,
+                false,
             );
         });
 
