@@ -186,7 +186,7 @@ export function prettifyStackTrace(stack: string): string {
         stack
             .split('\n')
             .map((line) => {
-                const match = line.match(/\s*at.*\/node_modules\//);
+                const match = line.match(/\s*at\s.*\/node_modules\//);
                 if (match) {
                     return pc.dim(line);
                 }
