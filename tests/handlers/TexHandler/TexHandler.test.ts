@@ -36,7 +36,6 @@ suite("TexHandler<'none'>", async () => {
             it('should work', () => {
                 expect(handler.backendIs('none')).toBe(true);
                 expect(handler.backendIs('katex')).toBe(false);
-                expect(handler.backendIs('mathjax-node')).toBe(false);
                 expect(handler.backendIs('mathjax')).toBe(false);
                 expect(handler.backendIs('custom')).toBe(false);
             });
@@ -115,7 +114,6 @@ suite("TexHandler<'custom'>", async () => {
             it('should work', () => {
                 expect(handler.backendIs('none')).toBe(false);
                 expect(handler.backendIs('katex')).toBe(false);
-                expect(handler.backendIs('mathjax-node')).toBe(false);
                 expect(handler.backendIs('mathjax')).toBe(false);
                 expect(handler.backendIs('custom')).toBe(true);
             });
@@ -133,18 +131,6 @@ suite('TexHandler error handling', () => {
                 TexHandler.create('mathjax'),
             ).rejects.toThrowError();
             expect(missingDeps).toContain('mathjax-full');
-        });
-    });
-
-    describe("TexHandler.create('mathjax-node') with mathjax-node mocked to throw error", () => {
-        vi.mock('mathjax-node', () => {
-            throw new Error('MathJax not found');
-        });
-        it('pushes "mathjax-node" to missingDeps and then throws error', async () => {
-            await expect(() =>
-                TexHandler.create('mathjax-node'),
-            ).rejects.toThrowError();
-            expect(missingDeps).toContain('mathjax-node');
         });
     });
 

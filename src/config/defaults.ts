@@ -53,12 +53,6 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
                     },
                 },
             } as FullTexConfiguration<T>;
-        case 'mathjax-node':
-            return {
-                css,
-                mathjaxNodeConfiguration: {},
-                inputConfiguration: {},
-            } as FullTexConfiguration<T>;
         default:
             return {} as FullTexConfiguration<T>;
     }

@@ -11,12 +11,7 @@ import type {
 /**
  * Supported TeX backends.
  */
-export type TexBackend =
-    | 'katex'
-    | 'mathjax-node'
-    | 'mathjax'
-    | 'custom'
-    | 'none';
+export type TexBackend = 'katex' | 'mathjax' | 'custom' | 'none';
 
 /**
  * Type of the processor used to parse tex.
@@ -34,13 +29,11 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
     ? object
     : B extends 'mathjax'
       ? MathDocument<unknown, unknown, unknown>
-      : B extends 'mathjax-node'
+      : B extends 'custom'
         ? object
-        : B extends 'custom'
+        : B extends 'none'
           ? object
-          : B extends 'none'
-            ? object
-            : never;
+          : never;
 
 /**
  * Type of the configuration object used to configure the tex processor.
@@ -51,13 +44,6 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
  * - `mathjax`: Type with an optional `outputFormat` property of type
  *   `'svg' | 'chtml'` and an optional `mathjaxConfiguration` property of type
  *   {@link MathjaxConfiguration | `MathjaxConfiguration`}.
- * - `mathjax-node`: Type with an optional `mathjaxNodeConfiguration` property
- *   of type
- *   [`MathjaxNodeConfig`](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/4354a1088a2881bf6613b98c84d18e614f08705e/types/mathjax-node/index.d.ts#L539C18-L539C35)
- *   and an optional `inputConfiguration` property of type
- *   [`TypesetInput`](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/4354a1088a2881bf6613b98c84d18e614f08705e/types/mathjax-node/index.d.ts#L9)
- *   (without the `math` and `format` properties, however, since those are
- *   dynamically set by Sveltex).
  * - `custom`: `Record<string, unknown>`.
  * - `none`: `Record<string, unknown>`.
  *
@@ -73,19 +59,11 @@ export type TexConfiguration<B extends TexBackend> = B extends 'katex'
             outputFormat?: 'svg' | 'chtml' | undefined;
             mathjaxConfiguration?: MathjaxConfiguration | undefined;
         }
-      : B extends 'mathjax-node'
-        ? TexConfigurationBase & {
-              mathjaxNodeConfiguration?: import('mathjax-node').MathjaxNodeConfig;
-              inputConfiguration?: Omit<
-                  import('mathjax-node').TypesetInput,
-                  'math' | 'format'
-              >;
-          }
-        : B extends 'custom'
+      : B extends 'custom'
+        ? Record<string, unknown>
+        : B extends 'none'
           ? Record<string, unknown>
-          : B extends 'none'
-            ? Record<string, unknown>
-            : never;
+          : never;
 
 export interface TexConfigurationBase {
     css?: LocalCssConfiguration | undefined;
@@ -129,7 +107,7 @@ export interface CdnCssConfiguration {
  * {@link TexHandler.configuration | `TexHandler.configuration`} getter.
  *
  * @typeParam B - The type of the tex processor.
- * @returns If {@link B | `B`} is `'mathjax'` or `'mathjax-node'`, return
+ * @returns If {@link B | `B`} is `'mathjax'`, return
  * {@link TexConfiguration | `TexConfiguration<B>`} with all top-level
  * properties required and non-nullable. Otherwise, return
  * {@link TexConfiguration | `TexConfiguration<B>`} as-is.
@@ -139,7 +117,6 @@ export interface CdnCssConfiguration {
  */
 export type FullTexConfiguration<B extends TexBackend> = B extends
     | 'mathjax'
-    | 'mathjax-node'
     | 'katex'
     ? RequiredNonNullable<TexConfiguration<B>> &
           FirstTwoLevelsRequiredNotUndefined<TexConfigurationBase>

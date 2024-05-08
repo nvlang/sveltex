@@ -98,7 +98,7 @@ export async function generateTests(
               : ['none'];
     const texBackends =
         vary.tex === true
-            ? ['katex', 'mathjax', 'mathjax-node']
+            ? ['katex', 'mathjax']
             : isArray(vary.tex)
               ? vary.tex
               : ['none'];

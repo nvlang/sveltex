@@ -537,60 +537,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     missingDeps.push('mathjax-full');
                     throw err;
                 }
-            case 'mathjax-node':
-                try {
-                    type Backend = 'mathjax-node';
-                    type Configuration = TexConfiguration<Backend>;
-                    const mathjax = await import('mathjax-node');
-                    const process = async (
-                        tex: string,
-                        { inline, options }: TexProcessOptions<Backend>,
-                        texHandler: TexHandler<Backend>,
-                    ): Promise<string> => {
-                        const result = await mathjax.typeset({
-                            math: tex,
-                            format: inline ?? true ? 'inline-TeX' : 'TeX',
-                            ...texHandler.configuration.inputConfiguration,
-                            ...options?.inputConfiguration,
-                        });
-                        if (!result.errors) {
-                            return escapeBraces(
-                                result.svg ?? result.html ?? result.mml ?? '',
-                            );
-                        } else {
-                            log('error', 'Errors: ', result.errors);
-                            return '';
-                        }
-                    };
-                    const configure = (
-                        configuration: Configuration,
-                        texHandler: TexHandler<'mathjax-node'>,
-                    ) => {
-                        if (configuration.mathjaxNodeConfiguration) {
-                            mathjax.config(
-                                texHandler.configuration
-                                    .mathjaxNodeConfiguration,
-                            );
-                            mathjax.start();
-                        }
-                    };
-                    const handler = new TexHandler<'mathjax-node'>({
-                        backend: 'mathjax-node',
-                        process,
-                        configure,
-                        processor: {},
-                        configuration:
-                            getDefaultTexConfiguration('mathjax-node'),
-                        backendVersion: undefined,
-                    });
-                    await handler.configure({
-                        inputConfiguration: { html: true },
-                    });
-                    return handler;
-                } catch (err) {
-                    missingDeps.push('mathjax-node');
-                    throw err;
-                }
             case 'none':
                 return new TexHandler<'none'>({
                     backend: 'none',

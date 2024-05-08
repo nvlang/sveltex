@@ -146,15 +146,10 @@ export interface BackendChoices<
      *     have to load any scripts for KaTeX, since the rendering will take
      *     place during preprocessing. This is also why it suffices to have
      *     KaTeX as a devDependency (as opposed to a regular dependency).
-     * - `'mathjax-node'` (uses MathJax v2 at the time of writing):
-     *   - Make sure you have `mathjax-node` installed as a devDependency (or
-     *     regular dependency).
-     *   - Make sure you include the MathJax CSS file in your HTML file.
-     * - `'mathjax'` (latest MathJax):
+     * - `'mathjax'`:
      *   - Make sure you have `mathjax-full` installed as a devDependency (or
      *     regular dependency).
      *   - Make sure you include the MathJax CSS file in your HTML file.
-     *
      */
     /* eslint-enable tsdoc/syntax */
     texBackend?: T | undefined;
@@ -237,10 +232,8 @@ export interface SveltexConfiguration<
      *
      * - `katex`: [Docs](https://katex.org/docs/options.html) /
      *   [GitHub](https://github.com/KaTeX/KaTeX)
-     * - `mathjax` (latest): [Docs](https://docs.mathjax.org/en/latest/) /
+     * - `mathjax`: [Docs](https://docs.mathjax.org/en/latest/) /
      *   [GitHub](https://github.com/mathjax/MathJax-src)
-     * - `mathjax-node` (v2): [Docs](https://docs.mathjax.org/en/v2.7-latest/) /
-     *   [GitHub](https://github.com/mathjax/MathJax-node)
      */
     tex?: TexConfiguration<T>;
 
