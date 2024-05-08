@@ -113,8 +113,11 @@ function isLogOptionsObject(input: unknown): input is LogOptionsObject {
 }
 
 interface LogOptionsObject {
+    /**
+     * @defaultValue `'log'`
+     */
     severity?: LogSeverity | undefined;
-    style?: PicocolorStyle | PicocolorStyle[] | undefined;
+    style?: PicocolorStyle | PicocolorStyle[] | undefined | null;
 }
 
 type LogOptions = LogSeverity | LogOptionsObject;
@@ -143,7 +146,7 @@ export function log(...args: unknown[]) {
     const possiblyOptions = args[0];
     let remainingArgs = args;
     let severity: LogSeverity = 'log';
-    let style: PicocolorStyle | PicocolorStyle[] = [];
+    let style: PicocolorStyle | PicocolorStyle[] | null = [];
 
     // If the first argument is a log severity or log options object, extract
     // the severity and style, and remove the first argument from the list of
@@ -154,7 +157,9 @@ export function log(...args: unknown[]) {
             severity = possiblyOptions;
         } else {
             if (possiblyOptions.severity) severity = possiblyOptions.severity;
-            if (possiblyOptions.style) style = possiblyOptions.style;
+            if (possiblyOptions.style !== undefined) {
+                style = possiblyOptions.style;
+            }
         }
     }
 
@@ -163,6 +168,7 @@ export function log(...args: unknown[]) {
     // If color is not supported or no styles are provided, log without styling
     if (
         !pc.isColorSupported ||
+        style === null ||
         (defaultPcStyles[severity].length === 0 && style.length === 0)
     ) {
         consoles[severity](...remainingArgs);
