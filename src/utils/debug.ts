@@ -317,7 +317,7 @@ export async function runWithSpinner(
     action: (spinner: Ora, startTime: bigint) => unknown,
     messages: {
         startMessage: string;
-        succeedMessage: (timeTaken: string) => string;
+        successMessage: (timeTaken: string) => string;
         failMessage: (timeTaken: string, error: unknown) => string;
     },
 ): Promise<0 | 1> {
@@ -326,7 +326,7 @@ export async function runWithSpinner(
     try {
         await action(spinner, start);
         spinner.succeed(
-            pc.green(messages.succeedMessage(timeToString(timeSince(start)))),
+            pc.green(messages.successMessage(timeToString(timeSince(start)))),
         );
         return 0;
     } catch (err) {

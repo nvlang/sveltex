@@ -411,7 +411,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             },
                             {
                                 startMessage: `Generating MathJax stylesheet (${texHandler.configuration.outputFormat})`,
-                                succeedMessage: (t) =>
+                                successMessage: (t) =>
                                     `Generated MathJax stylesheet (${texHandler.configuration.outputFormat}) in ${t}`,
                                 failMessage: (t) =>
                                     `Error generating MathJax stylesheet (${texHandler.configuration.outputFormat}) after ${t}`,
@@ -435,7 +435,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             },
                             {
                                 startMessage: `Minifying MathJax stylesheet (${texHandler.configuration.outputFormat})`,
-                                succeedMessage: (t) =>
+                                successMessage: (t) =>
                                     `Minified MathJax stylesheet (${texHandler.configuration.outputFormat}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${String(opt.stats.originalSize * 100)}% reduction) in ${t}`,
                                 failMessage: (t) =>
                                     `Error minifying MathJax stylesheet (${texHandler.configuration.outputFormat}) after ${t}`,
@@ -452,7 +452,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                             },
                             {
                                 startMessage: `Writing MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath}`,
-                                succeedMessage: (t) =>
+                                successMessage: (t) =>
                                     `Wrote MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath} in ${t}`,
                                 failMessage: (t) =>
                                     `Error writing MathJax stylesheet (${texHandler.configuration.outputFormat}) to ${stylesheetPath} after ${t}`,
