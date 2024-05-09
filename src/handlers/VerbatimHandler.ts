@@ -21,7 +21,6 @@ import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
 import { isSimpleEscapeInstruction } from '$type-guards';
 import {
-    diagnoseVerbatimEnvironmentConfiguration,
     escapeBraces,
     interpretAttributes,
     log,
@@ -29,6 +28,8 @@ import {
     parseComponent,
     prettifyError,
 } from '$utils';
+
+import { diagnoseVerbatimEnvironmentConfiguration } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 
 // External dependencies
 import { escape as escapeHtml } from 'html-escaper';

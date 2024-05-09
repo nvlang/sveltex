@@ -6,7 +6,11 @@ import type {
     SveltexConfiguration,
 } from '$types/SveltexConfiguration.js';
 import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
-import type { CodeBackend } from '$types/handlers/Code.js';
+import type {
+    CodeBackend,
+    CodeConfiguration,
+    ThemableCodeBackend,
+} from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
 import type { Location } from '$types/utils/Ast.js';
@@ -34,12 +38,17 @@ import { mergeConfigs } from '$utils/merge.js';
 import MagicString from 'magic-string';
 import sorcery from 'sorcery';
 import { ensureStartsWithSlash } from '$utils/misc.js';
+import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
+import { isThemableCodeBackend } from '$type-guards/code.js';
+import { assert, is } from 'tsafe';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
  *
  * **Important**: You must `await` the result of this function before using the
  * `Sveltex` instance.
+ *
+ * @throws Error if the backend choices are invalid.
  */
 export async function sveltex<
     M extends MarkdownBackend,
@@ -49,6 +58,9 @@ export async function sveltex<
 >(
     backendChoices?: BackendChoices<M, C, T, A> | undefined,
 ): Promise<Sveltex<M, C, T, A>> {
+    if (backendChoices && diagnoseBackendChoices(backendChoices).errors !== 0) {
+        throw new Error('Invalid backend choices. See console for details.');
+    }
     return await Sveltex.create<M, C, T, A>(
         backendChoices?.markdownBackend ?? ('none' as M),
         backendChoices?.codeBackend ?? ('none' as C),
@@ -148,13 +160,20 @@ export class Sveltex<
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
         if (this.texBackend === 'katex' || this.texBackend === 'mathjax') {
-            const read = (
-                this.texHandler as unknown as TexHandler<'katex' | 'mathjax'>
-            ).configuration.css.read;
-            if (read) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const path = this.texHandler.stylesheetPath!;
+            assert(is<Sveltex<M, C, 'katex' | 'mathjax', A>>(this));
+            if (this.texHandler.configuration.css.read) {
+                const path = this.texHandler.stylesheetPath;
                 lines.push(`import '${ensureStartsWithSlash(path)}';`);
+            }
+        }
+
+        if (isThemableCodeBackend(this.codeBackend)) {
+            assert(is<Sveltex<M, ThemableCodeBackend, T, A>>(this));
+            if (this.codeHandler.configuration.theme.read) {
+                const path = this.codeHandler.cssPath;
+                if (path) {
+                    lines.push(`import '${ensureStartsWithSlash(path)}';`);
+                }
             }
         }
 
@@ -459,7 +478,9 @@ export class Sveltex<
 
         await Promise.all([
             this.markdownHandler.configure(mergedConfig.markdown),
-            this.codeHandler.configure(mergedConfig.code),
+            this.codeHandler.configure(
+                mergedConfig.code as CodeConfiguration<C>,
+            ),
             this.texHandler.configure(mergedConfig.tex as TexConfiguration<T>),
             this.advancedTexHandler.configure(mergedConfig.advancedTex),
         ]);

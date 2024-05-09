@@ -171,7 +171,6 @@ suite("TexHandler<'mathjax'>", async () => {
                 expect(log).toHaveBeenNthCalledWith(
                     1,
                     'error',
-                    'Error getting MathJax version:\n\n',
                     expect.stringContaining(id),
                 );
                 versionMock.mockRestore();

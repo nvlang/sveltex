@@ -7,7 +7,9 @@ import type {
     CodeProcessOptions,
     CodeProcessor,
     FullCodeConfiguration,
+    ThemableCodeBackend,
 } from '$types';
+import type { HighlightJsTheme } from '$types/handlers/misc.js';
 
 // Internal dependencies
 import { getDefaultCodeConfiguration } from '$config';
@@ -16,15 +18,23 @@ import { Handler } from '$handlers/Handler.js';
 import {
     customEscapeSequencesToHtml,
     escapeBraces,
+    fs,
     log,
     mergeConfigs,
     re,
+    runWithSpinner,
     uniqueEscapeSequences,
 } from '$utils';
+import { isThemableCodeBackend } from '$type-guards/code.js';
+import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
+import { fetchCss, getVersion } from '$utils/cdn.js';
 
 // External dependencies
 import { escape as escapeHtml } from 'html-escaper';
 import pc from 'picocolors';
+
+import { join } from 'node:path';
+import { assert, is } from 'tsafe';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
     B,
@@ -40,6 +50,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             code: string,
             options?: CodeProcessOptions | undefined,
         ) => {
+            if (this.configIsValid === undefined) {
+                this.configIsValid =
+                    diagnoseCodeConfiguration(this.backend, this.configuration)
+                        .errors === 0;
+            }
+            if (!this.configIsValid) return code;
+            if (this.shouldFetchCss) await this.fetchAndWriteCss();
+
             let innerCode: string = code;
             let opts: CodeProcessOptions | undefined = { _wrap: true };
 
@@ -76,6 +94,83 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
             return wrapArray[0] + n + processedCode + n + wrapArray[1];
         };
+    }
+
+    private configIsValid: boolean | undefined = undefined;
+    private shouldFetchCss: boolean = true;
+    private async fetchAndWriteCss() {
+        // Regardless of whether the fetching fails, succeeds, or is skipped, we
+        // don't want to do it twice.
+        this.shouldFetchCss = false;
+
+        // If the backend isn't themable, don't try to fetch any CSS
+        if (!isThemableCodeBackend(this.backend)) return;
+
+        // Unfortunately, TypeScript doesn't realize that, at this point, B extends
+        // ThemableCodeBackend
+        assert(is<CodeHandler<ThemableCodeBackend>>(this));
+
+        // Convenience alias + type assertion
+        const configuration = this.configuration;
+
+        if (!configuration.theme.write) return;
+
+        // Convenience alias
+        const theme = configuration.theme;
+
+        // Auxiliary variable to help build the path to the fetched stylesheet
+        let min: string = '';
+        if (
+            this.backend === 'highlight.js' &&
+            (theme as HighlightJsTheme).min
+        ) {
+            min = '.min';
+        }
+
+        // The backend version, used to try to ensure that the fetched
+        // stylesheet is compatible with the current version of the backend.
+        const version: string =
+            this.backend === 'highlight.js'
+                ? (await getVersion(this.backend)) ?? 'latest'
+                : 'latest';
+
+        // Build the path to which we should write the fetched stylesheet
+        const path = join(
+            theme.dir,
+            `${this.backend}@${version}.${theme.name}${min}.css`,
+        );
+
+        // If the file already exists, don't fetch it again
+        if (fs.existsSync(path)) return;
+
+        // Fetch the CSS from a CDN
+        const css = await fetchCss(this.backend, theme, version);
+
+        // If the fetch failed, don't try to write anything
+        if (!css) return;
+
+        // Write the fetched CSS to the specified path
+        const written = await runWithSpinner(
+            async () => {
+                await fs.writeFileEnsureDir(path, css);
+            },
+            {
+                startMessage: `Writing ${this.backend} theme to ${path}`,
+                failMessage: (t) =>
+                    `Failed to write ${this.backend} theme to ${path} (took ${t})`,
+                successMessage: (t) =>
+                    `Successfully wrote ${this.backend} theme to ${path} in ${t}`,
+            },
+        );
+
+        console.log(written);
+
+        if (written === 0) this._cssPath = path;
+    }
+
+    private _cssPath: string | undefined = undefined;
+    get cssPath() {
+        return this._cssPath;
     }
 
     private static codeBlockDelimsRegex = re`
@@ -186,7 +281,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 'error',
                 `Error parsing code snippet (no delimiters could be found/matched): ${innerCode}`,
             );
-            console.trace('Error parsing code snippet');
             return { innerCode, optionsFromDelims };
         }
 
@@ -256,7 +350,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 try {
                     type Backend = 'highlight.js';
                     const processor = (await import('highlight.js')).default;
-                    return new CodeHandler<Backend>({
+                    const codeHandler = new CodeHandler<Backend>({
                         backend: 'highlight.js',
                         processor,
                         configuration:
@@ -275,6 +369,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             codeHandler.processor.configure(config);
                         },
                     });
+                    return codeHandler;
                 } catch (error) {
                     missingDeps.push('highlight.js');
                     throw error;
@@ -469,13 +564,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     },
                     process: (code, _opts, handler) => {
                         let escaped = code;
-                        if (handler.configuration.escapeHtml !== false) {
+                        const configuration = handler.configuration;
+                        if (configuration.escapeHtml) {
                             escaped = escapeHtml(escaped);
                         }
                         // NB: It's important to escape braces _after_ escaping HTML,
                         // since escaping braces will introduce ampersands which
                         // escapeHtml would escape
-                        if (handler.configuration.escapeBraces !== false) {
+                        if (configuration.escapeBraces) {
                             escaped = escapeBraces(escaped);
                         }
 

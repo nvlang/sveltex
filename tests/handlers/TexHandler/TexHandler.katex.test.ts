@@ -138,7 +138,6 @@ suite("TexHandler<'katex'>", async () => {
             expect(log).toHaveBeenNthCalledWith(
                 1,
                 'error',
-                'Error getting KaTeX version:\n\n',
                 expect.stringContaining(id),
             );
             versionMock.mockRestore();

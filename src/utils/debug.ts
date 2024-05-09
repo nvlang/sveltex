@@ -320,20 +320,26 @@ export async function runWithSpinner(
         successMessage: (timeTaken: string) => string;
         failMessage: (timeTaken: string, error: unknown) => string;
     },
+    failureValues?: unknown[],
 ): Promise<0 | 1> {
     const start = time();
     const spinner = ora(messages.startMessage).start();
+    let code: 0 | 1 = 0;
     try {
-        await action(spinner, start);
+        const res = await action(spinner, start);
+        if (failureValues?.includes(res)) code = 1;
+    } catch (err) {
+        code = 1;
+        log('error', prettifyError(err) + '\n\n');
+    }
+    if (code === 0) {
         spinner.succeed(
             pc.green(messages.successMessage(timeToString(timeSince(start)))),
         );
-        return 0;
-    } catch (err) {
+    } else {
         spinner.fail(
-            pc.red(messages.failMessage(timeToString(timeSince(start)), err)),
+            pc.red(messages.failMessage(timeToString(timeSince(start)), code)),
         );
-        log('error', prettifyError(err) + '\n\n');
-        return 1;
     }
+    return code;
 }

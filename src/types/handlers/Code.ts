@@ -1,6 +1,7 @@
 // Types
 import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { RequiredNonNullable, SimpleEscapeInstruction } from '$types';
+import { HighlightJsTheme, StarryNightTheme } from '$types/handlers/misc.js';
 
 /**
  * Union type of supported code backends.
@@ -108,39 +109,43 @@ export interface GeneralCodeConfiguration {
  */
 export type SpecificCodeConfiguration<B extends CodeBackend> =
     B extends 'highlight.js'
-        ? Partial<import('highlight.js').HLJSOptions>
-        : B extends 'prismjs'
-          ? { languages?: string[] | 'all' }
-          : B extends 'starry-night'
-            ? {
-                  /**
-                   * Languages to register. If `'all'`, all languages are
-                   * registered. If `'common'`, some ≈35 common languages are
-                   * registered.
-                   *
-                   * If an array of strings is provided, each string should be a
-                   * scope name to register. The supported scope names can be found
-                   * on the `starry-night`
-                   * [README](https://github.com/wooorm/starry-night/?tab=readme-ov-file#languages)
-                   * on GitHub.
-                   *
-                   * @remarks The scopes upon which any given scope depends will be
-                   * registered automatically.
-                   *
-                   * @defaultValue None.
-                   */
-                  languages?: string[] | 'all' | 'common';
+        ? {
+              theme?: CodeThemeConfiguration<B> | undefined;
+          } & Partial<import('highlight.js').HLJSOptions>
+        : B extends 'starry-night'
+          ? {
+                theme?: CodeThemeConfiguration<B> | undefined;
+            } & {
+                /**
+                 * Languages to register. If `'all'`, all languages are
+                 * registered. If `'common'`, some ≈35 common languages are
+                 * registered.
+                 *
+                 * If an array of strings is provided, each string should be a
+                 * scope name to register. The supported scope names can be found
+                 * on the `starry-night`
+                 * [README](https://github.com/wooorm/starry-night/?tab=readme-ov-file#languages)
+                 * on GitHub.
+                 *
+                 * @remarks The scopes upon which any given scope depends will be
+                 * registered automatically.
+                 *
+                 * @defaultValue None.
+                 */
+                languages?: string[] | 'all' | 'common';
 
-                  /**
-                   * Custom grammars to register.
-                   */
-                  customLanguages?: import('@wooorm/starry-night').Grammar[];
+                /**
+                 * Custom grammars to register.
+                 */
+                customLanguages?: import('@wooorm/starry-night').Grammar[];
 
-                  /**
-                   * Options to pass to the `createStarryNight` function.
-                   */
-                  // options?: import('@wooorm/starry-night').Options;
-              }
+                /**
+                 * Options to pass to the `createStarryNight` function.
+                 */
+                // options?: import('@wooorm/starry-night').Options;
+            }
+          : B extends 'prismjs'
+            ? { languages?: string[] | 'all' }
             : B extends 'escapeOnly'
               ? SimpleEscapeInstruction
               : B extends 'custom'
@@ -148,6 +153,28 @@ export type SpecificCodeConfiguration<B extends CodeBackend> =
                 : B extends 'none'
                   ? Record<string, unknown>
                   : never;
+
+export type ThemableCodeBackend = 'highlight.js' | 'starry-night';
+
+export type CodeThemeConfiguration<B extends ThemableCodeBackend> =
+    B extends 'highlight.js'
+        ? HighlightJsTheme
+        : B extends 'starry-night'
+          ? StarryNightTheme
+          : never;
+
+export type FullCodeThemeConfiguration<B extends ThemableCodeBackend> =
+    RequiredNonNullable<CodeThemeConfiguration<B>>;
+
+export type FullSpecificCodeConfiguration<B extends CodeBackend> =
+    B extends ThemableCodeBackend
+        ? Omit<SpecificCodeConfiguration<B>, 'theme'> & {
+              /**
+               * Theme to use for syntax highlighting.
+               */
+              theme: FullCodeThemeConfiguration<B>;
+          }
+        : SpecificCodeConfiguration<B>;
 
 /**
  * Type of the input passed to the {@link CodeHandler | `CodeHandler`}'s
@@ -166,7 +193,7 @@ export type CodeConfiguration<B extends CodeBackend> =
  */
 export type FullCodeConfiguration<B extends CodeBackend> =
     RequiredNonNullable<GeneralCodeConfiguration> &
-        SpecificCodeConfiguration<B>;
+        FullSpecificCodeConfiguration<B>;
 
 /**
  * Type of the {@link CodeHandler | `CodeHandler`}'s

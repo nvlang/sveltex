@@ -4,7 +4,6 @@ export * from './cache.js';
 export * from './cli.js';
 export * from './css.js';
 export * from './debug.js';
-export * from './diagnosers.js';
 export * from './dvisvgm.js';
 export * from './escape.js';
 export * from './frontmatter.js';

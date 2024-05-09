@@ -1,18 +1,47 @@
 /* eslint-disable vitest/no-commented-out-tests */
-import { suite, describe, it, expect, vi } from 'vitest';
+import {
+    suite,
+    describe,
+    it,
+    expect,
+    vi,
+    afterAll,
+    beforeEach,
+    afterEach,
+} from 'vitest';
 
 import { CodeHandler } from '$handlers';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 import { isFunction } from '$type-guards/utils.js';
+import { spy } from '$tests/fixtures.js';
+import { v4 as uuid } from 'uuid';
 
-vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
-vi.spyOn(consoles, 'warn').mockImplementation(() => undefined);
+function fixture() {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+}
 
 suite("CodeHandler<'highlight.js'>", async () => {
+    fixture();
+    const consoleErrorMock = vi
+        .spyOn(consoles, 'error')
+        .mockImplementation(() => undefined);
+    vi.spyOn(consoles, 'warn').mockImplementation(() => undefined);
+    const { writeFileEnsureDir, existsSync, log } = await spy(
+        ['writeFileEnsureDir', 'writeFile', 'existsSync', 'log'],
+        true,
+    );
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
     const handler = await CodeHandler.create('highlight.js');
-
     describe("CodeHandler.create('highlight.js')", () => {
+        fixture();
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -20,8 +49,89 @@ suite("CodeHandler<'highlight.js'>", async () => {
         });
     });
 
+    describe('css', () => {
+        fixture();
+        it('fetches and generates CSS if run for the first time', async () => {
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.process('', {});
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                1,
+                expect.stringMatching(
+                    /src\/sveltex\/highlight\.js@.*(\.min)?\.css/,
+                ),
+                expect.stringContaining('pre code'),
+            );
+            await handler.process('', {});
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+        });
+
+        it("logs a message if CSS couldn't be written", async () => {
+            const id = uuid();
+            writeFileEnsureDir.mockImplementationOnce(() => {
+                throw new Error(id);
+            });
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.process('', {});
+            expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+            expect(consoleErrorMock).toHaveBeenNthCalledWith(
+                1,
+                expect.stringContaining(id),
+            );
+        });
+
+        it("shouldn't write CSS if configuration.theme.write is false", async () => {
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { write: false } });
+            await handler.process('', {});
+            expect(consoleErrorMock).toHaveBeenCalledTimes(0);
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
+            expect(existsSync).not.toHaveBeenCalled();
+        });
+
+        it("shouldn't write CSS if configuration is not valid", async () => {
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({
+                theme: 123 as unknown as object,
+            });
+            await handler.process('', {});
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
+            expect(existsSync).not.toHaveBeenCalled();
+        });
+
+        it("should work even if version can't be fetched", async () => {
+            const getVersionMock = vi
+                .spyOn(await import('$utils/cdn.js'), 'getVersion')
+                .mockResolvedValueOnce(undefined);
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.process('', {});
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                1,
+                expect.stringMatching(
+                    /src\/sveltex\/highlight\.js@latest.default(\.min)?\.css/,
+                ),
+                expect.stringContaining('pre code'),
+            );
+            getVersionMock.mockRestore();
+        });
+
+        it("should return early if CSS can't be fetched", async () => {
+            const fetchCssMock = vi
+                .spyOn(await import('$utils/cdn.js'), 'fetchCss')
+                .mockResolvedValueOnce(undefined);
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.process('', {});
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
+            fetchCssMock.mockRestore();
+        });
+    });
+
     describe('codeHandler', () => {
+        fixture();
         describe('process()', () => {
+            fixture();
             it('is a function', () => {
                 expect(handler.process).toBeTypeOf('function');
                 expect(handler.process).not.toBeNull();
@@ -96,6 +206,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
         });
 
         describe('configure()', () => {
+            fixture();
             it('is a function', () => {
                 expect(handler.configure).toBeTypeOf('function');
                 expect(handler.configure).not.toBeNull();
@@ -125,6 +236,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
         });
 
         describe('processor', () => {
+            fixture();
             it('is object', () => {
                 expect(handler.processor).toBeTypeOf('object');
                 expect(handler.processor).not.toBeNull();
@@ -132,6 +244,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
         });
 
         describe('configuration', () => {
+            fixture();
             it('is default', async () => {
                 const handler = await CodeHandler.create('highlight.js');
                 expect('configuration' in handler).toBe(true);
@@ -166,6 +279,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
     });
 
     describe('backend', () => {
+        fixture();
         it("is 'highlight.js'", () => {
             expect(handler.backend).toBe('highlight.js');
         });

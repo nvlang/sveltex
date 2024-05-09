@@ -15,14 +15,23 @@ import {
 
 suite('Sveltex', async () => {
     // const { log, spawnCliInstruction, writeFile } =
-    await spy(['writeFile', 'spawnCliInstruction', 'log', 'mkdir'], true);
+    await spy(
+        [
+            'writeFileEnsureDir',
+            'spawnCliInstruction',
+            'log',
+            'mkdir',
+            'existsSync',
+        ],
+        true,
+    );
 
-    let sp: Sveltex<'none', 'none', 'mathjax', 'local'>;
+    let sp: Sveltex<'none', 'highlight.js', 'mathjax', 'local'>;
 
     beforeAll(async () => {
         sp = await sveltex({
             markdownBackend: 'none',
-            codeBackend: 'none',
+            codeBackend: 'highlight.js',
             texBackend: 'mathjax',
             advancedTexBackend: 'local',
         });
@@ -66,11 +75,11 @@ suite('Sveltex', async () => {
     describe('Sveltex.markup + Sveltex.script', () => {
         it('works (basic)', async () => {
             const markupOut = await sp.markup({
-                content: '<tex ref="something">x</tex>',
+                content: '<tex ref="something">x</tex> `code`',
                 filename: 'test-basic.sveltex',
             });
             expect((markupOut as Processed).code).toEqual(
-                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>',
+                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure> <code class="language-plaintext">code</code>',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,
@@ -83,11 +92,11 @@ suite('Sveltex', async () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
-                markup: '<tex ref="something">x</tex>',
+                markup: '<tex ref="something">x</tex> `code`',
                 filename: 'test-basic.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n",
+                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -142,7 +151,7 @@ suite('Sveltex', async () => {
                 filename: 'test.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n",
+                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -171,7 +180,7 @@ suite('Sveltex', async () => {
                 filename: 'test.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\n```\n",
+                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
             );
 
             sp.advancedTexHandler.texComponents = {};

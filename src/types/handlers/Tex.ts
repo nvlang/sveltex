@@ -2,11 +2,16 @@
 import type { TexHandler } from '$handlers';
 import type { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 import type {
-    FirstTwoLevelsRequiredNotUndefined,
     MathjaxConfiguration,
     MathjaxConversionOptions,
     RequiredNonNullable,
 } from '$types/utils';
+import {
+    FullKatexCssConfiguration,
+    FullMathjaxCssConfiguration,
+    KatexCssConfiguration,
+    MathjaxCssConfiguration,
+} from '$types/handlers/misc.js';
 
 /**
  * Supported TeX backends.
@@ -51,11 +56,11 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
  * `configure` function.
  */
 export type TexConfiguration<B extends TexBackend> = B extends 'katex'
-    ? TexConfigurationBase & {
+    ? { css?: KatexCssConfiguration | undefined } & {
           katex?: Omit<import('katex').KatexOptions, 'displayMode'> | undefined;
       }
     : B extends 'mathjax'
-      ? TexConfigurationBase & {
+      ? { css?: MathjaxCssConfiguration | undefined } & {
             outputFormat?: 'svg' | 'chtml' | undefined;
             mathjaxConfiguration?: MathjaxConfiguration | undefined;
         }
@@ -65,62 +70,21 @@ export type TexConfiguration<B extends TexBackend> = B extends 'katex'
           ? Record<string, unknown>
           : never;
 
-export interface TexConfigurationBase {
-    css?: LocalCssConfiguration | undefined;
-}
-
-export interface LocalCssConfiguration {
-    /**
-     * @defaultValue `'src/sveltex'`
-     */
-    dir?: string | undefined;
-    /**
-     * @defaultValue `true`
-     */
-    write?: boolean | undefined;
-    /**
-     * Whether to import the CSS file to which {@link dir | `path`} points in
-     * the Svelte component.
-     *
-     * @defaultValue `true`
-     */
-    read?: boolean | undefined;
-}
-
-export interface CdnCssConfiguration {
-    type: 'cdn';
-    /**
-     * The URL of the CSS file to use.
-     */
-    url?: string | undefined;
-    /**
-     * Whether to import the CSS file to which {@link url | `url`} points in the
-     * Svelte component.
-     *
-     * @defaultValue `true`
-     */
-    read?: boolean | undefined;
-}
-
 /**
  * Return type of the
  * {@link TexHandler.configuration | `TexHandler.configuration`} getter.
  *
- * @typeParam B - The type of the tex processor.
- * @returns If {@link B | `B`} is `'mathjax'`, return
- * {@link TexConfiguration | `TexConfiguration<B>`} with all top-level
- * properties required and non-nullable. Otherwise, return
- * {@link TexConfiguration | `TexConfiguration<B>`} as-is.
- *
- * @remarks This is the type of the argument passed to the tex handler's
- * `configure` function.
+ * @typeParam B - The type of the tex backend.
  */
-export type FullTexConfiguration<B extends TexBackend> = B extends
-    | 'mathjax'
-    | 'katex'
-    ? RequiredNonNullable<TexConfiguration<B>> &
-          FirstTwoLevelsRequiredNotUndefined<TexConfigurationBase>
-    : TexConfiguration<B>;
+export type FullTexConfiguration<B extends TexBackend> = B extends 'mathjax'
+    ? RequiredNonNullable<TexConfiguration<B>> & {
+          css: FullMathjaxCssConfiguration;
+      }
+    : B extends 'katex'
+      ? RequiredNonNullable<TexConfiguration<B>> & {
+            css: FullKatexCssConfiguration;
+        }
+      : TexConfiguration<B>;
 
 /**
  * Type of the function that processes a tex string.

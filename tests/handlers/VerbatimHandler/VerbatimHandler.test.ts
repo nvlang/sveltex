@@ -409,7 +409,7 @@ suite('VerbatimHandler', async () => {
             expect(log).toHaveBeenNthCalledWith(
                 1,
                 'error',
-                'Invalid verbatim environment configuration for "Code":\n- Expected "processInner" to be a valid description of how the inner content of the verbatim environment should be processed. Instead, got: \'something\'\n- The "defaultAttributes" field must be a non-null object. Instead, got: \'something\'\n- The "attributeForwardingBlocklist" field must be an array of strings. Instead, got: \'something\'\n- The "attributeForwardingAllowlist" field must be an array of strings or the string "all". Instead, got: \'something\'\n- The "component" field must be a string. Instead, got: 5\n- The "respectSelfClosing" field must be a boolean. Instead, got: \'something\'\n- The "selfCloseOutputWith" field must be one of "auto", "/>", or " />". Instead, got: \'something\'\n',
+                'Invalid verbatim environment configuration for "Code":\n- Expected "processInner" to be a valid description of how the inner content of the verbatim environment should be processed. Instead, got a string.\n- The "defaultAttributes" field must be a non-null object. Instead, got a string.\n- The "attributeForwardingBlocklist" field must be an array of strings. Instead, got a string.\n- The "attributeForwardingAllowlist" field must be an array of strings or the string "all". Instead, got a string.\n- The "component" field must be a string. Instead, got a number.\n- The "respectSelfClosing" field must be a boolean. Instead, got a string.\n- The "selfCloseOutputWith" field must be one of "auto", "/>", or " />". Instead, got a string.\n',
             );
         });
         it('should log helpful error if any invalid verbatim configurations are passed 2', async () => {
@@ -427,7 +427,7 @@ suite('VerbatimHandler', async () => {
             expect(log).toHaveBeenNthCalledWith(
                 1,
                 'error',
-                'Invalid verbatim environment configuration for "Code":\n- Expected configuration to be non-null object. Instead, got: \'something\'\n',
+                'Invalid verbatim environment configuration for "Code":\n- Expected configuration to be non-null object. Instead, got a string.\n',
             );
         });
     });

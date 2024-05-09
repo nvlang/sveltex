@@ -24,6 +24,7 @@ import { interpretAttributes } from '$utils/misc.js';
 import findCacheDirectory from 'find-cache-dir';
 import { homedir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
+import { isThemableCodeBackend } from '$type-guards/code.js';
 
 /**
  * Get the default configuration for a TeX backend.
@@ -281,10 +282,9 @@ export function getDefaultAdvancedTexConfiguration<
  * Default CodeConfiguration
  */
 export function getDefaultCodeConfiguration<C extends CodeBackend>(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _codeBackend: C,
+    codeBackend: C,
 ): FullCodeConfiguration<C> {
-    return {
+    const base: FullCodeConfiguration<CodeBackend> = {
         wrapClassPrefix: 'language-',
         wrap: (opts: CodeProcessOptions & { wrapClassPrefix: string }) => {
             const attr =
@@ -295,7 +295,33 @@ export function getDefaultCodeConfiguration<C extends CodeBackend>(
                 ? ([`<code${attr}>`, '</code>'] as [string, string])
                 : ([`<pre><code${attr}>`, '</code></pre>'] as [string, string]);
         },
-    } as FullCodeConfiguration<C>;
+    };
+    if (!isThemableCodeBackend(codeBackend)) {
+        return base as FullCodeConfiguration<C>;
+    }
+    const commonThemeProps = {
+        cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
+        dir: 'src/sveltex',
+        name: 'default',
+        read: true,
+        write: true,
+        timeout: 1000,
+    };
+    switch (codeBackend) {
+        case 'highlight.js':
+            return {
+                ...base,
+                theme: { ...commonThemeProps, min: true },
+            } as FullCodeConfiguration<CodeBackend> as FullCodeConfiguration<C>;
+        case 'starry-night':
+            return {
+                ...base,
+                theme: { ...commonThemeProps, mode: 'both' },
+            } as FullCodeConfiguration<CodeBackend> as FullCodeConfiguration<C>;
+        /* v8 ignore next 2 (unreachable code) */
+        default:
+            return base as FullCodeConfiguration<C>;
+    }
 }
 
 /**

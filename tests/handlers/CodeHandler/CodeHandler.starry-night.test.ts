@@ -1,16 +1,45 @@
 /* eslint-disable vitest/no-commented-out-tests */
-import { suite, describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+    suite,
+    describe,
+    it,
+    expect,
+    vi,
+    beforeEach,
+    afterEach,
+    afterAll,
+} from 'vitest';
 
 import { CodeHandler } from '$handlers';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 import { isFunction } from '$type-guards/utils.js';
+import { spy } from '$tests/fixtures.js';
+
+function fixture() {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+}
 
 suite.concurrent("CodeHandler<'starry-night'>", async () => {
+    fixture();
+    const { writeFileEnsureDir } = await spy(
+        ['writeFileEnsureDir', 'existsSync'],
+        true,
+    );
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
+
     const handler = await CodeHandler.create('starry-night');
     await handler.configure({ languages: 'common' });
 
     describe.concurrent("CodeHandler.create('starry-night')", () => {
+        fixture();
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -18,8 +47,26 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
         });
     });
 
+    describe('css', () => {
+        fixture();
+        it('fetches and generates CSS if run for the first time', async () => {
+            const handler = await CodeHandler.create('starry-night');
+            await handler.process('');
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                1,
+                expect.stringMatching(/src\/sveltex\/starry-night@.*\.css/),
+                expect.stringContaining(':root'),
+            );
+            await handler.process('');
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+        });
+    });
+
     describe.concurrent('codeHandler', () => {
+        fixture();
         describe.concurrent('process()', () => {
+            fixture();
             it('is a function', () => {
                 expect(handler.process).toBeTypeOf('function');
                 expect(handler.process).not.toBeNull();
@@ -102,6 +149,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
         });
 
         describe.sequential('configure()', () => {
+            fixture();
             const consoleWarnMock = vi
                 .spyOn(consoles, 'warn')
                 .mockImplementation(() => undefined);
@@ -226,6 +274,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
         });
 
         describe.concurrent('processor', () => {
+            fixture();
             it('is object', () => {
                 expect(handler.processor).toBeTypeOf('object');
                 expect(handler.processor).not.toBeNull();
@@ -233,6 +282,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
         });
 
         describe.concurrent('configuration', () => {
+            fixture();
             it('is default', async () => {
                 const handler = await CodeHandler.create('starry-night');
                 expect('configuration' in handler).toBe(true);
@@ -267,6 +317,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
     });
 
     describe.concurrent('backend', () => {
+        fixture();
         it("is 'starry-night'", () => {
             expect(handler.backend).toBe('starry-night');
         });

@@ -25,12 +25,12 @@ import {
 } from '$utils';
 import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js';
 import { getDefaultTexConfiguration } from '$config/defaults.js';
-import fetch from 'node-fetch';
 import { join, normalize } from 'path';
 import ora from 'ora';
 import CleanCSS, { Output } from 'clean-css';
 import pc from 'picocolors';
 import prettyBytes from 'pretty-bytes';
+import { fetchCss, getVersion } from '$utils/cdn.js';
 
 type StringIfMathjaxOrKatex<B extends TexBackend> = B extends
     | 'mathjax'
@@ -243,97 +243,59 @@ export class TexHandler<B extends TexBackend> extends Handler<
                         texHandler: TexHandler<'katex'>,
                     ) => Promise<void> = async (texHandler) => {
                         const stylesheetPath = texHandler.stylesheetPath;
-                        if (texHandler.configuration.css.write) {
-                            // If the CSS file already exists and the backend
-                            // version is set, we don't need to fetch the CSS.
-                            // If the backend version is `'latest'`, this
-                            // assumption is a bit flawed, but alas, it shall
-                            // suffice for now.
-                            if (fs.existsSync(stylesheetPath)) return;
+                        // If the CSS file already exists and the backend
+                        // version is set, we don't need to fetch the CSS.
+                        // If the backend version is `'latest'`, this
+                        // assumption is a bit flawed, but alas, it shall
+                        // suffice for now.
+                        if (
+                            !texHandler.configuration.css.write ||
+                            fs.existsSync(stylesheetPath)
+                        ) {
+                            return;
+                        }
 
-                            const url = `https://cdn.jsdelivr.net/npm/katex@${texHandler.backendVersion}/dist/katex.min.css`;
+                        texHandler.stylesheetHasBeenGenerated = true;
 
-                            const spinner = ora(
-                                `Fetching KaTeX stylesheet from "${url}"`,
-                            ).start();
+                        const css = await fetchCss(
+                            'katex',
+                            texHandler.configuration.css,
+                            texHandler.backendVersion,
+                        );
 
-                            try {
-                                // Fetch the CSS file from JSdelivr
-                                const response = await fetch(url);
+                        if (!css) return;
 
-                                // Get the CSS content
-                                // Check if the response is ok (status in the range 200-299)
-                                if (!response.ok) {
-                                    spinner.fail(
-                                        `HTTP error: ${String(response.status)}.`,
-                                    );
-                                    throw new Error(
-                                        `HTTP error fetching KaTeX stylesheet from JSdelivr (${url}): ${String(response.status)}.`,
-                                    );
-                                }
+                        const spinner = ora(
+                            `Writing KaTeX stylesheet to ${stylesheetPath}`,
+                        ).start();
 
-                                spinner.text = 'Reading response';
+                        try {
+                            // Write the CSS to the specified path
+                            await fs.writeFileEnsureDir(stylesheetPath, css);
 
-                                // Get the CSS content as text
-                                const css = await response.text();
+                            texHandler.stylesheetHasBeenGenerated = true;
 
-                                try {
-                                    spinner.text = `Writing KaTeX stylesheet to ${stylesheetPath}`;
-
-                                    // Write the CSS to the specified path
-                                    await fs.writeFileEnsureDir(
-                                        stylesheetPath,
-                                        css,
-                                    );
-
-                                    texHandler.stylesheetHasBeenGenerated =
-                                        true;
-
-                                    spinner.succeed(
-                                        pc.green(
-                                            `Wrote KaTeX stylesheet to ${stylesheetPath}`,
-                                        ),
-                                    );
-                                } catch (err) {
-                                    spinner.fail(
-                                        pc.red(
-                                            `Error writing KaTeX stylesheet to ${stylesheetPath}`,
-                                        ),
-                                    );
-                                    log('error', prettifyError(err) + '\n\n');
-                                }
-                            } catch (err) {
-                                spinner.fail(
-                                    pc.red(
-                                        `Error fetching KaTeX stylesheet from "${url}"`,
-                                    ),
-                                );
-                                log('error', prettifyError(err) + '\n\n');
-                            }
+                            spinner.succeed(
+                                pc.green(
+                                    `Wrote KaTeX stylesheet to ${stylesheetPath}`,
+                                ),
+                            );
+                        } catch (err) {
+                            spinner.fail(
+                                pc.red(
+                                    `Error writing KaTeX stylesheet to ${stylesheetPath}`,
+                                ),
+                            );
+                            log('error', prettifyError(err) + '\n\n');
                         }
                     };
-                    let backendVersion: string;
-                    try {
-                        backendVersion = (
-                            await import('katex/package.json', {
-                                with: { type: 'json' },
-                            })
-                        ).default.version;
-                    } catch (err) {
-                        backendVersion = 'latest';
-                        log(
-                            'error',
-                            'Error getting KaTeX version:\n\n',
-                            prettifyError(err) + '\n\n',
-                        );
-                    }
                     const th = new TexHandler<'katex'>({
                         backend: 'katex',
                         configuration: getDefaultTexConfiguration('katex'),
                         process,
                         configure: () => undefined,
                         processor: {},
-                        backendVersion,
+                        backendVersion: (await getVersion('katex')) ?? 'latest',
                         generateStylesheet,
                     });
                     await th.configure({});
@@ -369,21 +331,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     const adaptor = liteAdaptor();
                     RegisterHTMLHandler(adaptor);
 
-                    let backendVersion: string;
-                    try {
-                        backendVersion = (
-                            await import('mathjax-full/package.json', {
-                                with: { type: 'json' },
-                            })
-                        ).default.version;
-                    } catch (err) {
-                        backendVersion = 'latest';
-                        log(
-                            'error',
-                            'Error getting MathJax version:\n\n',
-                            prettifyError(err) + '\n\n',
-                        );
-                    }
                     const generateStylesheet: (
                         texHandler: TexHandler<'mathjax'>,
                     ) => Promise<void> = async (texHandler) => {
@@ -462,7 +409,8 @@ export class TexHandler<B extends TexBackend> extends Handler<
 
                     const handler = new TexHandler<'mathjax'>({
                         backend: 'mathjax',
-                        backendVersion,
+                        backendVersion:
+                            (await getVersion('mathjax-full')) ?? 'latest',
                         configure: (_configuration, handler) => {
                             handler.processor = mathjax.document('', {
                                 InputJax: new TeX(
