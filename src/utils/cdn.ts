@@ -48,26 +48,27 @@ export async function fetchFromCdn(
     cdns: SupportedCdn[] = ['jsdelivr', 'esm.sh', 'unpkg'],
     timeout: number = 1000,
 ): Promise<string | undefined> {
-    let css: string | undefined;
+    let result: string | undefined;
     if (cdns.length === 0) throw new Error('No CDNs specified');
     await runWithSpinner(
         async (spinner) => {
             for (const cdn of cdns) {
                 const url = linkify(pkg, resource, version, cdn);
-                spinner.text = `Fetching CSS for ${pkg} from ${cdn}`;
-                css = await fetchWithTimeout(url, timeout);
-                if (css) return 0;
+                spinner.text = `Fetching ${url}`;
+                result = await fetchWithTimeout(url, timeout);
+                if (result) return 0; // Breaks out of runWithSpinner
             }
             return 1;
         },
         {
-            startMessage: `Fetching CSS for ${pkg}`,
-            failMessage: (t) => `Couldn't fetch CSS for ${pkg} (took ${t})`,
-            successMessage: (t) => `Fetched CSS for ${pkg} in ${t}`,
+            startMessage: `Fetching ${resource} for ${pkg}`,
+            failMessage: (t) =>
+                `Couldn't fetch ${resource} for ${pkg} (took ${t})`,
+            successMessage: (t) => `Fetched ${resource} for ${pkg} in ${t}`,
         },
         [1],
     );
-    return css;
+    return result;
 }
 
 export function linkify(

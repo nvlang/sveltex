@@ -11,17 +11,16 @@ import {
     isString,
 } from '$type-guards';
 import {
-    highlightJsThemeNames,
     isHighlightJsThemeName,
     isStarryNightThemeName,
     isSupportedCdn,
     isThemableCodeBackend,
-    starryNightThemeNames,
     supportedCdns,
     themableCodeBackends,
 } from '$type-guards/code.js';
 import { log } from '$utils/debug.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
+import { highlightJsThemeNames, starryNightThemeNames } from 'src/data/code.js';
 
 import assert from 'node:assert';
 

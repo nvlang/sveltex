@@ -12,8 +12,8 @@ function fixture() {
 
 suite("TexHandler<'katex'>", async () => {
     fixture();
-    const { writeFile, log, existsSync } = await spy(
-        ['writeFile', 'log', 'existsSync', 'mkdir'],
+    const { writeFileEnsureDir, log, existsSync } = await spy(
+        ['writeFileEnsureDir', 'log', 'existsSync', 'mkdir'],
         true,
     );
     const handler = await TexHandler.create('katex');
@@ -31,14 +31,13 @@ suite("TexHandler<'katex'>", async () => {
 
         it('generates CSS', async () => {
             await (await TexHandler.create('katex')).process('');
-            expect(writeFile).toHaveBeenCalledTimes(1);
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(61);
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
                     /src\/sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
                 ),
                 expect.stringContaining('fonts/KaTeX'),
-                'utf8',
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -48,14 +47,13 @@ suite("TexHandler<'katex'>", async () => {
             const handler = await TexHandler.create('katex');
             await handler.process('');
             await handler.process('');
-            expect(writeFile).toHaveBeenCalledTimes(1);
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(61);
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
                     /src\/sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
                 ),
                 expect.stringContaining('fonts/KaTeX'),
-                'utf8',
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -63,7 +61,7 @@ suite("TexHandler<'katex'>", async () => {
         it("doesn't generate CSS if the file already exists", async () => {
             existsSync.mockReturnValueOnce(true);
             await (await TexHandler.create('katex')).process('');
-            expect(writeFile).not.toHaveBeenCalled();
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
         });
 
@@ -72,7 +70,7 @@ suite("TexHandler<'katex'>", async () => {
             const handler = await TexHandler.create('katex');
             await handler.configure({ css: { write: false } });
             await handler.process('');
-            expect(writeFile).not.toHaveBeenCalled();
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
         });
     });
@@ -144,9 +142,24 @@ suite("TexHandler<'katex'>", async () => {
         });
         it("should silently log error if there's a problem writing stylesheet", async () => {
             const id = uuid();
-            writeFile.mockImplementationOnce(() => {
+            writeFileEnsureDir.mockImplementationOnce(() => {
                 throw new Error(id);
             });
+            await (await TexHandler.create('katex')).process('');
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
+                'error',
+                expect.stringContaining(id),
+            );
+        });
+        it("should silently log error if there's a problem writing fonts", async () => {
+            const id = uuid();
+            writeFileEnsureDir
+                .mockImplementationOnce(() => undefined)
+                .mockImplementationOnce(() => {
+                    throw new Error(id);
+                });
             await (await TexHandler.create('katex')).process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(

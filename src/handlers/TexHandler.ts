@@ -26,11 +26,10 @@ import {
 import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js';
 import { getDefaultTexConfiguration } from '$config/defaults.js';
 import { join, normalize } from 'path';
-import ora from 'ora';
 import CleanCSS, { Output } from 'clean-css';
-import pc from 'picocolors';
 import prettyBytes from 'pretty-bytes';
-import { fetchCss, getVersion } from '$utils/cdn.js';
+import { fetchCss, fetchFromCdn, getVersion } from '$utils/cdn.js';
+import { katexFonts } from 'src/data/tex.js';
 
 type StringIfMathjaxOrKatex<B extends TexBackend> = B extends
     | 'mathjax'
@@ -265,29 +264,35 @@ export class TexHandler<B extends TexBackend> extends Handler<
 
                         if (!css) return;
 
-                        const spinner = ora(
-                            `Writing KaTeX stylesheet to ${stylesheetPath}`,
-                        ).start();
-
+                        // Write the CSS to the specified path
                         try {
-                            // Write the CSS to the specified path
                             await fs.writeFileEnsureDir(stylesheetPath, css);
-
-                            texHandler.stylesheetHasBeenGenerated = true;
-
-                            spinner.succeed(
-                                pc.green(
-                                    `Wrote KaTeX stylesheet to ${stylesheetPath}`,
-                                ),
-                            );
                         } catch (err) {
-                            spinner.fail(
-                                pc.red(
-                                    `Error writing KaTeX stylesheet to ${stylesheetPath}`,
-                                ),
-                            );
                             log('error', prettifyError(err) + '\n\n');
                         }
+
+                        const stylesheetDir = stylesheetPath
+                            .split('/')
+                            .slice(0, -1)
+                            .join('/');
+
+                        await Promise.all(
+                            katexFonts.map(async (fontName) => {
+                                const fontFile = await fetchFromCdn(
+                                    'katex',
+                                    `dist/fonts/${fontName}`,
+                                );
+                                if (!fontFile) return;
+                                try {
+                                    await fs.writeFileEnsureDir(
+                                        join(stylesheetDir, 'fonts', fontName),
+                                        fontFile,
+                                    );
+                                } catch (err) {
+                                    log('error', prettifyError(err) + '\n\n');
+                                }
+                            }),
+                        );
                     };
                     const th = new TexHandler<'katex'>({
                         backend: 'katex',
