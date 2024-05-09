@@ -48,6 +48,10 @@ import { assert, is } from 'tsafe';
  * **Important**: You must `await` the result of this function before using the
  * `Sveltex` instance.
  *
+ * @param backendChoices - The backend choices to use for the Sveltex instance.
+ * @param configuration - The configuration to use for the Sveltex instance. The
+ * instance can also be configured later using the `configure` method.
+ *
  * @throws Error if the backend choices are invalid.
  */
 export async function sveltex<
@@ -57,16 +61,19 @@ export async function sveltex<
     A extends AdvancedTexBackend,
 >(
     backendChoices?: BackendChoices<M, C, T, A> | undefined,
+    configuration?: SveltexConfiguration<M, C, T, A>,
 ): Promise<Sveltex<M, C, T, A>> {
     if (backendChoices && diagnoseBackendChoices(backendChoices).errors !== 0) {
         throw new Error('Invalid backend choices. See console for details.');
     }
-    return await Sveltex.create<M, C, T, A>(
+    const s = await Sveltex.create<M, C, T, A>(
         backendChoices?.markdownBackend ?? ('none' as M),
         backendChoices?.codeBackend ?? ('none' as C),
         backendChoices?.texBackend ?? ('none' as T),
         backendChoices?.advancedTexBackend ?? ('none' as A),
     );
+    if (configuration) await s.configure(configuration);
+    return s;
 }
 
 export function notCustom<B extends string>(
