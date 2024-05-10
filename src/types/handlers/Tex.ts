@@ -7,10 +7,10 @@ import type {
     RequiredNonNullable,
 } from '$types/utils';
 import {
-    FullKatexCssConfiguration,
-    FullMathjaxCssConfiguration,
-    KatexCssConfiguration,
-    MathjaxCssConfiguration,
+    CssApproach,
+    CssApproachLocal,
+    CssConfiguration,
+    FullCssConfiguration,
 } from '$types/handlers/misc.js';
 
 /**
@@ -55,14 +55,19 @@ export type TexProcessor<B extends TexBackend> = B extends 'katex'
  * @remarks This is the type of the argument passed to the tex handler's
  * `configure` function.
  */
-export type TexConfiguration<B extends TexBackend> = B extends 'katex'
-    ? { css?: KatexCssConfiguration | undefined } & {
+export type TexConfiguration<
+    B extends TexBackend,
+    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
+> = B extends 'katex'
+    ? {
+          css?: CssConfiguration<CA> | undefined;
           katex?: Omit<import('katex').KatexOptions, 'displayMode'> | undefined;
       }
     : B extends 'mathjax'
-      ? { css?: MathjaxCssConfiguration | undefined } & {
+      ? {
+            css?: CssConfiguration<CA> | undefined;
             outputFormat?: 'svg' | 'chtml' | undefined;
-            mathjaxConfiguration?: MathjaxConfiguration | undefined;
+            mathjax?: MathjaxConfiguration | undefined;
         }
       : B extends 'custom'
         ? Record<string, unknown>
@@ -76,15 +81,20 @@ export type TexConfiguration<B extends TexBackend> = B extends 'katex'
  *
  * @typeParam B - The type of the tex backend.
  */
-export type FullTexConfiguration<B extends TexBackend> = B extends 'mathjax'
-    ? RequiredNonNullable<TexConfiguration<B>> & {
-          css: FullMathjaxCssConfiguration;
+export type FullTexConfiguration<
+    B extends TexBackend,
+    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
+> = B extends 'mathjax' | 'katex'
+    ? RequiredNonNullable<Omit<TexConfiguration<B, CA>, 'css'>> & {
+          css: FullCssConfiguration<CA>;
       }
+    : TexConfiguration<B, CA>;
+
+type PossibleTexCssApproach<B extends TexBackend> = B extends 'mathjax'
+    ? CssApproachLocal
     : B extends 'katex'
-      ? RequiredNonNullable<TexConfiguration<B>> & {
-            css: FullKatexCssConfiguration;
-        }
-      : TexConfiguration<B>;
+      ? CssApproach
+      : never;
 
 /**
  * Type of the function that processes a tex string.
@@ -111,7 +121,10 @@ export type TexProcessFn<B extends TexBackend> =
  *
  * @typeParam B - Tex backend.
  */
-export type TexConfigureFn<B extends TexBackend> =
+export type TexConfigureFn<
+    B extends TexBackend,
+    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
+> =
     /**
      * Function to configure a {@link TexHandler | `TexHandler`} instance.
      *
@@ -120,7 +133,7 @@ export type TexConfigureFn<B extends TexBackend> =
      * @returns `void`, or a promise resolving to it.
      */
     (
-        opts: TexConfiguration<B>,
+        opts: TexConfiguration<B, CA>,
         texHandler: TexHandler<B>,
     ) => void | Promise<void>;
 
@@ -131,5 +144,5 @@ export type TexProcessOptions<B extends TexBackend> = B extends 'mathjax'
       }
     : {
           inline?: boolean | undefined;
-          options?: TexConfiguration<B> | undefined;
+          options?: TexConfiguration<B, never> | undefined;
       };

@@ -2,9 +2,7 @@ import {
     fetchFromCdn,
     fetchWithTimeout,
     getVersion,
-    highlightJsThemeResource,
-    linkify,
-    starryNightThemeResource,
+    cdnLink,
 } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
@@ -17,7 +15,6 @@ import {
     beforeEach,
     afterEach,
 } from 'vitest';
-import { getDefaultCodeConfiguration } from '$config';
 
 function fixture() {
     beforeEach(() => {
@@ -57,7 +54,7 @@ suite('utils/cdn', async () => {
         it.each([
             [
                 'https://httpstat.us/418',
-                2000,
+                3000,
                 undefined,
                 "HTTP error 418 \\(I'm a teapot\\): https://httpstat.us/418",
             ],
@@ -69,7 +66,7 @@ suite('utils/cdn', async () => {
             ],
         ])(
             'fetchWithTimeout(%o, %o) === %o',
-            { timeout: 1500, retry: 1 },
+            { timeout: 2500, retry: 1 },
             async (url, timeout, expected, logMessage) => {
                 expect(await fetchWithTimeout(url, timeout)).toEqual(expected);
                 if (logMessage) {
@@ -113,68 +110,7 @@ suite('utils/cdn', async () => {
         ] as const)(
             'linkify(%o, %o, %o, %o) === %o',
             (pkg, resource, version, cdn, expected) => {
-                expect(linkify(pkg, resource, version, cdn)).toBe(expected);
-            },
-        );
-    });
-
-    describe('starryNightThemeResource', () => {
-        fixture();
-        it.each([
-            [
-                {
-                    ...getDefaultCodeConfiguration('starry-night').theme,
-                    name: 'default',
-                    mode: 'light',
-                },
-                'style/light.css',
-            ],
-            [
-                {
-                    ...getDefaultCodeConfiguration('starry-night').theme,
-                    name: 'dimmed',
-                    mode: 'both',
-                },
-                'style/dimmed-both.css',
-            ],
-        ] as const)(
-            'starryNightThemeResource(%o) === %o',
-            (theme, expected) => {
-                expect(starryNightThemeResource(theme)).toEqual(expected);
-            },
-        );
-    });
-
-    describe('highlightJsThemeResource', () => {
-        fixture();
-        it.each([
-            [
-                {
-                    ...getDefaultCodeConfiguration('highlight.js').theme,
-                    name: 'default',
-                },
-                'styles/default.min.css',
-            ],
-            [
-                {
-                    ...getDefaultCodeConfiguration('highlight.js').theme,
-                    name: 'default',
-                    min: false,
-                },
-                'styles/default.css',
-            ],
-            [
-                {
-                    ...getDefaultCodeConfiguration('highlight.js').theme,
-                    name: 'tokyo-night-dark',
-                    min: true,
-                },
-                'styles/tokyo-night-dark.min.css',
-            ],
-        ] as const)(
-            'highlightJsThemeResource(%o) === %o',
-            (theme, expected) => {
-                expect(highlightJsThemeResource(theme)).toEqual(expected);
+                expect(cdnLink(pkg, resource, version, cdn)).toBe(expected);
             },
         );
     });

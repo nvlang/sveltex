@@ -1,7 +1,7 @@
 // Types
 import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { RequiredNonNullable, SimpleEscapeInstruction } from '$types';
-import { HighlightJsTheme, StarryNightTheme } from '$types/handlers/misc.js';
+import { CodeTheme, FullCodeTheme } from '$types/handlers/misc.js';
 
 /**
  * Union type of supported code backends.
@@ -109,13 +109,9 @@ export interface GeneralCodeConfiguration {
  */
 export type SpecificCodeConfiguration<B extends CodeBackend> =
     B extends 'highlight.js'
-        ? {
-              theme?: CodeThemeConfiguration<B> | undefined;
-          } & Partial<import('highlight.js').HLJSOptions>
+        ? Partial<import('highlight.js').HLJSOptions>
         : B extends 'starry-night'
           ? {
-                theme?: CodeThemeConfiguration<B> | undefined;
-            } & {
                 /**
                  * Languages to register. If `'all'`, all languages are
                  * registered. If `'common'`, some ≈35 common languages are
@@ -156,23 +152,23 @@ export type SpecificCodeConfiguration<B extends CodeBackend> =
 
 export type ThemableCodeBackend = 'highlight.js' | 'starry-night';
 
-export type CodeThemeConfiguration<B extends ThemableCodeBackend> =
-    B extends 'highlight.js'
-        ? HighlightJsTheme
-        : B extends 'starry-night'
-          ? StarryNightTheme
-          : never;
-
-export type FullCodeThemeConfiguration<B extends ThemableCodeBackend> =
-    RequiredNonNullable<CodeThemeConfiguration<B>>;
-
-export type FullSpecificCodeConfiguration<B extends CodeBackend> =
+type SpecificCodeAndThemeConfiguration<B extends CodeBackend> =
     B extends ThemableCodeBackend
-        ? Omit<SpecificCodeConfiguration<B>, 'theme'> & {
+        ? SpecificCodeConfiguration<B> & {
               /**
-               * Theme to use for syntax highlighting.
+               * Configure the theme to use for syntax highlighting.
                */
-              theme: FullCodeThemeConfiguration<B>;
+              theme?: CodeTheme<B, 'cdn' | 'self-hosted' | 'none'> | undefined;
+          }
+        : SpecificCodeConfiguration<B>;
+
+type FullSpecificCodeAndThemeConfiguration<B extends CodeBackend> =
+    B extends ThemableCodeBackend
+        ? SpecificCodeConfiguration<B> & {
+              /**
+               * Configure the theme to use for syntax highlighting.
+               */
+              theme: FullCodeTheme<B, 'cdn' | 'self-hosted' | 'none'>;
           }
         : SpecificCodeConfiguration<B>;
 
@@ -183,7 +179,7 @@ export type FullSpecificCodeConfiguration<B extends CodeBackend> =
  * @typeParam B - Code backend.
  */
 export type CodeConfiguration<B extends CodeBackend> =
-    GeneralCodeConfiguration & SpecificCodeConfiguration<B>;
+    GeneralCodeConfiguration & SpecificCodeAndThemeConfiguration<B>;
 
 /**
  * Return type of the {@link CodeHandler | `CodeHandler`}'s
@@ -193,7 +189,7 @@ export type CodeConfiguration<B extends CodeBackend> =
  */
 export type FullCodeConfiguration<B extends CodeBackend> =
     RequiredNonNullable<GeneralCodeConfiguration> &
-        FullSpecificCodeConfiguration<B>;
+        FullSpecificCodeAndThemeConfiguration<B>;
 
 /**
  * Type of the {@link CodeHandler | `CodeHandler`}'s

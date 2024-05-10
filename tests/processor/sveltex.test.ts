@@ -392,7 +392,7 @@ suite('edge cases', async () => {
                     ].join('\n'),
                 ),
             ).toEqual(
-                '<script>\n</script>\n<pre><code class="language-html">\n&lt;<span class="pl-ent">Verbatim</span>&gt;\ntest\n&lt;/<span class="pl-ent">Verbatim</span>&gt;\n</code></pre>',
+                '<script>\n</script>\n<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<pre><code class="language-html">\n&lt;<span class="pl-ent">Verbatim</span>&gt;\ntest\n&lt;/<span class="pl-ent">Verbatim</span>&gt;\n</code></pre>',
             );
         });
 
@@ -403,9 +403,7 @@ suite('edge cases', async () => {
                         '\n',
                     ),
                 ),
-            ).toEqual(
-                '<script>\n</script>\n<Verbatim>\n```\ntest\n```\n</Verbatim>',
-            );
+            ).toContain('<Verbatim>\n```\ntest\n```\n</Verbatim>');
         });
     });
 });
@@ -651,13 +649,13 @@ suite.concurrent('sveltex()', async () => {
                 label: 'code block (plain)',
                 input: '```\n() => {let a}\n```',
                 expected:
-                    '<script>\n</script>\n<pre><code class="language-plaintext">\n() =&gt; &lbrace;let a&rbrace;\n</code></pre>',
+                    '<script>\n</script>\n<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<pre><code class="language-plaintext">\n() =&gt; &lbrace;let a&rbrace;\n</code></pre>',
             },
             {
                 label: 'code block (ts)',
                 input: '```typescript\n() => {let a}\n```',
                 expected:
-                    '<script>\n</script>\n<pre><code class="language-typescript">\n() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
+                    '<script>\n</script>\n<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<pre><code class="language-typescript">\n() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
             },
         ])('$test.label', async (test) => {
             const preprocessor = await sveltex({

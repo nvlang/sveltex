@@ -5,15 +5,16 @@ import { type MockInstance, vi, beforeEach, afterAll } from 'vitest';
 type Mockable = (typeof mockableFunctions)[number];
 
 const mockableFunctions = [
+    'ensureDir',
+    'existsSync',
+    'fancyWrite',
     'log',
+    'mkdir',
+    'readFile',
+    'readFileSync',
+    'rename',
     'spawnCliInstruction',
     'writeFile',
-    'readFile',
-    'existsSync',
-    'rename',
-    'mkdir',
-    'readFileSync',
-    'ensureDir',
     'writeFileEnsureDir',
 ] as const;
 
@@ -49,6 +50,9 @@ export async function spy(
                 await import('$utils/cli.js'),
                 'spawnCliInstruction',
             );
+            break;
+        case 'fancyWrite':
+            spyFn = vi.spyOn(await import('$utils/cdn.js'), 'fancyWrite');
             break;
         case 'writeFile':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'writeFile');

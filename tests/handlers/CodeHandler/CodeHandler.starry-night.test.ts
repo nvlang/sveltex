@@ -51,6 +51,7 @@ suite.concurrent("CodeHandler<'starry-night'>", async () => {
         fixture();
         it('fetches and generates CSS if run for the first time', async () => {
             const handler = await CodeHandler.create('starry-night');
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('');
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(

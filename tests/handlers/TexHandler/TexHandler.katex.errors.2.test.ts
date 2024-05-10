@@ -11,7 +11,7 @@ suite("TexHandler<'katex'>", async () => {
         vi.clearAllMocks();
     });
     const { log } = await spy(
-        ['writeFileEnsureDir', 'log', 'mkdir', 'existsSync'],
+        ['fancyWrite', 'log', 'mkdir', 'existsSync'],
         true,
     );
     afterAll(() => {
@@ -30,7 +30,9 @@ suite("TexHandler<'katex'>", async () => {
                     text: () => Promise.resolve('test'),
                 } as Response);
             });
-            await (await TexHandler.create('katex')).process('');
+            const th = await TexHandler.create('katex');
+            await th.configure({ css: { type: 'self-hosted' } });
+            await th.process('');
             expect(log).toHaveBeenCalledTimes(180); // 60 fonts * 3 CDNs
             range(1, 180).forEach((i) => {
                 expect(log).toHaveBeenNthCalledWith(

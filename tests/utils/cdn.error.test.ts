@@ -1,4 +1,4 @@
-import { fetchFromCdn, fetchWithTimeout } from '$utils/cdn.js';
+import { fancyFetch, fetchFromCdn, fetchWithTimeout } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
     suite,
@@ -21,7 +21,7 @@ function fixture() {
     });
 }
 
-suite('utils/cdn', async () => {
+suite.sequential('utils/cdn', async () => {
     fixture();
     const { log } = await spy(
         ['writeFileEnsureDir', 'log', 'existsSync'],
@@ -39,10 +39,25 @@ suite('utils/cdn', async () => {
                 default: vi
                     .fn()
                     .mockRejectedValueOnce(
+                        new Error('6da12ed8-b5ff-447d-a16c-166e67cd0301'),
+                    )
+                    .mockRejectedValueOnce(
                         new Error('968b000c-a8df-4595-beb3-0e2a8c5eb9e6'),
                     ),
             }),
         );
+    });
+    describe('fancyFetch', () => {
+        fixture();
+        it('should fail gracefully', async () => {
+            await fancyFetch('https://httpstat.us/200');
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
+                'error',
+                expect.stringContaining('6da12ed8-b5ff-447d-a16c-166e67cd0301'),
+            );
+        });
     });
     describe('fetchWithTimeout', () => {
         fixture();
@@ -62,6 +77,20 @@ suite('utils/cdn', async () => {
         it('should fail gracefully', async () => {
             await fetchFromCdn('katex', 'dist/katex.min.css', 'latest');
             expect(log).toHaveBeenCalledTimes(3);
+        });
+    });
+    describe('fancyFetch (2)', () => {
+        fixture();
+        it('should fail gracefully (2)', async () => {
+            vi.spyOn(
+                await import('$utils/cdn.js'),
+                'fetchWithTimeout',
+            ).mockImplementationOnce(() => {
+                throw new Error('346ca4ae-c33c-487a-8d61-d907cc2e239e');
+            });
+            await fancyFetch('https://httpstat.us/200');
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenNthCalledWith(1, 'error', expect.any(String));
         });
     });
 });

@@ -32,28 +32,38 @@ import { isThemableCodeBackend } from '$type-guards/code.js';
 export function getDefaultTexConfiguration<T extends TexBackend>(
     texBackend: T,
 ): FullTexConfiguration<T> {
-    const css = {
+    const cssCommon = {
         dir: 'src/sveltex',
-        write: true,
-        read: true,
+        timeout: 1000,
     };
     switch (texBackend) {
-        case 'katex':
-            return {
-                css,
-                katex: {},
-            } as FullTexConfiguration<T>;
-        case 'mathjax':
-            return {
-                css,
-                outputFormat: 'svg',
-                mathjaxConfiguration: {
-                    chtml: {
-                        fontURL:
-                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
-                    },
+        case 'katex': {
+            const rv: FullTexConfiguration<'katex'> = {
+                css: {
+                    type: 'cdn',
+                    cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
+                    ...cssCommon,
                 },
-            } as FullTexConfiguration<T>;
+                katex: {},
+            };
+            return rv as unknown as FullTexConfiguration<T>;
+        }
+        case 'mathjax': {
+            const rv: FullTexConfiguration<'mathjax'> = {
+                css: {
+                    type: 'self-hosted',
+                    ...cssCommon,
+                },
+                outputFormat: 'svg',
+                mathjax: {
+                    // chtml: {
+                    //     fontURL:
+                    //         'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                    // },
+                },
+            };
+            return rv as unknown as FullTexConfiguration<T>;
+        }
         default:
             return {} as FullTexConfiguration<T>;
     }
@@ -284,7 +294,9 @@ export function getDefaultAdvancedTexConfiguration<
 export function getDefaultCodeConfiguration<C extends CodeBackend>(
     codeBackend: C,
 ): FullCodeConfiguration<C> {
-    const base: FullCodeConfiguration<CodeBackend> = {
+    const base: FullCodeConfiguration<
+        'custom' | 'escapeOnly' | 'none' | 'prismjs'
+    > = {
         wrapClassPrefix: 'language-',
         wrap: (opts: CodeProcessOptions & { wrapClassPrefix: string }) => {
             const attr =
@@ -297,14 +309,13 @@ export function getDefaultCodeConfiguration<C extends CodeBackend>(
         },
     };
     if (!isThemableCodeBackend(codeBackend)) {
-        return base as FullCodeConfiguration<C>;
+        return base as unknown as FullCodeConfiguration<C>;
     }
     const commonThemeProps = {
         cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
         dir: 'src/sveltex',
         name: 'default',
-        read: true,
-        write: true,
+        type: 'cdn',
         timeout: 1000,
     };
     switch (codeBackend) {

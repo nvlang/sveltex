@@ -318,18 +318,20 @@ export async function runWithSpinner(
     messages: {
         startMessage: string;
         successMessage: (timeTaken: string) => string;
-        failMessage: (timeTaken: string, error: unknown) => string;
+        failMessage?: (timeTaken: string, error: unknown) => string;
     },
     failureValues?: unknown[],
 ): Promise<0 | 1> {
     const start = time();
     const spinner = ora(messages.startMessage).start();
     let code: 0 | 1 = 0;
+    let error: unknown;
     try {
         const res = await action(spinner, start);
         if (failureValues?.includes(res)) code = 1;
     } catch (err) {
         code = 1;
+        error = err;
         log('error', prettifyError(err) + '\n\n');
     }
     if (code === 0) {
@@ -338,7 +340,14 @@ export async function runWithSpinner(
         );
     } else {
         spinner.fail(
-            pc.red(messages.failMessage(timeToString(timeSince(start)), code)),
+            pc.red(
+                messages.failMessage
+                    ? messages.failMessage(
+                          timeToString(timeSince(start)),
+                          error,
+                      )
+                    : prettifyError(error),
+            ),
         );
     }
     return code;

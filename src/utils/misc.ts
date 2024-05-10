@@ -265,7 +265,7 @@ export function splitContent(content: string): string[] {
  * ensureStartsWithSlash('/path/to/file'); // '/path/to/file'
  * ```
  */
-export function ensureStartsWithSlash(path: string): `/${string}` {
+export function prefixWithSlash(path: string): `/${string}` {
     return path.startsWith('/') ? (path as `/${string}`) : `/${path}`;
 }
 

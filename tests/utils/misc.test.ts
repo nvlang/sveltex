@@ -1,6 +1,6 @@
 import {
     ensureDoesNotStartWithSlash,
-    ensureStartsWithSlash,
+    prefixWithSlash,
     ensureWithinRange,
     interpretAttributes,
     interpretString,
@@ -203,11 +203,11 @@ suite.concurrent('utils/misc', async () => {
 
     describe('ensureStartsWithSlash', () => {
         it('should add leading slash', () => {
-            expect(ensureStartsWithSlash('abc')).toEqual('/abc');
+            expect(prefixWithSlash('abc')).toEqual('/abc');
         });
         it('should return strings with leading slashes as-is', () => {
-            expect(ensureStartsWithSlash('/abc')).toEqual('/abc');
-            expect(ensureStartsWithSlash('/abc/')).toEqual('/abc/');
+            expect(prefixWithSlash('/abc')).toEqual('/abc');
+            expect(prefixWithSlash('/abc/')).toEqual('/abc/');
         });
     });
 });

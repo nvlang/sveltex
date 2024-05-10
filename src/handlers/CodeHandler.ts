@@ -9,31 +9,30 @@ import type {
     FullCodeConfiguration,
     ThemableCodeBackend,
 } from '$types';
-import type { HighlightJsTheme } from '$types/handlers/misc.js';
 
 // Internal dependencies
 import { getDefaultCodeConfiguration } from '$config';
-import { missingDeps } from '$utils/globals.js';
 import { Handler } from '$handlers/Handler.js';
+import { isThemableCodeBackend } from '$type-guards/code.js';
+import { isArray } from '$type-guards/utils.js';
 import {
     customEscapeSequencesToHtml,
     escapeBraces,
     fs,
     log,
     mergeConfigs,
+    prefixWithSlash,
     re,
-    runWithSpinner,
     uniqueEscapeSequences,
 } from '$utils';
-import { isThemableCodeBackend } from '$type-guards/code.js';
+import { fancyFetch, fancyWrite, getVersion, cdnLink } from '$utils/cdn.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
-import { fetchCss, getVersion } from '$utils/cdn.js';
+import { missingDeps } from '$utils/globals.js';
 
 // External dependencies
 import { escape as escapeHtml } from 'html-escaper';
-import pc from 'picocolors';
-
 import { join } from 'node:path';
+import pc from 'picocolors';
 import { assert, is } from 'tsafe';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
@@ -56,7 +55,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         .errors === 0;
             }
             if (!this.configIsValid) return code;
-            if (this.shouldFetchCss) await this.fetchAndWriteCss();
+            await this.handleCss();
 
             let innerCode: string = code;
             let opts: CodeProcessOptions | undefined = { _wrap: true };
@@ -82,9 +81,15 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             // (This is sometimes used, for example, by the VerbatimHandler.)
             if (opts._wrap === false) return processedCode;
 
-            const wrapArray = this.configuration.wrap({
+            const configuration = this.configuration;
+
+            assert(
+                is<FullCodeConfiguration<ThemableCodeBackend>>(configuration),
+            );
+
+            const wrapArray = configuration.wrap({
                 ...opts,
-                wrapClassPrefix: this.configuration.wrapClassPrefix,
+                wrapClassPrefix: configuration.wrapClassPrefix,
             });
 
             // Add a newline before and after the code block, since
@@ -96,81 +101,99 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         };
     }
 
-    private configIsValid: boolean | undefined = undefined;
-    private shouldFetchCss: boolean = true;
-    private async fetchAndWriteCss() {
-        // Regardless of whether the fetching fails, succeeds, or is skipped, we
-        // don't want to do it twice.
-        this.shouldFetchCss = false;
+    /**
+     * Lines of code that should be added to the `<svelte:head>` component
+     * of any page that contains any code on which this handler ran. This
+     * variable must be set at most once.
+     */
+    private _headLines: string[] = [];
+    get headLines() {
+        return this._headLines;
+    }
 
+    /**
+     * Lines of code that should be added to the `<script>` tag
+     * of any page that contains any TeX on which this handler ran. This
+     * variable must be set at most once, and cannot depend on what page the
+     * handler is being used on. These aren't necessarily the only lines that
+     * will be added to the `<script>` tag on this handler's behalf, but they're
+     * the only ones that don't depend on further details about the TeX content
+     * of the page.
+     */
+    private _scriptLines: string[] = [];
+    get scriptLines() {
+        return this._scriptLines;
+    }
+
+    get handleCss() {
+        return async () => {
+            if (this._handledCss) return;
+            this._handledCss = true;
+            await this._handleCss();
+        };
+    }
+
+    private configIsValid: boolean | undefined = undefined;
+    private _handledCss: boolean = false;
+    private async _handleCss() {
         // If the backend isn't themable, don't try to fetch any CSS
         if (!isThemableCodeBackend(this.backend)) return;
 
-        // Unfortunately, TypeScript doesn't realize that, at this point, B extends
-        // ThemableCodeBackend
+        // Unfortunately, TypeScript doesn't realize that, at this point, B
+        // extends ThemableCodeBackend
         assert(is<CodeHandler<ThemableCodeBackend>>(this));
 
         // Convenience alias + type assertion
-        const configuration = this.configuration;
+        const theme = this.configuration.theme;
+        const { name, mode, min, cdn, dir, type } = theme;
 
-        if (!configuration.theme.write) return;
-
-        // Convenience alias
-        const theme = configuration.theme;
-
-        // Auxiliary variable to help build the path to the fetched stylesheet
-        let min: string = '';
-        if (
-            this.backend === 'highlight.js' &&
-            (theme as HighlightJsTheme).min
-        ) {
-            min = '.min';
-        }
+        if (type === 'none') return;
 
         // The backend version, used to try to ensure that the fetched
         // stylesheet is compatible with the current version of the backend.
-        const version: string =
+        const v: string =
             this.backend === 'highlight.js'
                 ? (await getVersion(this.backend)) ?? 'latest'
                 : 'latest';
 
+        const resourceName =
+            this.backend === 'highlight.js'
+                ? `${name}${min ? '.min' : ''}.css`
+                : `${name === 'default' ? '' : `${name}-`}${mode}.css`;
+        const resource = `${this.backend === 'highlight.js' ? 'styles' : 'style'}/${resourceName}`;
+        const pkg =
+            this.backend === 'starry-night'
+                ? '@wooorm/starry-night'
+                : this.backend;
+        const cdns = isArray(cdn) ? cdn : [cdn];
+        const links = cdns.map((c) => cdnLink(pkg, resource, v, c));
+
+        //
+        if (type === 'cdn') {
+            if (links[0]) {
+                this._headLines = [
+                    `<link rel="stylesheet" href="${links[0]}">`,
+                ];
+            }
+            return;
+        }
+
         // Build the path to which we should write the fetched stylesheet
-        const path = join(
-            theme.dir,
-            `${this.backend}@${version}.${theme.name}${min}.css`,
-        );
+        const path = join(dir, `${this.backend}@${v}.${resourceName}`);
 
         // If the file already exists, don't fetch it again
         if (fs.existsSync(path)) return;
 
         // Fetch the CSS from a CDN
-        const css = await fetchCss(this.backend, theme, version);
+        const css = await fancyFetch(links);
 
         // If the fetch failed, don't try to write anything
         if (!css) return;
 
         // Write the fetched CSS to the specified path
-        const written = await runWithSpinner(
-            async () => {
-                await fs.writeFileEnsureDir(path, css);
-            },
-            {
-                startMessage: `Writing ${this.backend} theme to ${path}`,
-                failMessage: (t) =>
-                    `Failed to write ${this.backend} theme to ${path} (took ${t})`,
-                successMessage: (t) =>
-                    `Successfully wrote ${this.backend} theme to ${path} in ${t}`,
-            },
-        );
+        await fancyWrite(path, css);
 
-        console.log(written);
-
-        if (written === 0) this._cssPath = path;
-    }
-
-    private _cssPath: string | undefined = undefined;
-    get cssPath() {
-        return this._cssPath;
+        this._scriptLines = [`import '${prefixWithSlash(path)}';`];
     }
 
     private static codeBlockDelimsRegex = re`
@@ -350,7 +373,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 try {
                     type Backend = 'highlight.js';
                     const processor = (await import('highlight.js')).default;
-                    const codeHandler = new CodeHandler<Backend>({
+                    return new CodeHandler<Backend>({
                         backend: 'highlight.js',
                         processor,
                         configuration:
@@ -369,7 +392,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             codeHandler.processor.configure(config);
                         },
                     });
-                    return codeHandler;
                 } catch (error) {
                     missingDeps.push('highlight.js');
                     throw error;
@@ -437,7 +459,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         await import('hast-util-find-and-replace')
                     ).findAndReplace;
                     const toHtml = (await import('hast-util-to-html')).toHtml;
-                    const codeHandler = new CodeHandler<Backend>({
+                    return new CodeHandler<Backend>({
                         backend: 'starry-night',
                         processor,
                         process: (code, { lang } = {}, codeHandler) => {
@@ -539,7 +561,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             }
                         },
                     });
-                    return codeHandler;
                 } catch (error) {
                     missingDeps.push(
                         '@wooorm/starry-night',

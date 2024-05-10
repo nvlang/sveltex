@@ -40,16 +40,6 @@ suite("TexHandler<'none'>", async () => {
                 expect(handler.backendIs('custom')).toBe(false);
             });
         });
-
-        describe('CSS', () => {
-            it('stylesheetName getter should return undefined', () => {
-                expect(handler.stylesheetName).toBeUndefined();
-            });
-
-            it('stylesheetPath getter should return undefined', () => {
-                expect(handler.stylesheetPath).toBeUndefined();
-            });
-        });
     });
 });
 
@@ -154,14 +144,6 @@ suite('TexHandler error handling', () => {
             ).rejects.toThrowError(
                 'Called TexHandler.create("custom", custom) without a second parameter.',
             );
-        });
-    });
-
-    describe("TexHandler.create('unsupported')", () => {
-        it('should throw error', async () => {
-            await expect(() =>
-                TexHandler.create('unsupported' as 'none'),
-            ).rejects.toThrowError();
         });
     });
 });

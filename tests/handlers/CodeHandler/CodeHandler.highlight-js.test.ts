@@ -53,6 +53,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
         fixture();
         it('fetches and generates CSS if run for the first time', async () => {
             const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
@@ -62,6 +63,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
                 ),
                 expect.stringContaining('pre code'),
             );
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
         });
@@ -72,6 +74,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
                 throw new Error(id);
             });
             const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('', {});
             expect(consoleErrorMock).toHaveBeenCalledTimes(1);
             expect(consoleErrorMock).toHaveBeenNthCalledWith(
@@ -80,9 +83,9 @@ suite("CodeHandler<'highlight.js'>", async () => {
             );
         });
 
-        it("shouldn't write CSS if configuration.theme.write is false", async () => {
+        it("shouldn't write CSS if configuration.theme.type is none", async () => {
             const handler = await CodeHandler.create('highlight.js');
-            await handler.configure({ theme: { write: false } });
+            await handler.configure({ theme: { type: 'none' } });
             await handler.process('', {});
             expect(consoleErrorMock).toHaveBeenCalledTimes(0);
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
@@ -92,7 +95,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
         it("shouldn't write CSS if configuration is not valid", async () => {
             const handler = await CodeHandler.create('highlight.js');
             await handler.configure({
-                theme: 123 as unknown as object,
+                theme: 123 as unknown as { type: 'none' },
             });
             await handler.process('', {});
             expect(log).toHaveBeenCalledTimes(1);
@@ -105,6 +108,7 @@ suite("CodeHandler<'highlight.js'>", async () => {
                 .spyOn(await import('$utils/cdn.js'), 'getVersion')
                 .mockResolvedValueOnce(undefined);
             const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
@@ -119,9 +123,22 @@ suite("CodeHandler<'highlight.js'>", async () => {
 
         it("should return early if CSS can't be fetched", async () => {
             const fetchCssMock = vi
-                .spyOn(await import('$utils/cdn.js'), 'fetchCss')
+                .spyOn(await import('$utils/cdn.js'), 'fancyFetch')
                 .mockResolvedValueOnce(undefined);
             const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { type: 'self-hosted' } });
+            await handler.process('', {});
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
+            fetchCssMock.mockRestore();
+        });
+
+        it('should return early if CSS file is already present', async () => {
+            const fetchCssMock = vi
+                .spyOn(await import('$utils/cdn.js'), 'fancyFetch')
+                .mockResolvedValueOnce(undefined);
+            existsSync.mockReturnValueOnce(true);
+            const handler = await CodeHandler.create('highlight.js');
+            await handler.configure({ theme: { type: 'self-hosted' } });
             await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
             fetchCssMock.mockRestore();

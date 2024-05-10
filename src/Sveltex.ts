@@ -6,11 +6,7 @@ import type {
     SveltexConfiguration,
 } from '$types/SveltexConfiguration.js';
 import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
-import type {
-    CodeBackend,
-    CodeConfiguration,
-    ThemableCodeBackend,
-} from '$types/handlers/Code.js';
+import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
 import type { Location } from '$types/utils/Ast.js';
@@ -37,10 +33,7 @@ import { mergeConfigs } from '$utils/merge.js';
 // External dependencies
 import MagicString from 'magic-string';
 import sorcery from 'sorcery';
-import { ensureStartsWithSlash } from '$utils/misc.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
-import { isThemableCodeBackend } from '$type-guards/code.js';
-import { assert, is } from 'tsafe';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -61,7 +54,7 @@ export async function sveltex<
     A extends AdvancedTexBackend,
 >(
     backendChoices?: BackendChoices<M, C, T, A> | undefined,
-    configuration?: SveltexConfiguration<M, C, T, A>,
+    configuration?: SveltexConfiguration<M, C, T, A> | undefined,
 ): Promise<Sveltex<M, C, T, A>> {
     if (backendChoices && diagnoseBackendChoices(backendChoices).errors !== 0) {
         throw new Error('Invalid backend choices. See console for details.');
@@ -138,20 +131,16 @@ export class Sveltex<
             return;
         }
 
-        const texComponents = this._advancedTexHandler.texComponents[filename];
-
-        // If no TeX components are defined in this file, we don't need to
-        // append anything to the `<script>` tag, so we return early.
-        if (texComponents === undefined || texComponents.length === 0) return;
+        const tcInfos = this._advancedTexHandler.texComponents[filename] ?? [];
 
         const s = new MagicString(content);
 
-        // This string represents the code that will be appended to the script
+        // This array represents the code that will be appended to the <script>
         // tag in the Svelte file. It imports the `onMount` function from Svelte
         // and uses it as a hook to fetch the SVG contents of the TeX components
         // and add them to the `<figure>` DOM elements that were created for
         // them.
-        const lines = texComponents.map((tcii) => TexComponent.importSvg(tcii));
+        const script = tcInfos.map((info) => TexComponent.importSvg(info));
 
         // For info on the language aliases being used here, see
         // https://github.com/sveltejs/svelte-preprocess/blob/c2107e529da9438ea5b8060aa471119940896e40/src/modules/language.ts#L29-L39
@@ -166,25 +155,12 @@ export class Sveltex<
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
-        if (this.texBackend === 'katex' || this.texBackend === 'mathjax') {
-            assert(is<Sveltex<M, C, 'katex' | 'mathjax', A>>(this));
-            if (this.texHandler.configuration.css.read) {
-                const path = this.texHandler.stylesheetPath;
-                lines.push(`import '${ensureStartsWithSlash(path)}';`);
-            }
-        }
+        script.push(...this.texHandler.scriptLines);
+        script.push(...this.codeHandler.scriptLines);
 
-        if (isThemableCodeBackend(this.codeBackend)) {
-            assert(is<Sveltex<M, ThemableCodeBackend, T, A>>(this));
-            if (this.codeHandler.configuration.theme.read) {
-                const path = this.codeHandler.cssPath;
-                if (path) {
-                    lines.push(`import '${ensureStartsWithSlash(path)}';`);
-                }
-            }
-        }
+        if (script.length === 0) return;
 
-        let str = lines.join('\n');
+        let str = script.join('\n');
 
         if (['coffee', 'coffeescript'].includes(lang)) {
             // If the user is using CoffeeScript, we need to wrap the code in
@@ -390,6 +366,21 @@ export class Sveltex<
 
             const s = new MagicString(escapedVerbAndMT);
 
+            const headIdx = escapedVerbAndMT.indexOf('</svelte:head>');
+            const headLines = [
+                ...this.texHandler.headLines,
+                ...this.codeHandler.headLines,
+            ];
+            if (headLines.length > 0) {
+                if (headIdx === -1) {
+                    s.prepend(
+                        `<svelte:head>\n${headLines.join('\n')}\n</svelte:head>\n`,
+                    );
+                } else {
+                    s.prependRight(headIdx, `${headLines.join('\n')}\n`);
+                }
+            }
+
             /**
              * Since nodes of type `'Text'` do not have children, the ranges in
              * `textRanges` are guaranteed to be pairwise disjoint, meaning that
@@ -399,6 +390,8 @@ export class Sveltex<
              */
             const tasks = textRanges.map(async ({ start, end }) => {
                 const substring = escapedVerbAndMT.slice(start, end);
+                if (substring.trim() === '')
+                    return { start, end, processedAndUnescaped: undefined };
                 const processedHtml = await markdownHandler.process(substring);
                 const processedAndUnescaped = unescape(
                     processedHtml,
@@ -415,7 +408,8 @@ export class Sveltex<
              * {@link https://en.wikipedia.org/wiki/Write-write_conflict | write-write conflicts}.
              */
             changes.forEach(({ start, end, processedAndUnescaped }) => {
-                s.overwrite(start, end, processedAndUnescaped);
+                if (processedAndUnescaped)
+                    s.overwrite(start, end, processedAndUnescaped);
             });
 
             // Add <script> tag if not present

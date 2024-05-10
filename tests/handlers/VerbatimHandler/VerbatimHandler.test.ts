@@ -328,7 +328,7 @@ suite('VerbatimHandler', async () => {
                 { filename: 'test.sveltex' },
             );
             expect(result).toEqual(
-                '<JavaScript>\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</JavaScript>',
+                '<JavaScript lang="js">\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</JavaScript>',
             );
         });
 

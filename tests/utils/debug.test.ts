@@ -10,6 +10,7 @@ import {
     log,
     consoles,
     prettifyError,
+    runWithSpinner,
 } from '$utils';
 import { spy } from '$tests/fixtures.js';
 import { readFileSync } from 'node:fs';
@@ -105,6 +106,23 @@ suite('debug', async () => {
                 1,
                 pc.yellow('warn test'),
             );
+        });
+    });
+
+    describe('runWithSpinner', () => {
+        it('should work catch errors even if no failMessage was set', () => {
+            expect(
+                async () =>
+                    await runWithSpinner(
+                        () => {
+                            throw new Error('something');
+                        },
+                        {
+                            startMessage: 'test',
+                            successMessage: () => 'success',
+                        },
+                    ),
+            ).not.toThrow();
         });
     });
 

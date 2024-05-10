@@ -54,7 +54,7 @@ describe.each(range(1, 5))('mergeCustom', (level) => {
         );
     });
 
-    it('should concatenate arrays', () => {
+    it.skip('should concatenate arrays', () => {
         const config1 = {
             a: [1, 2],
             b: { c: [1, 2] },

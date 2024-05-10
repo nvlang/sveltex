@@ -19,6 +19,8 @@ export const mergeCustom = deepmergeCustom({
         utils.defaultMergeFunctions.mergeOthers(
             values.filter((v) => v !== undefined && v !== null),
         ),
+    // Don't merge arrays
+    mergeArrays: (values) => values[values.length - 1],
 });
 
 export function mergeWithoutUndefinedOverrides<T extends NonNullable<object>>(

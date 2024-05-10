@@ -1,45 +1,9 @@
 import { isArray } from '$type-guards/utils.js';
-import { RequiredNonNullable } from '$types';
-import {
-    FullCodeThemeConfiguration,
-    ThemableCodeBackend,
-} from '$types/handlers/Code.js';
-import {
-    SupportedCdn,
-    FullKatexCssConfiguration,
-    HighlightJsTheme,
-    StarryNightTheme,
-} from '$types/handlers/misc.js';
+import { SupportedCdn } from '$types/handlers/misc.js';
 import { log, prettifyError, runWithSpinner } from '$utils/debug.js';
+import { fs } from '$utils/fs.js';
 import fetch, { AbortError } from 'node-fetch';
-
-export async function fetchCss<Pkg extends 'katex' | ThemableCodeBackend>(
-    pkg: Pkg,
-    config: Pkg extends 'katex'
-        ? FullKatexCssConfiguration
-        : FullCodeThemeConfiguration<ThemableCodeBackend>,
-    version: string = 'latest',
-): Promise<string | undefined> {
-    const { timeout, cdn } = config;
-    const cdns = isArray(cdn) ? cdn : [cdn];
-    const resource =
-        pkg === 'katex'
-            ? 'dist/katex.min.css'
-            : pkg === 'starry-night'
-              ? starryNightThemeResource(
-                    config as FullCodeThemeConfiguration<'starry-night'>,
-                )
-              : highlightJsThemeResource(
-                    config as FullCodeThemeConfiguration<'highlight.js'>,
-                );
-    return await fetchFromCdn(
-        pkg === 'starry-night' ? '@wooorm/starry-night' : pkg,
-        resource,
-        version,
-        cdns,
-        timeout,
-    );
-}
+import { cdnPrefixes } from 'src/data/cdn.js';
 
 export async function fetchFromCdn(
     pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
@@ -53,7 +17,7 @@ export async function fetchFromCdn(
     await runWithSpinner(
         async (spinner) => {
             for (const cdn of cdns) {
-                const url = linkify(pkg, resource, version, cdn);
+                const url = cdnLink(pkg, resource, version, cdn);
                 spinner.text = `Fetching ${url}`;
                 result = await fetchWithTimeout(url, timeout);
                 if (result) return 0; // Breaks out of runWithSpinner
@@ -71,20 +35,58 @@ export async function fetchFromCdn(
     return result;
 }
 
-export function linkify(
+export function cdnLink(
     pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
     resource: string,
     version: string = 'latest',
     cdn: SupportedCdn = 'jsdelivr',
 ) {
-    switch (cdn) {
-        case 'jsdelivr':
-            return `https://cdn.jsdelivr.net/npm/${pkg}@${version}/${resource}`;
-        case 'esm.sh':
-            return `https://esm.sh/${pkg}@${version}/${resource}`;
-        case 'unpkg':
-            return `https://unpkg.com/${pkg}@${version}/${resource}`;
+    return `${cdnPrefixes[cdn]}${pkg}@${version}/${resource}`;
+}
+
+export async function fancyWrite(
+    path: string,
+    content: string,
+    timeout: number = 1000,
+): Promise<number> {
+    return await runWithSpinner(
+        async () => {
+            await fs.writeFileEnsureDir(path, content);
+        },
+        {
+            startMessage: `Writing ${path}`,
+            failMessage: (t) => `Couldn't write ${path} (${t})`,
+            successMessage: (t) => `Wrote ${path} (${t})`,
+        },
+        [timeout],
+    );
+}
+
+export async function fancyFetch(
+    url: string | string[],
+    timeout: number = 1000,
+): Promise<string | undefined> {
+    if (isArray(url)) {
+        let result: string | undefined;
+        for (const u of url) {
+            // console.log(`${String(n++)}: ${u}`);
+            result = await fancyFetch(u, timeout);
+            if (result) return result;
+        }
+        return undefined;
     }
+    let result: string | undefined;
+    await runWithSpinner(
+        async () => {
+            result = await fetchWithTimeout(url);
+        },
+        {
+            startMessage: `Fetching ${url}`,
+            successMessage: (t) => `Fetched ${url} (${t})`,
+        },
+        [timeout],
+    );
+    return result;
 }
 
 export async function fetchWithTimeout(
@@ -125,20 +127,6 @@ export async function fetchWithTimeout(
     }
     clearTimeout(timeoutObj);
     return undefined;
-}
-
-export function starryNightThemeResource(
-    theme: RequiredNonNullable<StarryNightTheme>,
-): string {
-    const { name, mode } = theme;
-    return `style/${name === 'default' ? '' : `${name}-`}${mode}.css`;
-}
-
-export function highlightJsThemeResource(
-    theme: RequiredNonNullable<HighlightJsTheme>,
-): string {
-    const { name, min } = theme;
-    return `styles/${name}${min ? '.min' : ''}.css`;
 }
 
 /**
