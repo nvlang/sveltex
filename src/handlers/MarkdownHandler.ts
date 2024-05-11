@@ -7,12 +7,12 @@ import type {
     MarkdownProcessFn,
     MarkdownProcessOptions,
     MarkdownProcessor,
-} from '$types';
+} from '$types/handlers/Markdown.js';
 
 // Internal dependencies
 import { missingDeps } from '$utils/globals.js';
 import { Handler } from '$handlers/Handler.js';
-import { re } from '$utils';
+import { re } from '$utils/misc.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing

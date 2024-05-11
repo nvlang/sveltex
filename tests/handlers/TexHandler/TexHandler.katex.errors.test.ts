@@ -1,10 +1,10 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
-import { TexHandler } from '$handlers';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import fetch, { type Response } from 'node-fetch';
 import { v4 as uuid } from 'uuid';
-import { range } from '$tests';
+import { range } from '$tests/utils.js';
 
 suite("TexHandler<'katex'>", async () => {
     beforeEach(() => {

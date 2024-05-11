@@ -1,4 +1,5 @@
-import type { SourceMap } from 'magic-string';
+// Types
+import type { SourceMap } from '$deps.js';
 
 export interface Processed {
     /**

@@ -1,6 +1,6 @@
-import { CodeBackend } from '$types/handlers/Code.js';
-import { RequiredNonNullable } from '$types/utils/utility-types.js';
-import { highlightJsThemeNames, starryNightThemeNames } from 'src/data/code.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { RequiredNonNullable } from '$types/utils/utility-types.js';
+import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
 
 export interface NoneConfiguration {
     /**

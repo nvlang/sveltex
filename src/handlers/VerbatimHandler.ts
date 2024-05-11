@@ -3,38 +3,31 @@
 // remove them because I want to keep type assertions to a minimum.
 
 // Types
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type {
-    AdvancedTexBackend,
-    CodeBackend,
-    ConfigureFn,
     FullVerbatimConfiguration,
     FullVerbatimEnvironmentConfiguration,
-    ProcessFn,
     VerbatimConfiguration,
     VerbatimProcessOptions,
-} from '$types';
+} from '$types/handlers/Verbatim.js';
 
 // Internal dependencies
-import { getDefaultVerbatimEnvironmentConfiguration } from '$config';
+import { getDefaultVerbatimEnvironmentConfiguration } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
-import { isSimpleEscapeInstruction } from '$type-guards';
-import {
-    escapeBraces,
-    interpretAttributes,
-    log,
-    mergeConfigs,
-    parseComponent,
-    prettifyError,
-} from '$utils';
-
+import { isSimpleEscapeInstruction } from '$type-guards/verbatim.js';
+import { log, prettifyError } from '$utils/debug.js';
 import { diagnoseVerbatimEnvironmentConfiguration } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
+import { escapeBraces } from '$utils/escape.js';
+import { mergeConfigs } from '$utils/merge.js';
+import { interpretAttributes } from '$utils/misc.js';
+import { parseComponent } from '$utils/parseComponent.js';
 
 // External dependencies
-import { escape as escapeHtml } from 'html-escaper';
-import assert from 'node:assert';
-import rfdc from 'rfdc'; // "Really Fast Deep Clone"
+import { escapeHtml, nodeAssert, rfdc } from '$deps.js';
 
 const deepClone = rfdc();
 
@@ -132,7 +125,7 @@ export class VerbatimHandler<
 
                 if (isVerbEnv) {
                     const config = verbatimHandler.verbEnvs.get(tag);
-                    assert(config !== undefined);
+                    nodeAssert(config !== undefined);
 
                     const defaultAttributes: Record<
                         string,

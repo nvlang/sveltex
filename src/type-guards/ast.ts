@@ -16,7 +16,7 @@ import type {
     LineColumn,
     StartEnd_LineColumn,
     StartEnd_Offset,
-} from '$types';
+} from '$types/utils/Ast.js';
 
 /**
  * Type guard for `BaseNode`.

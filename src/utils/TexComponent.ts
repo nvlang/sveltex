@@ -1,21 +1,21 @@
 // Types
+import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
     AdvancedTexBackend,
-    CliInstruction,
     FullTexComponentConfiguration,
     FullTexLiveConfiguration,
-    SupportedTexEngine,
     TexComponentConfiguration,
     TexComponentImportInfo,
-} from '$types';
-import type { KeyPath } from '$utils';
+} from '$types/handlers/AdvancedTex.js';
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
+import type { KeyPath } from '$utils/cache.js';
 
 // Internal dependencies
 import {
     getDefaultAdvancedTexConfiguration,
     getDefaultTexComponentConfiguration,
 } from '$config/defaults.js';
-import { AdvancedTexHandler } from '$handlers';
+import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spawnCliInstruction } from '$utils/cli.js';
 import {
     escapeCssColorVarsToNamedColors,
@@ -29,15 +29,12 @@ import {
     timeToString,
 } from '$utils/debug.js';
 import { buildDvisvgmInstruction } from '$utils/dvisvgm.js';
+import { fs } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { sha256 } from '$utils/misc.js';
 
 // External dependencies
-import { fs } from '$utils/fs.js';
-import { join, relative, resolve } from 'node:path';
-import ora from 'ora';
-import pc from 'picocolors';
-import { optimize } from 'svgo';
+import { join, relative, resolve, ora, pc, svgoOptimize } from '$deps.js';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -712,7 +709,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
 
             const svgOptimized = texLiveConfig.overrideSvgPostprocess
                 ? texLiveConfig.overrideSvgPostprocess(unescaped, this)
-                : optimize(unescaped, texLiveConfig.svgoOptions).data;
+                : svgoOptimize(unescaped, texLiveConfig.svgoOptions).data;
 
             await fs.writeFile(this.out.svgPath, svgOptimized, 'utf8');
             await fs.rename(this.out.svgPath, this.out.sveltePath);

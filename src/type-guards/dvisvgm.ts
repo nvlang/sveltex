@@ -9,7 +9,7 @@ import type {
     TexDimUnit,
     TexDimUnitless,
     TexDimWithUnit,
-} from '$types';
+} from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
 import {

@@ -1,25 +1,26 @@
 // Types
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type {
     BBox,
     BitmapFormat,
     BoundingBox,
-    CliInstruction,
     DvisvgmOptions,
     FilepathWithExtension,
     Flag,
     TexDim,
-} from '$types';
+} from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultDvisvgmOptions } from '$config';
+import { getDefaultDvisvgmOptions } from '$config/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,
-    isString,
     isTexDim,
     isTexDimUnitless,
-} from '$type-guards';
-import { ensureWithinRange, mergeWithoutUndefinedOverrides } from '$utils';
+} from '$type-guards/dvisvgm.js';
+import { isString } from '$type-guards/utils.js';
+import { mergeWithoutUndefinedOverrides } from '$utils/merge.js';
+import { ensureWithinRange } from '$utils/misc.js';
 
 /**
  * Convert a {@link BitmapFormat | `BitmapFormat`} to a string that can be

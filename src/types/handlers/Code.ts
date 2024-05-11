@@ -1,7 +1,8 @@
 // Types
 import type { CodeHandler } from '$handlers/CodeHandler.js';
-import type { RequiredNonNullable, SimpleEscapeInstruction } from '$types';
-import { CodeTheme, FullCodeTheme } from '$types/handlers/misc.js';
+import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
+import type { CodeTheme, FullCodeTheme } from '$types/handlers/misc.js';
+import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 
 /**
  * Union type of supported code backends.

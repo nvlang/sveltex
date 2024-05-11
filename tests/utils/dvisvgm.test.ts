@@ -4,14 +4,14 @@ import {
     bboxToFlagValue,
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
-} from '$utils';
+} from '$utils/dvisvgm.js';
 import type {
     BBox,
     BitmapFormat,
     BoundingBox,
     PaperSize,
     TexDim,
-} from '$types';
+} from '$types/utils/DvisvgmOptions.js';
 
 suite.concurrent('utils/dvisvgm', () => {
     describe.concurrent('bboxToFlagValue', () => {

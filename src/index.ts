@@ -3,18 +3,18 @@
  * @packageDocumentation
  */
 
-export { sveltex } from './Sveltex.js';
-
 export type {
     AdvancedTexBackend,
     AdvancedTexConfiguration,
-    CodeBackend,
-    CodeConfiguration,
+} from '$types/handlers/AdvancedTex.js';
+export type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
+export type {
     MarkdownBackend,
     MarkdownConfiguration,
-    TexBackend,
-    TexConfiguration,
-    SveltexConfiguration,
-} from '$types';
+} from '$types/handlers/Markdown.js';
+export type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
+export type { SveltexConfiguration } from '$types/SveltexConfiguration.js';
+
+export { sveltex } from './Sveltex.js';
 
 export type { Sveltex } from './Sveltex.js';

@@ -1,17 +1,16 @@
 // Types
-import type { TexHandler } from '$handlers';
-import type { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
+import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
-    MathjaxConfiguration,
-    MathjaxConversionOptions,
-    RequiredNonNullable,
-} from '$types/utils';
-import {
     CssApproach,
     CssApproachLocal,
     CssConfiguration,
     FullCssConfiguration,
 } from '$types/handlers/misc.js';
+import type {
+    MathjaxConfiguration,
+    MathjaxConversionOptions,
+} from '$types/utils/MathjaxOptions.js';
+import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 
 /**
  * Supported TeX backends.
@@ -33,7 +32,11 @@ export type TexBackend = 'katex' | 'mathjax' | 'custom' | 'none';
 export type TexProcessor<B extends TexBackend> = B extends 'katex'
     ? object
     : B extends 'mathjax'
-      ? MathDocument<unknown, unknown, unknown>
+      ? import('mathjax-full/js/core/MathDocument.js').MathDocument<
+            unknown,
+            unknown,
+            unknown
+        >
       : B extends 'custom'
         ? object
         : B extends 'none'

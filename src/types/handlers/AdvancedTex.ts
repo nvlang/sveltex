@@ -1,18 +1,19 @@
 // Types
-import { AdvancedTexHandler } from '$handlers';
-import type { TexComponent } from '$utils/TexComponent.js';
+import type { HTMLAttributes, SvgoOptions } from '$deps.js';
+import type { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
+import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import type {
-    CliInstruction,
-    ConfigureFn,
-    DvisvgmOptions,
-    ProcessFn,
     RequiredNonNullable,
     RequiredNonNullableExcept,
-    SupportedTexEngine,
-} from '$types';
-import type { HTMLAttributes } from 'svelte/elements';
-import type { Config as SvgoOptions } from 'svgo';
+} from '$types/utils/utility-types.js';
+import type { TexComponent } from '$utils/TexComponent.js';
 
+/**
+ * Supported advanced TeX backends.
+ */
 export type AdvancedTexBackend = 'local' | 'custom' | 'none';
 
 export type FullTexLiveConfiguration = RequiredNonNullableExcept<

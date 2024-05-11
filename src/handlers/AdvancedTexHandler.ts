@@ -9,7 +9,7 @@ import type {
     FullAdvancedTexConfiguration,
     TexComponentConfiguration,
     TexComponentImportInfo,
-} from '$types';
+} from '$types/handlers/AdvancedTex.js';
 
 // Internal dependencies
 import { getDefaultAdvancedTexConfiguration } from '$config/defaults.js';
@@ -17,7 +17,7 @@ import { TexComponent } from '$utils/TexComponent.js';
 import { SveltexCache } from '$utils/cache.js';
 import { log } from '$utils/debug.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { Handler } from './Handler.js';
+import { Handler } from '$handlers/Handler.js';
 
 export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
     B,

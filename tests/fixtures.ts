@@ -1,5 +1,5 @@
-import { isArray, isString } from '$type-guards';
-import mockFs from 'mock-fs';
+import { isArray, isString } from '$type-guards/utils.js';
+import { mockFs } from '$dev_deps.js';
 import { type MockInstance, vi, beforeEach, afterAll } from 'vitest';
 
 type Mockable = (typeof mockableFunctions)[number];
@@ -118,19 +118,6 @@ export function fixture1(
         mockFs.restore();
         vi.restoreAllMocks();
     });
-}
-
-export async function mockWriteFile() {
-    vi.mock(
-        'node:fs/promises',
-        async (orig: () => Promise<typeof import('node:fs/promises')>) => {
-            return {
-                ...(await orig()),
-                writeFile: vi.fn().mockReturnValue(undefined),
-            };
-        },
-    );
-    return vi.mocked((await import('node:fs/promises')).writeFile);
 }
 
 // export async function mockNodeFs() {

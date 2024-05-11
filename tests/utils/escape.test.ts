@@ -1,6 +1,6 @@
 /* eslint-disable vitest/no-commented-out-tests */
-import { type Sveltex, sveltex } from '$sveltex-preprocess';
-import { uuidV4Regexp } from '$tests';
+import { type Sveltex, sveltex } from '$Sveltex.js';
+import { uuidV4Regexp } from '$tests/utils.js';
 import {
     escapeBraces,
     escapeRegExps,
@@ -8,7 +8,7 @@ import {
     intersection,
     outermostRanges,
     unescape,
-} from '$utils';
+} from '$utils/escape.js';
 import { describe, expect, it, suite } from 'vitest';
 
 suite.concurrent('processor/escape', async () => {

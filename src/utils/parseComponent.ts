@@ -1,6 +1,6 @@
 // Internal dependencies
-import { re } from '$utils';
 import { escapeWhitespace } from '$utils/debug.js';
+import { re } from '$utils/misc.js';
 
 /**
  * Parses a component from an HTML string.

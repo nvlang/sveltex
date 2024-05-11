@@ -1,5 +1,5 @@
 import { suite, describe, it, expect, vi } from 'vitest';
-import { MarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { missingDeps } from '$utils/globals.js';
 
 suite('MarkdownHandler', () => {

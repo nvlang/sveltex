@@ -11,7 +11,7 @@ import type {
     BaseNode_v5,
     LineColumn,
     Location,
-} from '$types';
+} from '$types/utils/Ast.js';
 
 // Internal dependencies
 import { SVELTE_MAJOR_VERSION } from '$utils/globals.js';
@@ -26,10 +26,10 @@ import {
     isBaseNode_v4,
     isBaseNode_v5,
     isFragment_v5,
-} from '$type-guards';
+} from '$type-guards/ast.js';
 
 // External dependencies
-import { parse as svelteParse } from 'svelte/compiler';
+import { svelteParse } from '$deps.js';
 
 /**
  * One of the differences between the parser from Svelte 5 (when the `modern`

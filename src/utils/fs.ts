@@ -1,6 +1,13 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+// External dependencies
+import {
+    existsSync,
+    readFileSync,
+    mkdir,
+    readFile,
+    rename,
+    writeFile,
+    dirname,
+} from '$deps.js';
 
 export const fs = {
     existsSync,

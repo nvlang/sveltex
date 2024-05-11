@@ -1,4 +1,5 @@
-import type { SpawnOptionsWithoutStdio } from 'child_process';
+// Types
+import type { SpawnOptionsWithoutStdio } from '$deps.js';
 
 /**
  * Instructions to execute on the command-line interface (CLI).

@@ -1,20 +1,17 @@
 // Types
-import type {
-    AdvancedTexBackend,
-    CodeBackend,
-    Location,
-    MarkdownBackend,
-    TexBackend,
-} from '$types';
+import type { Sveltex } from '$Sveltex.js';
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
+import type { Location } from '$types/utils/Ast.js';
 
 // Internal dependencies
-import type { Sveltex } from '$sveltex-preprocess';
 import { isPresentAndDefined } from '$type-guards/utils.js';
 import { re, splitContent } from '$utils/misc.js';
 
 // External dependencies
-import MagicString from 'magic-string';
-import { v4 as uuidv4 } from 'uuid';
+import { MagicString, uuid } from '$deps.js';
 
 /**
  * Components whose contents should be interpreted as plain text by the Svelte
@@ -391,7 +388,7 @@ export function escapeVerbInMarkup(
     });
     const ranges = outermostRanges(matchedRanges);
     ranges.forEach((range) => {
-        const id = uuidv4();
+        const id = uuid();
         savedMatches.set(id, range.content);
         s.overwrite(range.start, range.end, id);
     });
@@ -500,7 +497,7 @@ export function escapeMustacheTags(
     // Escape mustache tags
     ranges.forEach((range) => {
         const match = content.slice(range.start, range.end);
-        const id = uuidv4();
+        const id = uuid();
         savedMatches.set(id, match);
         s.overwrite(range.start, range.end, id);
     });
@@ -520,10 +517,10 @@ export function escapeBraces(content: string) {
 }
 
 export const uniqueEscapeSequences = {
-    '<': uuidv4(),
-    '>': uuidv4(),
-    '{': uuidv4(),
-    '}': uuidv4(),
+    '<': uuid(),
+    '>': uuid(),
+    '{': uuid(),
+    '}': uuid(),
 } as const;
 
 // /**

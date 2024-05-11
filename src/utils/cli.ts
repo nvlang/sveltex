@@ -1,5 +1,8 @@
-import { spawn } from 'child_process';
-import { CliInstruction } from '$types';
+// Types
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
+
+// External dependencies
+import { spawn } from '$deps.js';
 
 /**
  * Spawns a child process to execute a command.

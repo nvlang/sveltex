@@ -1,5 +1,16 @@
-import type { CodeBackend } from '$types';
+// Types
+import type { CodeBackend } from '$types/handlers/Code.js';
 
+// Internal dependencies
+import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
+import {
+    isHighlightJsThemeName,
+    isStarryNightThemeName,
+    isSupportedCdn,
+    isThemableCodeBackend,
+    supportedCdns,
+    themableCodeBackends,
+} from '$type-guards/code.js';
 import {
     isArray,
     isBoolean,
@@ -9,20 +20,12 @@ import {
     isOneOf,
     isPresentAndDefined,
     isString,
-} from '$type-guards';
-import {
-    isHighlightJsThemeName,
-    isStarryNightThemeName,
-    isSupportedCdn,
-    isThemableCodeBackend,
-    supportedCdns,
-    themableCodeBackends,
-} from '$type-guards/code.js';
+} from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
-import { highlightJsThemeNames, starryNightThemeNames } from 'src/data/code.js';
 
-import assert from 'node:assert';
+// External dependencies
+import { nodeAssert } from '$deps.js';
 
 export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
     if (!isNonNullObject(x)) {
@@ -42,7 +45,7 @@ export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
     );
     if (isPresentAndDefined(x, 'theme')) {
         if (isThemableCodeBackend(backend)) {
-            assert('theme' in x);
+            nodeAssert('theme' in x);
             if (!isNonNullObject(x.theme)) {
                 d.addProblem(
                     `Expected "theme" to be non-null object. ${insteadGot(x, 'object')}`,

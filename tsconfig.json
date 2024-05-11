@@ -26,21 +26,8 @@
     "noUnusedParameters": true,
     "outDir": "./dist",
     "paths": {
-      "$config": ["src/config/index.ts"],
-      "$config/*": ["src/config/*"],
-      "$handlers": ["src/handlers/index.ts"],
-      "$handlers/*": ["src/handlers/*"],
-      "$sveltex-preprocess": ["src/index.ts"],
-      "$tests": ["tests/index.ts"],
-      "$tests/*": ["tests/*"],
-      "$type-guards": ["src/type-guards/index.ts"],
-      "$type-guards/*": ["src/type-guards/*"],
-      "$types": ["src/types/index.ts"],
-      "$types/*": ["src/types/*"],
-      "$types/utils": ["src/types/utils/index.ts"],
-      "$types/utils/*": ["src/types/utils/*"],
-      "$utils": ["src/utils/index.ts"],
-      "$utils/*": ["src/utils/*"]
+      "$*": ["src/*"],
+      "$tests/*": ["tests/*"]
     },
     // "types": ["sveltex-preprocess"]
     "resolveJsonModule": true,

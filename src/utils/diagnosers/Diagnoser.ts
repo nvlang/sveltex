@@ -7,8 +7,7 @@ import {
 import { log } from '$utils/debug.js';
 
 // External dependencies
-import { inspect } from 'node:util';
-import { get as getKey } from 'radash';
+import { inspect, getKey } from '$deps.js';
 
 /**
  * A class to diagnose problems in an object.

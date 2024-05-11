@@ -1,8 +1,8 @@
 import { suite, describe, it, expect, vi, afterAll } from 'vitest';
 
 import { spy } from '$tests/fixtures.js';
-import mockFs from 'mock-fs';
-import { SveltexCache } from '$utils';
+import { mockFs } from '$dev_deps.js';
+import { SveltexCache } from '$utils/cache.js';
 
 suite('SveltexCache', async () => {
     afterAll(() => {

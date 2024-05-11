@@ -9,8 +9,8 @@ import {
     vi,
 } from 'vitest';
 
-import { VerbatimHandler } from '$handlers';
-import { sveltex } from '$sveltex-preprocess';
+import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
+import { sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
 
 const sveltexPreprocessor = await sveltex({

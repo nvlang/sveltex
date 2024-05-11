@@ -1,6 +1,6 @@
-import { Sveltex, sveltex } from '$sveltex-preprocess';
+import { Sveltex, sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
-import mockFs from 'mock-fs';
+import { mockFs } from '$dev_deps.js';
 import { Processed } from 'svelte/compiler';
 import {
     afterAll,

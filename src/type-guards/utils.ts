@@ -1,5 +1,8 @@
 // Types
-import type { NotUndefined, UnknownFunction } from '$types';
+import type {
+    NotUndefined,
+    UnknownFunction,
+} from '$types/utils/utility-types.js';
 
 /**
  * Type guard to check that an input is defined (i.e., not `undefined`).

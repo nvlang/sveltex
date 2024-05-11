@@ -1,10 +1,9 @@
-import { AdvancedTexHandler } from '$handlers';
-import { sveltex } from '$sveltex-preprocess';
+import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
 import { pathExists } from '$utils/debug.js';
 
-import { resolve } from 'node:path';
-import { rimraf } from 'rimraf';
+import { rimraf, resolve } from '$deps.js';
 import {
     afterAll,
     afterEach,

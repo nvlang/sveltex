@@ -1,17 +1,17 @@
+// Types
+import type { BackendChoices } from '$types/SveltexConfiguration.js';
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
+
 // Internal dependencies
-import { isNonNullObject, isOneOf } from '$type-guards';
-import {
-    AdvancedTexBackend,
-    BackendChoices,
-    CodeBackend,
-    MarkdownBackend,
-    TexBackend,
-} from '$types';
+import { isNonNullObject, isOneOf } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 
 // External dependencies
-import { assert, Equals } from 'tsafe';
+import { assert, type Equals } from '$deps.js';
 
 // Constants describing the possible backends
 const markdownBackends = [

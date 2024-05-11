@@ -1,9 +1,14 @@
-import { isArray } from '$type-guards/utils.js';
+// Types
 import { SupportedCdn } from '$types/handlers/misc.js';
+
+// Internal dependencies
+import { cdnPrefixes } from '$data/cdn.js';
+import { isArray } from '$type-guards/utils.js';
 import { log, prettifyError, runWithSpinner } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
-import fetch, { AbortError } from 'node-fetch';
-import { cdnPrefixes } from 'src/data/cdn.js';
+
+// External dependencies
+import { AbortError, nodeFetch } from '$deps.js';
 
 export async function fetchFromCdn(
     pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
@@ -102,7 +107,7 @@ export async function fetchWithTimeout(
     }, timeout);
 
     try {
-        const response = await fetch(url, {
+        const response = await nodeFetch(url, {
             signal: controller.signal,
         });
 

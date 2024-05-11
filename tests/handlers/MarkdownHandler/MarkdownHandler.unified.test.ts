@@ -1,6 +1,6 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import { MarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
 suite("MarkdownHandler<'unified'>", async () => {
     const handler = await MarkdownHandler.create('unified');

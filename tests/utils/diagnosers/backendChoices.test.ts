@@ -1,11 +1,10 @@
+import type { BackendChoices } from '$types/SveltexConfiguration.js';
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
+
 import { spy } from '$tests/fixtures.js';
-import {
-    AdvancedTexBackend,
-    BackendChoices,
-    CodeBackend,
-    MarkdownBackend,
-    TexBackend,
-} from '$types';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
 import { suite, it, expect, vi, afterAll, beforeEach, afterEach } from 'vitest';
 

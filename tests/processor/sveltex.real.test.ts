@@ -1,20 +1,17 @@
 /**
  * Realistic tests for the Sveltex processor.
  */
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
 
-import {
-    AdvancedTexBackend,
-    CodeBackend,
-    MarkdownBackend,
-    Sveltex,
-    TexBackend,
-    sveltex,
-} from '$sveltex-preprocess';
+import { Sveltex, sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
-import { isArray, isString } from '$type-guards';
-import { splitContent } from '$utils';
-import { assert, is } from 'tsafe';
-import { v4 as uuid } from 'uuid';
+import { isArray, isString } from '$type-guards/utils.js';
+import { splitContent } from '$utils/misc.js';
+
+import { assert, is, uuid } from '$deps.js';
 import {
     afterAll,
     afterEach,

@@ -2,7 +2,7 @@
 import { detectPackageManager, log } from '$utils/debug.js';
 
 // External dependencies
-import { VERSION } from 'svelte/compiler';
+import { VERSION } from '$deps.js';
 
 /**
  * The major version of the Svelte compiler (e.g., `4` or `5`).

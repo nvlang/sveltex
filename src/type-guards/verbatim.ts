@@ -1,15 +1,17 @@
 // Types
+import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
     AdvancedTexBackend,
-    CliInstruction,
-    DvisvgmOptions,
-    SimpleEscapeInstruction,
-    SupportedTexEngine,
     TexComponentConfiguration,
     TexLiveConfiguration,
+} from '$types/handlers/AdvancedTex.js';
+import type {
+    SimpleEscapeInstruction,
     VerbatimEnvironmentConfiguration,
     VerbatimProcessInner,
-} from '$types';
+} from '$types/handlers/Verbatim.js';
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
+import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
 import {

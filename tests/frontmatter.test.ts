@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { consumeFrontmatter } from '$utils';
+import { consumeFrontmatter } from '$utils/frontmatter.js';
 
 describe('consumeFrontmatter(content: string)', () => {
     it('basic functionality', () => {

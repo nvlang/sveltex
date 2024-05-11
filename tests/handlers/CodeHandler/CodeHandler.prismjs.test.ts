@@ -1,7 +1,7 @@
 /* eslint-disable vitest/no-commented-out-tests */
 import { suite, describe, it, expect, vi } from 'vitest';
 
-import { CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers/CodeHandler.js';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 

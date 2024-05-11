@@ -1,6 +1,6 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import { MarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
 import { Marked, type MarkedOptions, type MarkedExtension } from 'marked';
 

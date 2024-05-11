@@ -3,7 +3,7 @@ import {
     SVELTE_MAJOR_VERSION,
     SVELTE_MINOR_VERSION,
     SVELTE_PATCH_VERSION,
-} from '$utils';
+} from '$utils/globals.js';
 
 describe('SVELTE_MAJOR_VERSION', () => {
     it('should be a number', () => {

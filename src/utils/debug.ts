@@ -1,5 +1,5 @@
 // Types
-import type { Colors } from 'picocolors/types.js';
+import type { Colors, Ora } from '$deps.js';
 
 // Internal dependencies
 import {
@@ -13,10 +13,7 @@ import {
 import { fs } from '$utils/fs.js';
 
 // External dependencies
-import { resolve } from 'node:path';
-import { inspect } from 'node:util';
-import pc from 'picocolors';
-import ora, { Ora } from 'ora';
+import { inspect, ora, pc, resolve } from '$deps.js';
 
 export type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 

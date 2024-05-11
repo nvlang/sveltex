@@ -1,20 +1,22 @@
-import { AdvancedTexHandler } from '$handlers';
-import type { SupportedTexEngine } from '$types';
+import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { spy } from '$tests/fixtures.js';
+import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import { TexComponent } from '$utils/TexComponent.js';
-import { pathExists, sha256, unescapeCssColorVarsFromSvg } from '$utils';
+import { unescapeCssColorVarsFromSvg } from '$utils/css.js';
+import { pathExists } from '$utils/debug.js';
+import { sha256 } from '$utils/misc.js';
+import { resolve } from 'node:path';
+import { rimraf } from 'rimraf';
 import {
+    afterAll,
+    afterEach,
+    beforeEach,
     describe,
-    it,
     expect,
+    it,
     suite,
     vi,
-    beforeEach,
-    afterEach,
-    afterAll,
 } from 'vitest';
-import { spy } from '$tests/fixtures.js';
-import { rimraf } from 'rimraf';
-import { resolve } from 'node:path';
 
 let ath: AdvancedTexHandler<'local'>;
 let tc: TexComponent<'local'>;

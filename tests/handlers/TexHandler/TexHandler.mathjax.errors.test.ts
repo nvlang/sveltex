@@ -1,5 +1,5 @@
 import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
-import { TexHandler } from '$handlers';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { consoles } from '$utils/debug.js';
 

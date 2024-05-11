@@ -1,4 +1,4 @@
-import mockFs from 'mock-fs';
+import { mockFs } from '$dev_deps.js';
 import { fs } from '$utils/fs.js';
 import { describe, it, expect, vi, beforeEach, afterAll, suite } from 'vitest';
 import { spy } from '$tests/fixtures.js';

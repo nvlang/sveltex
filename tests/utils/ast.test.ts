@@ -6,7 +6,7 @@ import {
     parse,
     stringifyAst,
     walk,
-} from '$utils';
+} from '$utils/ast.js';
 
 suite('AST utilities', () => {
     describe.each([3, 4, 5, 6, 7, 8])('getLocation', (version) => {

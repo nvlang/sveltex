@@ -1,13 +1,13 @@
-import {
-    AdvancedTexBackend,
-    CodeBackend,
-    MarkdownBackend,
-    TexBackend,
-    sveltex,
-} from '$sveltex-preprocess';
-import { isArray } from '$type-guards';
-import { escapeWhitespace } from '$utils';
-import { it, expect } from 'vitest';
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
+
+import { sveltex } from '$Sveltex.js';
+import { isArray } from '$type-guards/utils.js';
+import { escapeWhitespace } from '$utils/debug.js';
+
+import { expect, it } from 'vitest';
 
 export interface Test {
     input: string;

@@ -1,10 +1,12 @@
 // Types
-import type { Frontmatter } from '$types';
+import type { Frontmatter } from '$types/utils/Frontmatter.js';
 
 // Internal dependencies
-import { isFrontmatter } from '$type-guards';
+import { isFrontmatter } from '$type-guards/isFrontmatter.js';
 import { log } from '$utils/debug.js';
-import YAML from 'yaml';
+
+// External dependencies
+import { YAML } from '$deps.js';
 
 /**
  * Consume frontmatter from a string.

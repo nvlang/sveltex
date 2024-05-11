@@ -1,3 +1,7 @@
+// Types
+import type { Equals, Extends } from '$deps.js';
+
+// Internal dependencies
 import { isOneOf, isString } from '$type-guards/utils.js';
 import { CodeBackend, ThemableCodeBackend } from '$types/handlers/Code.js';
 import {
@@ -5,8 +9,10 @@ import {
     StarryNightThemeName,
     SupportedCdn,
 } from '$types/handlers/misc.js';
-import { highlightJsThemeNames, starryNightThemeNames } from 'src/data/code.js';
-import { Equals, Extends, assert } from 'tsafe';
+import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
+
+// External dependencies
+import { assert } from '$deps.js';
 
 export function isThemableCodeBackend(
     input: unknown,

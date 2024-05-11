@@ -7,28 +7,24 @@ import type {
     TexProcessFn,
     TexProcessOptions,
     TexProcessor,
-} from '$types';
+} from '$types/handlers/Tex.js';
 
 // Internal dependencies
-import { missingDeps } from '$utils/globals.js';
-import { Handler } from '$handlers/Handler.js';
-import { isArray, isLiteElement } from '$type-guards';
-import {
-    prefixWithSlash,
-    escapeBraces,
-    fs,
-    mergeConfigs,
-    re,
-    runWithSpinner,
-} from '$utils';
-import { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js';
 import { getDefaultTexConfiguration } from '$config/defaults.js';
-import { join } from 'node:path';
-import CleanCSS, { Output } from 'clean-css';
-import prettyBytes from 'pretty-bytes';
-import { fancyFetch, fancyWrite, getVersion, cdnLink } from '$utils/cdn.js';
-import { katexFonts } from 'src/data/tex.js';
+import { katexFonts } from '$data/tex.js';
+import { Handler } from '$handlers/Handler.js';
+import { isArray } from '$type-guards/utils.js';
 import { CssApproach, CssApproachLocal } from '$types/handlers/misc.js';
+import { cdnLink, fancyFetch, fancyWrite, getVersion } from '$utils/cdn.js';
+import { runWithSpinner } from '$utils/debug.js';
+import { escapeBraces } from '$utils/escape.js';
+import { fs } from '$utils/fs.js';
+import { missingDeps } from '$utils/globals.js';
+import { mergeConfigs } from '$utils/merge.js';
+import { prefixWithSlash, re } from '$utils/misc.js';
+
+// External dependencies
+import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
 
 export class TexHandler<
     B extends TexBackend,
@@ -314,6 +310,11 @@ export class TexHandler<
                 const { AllPackages } = await import(
                     'mathjax-full/js/input/tex/AllPackages.js'
                 );
+                const LiteElement = (
+                    await import('mathjax-full/js/adaptors/lite/Element.js')
+                ).LiteElement;
+                type LiteElementType =
+                    import('mathjax-full/js/adaptors/lite/Element.js').LiteElement;
 
                 const adaptor = liteAdaptor();
                 RegisterHTMLHandler(adaptor);
@@ -384,7 +385,7 @@ export class TexHandler<
                             css = adaptor.textContent(
                                 texHandler.processor.outputJax.styleSheet(
                                     texHandler.processor,
-                                ) as LiteElement,
+                                ) as LiteElementType,
                             );
                         },
                         {
@@ -444,7 +445,7 @@ export class TexHandler<
                             display: inline === false,
                         });
 
-                        if (!isLiteElement(result)) {
+                        if (!(result instanceof LiteElement)) {
                             throw new Error(
                                 `MathJax did not return a valid node (result: ${String(result)}).`,
                             );

@@ -4,9 +4,7 @@ import { log, prettifyError } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
 
 // External dependencies
-import { join, normalize, relative, resolve } from 'node:path';
-import { Glob } from 'glob';
-import { rimraf } from 'rimraf';
+import { Glob, join, normalize, relative, resolve, rimraf } from '$deps.js';
 
 export type KeyPath = `${string}/${string}`;
 type HashSHA256 = string;

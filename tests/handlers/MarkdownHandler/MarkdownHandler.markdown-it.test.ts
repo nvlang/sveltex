@@ -1,7 +1,7 @@
 import { suite, describe, it, expect } from 'vitest';
 import multimdTablePlugin from 'markdown-it-multimd-table';
 
-import { MarkdownHandler } from '$handlers';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import MarkdownIt from 'markdown-it';
 
 suite("MarkdownHandler<'markdown-it'>", async () => {

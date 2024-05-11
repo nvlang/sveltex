@@ -1,12 +1,15 @@
 // Types
-import type { ConfigureFn, ProcessFn, SimplerProcessFn } from '$types';
+import type {
+    ConfigureFn,
+    ProcessFn,
+    SimplerProcessFn,
+} from '$types/handlers/Handler.js';
 
 // Internal dependencies
-import { mergeConfigs } from '$utils';
+import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { get as getProperty, set as setProperty } from 'radash';
-import rfdc from 'rfdc'; // "Really Fast Deep Clone"
+import { getProperty, rfdc, setProperty } from '$deps.js';
 
 const deepClone = rfdc();
 

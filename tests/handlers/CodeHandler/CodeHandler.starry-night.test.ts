@@ -10,7 +10,7 @@ import {
     afterAll,
 } from 'vitest';
 
-import { CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers/CodeHandler.js';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 import { isFunction } from '$type-guards/utils.js';

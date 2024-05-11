@@ -9,9 +9,9 @@ import {
     type MockInstance,
 } from 'vitest';
 
-import { CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
-import mockFs from 'mock-fs';
+import { mockFs } from '$dev_deps.js';
 mockFs({});
 
 suite("CodeHandler<'none'>", async () => {

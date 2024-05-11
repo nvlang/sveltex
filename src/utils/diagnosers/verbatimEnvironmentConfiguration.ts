@@ -6,10 +6,12 @@ import {
     isOneOf,
     isString,
     isStringArray,
-    isVerbatimProcessInner,
-} from '$type-guards';
+} from '$type-guards/utils.js';
+import { isVerbatimProcessInner } from '$type-guards/verbatim.js';
 import { insteadGot } from '$utils/diagnosers/Diagnoser.js';
-import assert from 'node:assert';
+
+// External dependencies
+import { nodeAssert } from '$deps.js';
 
 /**
  * Diagnose whether a given object is a valid verbatim environment
@@ -34,13 +36,13 @@ export function diagnoseVerbatimEnvironmentConfiguration(x: unknown): {
         );
     } else {
         if (!ifPresentAndDefined(x, 'processInner', isVerbatimProcessInner)) {
-            assert('processInner' in x);
+            nodeAssert('processInner' in x);
             reasonsForFailure.push(
                 `Expected "processInner" to be a valid description of how the inner content of the verbatim environment should be processed. ${insteadGot(x.processInner)}`,
             );
         }
         if (!ifPresentAndDefined(x, 'defaultAttributes', isNonNullObject)) {
-            assert('defaultAttributes' in x);
+            nodeAssert('defaultAttributes' in x);
             reasonsForFailure.push(
                 `The "defaultAttributes" field must be a non-null object. ${insteadGot(x.defaultAttributes)}`,
             );
@@ -52,7 +54,7 @@ export function diagnoseVerbatimEnvironmentConfiguration(x: unknown): {
                 isStringArray,
             )
         ) {
-            assert('attributeForwardingBlocklist' in x);
+            nodeAssert('attributeForwardingBlocklist' in x);
             reasonsForFailure.push(
                 `The "attributeForwardingBlocklist" field must be an array of strings. ${insteadGot(x.attributeForwardingBlocklist)}`,
             );
@@ -64,19 +66,19 @@ export function diagnoseVerbatimEnvironmentConfiguration(x: unknown): {
                 (v) => isStringArray(v) || v === 'all',
             )
         ) {
-            assert('attributeForwardingAllowlist' in x);
+            nodeAssert('attributeForwardingAllowlist' in x);
             reasonsForFailure.push(
                 `The "attributeForwardingAllowlist" field must be an array of strings or the string "all". ${insteadGot(x.attributeForwardingAllowlist)}`,
             );
         }
         if (!ifPresentAndDefined(x, 'component', isString)) {
-            assert('component' in x);
+            nodeAssert('component' in x);
             reasonsForFailure.push(
                 `The "component" field must be a string. ${insteadGot(x.component)}`,
             );
         }
         if (!ifPresentAndDefined(x, 'respectSelfClosing', isBoolean)) {
-            assert('respectSelfClosing' in x);
+            nodeAssert('respectSelfClosing' in x);
             reasonsForFailure.push(
                 `The "respectSelfClosing" field must be a boolean. ${insteadGot(x.respectSelfClosing)}`,
             );
@@ -86,7 +88,7 @@ export function diagnoseVerbatimEnvironmentConfiguration(x: unknown): {
                 isOneOf(v, ['auto', '/>', ' />']),
             )
         ) {
-            assert('selfCloseOutputWith' in x);
+            nodeAssert('selfCloseOutputWith' in x);
             reasonsForFailure.push(
                 `The "selfCloseOutputWith" field must be one of "auto", "/>", or " />". ${insteadGot(x.selfCloseOutputWith)}`,
             );

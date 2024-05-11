@@ -1,4 +1,7 @@
-import type { RequiredNonNullable, RequiredNonNullableExcept } from '$types';
+import type {
+    RequiredNonNullable,
+    RequiredNonNullableExcept,
+} from '$types/utils/utility-types.js';
 
 export interface VerbatimProcessOptions {
     filename: string;

@@ -1,30 +1,35 @@
 // Types
+import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
 import type {
     AdvancedTexBackend,
+    FullAdvancedTexConfiguration,
+    FullTexComponentConfiguration,
+} from '$types/handlers/AdvancedTex.js';
+import type {
     CodeBackend,
     CodeProcessOptions,
-    DvisvgmOptions,
-    FirstTwoLevelsRequiredNotUndefined,
-    FullAdvancedTexConfiguration,
     FullCodeConfiguration,
+} from '$types/handlers/Code.js';
+import type {
     FullMarkdownConfiguration,
-    FullSveltexConfiguration,
-    FullTexComponentConfiguration,
-    FullTexConfiguration,
-    FullVerbatimEnvironmentConfiguration,
     MarkdownBackend,
-    TexBackend,
-} from '$types';
+} from '$types/handlers/Markdown.js';
+import type { FullTexConfiguration, TexBackend } from '$types/handlers/Tex.js';
+import type { FullVerbatimEnvironmentConfiguration } from '$types/handlers/Verbatim.js';
+import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
+import type { FirstTwoLevelsRequiredNotUndefined } from '$types/utils/utility-types.js';
 
 // Internal dependencies
-import { isNonNullObject, isPresentAndDefined, isString } from '$type-guards';
+import { isThemableCodeBackend } from '$type-guards/code.js';
+import {
+    isNonNullObject,
+    isPresentAndDefined,
+    isString,
+} from '$type-guards/utils.js';
 import { interpretAttributes } from '$utils/misc.js';
 
 // External dependencies
-import findCacheDirectory from 'find-cache-dir';
-import { homedir } from 'node:os';
-import { join, relative, resolve } from 'node:path';
-import { isThemableCodeBackend } from '$type-guards/code.js';
+import { findCacheDirectory, homedir, join, relative, resolve } from '$deps.js';
 
 /**
  * Get the default configuration for a TeX backend.

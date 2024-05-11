@@ -1,5 +1,5 @@
 import { describe, it, expect, suite } from 'vitest';
-import { componentRegExp, parseComponent } from '$utils';
+import { componentRegExp, parseComponent } from '$utils/parseComponent.js';
 
 suite('parseComponent', () => {
     describe('basic functionality', () => {

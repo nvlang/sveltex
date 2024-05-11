@@ -1,4 +1,5 @@
-import { deepmergeCustom } from 'deepmerge-ts';
+// External dependencies
+import { deepmergeCustom } from '$deps.js';
 
 /**
  * Merge multiple configuration objects into one.

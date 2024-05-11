@@ -1,7 +1,12 @@
+// Types
+import type { BinaryToTextEncoding } from '$deps.js';
+
 // Internal dependencies
 import { isBoolean, isNumber, isString } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
-import { createHash, type BinaryToTextEncoding } from 'node:crypto';
+
+// External dependencies
+import { createHash } from '$deps.js';
 
 /**
  * "Interprets" a string as a boolean, number, null, or undefined, if

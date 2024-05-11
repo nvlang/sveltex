@@ -17,7 +17,7 @@ import {
 import path from 'node:path';
 import os from 'node:os';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
-import { isTexComponentConfig } from '$type-guards';
+import { isTexComponentConfig } from '$type-guards/verbatim.js';
 import { spy } from '$tests/fixtures.js';
 
 function fixture() {

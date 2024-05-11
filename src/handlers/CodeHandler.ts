@@ -8,32 +8,28 @@ import type {
     CodeProcessor,
     FullCodeConfiguration,
     ThemableCodeBackend,
-} from '$types';
+} from '$types/handlers/Code.js';
 
 // Internal dependencies
-import { getDefaultCodeConfiguration } from '$config';
+import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { Handler } from '$handlers/Handler.js';
 import { isThemableCodeBackend } from '$type-guards/code.js';
 import { isArray } from '$type-guards/utils.js';
+import { cdnLink, fancyFetch, fancyWrite, getVersion } from '$utils/cdn.js';
+import { log } from '$utils/debug.js';
+import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
 import {
     customEscapeSequencesToHtml,
     escapeBraces,
-    fs,
-    log,
-    mergeConfigs,
-    prefixWithSlash,
-    re,
     uniqueEscapeSequences,
-} from '$utils';
-import { fancyFetch, fancyWrite, getVersion, cdnLink } from '$utils/cdn.js';
-import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
+} from '$utils/escape.js';
+import { fs } from '$utils/fs.js';
 import { missingDeps } from '$utils/globals.js';
+import { mergeConfigs } from '$utils/merge.js';
+import { prefixWithSlash, re } from '$utils/misc.js';
 
 // External dependencies
-import { escape as escapeHtml } from 'html-escaper';
-import { join } from 'node:path';
-import pc from 'picocolors';
-import { assert, is } from 'tsafe';
+import { assert, escapeHtml, is, join, pc } from '$deps.js';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
     B,

@@ -6,7 +6,7 @@ import {
     isTexLiveConfig,
     isVerbatimEnvironmentConfiguration,
 } from '$type-guards/verbatim.js';
-import type { VerbatimEnvironmentConfiguration } from '$types';
+import type { VerbatimEnvironmentConfiguration } from '$types/handlers/Verbatim.js';
 import { describe, expect, it } from 'vitest';
 
 describe('isVerbatimEnvironmentConfiguration', () => {

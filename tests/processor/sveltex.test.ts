@@ -1,23 +1,22 @@
 /* eslint-disable vitest/no-commented-out-tests */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import {
-    AdvancedTexHandler,
-    CodeHandler,
-    MarkdownHandler,
-    TexHandler,
-} from '$handlers';
-import { type Sveltex, sveltex } from '$sveltex-preprocess';
+
+import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { CodeBackend } from '$types/handlers/Code.js';
+import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
+
+import { sveltex, type Sveltex } from '$Sveltex.js';
 import { Processed } from '$types/Sveltex.js';
-import {
-    AdvancedTexBackend,
-    CodeBackend,
-    MarkdownBackend,
-    TexBackend,
-} from '$sveltex-preprocess';
-import { range } from '$tests';
+
+import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { CodeHandler } from '$handlers/CodeHandler.js';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
+import { spy } from '$tests/fixtures.js';
+import { range } from '$tests/utils.js';
 import { SourceMapConsumer } from 'source-map';
 import { afterAll, describe, expect, it, suite, vi } from 'vitest';
-import { spy } from '$tests/fixtures.js';
 
 suite.concurrent('Sveltex', async () => {
     await spy(['writeFile', 'log', 'existsSync', 'mkdir'], true);

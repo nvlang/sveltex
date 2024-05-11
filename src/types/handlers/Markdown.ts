@@ -1,5 +1,5 @@
-import type { MarkdownHandler } from '$handlers';
-import { ProcessFn } from '$types/handlers/Handler.js';
+import type { MarkdownHandler } from '$handlers/MarkdownHandler.js';
+import type { ProcessFn } from '$types/handlers/Handler.js';
 
 /**
  * Supported markdown processors.

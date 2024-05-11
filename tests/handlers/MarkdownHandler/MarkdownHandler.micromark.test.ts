@@ -1,7 +1,6 @@
 import { suite, describe, it, expect } from 'vitest';
 
-import { MarkdownHandler } from '$handlers';
-import {} from 'micromark';
+import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
 suite("MarkdownHandler<'micromark'>", async () => {
     const handler = await MarkdownHandler.create('micromark');

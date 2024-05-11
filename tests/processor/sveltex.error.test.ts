@@ -1,5 +1,5 @@
 import { missingDeps } from '$utils/globals.js';
-import { sveltex } from '$sveltex-preprocess';
+import { sveltex } from '$Sveltex.js';
 import { consoles } from '$utils/debug.js';
 import { afterAll, describe, expect, it, suite, vi } from 'vitest';
 import { spy } from '$tests/fixtures.js';

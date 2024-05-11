@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-const src = await import('$sveltex-preprocess');
+const src = await import('$index.js');
 
 describe('src+index', () => {
     it('is an object', () => {

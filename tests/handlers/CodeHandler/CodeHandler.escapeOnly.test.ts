@@ -1,6 +1,6 @@
 import { suite, describe, it, expect, vi } from 'vitest';
 
-import { CodeHandler } from '$handlers';
+import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);

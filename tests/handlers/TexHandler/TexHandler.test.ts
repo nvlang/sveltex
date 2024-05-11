@@ -1,5 +1,5 @@
 import { suite, describe, it, expect, vi } from 'vitest';
-import { TexHandler } from '$handlers';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { missingDeps } from '$utils/globals.js';
 
 suite("TexHandler<'none'>", async () => {

@@ -1,6 +1,6 @@
-import { range } from '$tests';
+import { range } from '$tests/utils.js';
 import { spy } from '$tests/fixtures.js';
-import { isString } from '$type-guards';
+import { isString } from '$type-guards/utils.js';
 import { Diagnoser } from '$utils/diagnosers/Diagnoser.js';
 import {
     suite,

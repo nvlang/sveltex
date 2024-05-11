@@ -1,4 +1,5 @@
-import { htmlTagNames } from 'html-tag-names';
+// External dependencies
+import { htmlTagNames } from '$deps.js';
 
 /**
  * Check if a string is a valid name for a component. For this to be the case,

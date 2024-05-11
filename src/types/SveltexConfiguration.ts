@@ -9,23 +9,32 @@
  * The TSDoc comments in this file are very important for the IntelliSense the
  * user will see when configuring SvelTeX in their Svelte project.
  */
+
 import type {
     AdvancedTexBackend,
     AdvancedTexConfiguration,
+    FullAdvancedTexConfiguration,
+} from '$types/handlers/AdvancedTex.js';
+import type {
     CodeBackend,
     CodeConfiguration,
-    FullAdvancedTexConfiguration,
     FullCodeConfiguration,
+} from '$types/handlers/Code.js';
+import type {
     FullMarkdownConfiguration,
-    FullTexConfiguration,
-    FullVerbatimConfiguration,
     MarkdownBackend,
     MarkdownConfiguration,
-    RequiredNonNullable,
+} from '$types/handlers/Markdown.js';
+import type {
+    FullTexConfiguration,
     TexBackend,
     TexConfiguration,
+} from '$types/handlers/Tex.js';
+import type {
+    FullVerbatimConfiguration,
     VerbatimConfiguration,
-} from '$types';
+} from '$types/handlers/Verbatim.js';
+import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 
 /**
  * Supported TeX engines.

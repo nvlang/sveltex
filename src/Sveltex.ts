@@ -17,7 +17,7 @@ import type {
 } from 'svelte/compiler';
 
 // Internal dependencies
-import { getDefaultSveltexConfig } from '$config';
+import { getDefaultSveltexConfig } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
@@ -29,11 +29,10 @@ import { log, prettifyError } from '$utils/debug.js';
 import { escapeMustacheTags, escapeVerb, unescape } from '$utils/escape.js';
 import { missingDeps, packageManager } from '$utils/globals.js';
 import { mergeConfigs } from '$utils/merge.js';
+import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
 
 // External dependencies
-import MagicString from 'magic-string';
-import sorcery from 'sorcery';
-import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
+import { MagicString, sorcery } from '$deps.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.

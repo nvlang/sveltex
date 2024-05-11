@@ -1,18 +1,19 @@
-import mockFs from 'mock-fs';
-import { describe, it, expect, vi, afterAll, suite, beforeEach } from 'vitest';
+import { mockFs } from '$dev_deps.js';
+import { afterAll, beforeEach, describe, expect, it, suite, vi } from 'vitest';
 
 import {
+    consoles,
     detectPackageManager,
+    escapeWhitespace,
     getPmFromLockfile,
     getPmFromPackageJson,
-    pathExists,
-    escapeWhitespace,
     log,
-    consoles,
+    pathExists,
     prettifyError,
     runWithSpinner,
-} from '$utils';
-import { spy } from '$tests/fixtures.js';
+} from '$utils/debug.js';
+import { spy } from 'tests/fixtures.js';
+
 import { readFileSync } from 'node:fs';
 import pc from 'picocolors';
 
