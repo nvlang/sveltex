@@ -116,6 +116,15 @@ suite("TexHandler<'katex'>", async () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
+            it('should support CSS color variables', async () => {
+                expect(
+                    await handler.process('$$\\color{var(--red)}x$$'),
+                ).toEqual(
+                    '<span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathcolor="var(--red)"><mi>x</mi></mstyle></mrow><annotation encoding="application/x-tex">\\color&lbrace;var(--red)&rbrace;x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="color:var(--red);">x</span></span></span></span></span>',
+                );
+                expect(log).not.toHaveBeenCalled();
+            });
+
             it('should support transformations', async () => {
                 await handler.configure({
                     transformations: {

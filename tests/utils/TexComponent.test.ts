@@ -2,7 +2,7 @@ import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import { TexComponent } from '$utils/TexComponent.js';
-import { unescapeCssColorVarsFromSvg } from '$utils/css.js';
+import { unescapeCssColorVars } from '$utils/css.js';
 import { pathExists } from '$utils/debug.js';
 import { sha256 } from '$utils/misc.js';
 import { resolve } from 'node:path';
@@ -544,7 +544,7 @@ describe.concurrent('unescapeCssColorVarsFromSvg', () => {
     it('should work', () => {
         const map = new Map<`--${string}`, string>();
         map.set('--css-var-123456', '123456');
-        expect(unescapeCssColorVarsFromSvg('#123456', map)).toEqual(
+        expect(unescapeCssColorVars('#123456', map)).toEqual(
             'var(--css-var-123456)',
         );
     });
@@ -552,8 +552,6 @@ describe.concurrent('unescapeCssColorVarsFromSvg', () => {
     it('should convert #RRGGBB to #RGB if applicable', () => {
         const map = new Map<`--${string}`, string>();
         map.set('--css-var', '112233');
-        expect(unescapeCssColorVarsFromSvg('#123', map)).toEqual(
-            'var(--css-var)',
-        );
+        expect(unescapeCssColorVars('#123', map)).toEqual('var(--css-var)');
     });
 });

@@ -25,6 +25,7 @@ import { copyTransformation, prefixWithSlash, re } from '$utils/misc.js';
 
 // External dependencies
 import { CleanCSS, Output, assert, is, join, prettyBytes } from '$deps.js';
+import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
 
 export class TexHandler<
     B extends TexBackend,
@@ -266,6 +267,11 @@ export class TexHandler<
                         );
                     });
 
+                    // Escape CSS color variables
+                    const { escaped, cssColorVars } =
+                        escapeCssColorVars(transformedTex);
+                    transformedTex = escaped;
+
                     // Run KaTeX
                     let output = renderToString(transformedTex, {
                         // Apply options from config (KaTeX doesn't have a
@@ -281,6 +287,8 @@ export class TexHandler<
                         // inline- or as display math.
                         displayMode: inline === false,
                     });
+
+                    output = unescapeCssColorVars(output, cssColorVars);
 
                     // Apply post-transformations
                     transformations.post.forEach((transformation) => {

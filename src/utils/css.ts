@@ -126,7 +126,7 @@ export function parseCssColorVarsFromTex(tex: string) {
  *
  * @internal
  */
-export function unescapeCssColorVarsFromSvg(
+export function unescapeCssColorVars(
     svg: string,
     cssColorVars: Map<CssVar, string>,
 ) {
@@ -155,6 +155,13 @@ export function unescapeCssColorVarsFromSvg(
  * Escape CSS color variables in the TeX content to named colors.
  *
  * @param tex - TeX content to escape.
+ * @param preamble - Optional preamble to append the color definitions to. If no
+ * preamble is provided, we assume that we're escaping CSS variables for KaTeX,
+ * meaning that we'll escape them directly to hex colors (which KaTeX supports
+ * natively). If a preamble is provided, we assume that we're escaping CSS
+ * variables for advanced TeX, meaning that we'll escape them to named colors
+ * and define these colors using the `\definecolor` command from the `xcolor`
+ * package.
  * @returns The escaped TeX content and a map of the CSS color variables to
  * their corresponding named colors.
  *
@@ -171,7 +178,8 @@ export function unescapeCssColorVarsFromSvg(
  * \end{document}
  * ```
  *
- * ...would return a variable `escaped` containing...
+ * ...(and preamble `'\usepackage{microtype}'`) would return a variable
+ * `escaped` containing...
  *
  * ```tex
  * \documentclass[tikz]{standalone}
@@ -191,22 +199,27 @@ export function unescapeCssColorVarsFromSvg(
  *
  * @internal
  */
-export function escapeCssColorVarsToNamedColors(tex: string, preamble: string) {
+export function escapeCssColorVars(tex: string, preamble?: string) {
     const cssColorVars = parseCssColorVarsFromTex(tex);
     let escaped = tex;
     cssColorVars.forEach((color, cssColorVar) => {
-        escaped = escaped.replaceAll(`var(${cssColorVar})`, 'sveltex' + color);
+        escaped = escaped.replaceAll(
+            `var(${cssColorVar})`,
+            `${preamble ? 'sveltex' : '#'}${color}`,
+        );
     });
-    escaped = escaped.replace(
-        preamble,
-        preamble +
-            '\n' +
-            // Ensure xcolor is loaded
-            '\\makeatletter\n' +
-            '\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n' +
-            '\\makeatother\n' +
-            // Append color definitions
-            texDefineHexColors(cssColorVars),
-    );
+    if (preamble) {
+        escaped = escaped.replace(
+            preamble,
+            preamble +
+                '\n' +
+                // Ensure xcolor is loaded
+                '\\makeatletter\n' +
+                '\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n' +
+                '\\makeatother\n' +
+                // Append color definitions
+                texDefineHexColors(cssColorVars),
+        );
+    }
     return { escaped, cssColorVars };
 }

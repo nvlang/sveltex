@@ -17,10 +17,7 @@ import {
 } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spawnCliInstruction } from '$utils/cli.js';
-import {
-    escapeCssColorVarsToNamedColors,
-    unescapeCssColorVarsFromSvg,
-} from '$utils/css.js';
+import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
 import {
     log,
     prettifyError,
@@ -499,7 +496,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
     readonly compile = async (): Promise<number | null> => {
         // 1. Get the escaped TeX content.
         const { escaped: compilableTexContent, cssColorVars } =
-            escapeCssColorVarsToNamedColors(
+            escapeCssColorVars(
                 this.contentWithCssVars,
                 this.configuration.preamble,
             );
@@ -705,7 +702,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
             //
             const svg = await fs.readFile(this.out.svgPath, 'utf8');
 
-            const unescaped = unescapeCssColorVarsFromSvg(svg, cssColorVars);
+            const unescaped = unescapeCssColorVars(svg, cssColorVars);
 
             const svgOptimized = texLiveConfig.overrideSvgPostprocess
                 ? texLiveConfig.overrideSvgPostprocess(unescaped, this)
