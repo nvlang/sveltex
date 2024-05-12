@@ -6,9 +6,11 @@ import {
     interpretString,
     re,
     sha256,
+    copyTransformation,
 } from '$utils/misc.js';
 import { spy } from '$tests/fixtures.js';
 import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
+import type { Transformation } from '$types/handlers/Tex.js';
 
 suite.concurrent('utils/misc', async () => {
     afterAll(() => {
@@ -208,6 +210,20 @@ suite.concurrent('utils/misc', async () => {
         it('should return strings with leading slashes as-is', () => {
             expect(prefixWithSlash('/abc')).toEqual('/abc');
             expect(prefixWithSlash('/abc/')).toEqual('/abc/');
+        });
+    });
+
+    describe.each([
+        [/a/, 'b'],
+        [/$.*(\[)-+/gmsu, '$$1$'],
+        ['abc', 'def'],
+    ])('copyTransformation([%o, %o])', (r, s) => {
+        it('should return equivalent transformation', () => {
+            expect(copyTransformation([r, s])).toEqual([r, s]);
+        });
+        it('should not return reference to original transformation', () => {
+            const t: Transformation = [r, s];
+            expect(copyTransformation(t)).not.toBe(t);
         });
     });
 });

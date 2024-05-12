@@ -115,6 +115,26 @@ suite("TexHandler<'katex'>", async () => {
                 );
                 expect(log).not.toHaveBeenCalled();
             });
+
+            it('should support transformations', async () => {
+                await handler.configure({
+                    transformations: {
+                        pre: [
+                            [/\*/g, '\\cdot'],
+                            ['a', 'b'],
+                            ['b', 'c'],
+                        ],
+                        post: [[/ xmlns:xlink=".*?"/g, '']],
+                    },
+                });
+                expect(await handler.process('$a * b$')).toEqual(
+                    '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
+                );
+                await handler.configure({
+                    transformations: null,
+                });
+                expect(log).not.toHaveBeenCalled();
+            });
         });
 
         describe('processor', () => {

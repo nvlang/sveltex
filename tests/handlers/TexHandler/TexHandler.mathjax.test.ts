@@ -133,6 +133,29 @@ suite("TexHandler<'mathjax'>", async () => {
                 );
                 expect(log).not.toHaveBeenCalled();
             });
+
+            it('should support transformations', async () => {
+                const handler = await TexHandler.create('mathjax');
+                await handler.configure({
+                    transformations: {
+                        pre: [
+                            [/\*/g, '\\cdot'],
+                            ['a', 'b'],
+                            ['b', 'c'],
+                        ],
+                        post: [
+                            [
+                                / class="(.*?)"/g,
+                                ' class="$1 mathjax-transformed"',
+                            ],
+                        ],
+                    },
+                });
+                expect(await handler.process('$a * b$')).toEqual(
+                    '<mjx-container class="MathJax mathjax-transformed" jax="SVG"><svg style="vertical-align: -0.025ex;" xmlns="http://www.w3.org/2000/svg" width="3.594ex" height="1.025ex" role="img" focusable="false" viewBox="0 -442 1588.4 453" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-1-TEX-I-1D450" d="M34 159Q34 268 120 355T306 442Q362 442 394 418T427 355Q427 326 408 306T360 285Q341 285 330 295T319 325T330 359T352 380T366 386H367Q367 388 361 392T340 400T306 404Q276 404 249 390Q228 381 206 359Q162 315 142 235T121 119Q121 73 147 50Q169 26 205 26H209Q321 26 394 111Q403 121 406 121Q410 121 419 112T429 98T420 83T391 55T346 25T282 0T202 -11Q127 -11 81 37T34 159Z"></path><path id="MJX-1-TEX-N-22C5" d="M78 250Q78 274 95 292T138 310Q162 310 180 294T199 251Q199 226 182 208T139 190T96 207T78 250Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D450" xlink:href="#MJX-1-TEX-I-1D450"></use></g><g data-mml-node="mo" transform="translate(655.2,0)"><use data-c="22C5" xlink:href="#MJX-1-TEX-N-22C5"></use></g><g data-mml-node="mi" transform="translate(1155.4,0)"><use data-c="1D450" xlink:href="#MJX-1-TEX-I-1D450"></use></g></g></g></svg></mjx-container>',
+                );
+                expect(log).not.toHaveBeenCalled();
+            });
         });
 
         describe('processor', () => {

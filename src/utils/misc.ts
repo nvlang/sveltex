@@ -7,6 +7,7 @@ import { log } from '$utils/debug.js';
 
 // External dependencies
 import { createHash } from '$deps.js';
+import { Transformation } from '$types/handlers/Tex.js';
 
 /**
  * "Interprets" a string as a boolean, number, null, or undefined, if
@@ -288,4 +289,12 @@ export function prefixWithSlash(path: string): `/${string}` {
  */
 export function ensureDoesNotStartWithSlash(path: string): string {
     return path.startsWith('/') ? path.slice(1) : path;
+}
+
+/**
+ * @param t - The {@link Transformation | `Transformation`} to copy.
+ * @returns A copy of the given transformation.
+ */
+export function copyTransformation(t: Transformation): Transformation {
+    return [isString(t[0]) ? t[0] : new RegExp(t[0].source, t[0].flags), t[1]];
 }

@@ -11,7 +11,7 @@ import { mergeConfigs } from '$utils/merge.js';
 // External dependencies
 import { getProperty, rfdc, setProperty } from '$deps.js';
 
-const deepClone = rfdc();
+export const deepClone = rfdc();
 
 /**
  * This is the generic class which all handlers should extend.
@@ -138,7 +138,7 @@ export class Handler<
      * generally be able to set them one at a time, with separate calls to
      * `configure`.
      */
-    private _configuration: FullConfiguration;
+    protected _configuration: FullConfiguration;
 
     /**
      * A deep copy of the configuration object for this handler.

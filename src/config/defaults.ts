@@ -37,17 +37,15 @@ import { findCacheDirectory, homedir, join, relative, resolve } from '$deps.js';
 export function getDefaultTexConfiguration<T extends TexBackend>(
     texBackend: T,
 ): FullTexConfiguration<T> {
-    const cssCommon = {
-        dir: 'src/sveltex',
-        timeout: 1000,
-    };
     switch (texBackend) {
         case 'katex': {
             const rv: FullTexConfiguration<'katex'> = {
+                transformations: { pre: [], post: [] },
                 css: {
                     type: 'cdn',
                     cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
-                    ...cssCommon,
+                    dir: 'src/sveltex',
+                    timeout: 1000,
                 },
                 katex: {},
             };
@@ -55,17 +53,17 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
         }
         case 'mathjax': {
             const rv: FullTexConfiguration<'mathjax'> = {
+                transformations: { pre: [], post: [] },
                 css: {
                     type: 'self-hosted',
-                    ...cssCommon,
+                    dir: 'src/sveltex',
+                    timeout: 1000,
                 },
                 outputFormat: 'svg',
-                mathjax: {
-                    // chtml: {
-                    //     fontURL:
-                    //         'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
-                    // },
-                },
+                mathjax: {},
+                // mathjax: { chtml: { fontURL:
+                //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                // }}
             };
             return rv as unknown as FullTexConfiguration<T>;
         }

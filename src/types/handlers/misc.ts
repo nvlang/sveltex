@@ -91,7 +91,7 @@ export interface CssConfiguration<T extends CssApproach> {
      * @defaultValue `['jsdelivr', 'esm.sh', 'unpkg']`
      */
     cdn?: T extends 'cdn'
-        ? SupportedCdn
+        ? SupportedCdn | undefined
         : T extends 'self-hosted'
           ? SupportedCdn | SupportedCdn[] | undefined
           : never;

@@ -12,8 +12,8 @@ import type {
 // Internal dependencies
 import { getDefaultTexConfiguration } from '$config/defaults.js';
 import { katexFonts } from '$data/tex.js';
-import { Handler } from '$handlers/Handler.js';
-import { isArray } from '$type-guards/utils.js';
+import { Handler, deepClone } from '$handlers/Handler.js';
+import { isArray, isOneOf } from '$type-guards/utils.js';
 import { CssApproach, CssApproachLocal } from '$types/handlers/misc.js';
 import { cdnLink, fancyFetch, fancyWrite, getVersion } from '$utils/cdn.js';
 import { runWithSpinner } from '$utils/debug.js';
@@ -21,10 +21,10 @@ import { escapeBraces } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
 import { missingDeps } from '$utils/globals.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { prefixWithSlash, re } from '$utils/misc.js';
+import { copyTransformation, prefixWithSlash, re } from '$utils/misc.js';
 
 // External dependencies
-import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
+import { CleanCSS, Output, assert, is, join, prettyBytes } from '$deps.js';
 
 export class TexHandler<
     B extends TexBackend,
@@ -42,6 +42,46 @@ export class TexHandler<
     FullTexConfiguration<B>,
     TexHandler<B, CA>
 > {
+    override get configuration() {
+        const clone = deepClone(this._configuration);
+
+        // rfdc doesn't handle RegExps well, so we have to copy them manually
+        if (isOneOf(this.backend, ['mathjax', 'katex'])) {
+            assert(is<TexHandler<'mathjax' | 'katex'>>(this));
+            clone.transformations = {
+                pre: [
+                    ...this._configuration.transformations.pre.map(
+                        copyTransformation,
+                    ),
+                ],
+                post: [
+                    ...this._configuration.transformations.post.map(
+                        copyTransformation,
+                    ),
+                ],
+            };
+        }
+
+        return clone;
+    }
+
+    override configureNullOverrides: [string, unknown][] = [
+        ['transformations', { pre: [], post: [] }],
+        ['transformations.pre', []],
+        ['transformations.post', []],
+        [
+            'css',
+            isOneOf(this.backend, ['mathjax', 'katex'])
+                ? {
+                      type: 'none',
+                      dir: 'src/sveltex',
+                      timeout: 1000,
+                      cdn: 'undefined',
+                  }
+                : undefined,
+        ],
+    ];
+
     override get process() {
         return async (
             tex: string,
@@ -192,7 +232,7 @@ export class TexHandler<
                   configuration?: TexConfiguration<'custom'>;
               }
             : never,
-    ) {
+    ): Promise<TexHandler<B>> {
         if (backend === 'custom') {
             if (custom === undefined) {
                 throw new Error(
@@ -205,7 +245,7 @@ export class TexHandler<
                 process: custom.process,
                 configure: custom.configure ?? (() => undefined),
                 configuration: custom.configuration ?? {},
-            });
+            }) as unknown as TexHandler<B>;
         } else if (backend === 'katex') {
             try {
                 const { renderToString } = (await import('katex')).default;
@@ -214,13 +254,42 @@ export class TexHandler<
                     { inline, options }: TexProcessOptions<'katex'>,
                     texHandler: TexHandler<'katex'>,
                 ): string => {
-                    return escapeBraces(
-                        renderToString(tex, {
-                            displayMode: inline === false,
-                            ...texHandler.configuration.katex,
-                            ...options,
-                        }),
-                    );
+                    // Get pre- and post-transformations arrays, and KaTeX
+                    // options.
+                    const { transformations, katex } = texHandler.configuration;
+
+                    // Apply pre-transformations
+                    let transformedTex = tex;
+                    transformations.pre.forEach((transformation) => {
+                        transformedTex = transformedTex.replaceAll(
+                            ...transformation,
+                        );
+                    });
+
+                    // Run KaTeX
+                    let output = renderToString(transformedTex, {
+                        // Apply options from config (KaTeX doesn't have a
+                        // processor object, so the configuration has to be
+                        // passed directly to each call to `renderToString`).
+                        ...katex,
+
+                        // Apply options from method parameter, which take
+                        // precedence over the ones from the config.
+                        ...options,
+
+                        // Tell KaTeX whether the output should be rendered as
+                        // inline- or as display math.
+                        displayMode: inline === false,
+                    });
+
+                    // Apply post-transformations
+                    transformations.post.forEach((transformation) => {
+                        output = output.replaceAll(...transformation);
+                    });
+
+                    // Return result, escaping braces (which might otherwise
+                    // confuse Svelte).
+                    return escapeBraces(output);
                 };
                 const handleCss: (
                     texHandler: TexHandler<'katex'>,
@@ -288,7 +357,7 @@ export class TexHandler<
                     handleCss,
                 });
                 await th.configure({});
-                return th;
+                return th as unknown as TexHandler<B>;
             } catch (err) {
                 missingDeps.push('katex');
                 throw err;
@@ -430,7 +499,7 @@ export class TexHandler<
                 const handler = new TexHandler<'mathjax'>({
                     backend: 'mathjax',
                     configure: (_configuration, handler) => {
-                        const config = handler.configuration;
+                        const config = handler._configuration;
                         handler.processor = mathjax.document('', {
                             InputJax: new TeX(config.mathjax.tex),
                             OutputJax:
@@ -440,17 +509,50 @@ export class TexHandler<
                         });
                     },
                     process: async (tex, { inline, options }, texHandler) => {
-                        const result = await texHandler.processor.convert(tex, {
-                            ...options,
-                            display: inline === false,
+                        // Get pre- and post-transformations arrays
+                        const { transformations } = texHandler.configuration;
+
+                        // Apply pre-transformations
+                        let transformedTex = tex;
+                        transformations.pre.forEach((transformation) => {
+                            transformedTex = transformedTex.replaceAll(
+                                ...transformation,
+                            );
                         });
 
+                        // Run MathJax
+                        const result = await texHandler.processor.convert(
+                            transformedTex,
+                            {
+                                // Apply options from method parameter
+                                ...options,
+
+                                // Tell MathJax whether the output should be
+                                // rendered as inline- or as display math.
+                                display: inline === false,
+                            },
+                        );
+
+                        // Validate result
                         if (!(result instanceof LiteElement)) {
                             throw new Error(
                                 `MathJax did not return a valid node (result: ${String(result)}).`,
                             );
                         }
-                        return escapeBraces(adaptor.outerHTML(result));
+
+                        // Transform the result into something we can use
+                        let output = adaptor.outerHTML(result);
+
+                        // Apply post-transformations
+                        transformations.post.forEach((transformation) => {
+                            output = output.replaceAll(
+                                ...(transformation as [RegExp, string]),
+                            );
+                        });
+
+                        // Return result, escaping braces (which might otherwise
+                        // confuse Svelte).
+                        return escapeBraces(output);
                     },
                     configuration: getDefaultTexConfiguration('mathjax'),
                     processor: mathjax.document('', {
@@ -473,7 +575,7 @@ export class TexHandler<
                         const { processor, ...rest } = handler;
                         return rest;
                     };
-                return handler;
+                return handler as unknown as TexHandler<B>;
             } catch (err) {
                 missingDeps.push('mathjax-full');
                 throw err;
@@ -487,6 +589,6 @@ export class TexHandler<
             },
             processor: {},
             configuration: {},
-        });
+        }) as unknown as TexHandler<B>;
     }
 }
