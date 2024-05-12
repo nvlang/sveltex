@@ -352,6 +352,7 @@ suite.concurrent('utils/dvisvgm', () => {
                 args: [
                     "--output='/path/to/output.svg'",
                     '--exact-bbox',
+                    '--bbox=2pt',
                     '--bitmap-format=png',
                     '--currentcolor=#000',
                     '--embed-bitmaps',

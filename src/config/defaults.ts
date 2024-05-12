@@ -186,7 +186,7 @@ export function getDefaultDvisvgmOptions(): FirstTwoLevelsRequiredNotUndefined<D
         },
         customArgs: [],
         svg: {
-            bbox: null,
+            bbox: [2, 'pt'], // overrides dvisvgm default
             bitmapFormat: 'png', // overrides dvisvgm default
             clipJoin: null,
             comments: false, // matches dvisvgm default, but we want to make sure
@@ -240,7 +240,7 @@ export function getDefaultAdvancedTexConfiguration<
         outputDirectory: 'src/sveltex',
         engine: 'lualatex',
         dvisvgmOptions: getDefaultDvisvgmOptions(),
-        intermediateFiletype: 'pdf',
+        intermediateFiletype: 'dvi',
         overrideCompilationCommand: undefined,
         overrideConversionCommand: undefined,
         overrideSvgPostprocess: undefined,
