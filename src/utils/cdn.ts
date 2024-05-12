@@ -10,36 +10,6 @@ import { fs } from '$utils/fs.js';
 // External dependencies
 import { AbortError, nodeFetch } from '$deps.js';
 
-export async function fetchFromCdn(
-    pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
-    resource: string,
-    version: string = 'latest',
-    cdns: SupportedCdn[] = ['jsdelivr', 'esm.sh', 'unpkg'],
-    timeout: number = 1000,
-): Promise<string | undefined> {
-    let result: string | undefined;
-    if (cdns.length === 0) throw new Error('No CDNs specified');
-    await runWithSpinner(
-        async (spinner) => {
-            for (const cdn of cdns) {
-                const url = cdnLink(pkg, resource, version, cdn);
-                spinner.text = `Fetching ${url}`;
-                result = await fetchWithTimeout(url, timeout);
-                if (result) return 0; // Breaks out of runWithSpinner
-            }
-            return 1;
-        },
-        {
-            startMessage: `Fetching ${resource} for ${pkg}`,
-            failMessage: (t) =>
-                `Couldn't fetch ${resource} for ${pkg} (took ${t})`,
-            successMessage: (t) => `Fetched ${resource} for ${pkg} in ${t}`,
-        },
-        [1],
-    );
-    return result;
-}
-
 export function cdnLink(
     pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
     resource: string,
@@ -74,7 +44,6 @@ export async function fancyFetch(
     if (isArray(url)) {
         let result: string | undefined;
         for (const u of url) {
-            // console.log(`${String(n++)}: ${u}`);
             result = await fancyFetch(u, timeout);
             if (result) return result;
         }
