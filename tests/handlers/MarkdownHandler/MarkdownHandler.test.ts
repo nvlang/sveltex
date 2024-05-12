@@ -3,18 +3,6 @@ import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { missingDeps } from '$utils/globals.js';
 
 suite('MarkdownHandler', () => {
-    describe('backendIs()', () => {
-        it('should work', async () => {
-            const handler = await MarkdownHandler.create('none');
-            expect(handler.backendIs('none')).toBe(true);
-            expect(handler.backendIs('custom')).toBe(false);
-            expect(handler.backendIs('markdown-it')).toBe(false);
-            expect(handler.backendIs('marked')).toBe(false);
-            expect(handler.backendIs('micromark')).toBe(false);
-            expect(handler.backendIs('unified')).toBe(false);
-        });
-    });
-
     describe('MarkdownHandler.shouldParseAsInline()', () => {
         it('should return true for inline markdown', () => {
             expect(MarkdownHandler.shouldParseAsInline('**strong** *em*')).toBe(

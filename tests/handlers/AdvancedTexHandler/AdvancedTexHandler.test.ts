@@ -16,7 +16,7 @@ import {
     vi,
 } from 'vitest';
 import { sha256 } from '$utils/misc.js';
-import { AdvancedTexConfiguration } from '$index.js';
+import { AdvancedTexConfiguration } from '$mod.js';
 
 // async function handlers() {
 //     const ath = await AdvancedTexHandler.create('local');
@@ -130,24 +130,6 @@ suite("AdvancedTexHandler<'local'>", async () => {
     //         await writeFileOrig(path, data, opts);
     //     },
     // );
-
-    describe.each([{}])('backendIs()', (config) => {
-        fixture(config);
-        it('should return true iff this.backend is equal to input', () => {
-            expect(ath.backendIs('local')).toEqual(true);
-            expect(ath.backendIs('custom')).toEqual(false);
-            expect(ath.backendIs('none')).toEqual(false);
-        });
-    });
-
-    describe.each([{}])('backendIsNot()', (config) => {
-        fixture(config);
-        it('should return true iff this.backend is not equal to input', () => {
-            expect(ath.backendIsNot('local')).toEqual(false);
-            expect(ath.backendIsNot('custom')).toEqual(true);
-            expect(ath.backendIsNot('none')).toEqual(true);
-        });
-    });
 
     describe('configure()', () => {
         fixture();

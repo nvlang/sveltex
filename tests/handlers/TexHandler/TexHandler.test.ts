@@ -41,15 +41,6 @@ suite("TexHandler<'none'>", async () => {
                 expect(handler.configure).not.toBeNull();
             });
         });
-
-        describe('backendIs()', () => {
-            it('should work', () => {
-                expect(handler.backendIs('none')).toBe(true);
-                expect(handler.backendIs('katex')).toBe(false);
-                expect(handler.backendIs('mathjax')).toBe(false);
-                expect(handler.backendIs('custom')).toBe(false);
-            });
-        });
     });
 });
 
@@ -107,15 +98,6 @@ suite("TexHandler<'custom'>", async () => {
                 expect(handler.configure).not.toBeNull();
                 // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
                 expect(await handler.configure({})).toBeUndefined();
-            });
-        });
-
-        describe('backendIs()', () => {
-            it('should work', () => {
-                expect(handler.backendIs('none')).toBe(false);
-                expect(handler.backendIs('katex')).toBe(false);
-                expect(handler.backendIs('mathjax')).toBe(false);
-                expect(handler.backendIs('custom')).toBe(true);
             });
         });
     });

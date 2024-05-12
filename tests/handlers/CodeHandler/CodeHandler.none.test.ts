@@ -80,17 +80,6 @@ suite("CodeHandler<'none'>", async () => {
             });
         });
 
-        describe('backendIs()', () => {
-            it('should work', () => {
-                expect(handler.backendIs('custom')).toEqual(false);
-                expect(handler.backendIs('none')).toEqual(true);
-                expect(handler.backendIs('escapeOnly')).toEqual(false);
-                expect(handler.backendIs('highlight.js')).toEqual(false);
-                expect(handler.backendIs('prismjs')).toEqual(false);
-                expect(handler.backendIs('starry-night')).toEqual(false);
-            });
-        });
-
         describe('consumeDelims()', () => {
             let consoleErrorMock: MockInstance;
 

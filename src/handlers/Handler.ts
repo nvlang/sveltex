@@ -238,40 +238,6 @@ export class Handler<
     configureNullOverrides: [string, unknown][] = [];
 
     /**
-     * Type guard to narrow the handler's backend.
-     */
-    backendIs<Q extends PossibleBackend | ActualBackend>(
-        backend: Q,
-    ): this is Handler<
-        Q,
-        PossibleBackend,
-        Processor,
-        ProcessOptions,
-        Configuration,
-        FullConfiguration,
-        ActualHandler
-    > {
-        return this.backend === backend;
-    }
-
-    /**
-     * Type guard to narrow the handler's backend.
-     */
-    backendIsNot<Q extends PossibleBackend | ActualBackend>(
-        backend: Q,
-    ): this is Handler<
-        Exclude<PossibleBackend, Q>,
-        PossibleBackend,
-        Processor,
-        ProcessOptions,
-        Configuration,
-        FullConfiguration,
-        ActualHandler
-    > {
-        return this.backend !== backend;
-    }
-
-    /**
      * Create a new instance of {@link Handler | `Handler`}.
      *
      * ⚠ **Warning**: The `processor` parameter is passed by reference.

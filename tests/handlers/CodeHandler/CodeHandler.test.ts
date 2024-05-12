@@ -59,17 +59,6 @@ suite("CodeHandler<'custom'>", async () => {
                 expect(await handler.configure({})).toBeUndefined();
             });
         });
-
-        describe('backendIs()', () => {
-            it('should work', () => {
-                expect(handler.backendIs('none')).toBe(false);
-                expect(handler.backendIs('escapeOnly')).toBe(false);
-                expect(handler.backendIs('highlight.js')).toBe(false);
-                expect(handler.backendIs('prismjs')).toBe(false);
-                expect(handler.backendIs('starry-night')).toBe(false);
-                expect(handler.backendIs('custom')).toBe(true);
-            });
-        });
     });
 });
 
