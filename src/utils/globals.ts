@@ -1,52 +1,27 @@
 // Internal dependencies
-import { detectPackageManager, log } from '$utils/debug.js';
+import { detectPackageManager, log, prettifyError } from '$utils/debug.js';
 
 // External dependencies
-import { VERSION } from '$deps.js';
+import { VERSION, semverMajor } from '$deps.js';
+
+function getMajorVersion(version: string): number {
+    try {
+        return (semverMajor as (v: string) => number)(version);
+    } catch (error) {
+        log(
+            'error',
+            `Could not determine Svelte compiler version. Got: "${version}".\n\n${prettifyError(error)}\n\n`,
+        );
+        return -1;
+    }
+}
 
 /**
  * The major version of the Svelte compiler (e.g., `4` or `5`).
  *
  * @see {@link VERSION | `VERSION`}, from `svelte/compiler`.
  */
-export const SVELTE_MAJOR_VERSION: number = parseInt(
-    (VERSION.match(/^(\d+)\.\d+\.\d+(?:-.*)?$/) ?? [])[1] ?? '0',
-);
-
-/**
- * The minor version of the Svelte compiler.
- *
- * @see {@link VERSION | `VERSION`}, from `svelte/compiler`.
- */
-export const SVELTE_MINOR_VERSION: number = parseInt(
-    (VERSION.match(/^\d+\.(\d+)\.\d+(?:-.*)?$/) ?? [])[1] ?? '0',
-);
-
-/**
- * The patch version of the Svelte compiler.
- *
- * @see {@link VERSION | `VERSION`}, from `svelte/compiler`.
- */
-export const SVELTE_PATCH_VERSION: number = parseInt(
-    (VERSION.match(/^\d+\.\d+\.(\d+)(?:-.*)?$/) ?? [])[1] ?? '0',
-);
-
-/**
- * Whether the Svelte compiler is a pre-release version.
- *
- * @see {@link VERSION | `VERSION`}, from `svelte/compiler`.
- */
-export const SVELTE_PRERELEASE: boolean = VERSION.includes('-');
-
-if (
-    isNaN(SVELTE_MAJOR_VERSION) ||
-    (SVELTE_MAJOR_VERSION === 0 && !VERSION.match(/^\d+\.\d+\.\d+(?:-.*)?$/))
-) {
-    log(
-        'error',
-        `Could not determine Svelte compiler version. Got: "${VERSION}".`,
-    );
-}
+export const SVELTE_MAJOR_VERSION: number = getMajorVersion(VERSION);
 
 /**
  * Array to keep track of missing dependencies

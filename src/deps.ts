@@ -23,6 +23,7 @@ export { default as prettyBytes } from 'pretty-bytes';
 export { get as getKey, get as getProperty, set as setProperty } from 'radash';
 export { default as rfdc } from 'rfdc'; // "Really Fast Deep Clone"
 export { rimraf } from 'rimraf';
+export { major as semverMajor } from 'semver';
 export { default as sorcery } from 'sorcery';
 export { VERSION, parse as svelteParse } from 'svelte/compiler';
 export { type HTMLAttributes } from 'svelte/elements';
