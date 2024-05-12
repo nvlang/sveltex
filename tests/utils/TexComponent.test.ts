@@ -10,6 +10,7 @@ import { rimraf } from 'rimraf';
 import {
     afterAll,
     afterEach,
+    beforeAll,
     beforeEach,
     describe,
     expect,
@@ -69,6 +70,16 @@ function fixture() {
 
 suite('TexComponent', async () => {
     vi.restoreAllMocks();
+    beforeAll(async () => {
+        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default);
+    });
     afterAll(async () => {
         vi.restoreAllMocks();
         if (pathExists(`tmp/tests`)) {
@@ -80,6 +91,7 @@ suite('TexComponent', async () => {
         ['writeFile', 'log', 'spawnCliInstruction', 'readFile'],
         false,
     );
+    log.mockImplementation(() => undefined);
 
     describe('create', () => {
         describe('error handling', () => {

@@ -1,5 +1,14 @@
 import { mockFs } from '$dev_deps.js';
-import { afterAll, beforeEach, describe, expect, it, suite, vi } from 'vitest';
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    suite,
+    vi,
+} from 'vitest';
 
 import {
     consoles,
@@ -18,6 +27,16 @@ import { readFileSync } from 'node:fs';
 import pc from 'picocolors';
 
 suite('debug', async () => {
+    beforeAll(async () => {
+        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default);
+    });
     afterAll(() => {
         vi.restoreAllMocks();
         mockFs.restore();
@@ -124,6 +143,19 @@ suite('debug', async () => {
                         },
                     ),
             ).not.toThrow();
+        });
+
+        it('should return 1 if failureValues contains return value of action', async () => {
+            expect(
+                await runWithSpinner(
+                    () => 'something',
+                    {
+                        startMessage: 'test',
+                        successMessage: () => 'success',
+                    },
+                    ['something'],
+                ),
+            ).toEqual(1);
         });
     });
 

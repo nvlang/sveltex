@@ -1,9 +1,4 @@
-import {
-    fetchFromCdn,
-    fetchWithTimeout,
-    getVersion,
-    cdnLink,
-} from '$utils/cdn.js';
+import { fetchWithTimeout, getVersion, cdnLink } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
     suite,
@@ -33,20 +28,6 @@ suite('utils/cdn', async () => {
     );
     afterAll(() => {
         vi.restoreAllMocks();
-    });
-    describe('getCss', () => {
-        fixture();
-        it('should fetch CSS from CDNs', async () => {
-            const css = await fetchFromCdn('katex', 'dist/katex.min.css');
-            expect(css).toBeDefined();
-            expect(css).toContain('@font-face{font-family:KaTeX_AMS;');
-        });
-
-        it('should throw an error if no CDNs are specified', async () => {
-            await expect(
-                fetchFromCdn('katex', 'dist/katex.min.css', 'latest', []),
-            ).rejects.toThrow('No CDNs specified');
-        });
     });
 
     describe('fetchWithTimeout', () => {

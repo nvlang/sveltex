@@ -1,4 +1,13 @@
-import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
+import {
+    suite,
+    describe,
+    it,
+    expect,
+    afterAll,
+    vi,
+    beforeEach,
+    beforeAll,
+} from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 import { spy } from '$tests/fixtures.js';
@@ -13,6 +22,16 @@ function fixture() {
 
 suite("TexHandler<'mathjax'>", async () => {
     fixture();
+    beforeAll(async () => {
+        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default);
+    });
     const { writeFile, fancyWrite, log, existsSync } = await spy(
         ['writeFile', 'fancyWrite', 'mkdir', 'log', 'existsSync'],
         true,
@@ -105,6 +124,7 @@ suite("TexHandler<'mathjax'>", async () => {
                 const handler = await TexHandler.create('mathjax');
                 handler.processor = {
                     convert: () => null,
+                    outputJax: { styleSheet: () => ({ children: [] }) },
                 } as unknown as MathDocument<unknown, unknown, unknown>;
                 await expect(
                     async () => await handler.process('abcde'),

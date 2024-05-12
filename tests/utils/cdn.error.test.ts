@@ -1,4 +1,4 @@
-import { fancyFetch, fetchFromCdn, fetchWithTimeout } from '$utils/cdn.js';
+import { fancyFetch, fetchWithTimeout } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
     suite,
@@ -70,13 +70,6 @@ suite.sequential('utils/cdn', async () => {
                 'error',
                 expect.stringContaining('968b000c-a8df-4595-beb3-0e2a8c5eb9e6'),
             );
-        });
-    });
-    describe('fetchFromCdn', () => {
-        fixture();
-        it('should fail gracefully', async () => {
-            await fetchFromCdn('katex', 'dist/katex.min.css', 'latest');
-            expect(log).toHaveBeenCalledTimes(3);
         });
     });
     describe('fancyFetch (2)', () => {

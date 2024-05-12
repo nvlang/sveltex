@@ -1,5 +1,14 @@
 /* eslint-disable vitest/no-commented-out-tests */
-import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
+import {
+    suite,
+    describe,
+    it,
+    expect,
+    afterAll,
+    vi,
+    beforeEach,
+    beforeAll,
+} from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import fetch, { type Response } from 'node-fetch';
@@ -14,6 +23,16 @@ suite("TexHandler<'katex'>", async () => {
         ['writeFile', 'log', 'mkdir', 'existsSync'],
         true,
     );
+    beforeAll(async () => {
+        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default);
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });

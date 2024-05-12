@@ -1,9 +1,19 @@
-import { suite, describe, it, expect, vi } from 'vitest';
+import { suite, describe, it, expect, vi, beforeAll } from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { missingDeps } from '$utils/globals.js';
 
 suite("TexHandler<'none'>", async () => {
     const handler = await TexHandler.create('none');
+    beforeAll(async () => {
+        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default);
+    });
     describe("TexHandler.create('none')", () => {
         it('returns instance of TexHandler', () => {
             expect(handler).toBeTypeOf('object');
