@@ -7,6 +7,7 @@ export default defineConfig({
     test: {
         include: ['./tests/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
         exclude: ['./e2e/**/*'],
+        maxConcurrency: 100,
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
             enabled: true,
