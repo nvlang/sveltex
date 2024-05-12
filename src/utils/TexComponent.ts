@@ -708,7 +708,17 @@ export class TexComponent<A extends AdvancedTexBackend> {
                 ? texLiveConfig.overrideSvgPostprocess(unescaped, this)
                 : svgoOptimize(unescaped, texLiveConfig.svgoOptions).data;
 
-            await fs.writeFile(this.out.svgPath, svgOptimized, 'utf8');
+            // SVGO (or dvisvgm?) seems to add CDATA tags to the SVG, which in
+            // turn seem to cause issues with how the SVG is rendered in the
+            // browser. I don't really understand why, since, from what I can
+            // gather, the CDATA tag should make perfect sense, and technically
+            // make the SVG more robust.
+            const svgFinal = svgOptimized.replace(
+                /<style>(.*?)<!\[CDATA\[(.*?)\]\]>(.*?)<\/style>/gsu,
+                '<style>$1$2$3</style>',
+            );
+
+            await fs.writeFile(this.out.svgPath, svgFinal, 'utf8');
             await fs.rename(this.out.svgPath, this.out.sveltePath);
 
             spinnerSvg.succeed(

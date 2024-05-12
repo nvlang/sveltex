@@ -289,7 +289,7 @@ suite("AdvancedTexHandler<'local'>", async () => {
                 2,
                 `${tmpTestsDir}/output/Example/ref.svg`,
                 expect.stringContaining(
-                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5.26pt" height="4.294pt" viewBox="0 0 5.26 4.294"><style><![CDATA[@font-face{font-family:XWTZSC-LMRoman10-Regular;src:url(data:application/x-font-woff2;base64',
+                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5.26pt" height="4.294pt" viewBox="0 0 5.26 4.294"><style>@font-face{font-family:XWTZSC-LMRoman10-Regular;src:url(data:application/x-font-woff2;base64',
                 ),
                 'utf8',
             );
@@ -297,7 +297,7 @@ suite("AdvancedTexHandler<'local'>", async () => {
                 2,
                 `${tmpTestsDir}/output/Example/ref.svg`,
                 expect.stringContaining(
-                    ' format(\'woff2\');}\ntext.f0 {font-family:XWTZSC-LMRoman10-Regular;font-size:9.96px}\n]]></style><g id="page1"><text class="f0" x="-0.258931" transform="translate(0 4.294)scale(.999735)" fill="currentColor">x</text></g></svg>',
+                    ' format(\'woff2\');}\ntext.f0 {font-family:XWTZSC-LMRoman10-Regular;font-size:9.96px}\n</style><g id="page1"><text class="f0" x="-0.258931" transform="translate(0 4.294)scale(.999735)" fill="currentColor">x</text></g></svg>',
                 ),
                 'utf8',
             );
@@ -391,7 +391,7 @@ suite("AdvancedTexHandler<'local'>", async () => {
                 2,
                 `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
                 expect.stringContaining(
-                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="7.592" height="4.289pt" viewBox="0 0 5.694 4.289"><style><![CDATA[@font-face{font-family:MHOLNP-CMMI10;src:url(data:application/x-font-woff2;base64,',
+                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="7.592" height="4.289pt" viewBox="0 0 5.694 4.289"><style>@font-face{font-family:MHOLNP-CMMI10;src:url(data:application/x-font-woff2;base64,',
                 ),
                 'utf8',
             );
@@ -399,7 +399,7 @@ suite("AdvancedTexHandler<'local'>", async () => {
                 2,
                 `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
                 expect.stringContaining(
-                    ' format(\'woff2\');}\ntext.f0 {font-family:MHOLNP-CMMI10;font-size:9.96px}\n]]></style><g id="page1"><text class="f0" transform="translate(0 4.289)scale(.999735)" fill="var(--some-css-variable)">x</text></g></svg>',
+                    ' format(\'woff2\');}\ntext.f0 {font-family:MHOLNP-CMMI10;font-size:9.96px}\n</style><g id="page1"><text class="f0" transform="translate(0 4.289)scale(.999735)" fill="var(--some-css-variable)">x</text></g></svg>',
                 ),
                 'utf8',
             );
