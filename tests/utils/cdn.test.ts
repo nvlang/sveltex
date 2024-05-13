@@ -35,7 +35,7 @@ suite('utils/cdn', async () => {
         it.each([
             [
                 'https://httpstat.us/418',
-                3000,
+                1000,
                 undefined,
                 "HTTP error 418 \\(I'm a teapot\\): https://httpstat.us/418",
             ],
@@ -47,7 +47,7 @@ suite('utils/cdn', async () => {
             ],
         ])(
             'fetchWithTimeout(%o, %o) === %o',
-            { timeout: 2500, retry: 1 },
+            { timeout: 1500, retry: 1 },
             async (url, timeout, expected, logMessage) => {
                 expect(await fetchWithTimeout(url, timeout)).toEqual(expected);
                 if (logMessage) {
@@ -56,7 +56,9 @@ suite('utils/cdn', async () => {
                         1,
                         expect.stringMatching(/error|warn/),
                         expect.stringMatching(
-                            new RegExp(`(${logMessage}|Timed out.*)`),
+                            new RegExp(
+                                `(${logMessage}|Timed out.*|HTTP error 503 (Service Unavailable): https://httpstat.us/418)`,
+                            ),
                         ),
                     );
                 }
