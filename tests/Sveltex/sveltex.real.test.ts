@@ -9,17 +9,18 @@ import type { TexBackend } from '$types/handlers/Tex.js';
 import { Sveltex, sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
 import { isArray, isString } from '$type-guards/utils.js';
-import { splitContent } from '$utils/misc.js';
+import { re } from '$utils/misc.js';
 
-import { assert, is, uuid } from '$deps.js';
+import { typeAssert, is, uuid } from '$deps.js';
 import {
+    type MockInstance,
     afterAll,
     afterEach,
+    beforeAll,
     beforeEach,
     describe,
     expect,
     it,
-    suite,
     vi,
 } from 'vitest';
 
@@ -108,6 +109,18 @@ const preprocessors = [
     ),
 ] as Sveltex<MarkdownBackend, CodeBackend, TexBackend, AdvancedTexBackend>[];
 
+function splitContent(content: string): string[] {
+    return content.match(splitContentRegExp) ?? [];
+}
+
+const splitContentRegExp = re`
+    (?:
+        <script [^>]* > .*? <\/script>  # script block
+        | <style [^>]* > .*? <\/style>  # style block
+        | .+? (?=<script|<style|$))
+    ${'gsu'}
+`;
+
 async function preprocess<
     M extends MarkdownBackend,
     C extends CodeBackend,
@@ -139,40 +152,31 @@ async function preprocess<
     return markup;
 }
 
-suite('Sveltex', async () => {
+describe('Sveltex', () => {
+    let log: MockInstance;
     fixture();
+    beforeAll(async () => {
+        const mocks = await spy(
+            [
+                'ensureDir',
+                'existsSync',
+                'fancyWrite',
+                'log',
+                'mkdir',
+                'readFile',
+                'readFileSync',
+                'rename',
+                'spawnCliInstruction',
+                'writeFile',
+                'writeFileEnsureDir',
+            ],
+            true,
+        );
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-
-    const {
-        // ensureDir,
-        // existsSync,
-        // fancyWrite,
-        log,
-        // mkdir,
-        // readFile,
-        // readFileSync,
-        // rename,
-        // spawnCliInstruction,
-        // writeFile,
-        // writeFileEnsureDir,
-    } = await spy(
-        [
-            'ensureDir',
-            'existsSync',
-            'fancyWrite',
-            'log',
-            'mkdir',
-            'readFile',
-            'readFileSync',
-            'rename',
-            'spawnCliInstruction',
-            'writeFile',
-            'writeFileEnsureDir',
-        ],
-        true,
-    );
 
     describe.each(preprocessors.filter((p) => p.markdownBackend !== 'none'))(
         'Markdown: $markdownBackend + $codeBackend + $texBackend + $advancedTexBackend',
@@ -296,7 +300,7 @@ function expectedCode<
     const expected: (string | RegExp)[] = [];
 
     if (p.codeBackend === 'starry-night') {
-        assert(is<Sveltex<M, 'starry-night', T, A>>(p));
+        typeAssert(is<Sveltex<M, 'starry-night', T, A>>(p));
         const theme = p.configuration.code.theme;
         // script
         // head
@@ -315,7 +319,7 @@ function expectedCode<
         // content
         expected.push('<code');
     } else if (p.codeBackend === 'highlight.js') {
-        assert(is<Sveltex<M, 'highlight.js', T, A>>(p));
+        typeAssert(is<Sveltex<M, 'highlight.js', T, A>>(p));
         const theme = p.configuration.code.theme;
         // head
         if (
@@ -345,7 +349,7 @@ function expectedTex<
 >(p: Sveltex<M, C, T, A>, _content?: string): (string | RegExp)[] {
     const expected: (string | RegExp)[] = [];
     if (p.texBackend === 'mathjax') {
-        assert(is<Sveltex<M, C, 'mathjax', A>>(p));
+        typeAssert(is<Sveltex<M, C, 'mathjax', A>>(p));
         // script
         if (p.configuration.tex.css.type === 'self-hosted') {
             // expected.push(/import '.*mathjax.*css.*'/);
@@ -357,7 +361,7 @@ function expectedTex<
             expected.push('<mjx-container class="MathJax"');
         }
     } else if (p.texBackend === 'katex') {
-        assert(is<Sveltex<M, C, 'katex', A>>(p));
+        typeAssert(is<Sveltex<M, C, 'katex', A>>(p));
         // head
         if (
             p.configuration.tex.css.type === 'cdn' &&

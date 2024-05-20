@@ -1,423 +1,561 @@
-/* eslint-disable vitest/no-commented-out-tests */
-import { type Sveltex, sveltex } from '$Sveltex.js';
-import { uuidV4Regexp } from '$tests/utils.js';
 import {
-    escapeBraces,
-    escapeRegExps,
-    escapeVerb,
-    intersection,
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from 'vitest';
+import { spy } from '$tests/fixtures.js';
+import {
+    colonUuid,
+    escape,
+    escapeSnippets,
+    escapeStringForRegExp,
+    getColonES,
+    getMathInSpecialDelimsES,
+    getMdastES,
+    getSvelteES,
     outermostRanges,
-    unescape,
+    padString,
+    parseToMdast,
+    unescapeSnippets,
 } from '$utils/escape.js';
-import { describe, expect, it, suite } from 'vitest';
+import { cartesianProduct, range, uuidV4Regexp } from '$tests/utils.js';
+import { typeAssert, is } from '$deps.js';
+import {
+    EscapableSnippet,
+    EscapedSnippet,
+    ProcessedSnippet,
+    Snippet,
+    TexEscapeSettings,
+    UnescapeOptions,
+} from '$types/utils/Escape.js';
+import { isArray, isString } from '$type-guards/utils.js';
 
-suite.concurrent('processor/escape', async () => {
-    describe.concurrent('escape regexes', () => {
-        it('should match LaTeX display math', () => {
-            const input = 'A$$B$$C';
-            const expected = ['$$B$$'];
-            const result = input.match(escapeRegExps.texDisplay);
-            expect(result).toEqual(expected);
-        });
-
-        it('should match inline LaTeX code', () => {
-            const input = 'Some text $x^2 + y^2 = \\frac{z^2}{2}$ more text';
-            const expected = ['$x^2 + y^2 = \\frac{z^2}{2}$'];
-            const result = input.match(escapeRegExps.texInline);
-            expect(result).toEqual(expected);
-        });
-
-        it('should match fenced code blocks', () => {
-            const input = '```typescript\nconsole.log("Hello, world!");\n```';
-            const expected = [
-                '```typescript\nconsole.log("Hello, world!");\n```',
-            ];
-            const result = input.match(escapeRegExps.codeBlock);
-            expect(result).toEqual(expected);
-        });
-
-        it('should match inline code (double backtick)', () => {
-            const input =
-                'Some text ``console.log("Hello, world!");`` more text';
-            const expected = ['``console.log("Hello, world!");``'];
-            const result = input.match(escapeRegExps.codeInlineDoubleBacktick);
-            expect(result).toEqual(expected);
-        });
-
-        it('should match inline code (single backtick)', () => {
-            const input = 'Some text `console.log("Hello, world!");` more text';
-            const expected = ['`console.log("Hello, world!");`'];
-            const result = input.match(escapeRegExps.codeInlineSingleBacktick);
-            expect(result).toEqual(expected);
-        });
+function fixture() {
+    beforeEach(() => {
+        vi.resetAllMocks();
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    const preprocessor1 = (await sveltex()) as Sveltex<
-        'none',
-        'none',
-        'none',
-        'none' | 'local'
-    >;
-
-    const preprocessor2 = (await sveltex({
-        advancedTexBackend: 'local',
-    })) as Sveltex<'none', 'none', 'none', 'none' | 'local'>;
-
-    const preprocessor3 = (await sveltex({
-        advancedTexBackend: 'local',
-    })) as Sveltex<'none', 'none', 'none', 'none' | 'local'>;
-
-    await preprocessor3.configure({
-        verbatim: {
-            verbatimEnvironments: {
-                Verbatim: {
-                    processInner: { escapeBraces: true, escapeHtml: true },
-                },
-            },
-        },
-        advancedTex: { components: { TeX: {} } },
+    afterEach(() => {
+        vi.resetAllMocks();
     });
+}
 
-    const preprocessor4 = (await sveltex({
-        advancedTexBackend: 'local',
-    })) as Sveltex<'none', 'none', 'none', 'none' | 'local'>;
-
-    await preprocessor4.configure({
-        verbatim: {
-            verbatimEnvironments: {
-                Verbatim: {
-                    processInner: { escapeBraces: true, escapeHtml: true },
-                    aliases: ['verbatim'],
-                },
-            },
-        },
-        advancedTex: { components: { TeX: { aliases: ['tex'] } } },
+describe.concurrent.shuffle('escape()', () => {
+    fixture();
+    beforeAll(async () => {
+        await spy(['log', 'fancyWrite', 'writeFile']);
+    });
+    afterAll(() => {
+        vi.restoreAllMocks();
     });
 
     describe.concurrent.each([
-        { preprocessor: preprocessor1, num: 1 },
-        { preprocessor: preprocessor2, num: 2 },
-        { preprocessor: preprocessor3, num: 3 },
-        { preprocessor: preprocessor4, num: 4 },
-    ])('escapeVerb()', ({ preprocessor, num }) => {
-        it('should noop empty content', () => {
-            const content = '';
-            const expected = '';
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            expect(result).toEqual(expected);
-        });
-
-        it('should noop plain text', () => {
-            const content = 'Some text without markup';
-            const expected = 'Some text without markup';
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            expect(result).toEqual(expected);
-        });
-
-        it('should escape display math 1', () => {
-            const content = 'a$$b$$c';
-            // WARNING: uncommenting the line below will cause the test to fail for
-            // some reason beyond my understanding.
-            // expect(escapeRegExps.texDisplay.test(content)).toBe(true);
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            // expect(result).toMatch(/^A [a-f0-9-]{36} B$/);
-            expect(result).toEqual(
-                `a${(result.match(uuidV4Regexp) ?? [''])[0]}c`,
-            );
-        });
-
-        it('should escape display math 2', () => {
-            const content = '$$2 + 2 = 4.$$';
-            // WARNING: uncommenting the line below will cause the test to fail for
-            // some reason beyond my understanding.
-            // expect(escapeRegExps.texDisplay.test(content)).toBe(true);
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            // expect(result).toMatch(/^A [a-f0-9-]{36} B$/);
-            expect(result).toEqual((result.match(uuidV4Regexp) ?? [''])[0]);
-        });
-
-        it('should escape display math 3', () => {
-            const content = 'A $$\\LaTeX$$ B';
-            // expect(escapeRegExps.texDisplay.test(content)).toBe(true);
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            // expect(result).toMatch(/^A [a-f0-9-]{36} B$/);
-            expect(result).toEqual(
-                `A ${(result.match(uuidV4Regexp) ?? [''])[0]} B`,
-            );
-        });
-
-        it('should escape inline math', () => {
-            const content = 'A $\\LaTeX$ B';
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            expect(result).toMatch(/^A [a-f0-9-]{36} B$/);
-            expect(result).toEqual(
-                `A ${(result.match(uuidV4Regexp) ?? [''])[0]} B`,
-            );
-        });
-
-        it('should escape fenced code blocks', () => {
-            const content =
-                'A\n```typescript\nconsole.log("Hello, world!");\n```\nB';
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            expect(result).toMatch(/^A\n[a-f0-9-]{36}\nB$/);
-            expect(result).toEqual(
-                `A\n${(result.match(uuidV4Regexp) ?? [''])[0]}\nB`,
-            );
-        });
-
-        it('should escape inline code (double backtick)', () => {
-            const content =
-                'Some text ``console.log("Hello, world!");`` more text';
-            const result = escapeVerb(preprocessor, content).escapedContent;
-            expect(result).toMatch(/^Some text [a-f0-9-]{36} more text$/);
-            expect(result).toEqual(
-                `Some text ${(result.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-        });
-
-        it('should escape inline code (single backtick)', () => {
-            const content =
-                'Some text `console.log("Hello, world!");` more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes(
-                    '`console.log("Hello, world!");`',
-                ),
-            ).toBe(true);
-        });
-
-        it('should escape verbatim components', () => {
-            if (num < 3) return;
-            const content =
-                'Some text <Verbatim>x^{2} </verbatim> 3</Verbatim> more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes(
-                    '<Verbatim>x^{2} </verbatim> 3</Verbatim>',
-                ),
-            ).toBe(true);
-        });
-
-        it('should escape verbatim components (aliases)', () => {
-            if (num < 4) return;
-            const content =
-                'Some text <verbatim>x^{2} </Verbatim> 3</verbatim> more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes(
-                    '<verbatim>x^{2} </Verbatim> 3</verbatim>',
-                ),
-            ).toBe(true);
-        });
-
-        it('should escape tex components', () => {
-            if (num < 3) return;
-            const content = 'Some text <TeX>x^{2} < 3</TeX> more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes('<TeX>x^{2} < 3</TeX>'),
-            ).toBe(true);
-        });
-
-        it('should escape tex components (special characters)', () => {
-            if (num < 3) return;
-            const content =
-                'Some text <TeX>\n\\begin{a}}&<>/>>;\n</TeX> more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes(
-                    '<TeX>\n\\begin{a}}&<>/>>;\n</TeX>',
-                ),
-            ).toBe(true);
-        });
-
-        it('should escape tex components (tikz)', () => {
-            if (num < 3) return;
-            const content =
-                '<script>\n</script>\n\ntest1 *italic* test2\n\n<TeX ref="something">\n\\begin{tikzpicture}\n\\draw (0,0) circle (3);\n\\draw (0,-1) circle (1.8);\n\\draw[var(--red), thick] (0,0) rectangle (3, 3);\n\\end{tikzpicture}\n</TeX>\n\ntest3 **bold** test4';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toEqual(
-                `<script>\n</script>\n\ntest1 *italic* test2\n\n${(escapedContent.match(uuidV4Regexp) ?? [''])[0]}\n\ntest3 **bold** test4`,
-            );
-            expect(
-                [...savedMatches.values()].includes(
-                    '<TeX ref="something">\n\\begin{tikzpicture}\n\\draw (0,0) circle (3);\n\\draw (0,-1) circle (1.8);\n\\draw[var(--red), thick] (0,0) rectangle (3, 3);\n\\end{tikzpicture}\n</TeX>',
-                ),
-            ).toBe(true);
-        });
-
-        it('should escape tex components (aliases)', () => {
-            if (num < 4) return;
-            const content = 'Some text <tex>x^{2} < 3</tex> more text';
-            const { escapedContent, savedMatches } = escapeVerb(
-                preprocessor,
-                content,
-            );
-            expect(escapedContent).toMatch(
-                /^Some text [a-f0-9-]{36} more text$/,
-            );
-            expect(escapedContent).toEqual(
-                `Some text ${(escapedContent.match(uuidV4Regexp) ?? [''])[0]} more text`,
-            );
-            expect(
-                [...savedMatches.values()].includes('<tex>x^{2} < 3</tex>'),
-            ).toBe(true);
-        });
+        [
+            'code (inline)',
+            [1, 2, 3, 4, 5].map((n) => [
+                `a ${'`'.repeat(n)}b${'`'.repeat(n)} c`,
+                'a □ c',
+                [
+                    {
+                        type: 'code',
+                        processable: {
+                            innerContent: 'b',
+                            optionsForProcessor: { inline: true },
+                        },
+                    },
+                ],
+            ]),
+        ],
+        [
+            'code (block)',
+            (
+                [[0], [0, '1', '2', 0], [1], [2, undefined, undefined, 1]] as [
+                    number,
+                    string | undefined,
+                    string | undefined,
+                    number | undefined,
+                ][]
+            ).map(([n, lang, info, padding]) => [
+                `a${'\n'.repeat(padding ?? 0)}\n\`\`\`${'`'.repeat(n)}${lang ?? ''}${info ? ` ${info}` : ''}\nb\n${'`'.repeat(n)}\`\`\`\n${'\n'.repeat(padding ?? 0)}c`,
+                `a${'\n'.repeat(padding ? padding - 1 : 0)}\n\n□\n\n${'\n'.repeat(padding ? padding - 1 : 0)}c`,
+                [
+                    {
+                        type: 'code',
+                        processable: {
+                            innerContent: 'b',
+                            optionsForProcessor: { inline: false, lang, info },
+                        },
+                    } as Partial<EscapedSnippet<'code'>>,
+                ],
+            ]),
+        ],
+        ...generateTexTests(),
+        [
+            'mustacheTag',
+            [1, 2, 3, 4, 5].map((n) => [
+                `a ${'{'.repeat(n)}b${'}'.repeat(n)} c`,
+                'a □ c',
+                [
+                    {
+                        type: 'mustacheTag',
+                        original: {
+                            outerContent: `${'{'.repeat(n)}b${'}'.repeat(n)}`,
+                        },
+                    },
+                ],
+            ]),
+        ],
+        [
+            'svelte',
+            [
+                'script',
+                'style',
+                'svelte:head',
+                'svelte:window',
+                'svelte:document',
+                'svelte:body',
+                'svelte:options',
+            ].map((tag) => [
+                `a <${tag}>b</${tag}> c`,
+                'a \n\n□\n\n c',
+                [
+                    {
+                        type: 'svelte',
+                        original: {
+                            outerContent: `<${tag.replace(':', colonUuid)}>b</${tag.replace(':', colonUuid)}>`,
+                        },
+                        processable: undefined,
+                        escapeOptions: { pad: 2 },
+                        unescapeOptions: { removeParagraphTag: true },
+                    },
+                ],
+            ]),
+        ],
+    ] as [
+        string,
+        [
+            string,
+            string,
+            Partial<EscapedSnippet>[],
+            TexEscapeSettings | undefined,
+        ][],
+    ][])('%s', (_label, tests) => {
+        it.concurrent.each(tests)(
+            '%o → %o',
+            (raw, escaped, escapedSnippets, texEscapeSettings) => {
+                // expect(escape('a')).toEqual({
+                //     escapedDocument: 'a',
+                //     escapedSnippets: [],
+                // });
+                const res = escape(raw, undefined, texEscapeSettings);
+                expect(res.escapedDocument).toEqual(
+                    expect.stringMatching(
+                        new RegExp(
+                            escapeStringForRegExp(escaped).replaceAll(
+                                '□',
+                                uuidV4Regexp.source,
+                            ),
+                        ),
+                    ) as unknown,
+                );
+                escapedSnippets.forEach((snip, i) => {
+                    expect(res.escapedSnippets[i]?.[0]).toEqual(
+                        expect.stringMatching(uuidV4Regexp),
+                    );
+                    expect(res.escapedSnippets[i]?.[1]).toMatchObject(snip);
+                });
+            },
+        );
     });
 
-    describe.concurrent('unescape()', () => {
-        it('should unescape content', () => {
-            expect(unescape('123', new Map([['123', 'something']]))).toEqual(
-                'something',
-            );
-        });
+    describe('edge cases', () => {
+        fixture();
 
-        it('should remove <p> tags by default content', () => {
-            expect(
-                unescape('<p>123</p>', new Map([['123', 'something']])),
-            ).toEqual('something');
-        });
+        it.each([
+            [
+                '${...}$',
+                '□',
+                [
+                    {
+                        type: 'tex',
+                        processable: {
+                            innerContent: '{...}',
+                            optionsForProcessor: { inline: true },
+                        },
+                        escapeOpts: { pad: false },
+                        unescapeOpts: { removeParagraphTag: false },
+                    },
+                ],
+            ],
+            [
+                '${$}',
+                '□}',
+                [
+                    {
+                        type: 'tex',
+                        processable: {
+                            innerContent: '{',
+                            optionsForProcessor: { inline: true },
+                        },
+                    },
+                ],
+            ],
+            [
+                '{$}$',
+                '□$',
+                [
+                    {
+                        type: 'mustacheTag',
+                        original: {
+                            outerContent: '{$}',
+                        },
+                    },
+                ],
+            ],
+            [
+                '`{$}$`',
+                '□',
+                [
+                    {
+                        type: 'code',
+                        processable: {
+                            innerContent: '{$}$',
+                        },
+                    },
+                ],
+            ],
+            [
+                '<script attr="{a}$b$`c`">{1}$2$`3`</script>',
+                '□',
+                [
+                    {
+                        type: 'svelte',
+                        original: {
+                            loc: {
+                                end: 43,
+                                start: 0,
+                            },
+                            outerContent:
+                                '<script attr="{a}$b$`c`">{1}$2$`3`</script>',
+                        },
+                    },
+                ],
+            ],
+            [
+                '<script>a</script>\n...\n<script>c</script>',
+                '\n\n□\n\n\n...\n\n\n□\n\n',
+                [
+                    {
+                        type: 'svelte',
+                        original: {
+                            outerContent: '<script>a</script>',
+                        },
+                    },
+                    {
+                        type: 'svelte',
+                        original: {
+                            outerContent: '<script>c</script>',
+                        },
+                    },
+                ],
+            ],
+            [
+                'a $$b$$ c',
+                'a \n\n□\n\n c',
+                [
+                    {
+                        type: 'tex',
+                        processable: {
+                            innerContent: 'b',
+                            optionsForProcessor: { inline: false },
+                        },
+                    },
+                ],
+            ],
+        ] as [string, string, PartialSnippet[]][])(
+            '%o → %o',
+            (str, escaped, snippets) => {
+                const res = escape(str);
+                expect(res.escapedDocument).toMatch(
+                    new RegExp(
+                        escapeStringForRegExp(escaped).replaceAll(
+                            '□',
+                            uuidV4Regexp.source,
+                        ),
+                    ),
+                );
+                expect(res.escapedSnippets.length).toEqual(snippets.length);
+                res.escapedSnippets.forEach((snippet, i) => {
+                    expect(snippet[0]).toEqual(
+                        expect.stringMatching(uuidV4Regexp),
+                    );
+                    const snip = snippets[i];
+                    typeAssert(is<PartialSnippet>(snip));
+                    expect(snippet[1].type).toEqual(snip.type);
+                    if (snip.original?.outerContent) {
+                        expect(snippet[1].original.outerContent).toEqual(
+                            snip.original.outerContent,
+                        );
+                    }
+                    if (snip.original?.loc) {
+                        expect(snippet[1].original.loc).toEqual(
+                            snip.original.loc,
+                        );
+                    }
+                    if (snip.processable?.innerContent) {
+                        expect(snippet[1].processable?.innerContent).toEqual(
+                            snip.processable.innerContent,
+                        );
+                    }
+                    if (snip.processable?.optionsForProcessor) {
+                        expect(
+                            snippet[1].processable?.optionsForProcessor,
+                        ).toEqual(snip.processable.optionsForProcessor);
+                    }
+                    if (snip.unescapeOpts?.removeParagraphTag) {
+                        expect(
+                            snippet[1].unescapeOptions?.removeParagraphTag,
+                        ).toEqual(snip.unescapeOpts.removeParagraphTag);
+                    }
+                });
+            },
+        );
+    });
+});
 
-        it('should accept optional removeParagraphTag argument', () => {
-            expect(
-                unescape(
-                    '<p>123</p>\n<p>456</p>',
-                    new Map([
-                        ['123', 'something'],
-                        ['456', 'something else'],
-                    ]),
-                    (code) => code === 'something',
+interface PartialSnippet {
+    type: Snippet['type'];
+    original?: Partial<Snippet['original']>;
+    processable?: Partial<Snippet['processable']>;
+    unescapeOpts?: Partial<UnescapeOptions>;
+}
+
+describe.concurrent.shuffle('padString()', () => {
+    it('should add a newline on both sides by default', () => {
+        expect(padString('foo')).toEqual('\nfoo\n');
+    });
+
+    it('should add a newline on both sides when padInstr is true', () => {
+        expect(padString('foo', true)).toEqual('\nfoo\n');
+    });
+
+    it('should add a newline on both sides when padInstr is 1', () => {
+        expect(padString('foo', 1)).toEqual('\nfoo\n');
+    });
+
+    it('should add 2 newlines on each side when padInstr is 2', () => {
+        expect(padString('foo', 2)).toEqual('\n\nfoo\n\n');
+    });
+
+    it('should not add any padding when padInstr is false', () => {
+        expect(padString('foo', false)).toEqual('foo');
+    });
+
+    it('should add the specified string on both sides', () => {
+        expect(padString('foo', 'bar')).toEqual('barfoobar');
+    });
+
+    it('should add the specified string on the left side', () => {
+        expect(padString('foo', ['bar', false])).toEqual('barfoo');
+    });
+
+    it('should add the specified string on the right side', () => {
+        expect(padString('foo', [false, 'bar'])).toEqual('foobar');
+    });
+
+    it('should add the specified strings on both sides', () => {
+        expect(padString('foo', ['bar', 'baz'])).toEqual('barfoobaz');
+    });
+
+    it('should work with 2-tuples of strings _and_ numbers', () => {
+        expect(padString('foo', ['bar', 3])).toEqual('barfoo\n\n\n');
+        expect(padString('foo', [3, 'bar'])).toEqual('\n\n\nfoobar');
+    });
+});
+
+describe.concurrent.shuffle('escapeSnippets()', () => {
+    // vi.mock('□', () => {
+    //     return {
+    //         v4: vi.fn().mockReturnValue('□'),
+    //     };
+    // });
+    // const □Mock = vi.spyOn(await import('□'), 'v4');
+    // let c = 1;
+    // □Mock.mockReturnValue('□' + String(c++));
+    // beforeEach(() => {
+    //     vi.resetAllMocks();
+    //     c = 1;
+    // });
+    // afterAll(() => {
+    //     vi.restoreAllMocks();
+    // });
+    it.each([
+        {
+            document: 'a b c',
+            type: 'svelte',
+            original: { loc: { start: 2, end: 3 } },
+            escapeOptions: { pad: false },
+            escapedDocument: 'a □ c',
+            escapedSnippets: [
+                [
+                    '□',
+                    {
+                        type: 'svelte',
+                        original: { loc: { start: 2, end: 3 } },
+                    },
+                ],
+            ],
+        },
+        {
+            document: 'a b c',
+            type: 'svelte',
+            original: { loc: { start: 2, end: 3 } },
+            escapeOptions: { pad: true },
+            escapedDocument: 'a \n□\n c',
+            escapedSnippets: [
+                [
+                    '□',
+                    {
+                        type: 'svelte',
+                        original: { loc: { start: 2, end: 3 } },
+                    },
+                ],
+            ],
+        },
+        {
+            document: 'a b c',
+            type: 'svelte',
+            original: { loc: { start: 2, end: 3 } },
+            escapeOptions: { pad: ['\n\n', '\n\n'] },
+            escapedDocument: 'a \n\n□\n\n c',
+            escapedSnippets: [
+                [
+                    '□',
+                    {
+                        type: 'svelte',
+                        original: { loc: { start: 2, end: 3 } },
+                    },
+                ],
+            ],
+        },
+        {
+            document: '<script>...</script>\ntest',
+            type: 'svelte',
+            original: { loc: { start: 0, end: 20 } },
+            escapeOptions: { pad: ['\n\n', '\n\n'] },
+            escapedDocument: '\n\n□\n\n\ntest',
+            escapedSnippets: [
+                [
+                    '□',
+                    {
+                        type: 'svelte',
+                        original: { loc: { start: 0, end: 20 } },
+                    },
+                ],
+            ],
+        },
+    ] as (ProcessedSnippet &
+        EscapableSnippet & {
+            document: string;
+            escapedDocument: string;
+            escapedSnippets: [string, EscapedSnippet][];
+        })[])('$type: $document → $escapedDocument', (test) => {
+        expect(
+            escapeSnippets(test.document, [
+                {
+                    type: test.type,
+                    escapeOptions: test.escapeOptions,
+                    original: test.original,
+                    processable: test.processable,
+                },
+            ]),
+        ).toMatchObject({
+            escapedDocument: expect.stringMatching(
+                new RegExp(
+                    escapeStringForRegExp(test.escapedDocument).replaceAll(
+                        '□',
+                        uuidV4Regexp.source,
+                    ),
                 ),
-            ).toEqual('something\n<p>something else</p>');
-        });
-    });
-
-    describe.concurrent('escapeCurlyBraces()', () => {
-        it('should escape curly braces in the content', () => {
-            const content = 'Some {text} with {curly} braces';
-            const expected =
-                'Some &lbrace;text&rbrace; with &lbrace;curly&rbrace; braces';
-            const result = escapeBraces(content);
-            expect(result).toEqual(expected);
-        });
-
-        it('should escape multiple curly braces in the content', () => {
-            const content = '{{{multiple}}} {{{curly}}} {{{braces}}}';
-            const expected =
-                '&lbrace;&lbrace;&lbrace;multiple&rbrace;&rbrace;&rbrace; &lbrace;&lbrace;&lbrace;curly&rbrace;&rbrace;&rbrace; &lbrace;&lbrace;&lbrace;braces&rbrace;&rbrace;&rbrace;';
-            const result = escapeBraces(content);
-            expect(result).toEqual(expected);
-        });
-
-        it('should not escape other characters in the content', () => {
-            const content = 'Some {text} with other characters: !@#$%^&*()';
-            const expected =
-                'Some &lbrace;text&rbrace; with other characters: !@#$%^&*()';
-            const result = escapeBraces(content);
-            expect(result).toEqual(expected);
-        });
-
-        it('should not escape already escaped curly braces in the content', () => {
-            const content =
-                'Some &lbrace;text&rbrace; with &lbrace;escaped&rbrace; curly braces';
-            const expected =
-                'Some &lbrace;text&rbrace; with &lbrace;escaped&rbrace; curly braces';
-            const result = escapeBraces(content);
-            expect(result).toEqual(expected);
-        });
-
-        it('should escape "() => {}" properly', () => {
-            const content = '<pre><code>() =&gt; {}\n</code></pre>';
-            const expected =
-                '<pre><code>() =&gt; &lbrace;&rbrace;\n</code></pre>';
-            const result = escapeBraces(content);
-            expect(result).toEqual(expected);
-        });
-    });
-
-    describe.concurrent('intersection()', () => {
-        it('should return null if there is no intersection', () => {
-            const a = { start: 1, end: 5 };
-            const b = { start: 6, end: 10 };
-            const result = intersection(a, b);
-            expect(result).toBeNull();
-        });
-
-        it('should return the intersection if it exists', () => {
-            const a = { start: 1, end: 10 };
-            const b = { start: 5, end: 15 };
-            const expected = { start: 5, end: 10 };
-            const result = intersection(a, b);
-            expect(result).toEqual(expected);
-        });
-
-        it('should handle overlapping intervals', () => {
-            const a = { start: 1, end: 10 };
-            const b = { start: 5, end: 8 };
-            const expected = { start: 5, end: 8 };
-            const result = intersection(a, b);
-            expect(result).toEqual(expected);
-        });
-
-        it('should handle identical intervals', () => {
-            const a = { start: 1, end: 10 };
-            const b = { start: 1, end: 10 };
-            const expected = { start: 1, end: 10 };
-            const result = intersection(a, b);
-            expect(result).toEqual(expected);
+            ) as unknown,
+            escapedSnippets: test.escapedSnippets.map(
+                (snip) =>
+                    [expect.stringMatching(uuidV4Regexp), snip[1]] as [
+                        string,
+                        EscapedSnippet,
+                    ],
+            ),
         });
     });
 });
-describe('outermostRanges()', () => {
+
+describe.concurrent.shuffle('unescapeSnippets()', () => {
+    describe('removeParagraphTag: true', () => {
+        const ps: ProcessedSnippet = {
+            processed: 'b',
+            unescapeOptions: { removeParagraphTag: true },
+        };
+        it.each([
+            ['a □ c', 'a b c', [['□', ps]]],
+            ['a <p>□</p> c', 'a b c', [['□', ps]]],
+            ['a <p>\n□</p> c', 'a b c', [['□', ps]]],
+            ['a <p>□\n</p> c', 'a b c', [['□', ps]]],
+            ['a <p>\n\t \n□\n\n\n</p> c', 'a b c', [['□', ps]]],
+            ['<p>□</p>\nc', 'b\nc', [['□', ps]]],
+        ] as [string, string, [string, ProcessedSnippet][]][])(
+            '%o → %o',
+            (document, unescaped, processedSnippets) => {
+                expect(unescapeSnippets(document, processedSnippets)).toEqual(
+                    unescaped,
+                );
+            },
+        );
+    });
+
+    describe('removeParagraphTag: false', () => {
+        const ps: ProcessedSnippet = {
+            processed: 'b',
+            unescapeOptions: { removeParagraphTag: false },
+        };
+        it.each([
+            ['a □ c', 'a b c', [['□', ps]]],
+            ['a <p>□</p> c', 'a <p>b</p> c', [['□', ps]]],
+            ['a <p>\n□</p> c', 'a <p>\nb</p> c', [['□', ps]]],
+            ['a <p>□\n</p> c', 'a <p>b\n</p> c', [['□', ps]]],
+            [
+                'a <p>\n\t \n□\n\n\n</p> c',
+                'a <p>\n\t \nb\n\n\n</p> c',
+                [['□', ps]],
+            ],
+            ['<p>□</p>\nc', '<p>b</p>\nc', [['□', ps]]],
+        ] as [string, string, [string, ProcessedSnippet][]][])(
+            '%o → %o',
+            (document, unescaped, processedSnippets) => {
+                expect(unescapeSnippets(document, processedSnippets)).toEqual(
+                    unescaped,
+                );
+            },
+        );
+    });
+
+    describe('behaves gracefully if processed snippet for UUID is undefined', () => {
+        it.each([['a □ c', 'a □ c', [['□', undefined]]]] as unknown as [
+            string,
+            string,
+            [string, ProcessedSnippet][],
+        ][])('%o → %o', (document, unescaped, processedSnippets) => {
+            expect(unescapeSnippets(document, processedSnippets)).toEqual(
+                unescaped,
+            );
+        });
+    });
+});
+
+describe.concurrent.shuffle('outermostRanges()', () => {
     it('should return the outermost ranges', () => {
         const ranges = [
             { start: 0, end: 100 }, // outermost
@@ -461,3 +599,903 @@ describe('outermostRanges()', () => {
         expect(result).toEqual(expected);
     });
 });
+
+describe.concurrent.shuffle('getSvelteES()', () => {
+    describe.each([
+        [
+            'normal',
+            [
+                ...[
+                    'script',
+                    'style',
+                    'svelte:head',
+                    'svelte:window',
+                    'svelte:document',
+                    'svelte:body',
+                    'svelte:options',
+                ].map(
+                    (tag) =>
+                        [
+                            `a<${tag}>...</${tag}>b`,
+                            `<${tag}>...</${tag}>`,
+                            [
+                                {
+                                    escapeOptions: { pad: 2 },
+                                    original: {
+                                        loc: {
+                                            start: 1,
+                                            end:
+                                                9 +
+                                                2 *
+                                                    tag.replace(':', colonUuid)
+                                                        .length,
+                                        },
+                                        outerContent: `<${tag.replace(':', colonUuid)}>...</${tag.replace(':', colonUuid)}>`,
+                                    },
+                                    processable: undefined,
+                                    type: 'svelte',
+                                    unescapeOptions: {
+                                        removeParagraphTag: true,
+                                    },
+                                },
+                            ],
+                        ] as [string, string, EscapableSnippet[]],
+                ),
+            ],
+        ],
+        [
+            'self-closing',
+            [
+                ['a<script/>b', undefined, []],
+                ['a<style/>b', undefined, []],
+                ['a<svelte:head/>b', undefined, []],
+                ...[
+                    'svelte:window',
+                    'svelte:document',
+                    'svelte:body',
+                    'svelte:options',
+                ].map((tag) => [
+                    `a<${tag}/>b`,
+                    `<${tag}/>`,
+                    [
+                        {
+                            escapeOptions: { pad: 2 },
+                            original: {
+                                loc: {
+                                    start: 1,
+                                    end: 4 + tag.replace(':', colonUuid).length,
+                                },
+                                outerContent: `<${tag.replace(':', colonUuid)}/>`,
+                            },
+                            processable: undefined,
+                            type: 'svelte',
+                            unescapeOptions: { removeParagraphTag: true },
+                        },
+                    ],
+                ]),
+            ],
+        ],
+    ] as [string, [string, string, EscapableSnippet[]][]][])(
+        '%s Svelte elements',
+        (_label, tests) => {
+            it.each(tests)(
+                '%o → %o',
+                (document, _outerContent, escapedSnippets) => {
+                    expect(
+                        getSvelteES(document.replaceAll(':', colonUuid)),
+                    ).toMatchObject(escapedSnippets);
+                },
+            );
+        },
+    );
+});
+
+describe.concurrent.shuffle('getColonES()', () => {
+    describe.each([
+        [
+            'normal',
+            [
+                ...[
+                    'svelte:self',
+                    'svelte:component',
+                    'svelte:element',
+                    'svelte:fragment',
+                ].map(
+                    (tag) =>
+                        [
+                            `a<${tag}>...</${tag}>b`,
+                            "':', ':'",
+                            [
+                                {
+                                    escapeOptions: {
+                                        pad: false,
+                                        hyphens: false,
+                                    },
+                                    original: {
+                                        loc: { start: 8, end: 9 },
+                                        outerContent: ':',
+                                    },
+                                    processable: undefined,
+                                    type: 'svelte',
+                                    unescapeOptions: {
+                                        removeParagraphTag: false,
+                                    },
+                                },
+                                {
+                                    escapeOptions: {
+                                        pad: false,
+                                        hyphens: false,
+                                    },
+                                    original: {
+                                        loc: {
+                                            start: 14 + tag.length,
+                                            end: 15 + tag.length,
+                                        },
+                                        outerContent: ':',
+                                    },
+                                    processable: undefined,
+                                    type: 'svelte',
+                                    unescapeOptions: {
+                                        removeParagraphTag: false,
+                                    },
+                                },
+                            ],
+                        ] as [string, string, EscapableSnippet[]],
+                ),
+            ],
+        ],
+        [
+            'self-closing',
+            [
+                ...[
+                    'svelte:self',
+                    'svelte:component',
+                    'svelte:element',
+                    'svelte:fragment',
+                ].map(
+                    (tag) =>
+                        [
+                            `a<${tag}/>b`,
+                            "':'",
+                            [
+                                {
+                                    escapeOptions: {
+                                        pad: false,
+                                        hyphens: false,
+                                    },
+                                    original: {
+                                        loc: { start: 8, end: 9 },
+                                        outerContent: ':',
+                                    },
+                                    processable: undefined,
+                                    type: 'svelte',
+                                    unescapeOptions: {
+                                        removeParagraphTag: false,
+                                    },
+                                },
+                            ],
+                        ] as [string, string, EscapableSnippet[]],
+                ),
+            ],
+        ],
+    ] as [string, [string, string, EscapableSnippet[]][]][])(
+        '%s Svelte elements',
+        (_label, tests) => {
+            it.each(tests)(
+                '%o → %s',
+                (document, _outerContent, escapedSnippets) => {
+                    expect(getColonES(document)).toMatchObject(escapedSnippets);
+                },
+            );
+        },
+    );
+});
+
+describe.concurrent.shuffle('getMathInSpecialDelimsES()', () => {
+    describe.each([
+        ['tex disabled', false],
+        ['tex enabled', true],
+    ])('%s', (_label, enabled) => {
+        describe.each([
+            ['\\(...\\)', true],
+            ['\\[...\\]', false],
+        ])('%s', (label, inline) => {
+            const tests: [string, string, EscapableSnippet<'tex'>[]][] = [
+                'x^2',
+                '[1,2]',
+                'a\\cdot b',
+                '\\int_0^1 f(x) dx',
+                '\\sum_{i=0}^n i',
+                '\\begin{align} x &= 1 \\\\ y &= 2 \\end{align}',
+                '\\text{$x^2$}',
+                '1 / 2',
+            ].map((inner) => {
+                const outerContent = label.replace('...', inner);
+                return [
+                    `a${outerContent}c`,
+                    enabled ? outerContent : undefined,
+                    enabled
+                        ? [
+                              {
+                                  original: {
+                                      loc: {
+                                          start: 1,
+                                          end: 1 + outerContent.length,
+                                      },
+                                  },
+                                  escapeOptions: { pad: inline ? 0 : 2 },
+                                  processable: {
+                                      innerContent: inner,
+                                      optionsForProcessor: { inline },
+                                  },
+                                  type: 'tex',
+                              },
+                          ]
+                        : [],
+                ] as [string, string, EscapableSnippet<'tex'>[]];
+            });
+            it.each(tests)(
+                '%o → %o',
+                (document, _outerContent, escapedSnippets) => {
+                    expect(
+                        getMathInSpecialDelimsES(document, {
+                            enabled,
+                            delims: {
+                                inline: { escapedParentheses: true },
+                                display: { escapedSquareBrackets: true },
+                            },
+                        }),
+                    ).toMatchObject(escapedSnippets);
+                },
+            );
+        });
+    });
+});
+
+describe.concurrent.shuffle('getMdastES()', () => {
+    describe('mustacheTag', () => {
+        const tests: [string, string, EscapableSnippet<'mustacheTag'>[]][] = [
+            '@html b',
+            'b',
+            '{b}',
+            '{{b}}',
+            '$b$',
+            '$$b$$',
+            '$$$b$$$',
+            '$b$$',
+            '$$b$',
+            '`b`',
+            '``b``',
+            '```b```',
+            '`b``',
+            '``b`',
+            '"!@#$%^&*()_+{}|:"<>?~`"',
+        ].map((inner) => [
+            `a{${inner}}c`,
+            `{${inner}}`,
+            [
+                {
+                    original: {
+                        loc: { start: 1, end: 3 + inner.length },
+                        outerContent: `{${inner}}`,
+                    },
+                    processable: undefined,
+                    type: 'mustacheTag',
+                },
+            ],
+        ]);
+        it.each(tests)(
+            '%o → %o',
+            (document, _outerContent, escapedSnippets) => {
+                expect(
+                    getMdastES({
+                        ast: parseToMdast(document),
+                        document,
+                        lines: document.split('\n'),
+                        texSettings: { enabled: true },
+                    }),
+                ).toMatchObject(escapedSnippets);
+            },
+        );
+    });
+
+    describe('svelte', () => {
+        const tests: [string, string, EscapableSnippet<'svelte'>[]][] = [
+            'a{@debug b}c',
+            'a{@const b}c',
+            'a{#if b}c',
+            'a{/if b}c',
+            'a{#else if b}c',
+            'a{/else if b}c',
+            'a{#else b}c',
+            'a{/else b}c',
+            'a{#each b}c',
+            'a{/each b}c',
+            'a{#await b}c',
+            'a{/await b}c',
+            'a{:then b}c',
+            'a{:catch b}c',
+            'a{#key b}c',
+            'a{/key b}c',
+        ].map((str) => [
+            str,
+            str.slice(1, -1),
+            [
+                {
+                    original: {
+                        loc: { start: 1, end: str.length - 1 },
+                        outerContent: str.slice(1, -1),
+                    },
+                    processable: undefined,
+                    type: 'svelte',
+                },
+            ],
+        ]);
+        it.each(tests)(
+            '%o → %o',
+            (document, _outerContent, escapedSnippets) => {
+                // const ast = parseToMdast(document, [
+                //     'script',
+                //     'style',
+                //     'svelte:window',
+                //     'svelte:head',
+                //     'svelte:component',
+                // ]);
+                // removePosition(ast, { force: true });
+                // console.log(inspect(ast, { depth: 10, colors: true }));
+                expect(
+                    getMdastES({
+                        ast: parseToMdast(document),
+                        texSettings: { enabled: true },
+                        document,
+                        lines: document.split('\n'),
+                    }),
+                ).toMatchObject(escapedSnippets);
+            },
+        );
+    });
+
+    describe('code spans', () => {
+        it.each([
+            ...(
+                [
+                    ['`', 'b', ' b '],
+                    ['`', 'b', '\nb\n'],
+                    ['`', 'b', ' b\n'],
+                    ['`', 'b', '\nb '],
+                    ['`', 'b ', 'b '],
+                    ['`', ' b', ' b'],
+                    ['`', '\nb', '\nb'],
+                    ['`', 'b\n', 'b\n'],
+                    ['``', '`', ' ` '],
+                    ['`', '``', ' `` '],
+                    ['`', '```', ' ``` '],
+                ] as [string, string, string?][]
+            ).map(([delim, innerContent, innerContentRaw]) => {
+                const outerContent = `${delim}${innerContentRaw ?? innerContent}${delim}`;
+                return [
+                    `a␠${outerContent.replaceAll(' ', '␠')}␠c`,
+                    outerContent.replaceAll(' ', '␠'),
+                    [
+                        {
+                            original: {
+                                loc: { start: 2, end: 2 + outerContent.length },
+                            },
+                            processable: {
+                                innerContent,
+                                optionsForProcessor: { inline: true },
+                            },
+                            type: 'code',
+                        },
+                    ],
+                ] as [string, string, EscapableSnippet[]];
+            }),
+        ] as [string, string, EscapableSnippet[]][])(
+            '%o → %o',
+            (document, _outerContent, escapedSnippets) => {
+                expect(
+                    getMdastES({
+                        ast: parseToMdast(document.replaceAll('␠', ' ')),
+                        texSettings: { enabled: true },
+                        document,
+                        lines: document.split('\n'),
+                    }),
+                ).toMatchObject(escapedSnippets);
+            },
+        );
+    });
+
+    describe('code blocks', () => {
+        it.each([
+            ...(
+                [
+                    ['```', 'b', 'ts', 'info'],
+                    ['```', ''],
+                    ['```', '\nb\n'],
+                    ['~~~', '````\nb\n````'],
+                    ['````', '```\nb\n```'],
+                    ['````', '~~~~\nb\n~~~~'],
+                    ['````', '{{$$$` {\n\n\n\n'],
+                ] as [string, string, string?, string?][]
+            ).map(([delim, innerContent, lang, info]) => {
+                const outerContent = `${delim}${lang ?? ''}${info ? ' ' + info : ''}\n${innerContent}\n${delim}`;
+                return [
+                    `a\n${outerContent}\nc`,
+                    outerContent,
+                    [
+                        {
+                            original: {
+                                loc: { start: 2, end: 2 + outerContent.length },
+                            },
+                            processable: {
+                                innerContent: innerContent,
+                                optionsForProcessor: {
+                                    inline: false,
+                                    lang,
+                                    info,
+                                },
+                            },
+                            type: 'code',
+                            escapeOptions: { pad: [true, true] },
+                            unescapeOptions: { removeParagraphTag: true },
+                        },
+                    ],
+                ] as [string, string, EscapableSnippet[]];
+            }),
+        ] as [string, string, EscapableSnippet[]][])(
+            '%o → %o',
+            (document, _outerContent, escapedSnippets) => {
+                expect(
+                    getMdastES({
+                        ast: parseToMdast(document),
+                        texSettings: { enabled: true },
+                        document,
+                        lines: document.split('\n'),
+                    }),
+                ).toMatchObject(escapedSnippets);
+            },
+        );
+    });
+
+    describe('verbatim', () => {
+        describe.each([
+            [
+                'hides code spans',
+                [
+                    'a<Verb>`b`</Verb>c',
+                    'a<Verb>``b``</Verb>c',
+                    'a<Verb>```b```</Verb>c',
+                    'a\n<Verb>\n`b`\n</Verb>\nc',
+                    'a\n<Verb>\n``b``\n</Verb>\nc',
+                    'a\n<Verb>\n```b```\n</Verb>\nc',
+                    'a\n<Verb>\n\n`b`\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n``b``\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n```b```\n\n</Verb>\nc',
+                    'a\n\n<Verb>\n`b`\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n``b``\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n```b```\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n`b`\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n``b``\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n```b```\n\n</Verb>\n\nc',
+                ],
+            ],
+            [
+                'hides code blocks',
+                [
+                    'a\n<Verb>\n```\nb\n```\n</Verb>\nc',
+                    'a\n<Verb>\n```ts\nb\n```\n</Verb>\nc',
+                    'a\n<Verb>\n\n```\nb\n```\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n```ts\nb\n```\n\n</Verb>\nc',
+                    'a\n\n<Verb>\n```\nb\n```\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n```ts\nb\n```\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n```\nb\n```\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n```ts\nb\n```\n\n</Verb>\n\nc',
+                    'a\n<Verb>\n~~~\nb\n~~~\n</Verb>\nc',
+                    'a\n<Verb>\n~~~ts\nb\n~~~\n</Verb>\nc',
+                    'a\n<Verb>\n\n~~~\nb\n~~~\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n~~~ts\nb\n~~~\n\n</Verb>\nc',
+                    'a\n\n<Verb>\n~~~\nb\n~~~\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n~~~ts\nb\n~~~\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n~~~\nb\n~~~\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n~~~ts\nb\n~~~\n\n</Verb>\n\nc',
+                ],
+            ],
+            [
+                'hides math',
+                [
+                    'a<Verb>\\(b\\)</Verb>c',
+                    'a<Verb>\\[b\\]</Verb>c',
+                    'a<Verb>$b$</Verb>c',
+                    'a<Verb>$$b$$</Verb>c',
+                    'a<Verb>$$$b$$$</Verb>c',
+                    'a\n<Verb>\n\\(b\\)\n</Verb>\nc',
+                    'a\n<Verb>\n\\[b\\]\n</Verb>\nc',
+                    'a\n<Verb>\n$b$\n</Verb>\nc',
+                    'a\n<Verb>\n$$b$$\n</Verb>\nc',
+                    'a\n<Verb>\n$$$b$$$\n</Verb>\nc',
+                    'a\n<Verb>\n\n$b$\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n$$b$$\n\n</Verb>\nc',
+                    'a\n<Verb>\n\n$$$b$$$\n\n</Verb>\nc',
+                    'a\n\n<Verb>\n\\(b\\)\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\\[b\\]\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n$b$\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n$$b$$\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n$$$b$$$\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n\\(b\\)\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n\\[b\\]\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n$b$\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n$$b$$\n\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n$$$b$$$\n\n</Verb>\n\nc',
+                ],
+            ],
+            [
+                'hides mustache tags',
+                [
+                    'a<Verb>{b}</Verb>c',
+                    'a\n<Verb>\n{b}\n</Verb>\nc',
+                    'a\n<Verb>\n\n{b}\n\n</Verb>\nc',
+                    'a\n\n<Verb>\n{b}\n</Verb>\n\nc',
+                    'a\n\n<Verb>\n\n{b}\n\n</Verb>\n\nc',
+                ],
+            ],
+            [
+                'misc',
+                [
+                    ...['Verb', 'V3_rb'].flatMap((tag) => [
+                        // opening tag only
+                        `a<${tag}>{b}`,
+                        `a\n<${tag}>{b}`,
+                        [`a<${tag}>\n{b}`, 1],
+                        `a\n<${tag}>\n{b}`,
+                        `a\n<${tag}>\n\nb\n`,
+                        // different closing tag
+                        `a<${tag}>{b}</div>`,
+                        `a<${tag}>{b}</div></${tag}>`,
+                        `a<${tag}>{b}</3div></${tag}>`,
+                        `a<${tag}>{b}</_div></${tag}>`,
+                        `a<${tag}>{b}</div%div></${tag}>`,
+                        // closing tag only
+                        [`a</${tag}>{b}`, 1],
+                        [`a\n</${tag}>{b}`, 1],
+                        [`a</${tag}>\n{b}`, 1],
+                        [`a\n</${tag}>\n{b}`, 1],
+                        // whitespace in tag
+                        [`a< ${tag}>{b}`, 1],
+                        `a<${tag} >{b}`,
+                        [`a< ${tag} >{b}`, 1],
+                        [`a<\n${tag}>{b}`, 1],
+                        [`a<${tag}\n>{b}`, 1],
+                        // attributes in tag
+                        `<${tag} attr="val">{b}`,
+                        `<${tag} attr="val" attr2="val2">{b}`,
+                        [`< ${tag} >{b}`, 1],
+                        [`<\n${tag}>{b}`, 1],
+                        `<${tag} attr="val">{b}</${tag}>`,
+                        `<${tag} attr="val" attr2="val2">{b}</${tag}>`,
+                        [`< ${tag} >{b}</${tag}>`, 1],
+                        [`<\n${tag}>{b}</${tag}>`, 1],
+                        // with prefix
+                        `> <${tag} attr="val"></${tag}>`,
+                        `> <${tag} attr="val" attr2="val2">\n> b\n> </${tag}>`,
+                        `> <${tag}>`,
+                        `>> <${tag}>`,
+                        `> <${tag}>\n`,
+                        `>> <${tag}>\n`,
+                        `> </${tag}>.`,
+                        `- <${tag}>\n  </${tag}>`,
+                        `- *<${tag}>\n  </${tag}>*`,
+                        `> - <${tag}>\n>   </${tag}>`,
+                        `> - *<${tag}>\n>   </${tag}>*`,
+                        `- <${tag}>\n  ...`,
+                        `- *<${tag}>\n  ...*`,
+                        `> - <${tag}>\n>   ...`,
+                        `> - *<${tag}>\n>   ...*`,
+                        `- <${tag}>\n  ...\n  ...`,
+                        `- <${tag}>\n  ...\n  ...\n  </${tag}>`,
+                        `- *a\n  <${tag}>b*.`,
+                        [`- *a\n  <${tag}>...</${tag}>b*.`, -1],
+                        [`- *a\n  <${tag}>b*</${tag}>.`, -1],
+                        `- *a\n  \n  \n<${tag}>b*.`,
+                        [`- *a\n  \n  \n<${tag}></${tag}>b*.`, -1],
+                        [`- *a\n  \n  \n<${tag}>b*</${tag}>.`, -1],
+                        `<${tag}>\n- *a\n  b*\n- c\n</${tag}>`,
+                        `\n\n<${tag}>\n\n- *a\n  b*\n- c\n\n</${tag}>\n\n`,
+                    ]),
+                    `a<tag>`,
+                    `a\n<tag>`,
+                    `a<tag>\n`,
+                    `a\n<tag>\n`,
+                    // closing tag only
+                    `a</tag>`,
+                    `a\n</tag>`,
+                    `a</tag>\n`,
+                    `a\n</tag>\n`,
+                    // whitespace in tag
+                    `a< tag>`,
+                    `a<tag >`,
+                    `a< tag >`,
+                    `a<\ntag>`,
+                    `a<tag/>`,
+                    // attributes in tag
+                    `<tag attr="val">`,
+                    `<tag attr="val" attr2="val2">`,
+                    `< tag >`,
+                    `<\ntag>`,
+                    // with prefix
+                    `> <tag attr="val">`,
+                    `> <tag attr="val" attr2="val2">`,
+                    `> < tag >`,
+                    `> <\ntag>`,
+                    // invalid tag
+                    [`<%tag attr="val">`, -1],
+                    [`<t%ag attr="val">`, -1],
+                    [`<ta%g attr="val">`, -1],
+                    [`<tag% attr="val" attr2="val2">`, -1],
+                ],
+            ],
+        ])('%s', (_label, tests) => {
+            it.each(tests as (string | [string, number | undefined])[])(
+                '%o',
+                (doc) => {
+                    const n = isArray(doc) ? doc[1] ?? 0 : 0;
+                    const document = isArray(doc) ? doc[0] : doc;
+                    // console.log(inspect(ast, { depth: 10, colors: true }));
+                    if (n === -1) {
+                        expect(() =>
+                            parseToMdast(document, ['Verb', 'V3_rb']),
+                        ).toThrowError();
+                    } else {
+                        const ast = parseToMdast(document, ['Verb', 'V3_rb']);
+                        expect(
+                            getMdastES({
+                                ast,
+                                texSettings: { enabled: true },
+                                document,
+                                lines: document.split('\n'),
+                            }).length,
+                        ).toEqual(n);
+                    }
+                },
+            );
+        });
+    });
+
+    describe('tex', () => {
+        describe.each([
+            ...(
+                [
+                    [false, true],
+                    [true, false],
+                    [true, true],
+                ] as const
+            ).map(
+                ([enabled, singleDollar]) =>
+                    [
+                        `tex (${enabled ? 'enabled' : 'disabled'}${enabled ? (singleDollar ? ', singleDollar: true' : ', singleDollar: false') : ''})`,
+                        [
+                            { str: 'a$b$c', n: 1 },
+                            { str: 'a$$b$$c', n: 2 },
+                            { str: 'a$$$b$$$c', n: 3 },
+                        ].map(
+                            ({ str, n }) =>
+                                [
+                                    str,
+                                    !enabled || (n === 1 && !singleDollar)
+                                        ? undefined
+                                        : str.slice(1, -1),
+                                    {
+                                        enabled,
+                                        delims: { inline: { singleDollar } },
+                                    } as TexEscapeSettings,
+                                    !enabled || (n === 1 && !singleDollar)
+                                        ? []
+                                        : [
+                                              {
+                                                  original: {
+                                                      loc: {
+                                                          start: 1,
+                                                          end: 2 + 2 * n,
+                                                      },
+                                                  },
+                                                  processable: {
+                                                      innerContent: 'b',
+                                                      optionsForProcessor: {
+                                                          inline: n === 1,
+                                                      },
+                                                  },
+                                                  type: 'tex',
+                                              },
+                                          ],
+                                ] as [
+                                    string,
+                                    string | undefined,
+                                    TexEscapeSettings,
+                                    EscapableSnippet[],
+                                ],
+                        ),
+                    ] as [
+                        string,
+                        [
+                            string,
+                            string | undefined,
+                            TexEscapeSettings,
+                            EscapableSnippet[],
+                        ][],
+                    ],
+            ),
+        ])('%s', (_label, tests) => {
+            it.each(tests)(
+                '%o → %o',
+                (
+                    document,
+                    _outerContent,
+                    texEscapeSettings,
+                    escapedSnippets,
+                ) => {
+                    expect(
+                        getMdastES({
+                            ast: parseToMdast(
+                                document,
+                                undefined,
+                                texEscapeSettings,
+                            ),
+                            document,
+                            lines: document.split('\n'),
+                            texSettings: texEscapeSettings,
+                        }),
+                    ).toMatchObject(escapedSnippets);
+                },
+            );
+        });
+    });
+});
+
+function generateTexTests(): [
+    string,
+    [
+        string,
+        string,
+        Partial<EscapedSnippet>[],
+        TexEscapeSettings | undefined,
+    ][],
+][] {
+    const isDisplayMath = ['always', 'newline', 'fenced'] as const;
+    const delims = ['\\(...\\)', '\\[...\\]', 1, 2, 3] as [
+        '\\(...\\)',
+        '\\[...\\]',
+        1,
+        2,
+        3,
+    ];
+    return isDisplayMath.map((isDisplayMath) => [
+        `tex (${isDisplayMath})`,
+        cartesianProduct(delims, range(0, 1), range(0, 2), range(0, 2)).map(
+            ([delims, inner, leftOuter, rightOuter]) =>
+                texTest({
+                    input: {
+                        padding: {
+                            left: {
+                                inner,
+                                outer: inner + leftOuter,
+                            },
+                            right: {
+                                inner,
+                                outer: inner + rightOuter,
+                            },
+                        },
+                        content: {
+                            outer: { before: 'a', after: 'c' },
+                            inner: 'b',
+                        },
+                        delims: isString(delims) ? delims : ['$', delims],
+                    },
+                    settings: {
+                        enabled: true,
+                        delims: {
+                            inline: {
+                                singleDollar: true,
+                                escapedParentheses: true,
+                            },
+                            display: {
+                                escapedSquareBrackets: true,
+                            },
+                        },
+                        $$: { isDisplayMath },
+                    },
+                }),
+        ),
+    ]);
+}
+
+function texTest(opts: {
+    input: {
+        padding: {
+            left: { inner: number; outer: number };
+            right: { inner: number; outer: number };
+        };
+        content: {
+            outer: { before: string; after: string };
+            inner: string;
+        };
+        delims: ['$', number] | '\\[...\\]' | '\\(...\\)';
+    };
+    settings: TexEscapeSettings;
+}): [string, string, Partial<EscapedSnippet>[], TexEscapeSettings | undefined] {
+    const { input, settings } = opts;
+    const { padding, delims, content } = input;
+    const { left, right } = padding;
+    const { outer, inner } = content;
+    const { before, after } = outer;
+    const ldelim =
+        delims === '\\(...\\)'
+            ? '\\('
+            : delims === '\\[...\\]'
+              ? '\\['
+              : '$'.repeat(delims[1]);
+    const rdelim =
+        delims === '\\(...\\)'
+            ? '\\)'
+            : delims === '\\[...\\]'
+              ? '\\]'
+              : '$'.repeat(delims[1]);
+    const inputStr =
+        before +
+        '\n'.repeat(left.outer) +
+        ldelim +
+        '\n'.repeat(left.inner) +
+        inner +
+        '\n'.repeat(right.inner) +
+        rdelim +
+        '\n'.repeat(right.outer) +
+        after;
+    let inline =
+        delims === '\\(...\\)' || (delims !== '\\[...\\]' && delims[1] <= 1);
+    if (!inline && delims !== '\\[...\\]') {
+        if (settings.$$?.isDisplayMath === 'newline') {
+            inline = !(left.outer > 0 && right.outer > 0);
+        } else if (settings.$$?.isDisplayMath === 'fenced') {
+            inline = !(
+                left.outer > 0 &&
+                right.outer > 0 &&
+                left.inner > 0 &&
+                right.inner > 0
+            );
+        }
+    }
+    const expected = {
+        padding: {
+            left: inline ? 0 : 2,
+            right: inline ? 0 : 2,
+        },
+    };
+    const expectedStr =
+        before +
+        '\n'.repeat(left.outer) +
+        '\n'.repeat(expected.padding.left) +
+        '□' +
+        '\n'.repeat(expected.padding.right) +
+        '\n'.repeat(right.outer) +
+        after;
+    const innerContent =
+        '\n'.repeat(
+            left.inner === right.inner && left.inner >= 1
+                ? left.inner - 1
+                : left.inner,
+        ) +
+        inner +
+        '\n'.repeat(
+            right.inner === left.inner && right.inner >= 1
+                ? right.inner - 1
+                : right.inner,
+        );
+    const expectedSnippets: Partial<EscapedSnippet<'tex'>>[] = [
+        {
+            type: 'tex',
+            processable: {
+                innerContent,
+                optionsForProcessor: { inline },
+            },
+        },
+    ];
+    return [inputStr, expectedStr, expectedSnippets, settings];
+}

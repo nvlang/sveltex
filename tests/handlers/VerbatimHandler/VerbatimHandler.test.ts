@@ -1,11 +1,12 @@
 import {
     afterAll,
     afterEach,
+    beforeAll,
     beforeEach,
     describe,
     expect,
     it,
-    suite,
+    type MockInstance,
     vi,
 } from 'vitest';
 
@@ -68,11 +69,16 @@ function fixture() {
     });
 }
 
-suite('VerbatimHandler', async () => {
+describe('VerbatimHandler', () => {
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['log']);
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    const { log } = await spy(['log']);
+
     fixture();
 
     describe('constructor(sveltex: Sveltex)', () => {
@@ -134,32 +140,44 @@ suite('VerbatimHandler', async () => {
     describe('process(content: string)', () => {
         fixture();
         it('should process JS code correctly', async () => {
-            const result = await sveltexPreprocessor.verbatimHandler.process(
-                '<Code lang="js">\nconst a = new Map<string, { prop: number[] }>();\n</Code>',
-                { filename: 'test.sveltex' },
-            );
+            const result = (
+                await sveltexPreprocessor.verbatimHandler.process(
+                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: 'Code',
+                        attributes: { lang: 'js' },
+                        outerContent:
+                            '<Code lang="js">\nconst a = new Map<string, { prop: number[] }>();\n</Code>',
+                    },
+                )
+            ).processed;
             expect(result).toEqual(
                 '<Code>\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</Code>',
             );
         });
 
         it('should escape plain text correctly', async () => {
-            const result = await sveltexPreprocessor.verbatimHandler.process(
-                '<Code>\nconst a = new Map<string, { prop: number[] }>();\n</Code>',
-                { filename: 'test.sveltex' },
-            );
+            const result = (
+                await sveltexPreprocessor.verbatimHandler.process(
+                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: 'Code',
+                        attributes: {},
+                        outerContent:
+                            '<Code>\nconst a = new Map<string, { prop: number[] }>();\n</Code>',
+                    },
+                )
+            ).processed;
             expect(result).toEqual(
                 '<Code>\nconst a = new Map&lt;string, &lbrace; prop: number[] &rbrace;&gt;();\n</Code>',
             );
         });
 
         it('should correctly handle self-closing components', async () => {
-            expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Code id="something" />',
-                    { filename: 'test.sveltex' },
-                ),
-            ).toEqual('<Code id="something" />');
             await sveltexPreprocessor.configure({
                 verbatim: {
                     verbatimEnvironments: {
@@ -170,10 +188,15 @@ suite('VerbatimHandler', async () => {
                 },
             });
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Code id="something"/>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: true,
+                        tag: 'Code',
+                        attributes: { id: 'something' },
+                        outerContent: '<Code id="something"/>',
+                    })
+                ).processed,
             ).toEqual('<Code id="something" />');
             await sveltexPreprocessor.configure({
                 verbatim: {
@@ -185,10 +208,18 @@ suite('VerbatimHandler', async () => {
                 },
             });
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Code id="something" />',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        '<Code id="something" />',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: true,
+                            tag: 'Code',
+                            attributes: { id: 'something' },
+                            outerContent: '<Code id="something"/>',
+                        },
+                    )
+                ).processed,
             ).toEqual('<Code id="something"/>');
             await sveltexPreprocessor.configure({
                 verbatim: {
@@ -200,17 +231,27 @@ suite('VerbatimHandler', async () => {
                 },
             });
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Code id="something" />',
-                    { filename: 'test.sveltex' },
-                ),
-            ).toEqual('<Code id="something" />');
-            expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Code id="something"/>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: true,
+                        tag: 'Code',
+                        attributes: { id: 'something' },
+                        outerContent: '<Code id="something"/>',
+                    })
+                ).processed,
             ).toEqual('<Code id="something"/>');
+            expect(
+                (
+                    await sveltexPreprocessor.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: true,
+                        tag: 'Code',
+                        attributes: { id: 'something' },
+                        outerContent: '<Code id="something" />',
+                    })
+                ).processed,
+            ).toEqual('<Code id="something" />');
         });
 
         it('should correctly handle self-closing components (TeX)', async () => {
@@ -223,9 +264,15 @@ suite('VerbatimHandler', async () => {
                 },
             });
             expect(
-                await sp.verbatimHandler.process('<tex something />', {
-                    filename: 'test.sveltex',
-                }),
+                (
+                    await sp.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: true,
+                        tag: 'tex',
+                        attributes: { ref: 'something' },
+                        outerContent: '<tex ref=something />',
+                    })
+                ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>',
             );
@@ -244,46 +291,48 @@ suite('VerbatimHandler', async () => {
                 },
             });
             expect(
-                await sp.verbatimHandler.process(
-                    '<Code a="1" b="2" c="3" d="4" />',
-                    {
+                (
+                    await sp.verbatimHandler.process('', {
                         filename: 'test.sveltex',
-                    },
-                ),
+                        selfClosing: true,
+                        tag: 'Code',
+                        attributes: { a: 1, b: 2, c: 3, d: 4 },
+                        outerContent: '<Code a="1" b="2" c="3" d="4" />',
+                    })
+                ).processed,
             ).toEqual('<Code b="2" />');
             expect(
-                await sp.verbatimHandler.process('<Code a b c d />', {
-                    filename: 'test.sveltex',
-                }),
+                (
+                    await sp.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: true,
+                        tag: 'Code',
+                        attributes: {
+                            a: undefined,
+                            b: undefined,
+                            c: undefined,
+                            d: undefined,
+                        },
+                        outerContent: '<Code a b c d />',
+                    })
+                ).processed,
             ).toEqual('<Code b />');
-        });
-
-        it.each([
-            'x',
-            '<Code>',
-            '<Code/>x',
-            '<Code/>x</Code>',
-            '</Code>',
-            '</Code/>',
-            '<NotAVerbatimEnvironment />',
-        ])('should deal with weird content gracefully: %o', async (content) => {
-            const result = await sveltexPreprocessor.verbatimHandler.process(
-                content,
-                {
-                    filename: 'test.sveltex',
-                },
-            );
-            expect(result).toEqual(content);
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(1, 'error', expect.any(String));
         });
 
         it('should deal with unknown verbatim tags gracefully', async () => {
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<unknown>something</unknown>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        'something',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'unknown',
+                            attributes: {},
+                            outerContent: '<unknown>something</unknown>',
+                        },
+                    )
+                ).processed,
             ).toEqual('<unknown>something</unknown>');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(
@@ -297,10 +346,18 @@ suite('VerbatimHandler', async () => {
 
         it('should deal with ambiguous verbatim tags gracefully', async () => {
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Ambiguous>something</Ambiguous>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        '<Ambiguous>something</Ambiguous>',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'Ambiguous',
+                            attributes: {},
+                            outerContent: '<Ambiguous>something</Ambiguous>',
+                        },
+                    )
+                ).processed,
             ).toEqual('<Ambiguous>something</Ambiguous>');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(
@@ -313,20 +370,38 @@ suite('VerbatimHandler', async () => {
         });
 
         it('should work with aliases', async () => {
-            const result = await sveltexPreprocessor.verbatimHandler.process(
-                '<CodeBlock lang="js">\nconst a = new Map<string, { prop: number[] }>();\n</CodeBlock>',
-                { filename: 'test.sveltex' },
-            );
+            const result = (
+                await sveltexPreprocessor.verbatimHandler.process(
+                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: 'CodeBlock',
+                        attributes: { lang: 'js' },
+                        outerContent:
+                            '<CodeBlock lang="js">\nconst a = new Map<string, { prop: number[] }>();\n</CodeBlock>',
+                    },
+                )
+            ).processed;
             expect(result).toEqual(
                 '<CodeBlock>\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</CodeBlock>',
             );
         });
 
         it('should support transformation of component', async () => {
-            const result = await sveltexPreprocessor.verbatimHandler.process(
-                '<JS>\nconst a = new Map<string, { prop: number[] }>();\n</JS>',
-                { filename: 'test.sveltex' },
-            );
+            const result = (
+                await sveltexPreprocessor.verbatimHandler.process(
+                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: 'JS',
+                        attributes: {},
+                        outerContent:
+                            '<JS>\nconst a = new Map<string, { prop: number[] }>();\n</JS>',
+                    },
+                )
+            ).processed;
             expect(result).toEqual(
                 '<JavaScript lang="js">\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</JavaScript>',
             );
@@ -334,49 +409,81 @@ suite('VerbatimHandler', async () => {
 
         it('should support simple escape instructions', async () => {
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Verbatim>\n<>&{</Verbatim>',
-                    { filename: 'test.sveltex' },
-                ),
-            ).toEqual('<Verbatim>\n&lt;&gt;&amp;&lbrace;</Verbatim>');
-
-            expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Verbatim>\n<>&{</Verbatim>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        '\n<>&{',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'Verbatim',
+                            attributes: {},
+                            outerContent: '<Verbatim>\n<>&{</Verbatim>',
+                        },
+                    )
+                ).processed,
             ).toEqual('<Verbatim>\n&lt;&gt;&amp;&lbrace;</Verbatim>');
         });
 
         it('should support custom processInner functions', async () => {
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Custom attr="test" attr2="test2">content</Custom>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        'content',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'Custom',
+                            attributes: { attr: 'test', attr2: 'test2' },
+                            outerContent:
+                                '<Custom attr="test" attr2="test2">content</Custom>',
+                        },
+                    )
+                ).processed,
             ).toEqual(
                 '<Custom attr="test" attr2="test2">Custom: content{"attr":"test","attr2":"test2"}</Custom>',
             );
 
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<Custom>content</Custom>',
-                    { filename: 'test.sveltex' },
-                ),
-            ).toEqual('<Custom>Custom: content{}</Custom>');
+                (
+                    await sveltexPreprocessor.verbatimHandler.process(
+                        'content',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'Custom',
+                            attributes: { attr: 'test', attr2: 'test2' },
+                            outerContent:
+                                '<Custom attr="test" attr2="test2">content</Custom>',
+                        },
+                    )
+                ).processed,
+            ).toEqual(
+                '<Custom attr="test" attr2="test2">Custom: content{"attr":"test","attr2":"test2"}</Custom>',
+            );
         });
 
         it('misc', async () => {
             expect(
-                await sveltexPreprocessor.verbatimHandler.process('', {
-                    filename: 'test.sveltex',
-                }),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process('', {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: '',
+                        attributes: {},
+                        outerContent: '',
+                    })
+                ).processed,
             ).toEqual('');
             expect(
-                await sveltexPreprocessor.verbatimHandler.process(
-                    '<noop>abc</noop>',
-                    { filename: 'test.sveltex' },
-                ),
+                (
+                    await sveltexPreprocessor.verbatimHandler.process('abc', {
+                        filename: 'test.sveltex',
+                        selfClosing: false,
+                        tag: 'noop',
+                        attributes: {},
+                        outerContent: '<noop>abc</noop>',
+                    })
+                ).processed,
             ).toEqual('<noop>abc</noop>');
         });
     });

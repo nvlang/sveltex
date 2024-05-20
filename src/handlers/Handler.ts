@@ -10,6 +10,7 @@ import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
 import { getProperty, rfdc, setProperty } from '$deps.js';
+import { isString } from '$type-guards/utils.js';
 
 export const deepClone = rfdc();
 
@@ -107,7 +108,7 @@ export class Handler<
      * @internal
      * @readonly
      */
-    private readonly _process: ProcessFn<ProcessOptions, ActualHandler>;
+    protected readonly _process: ProcessFn<ProcessOptions, ActualHandler>;
 
     /**
      * Process content.
@@ -117,12 +118,14 @@ export class Handler<
      * @returns The processed content, or promise resolving to it.
      */
     get process(): SimplerProcessFn<ProcessOptions> {
-        return (content: string, options: ProcessOptions) => {
-            return this._process(
+        return async (content: string, options: ProcessOptions) => {
+            const res = await this._process(
                 content,
                 options,
                 this as unknown as ActualHandler,
             );
+            if (isString(res)) return { processed: res };
+            return res;
         };
     }
 

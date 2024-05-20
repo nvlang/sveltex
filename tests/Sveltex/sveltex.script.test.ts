@@ -3,22 +3,25 @@ import { spy } from '$tests/fixtures.js';
 import { mockFs } from '$dev_deps.js';
 import { Processed } from 'svelte/compiler';
 import {
+    MockInstance,
     afterAll,
     beforeAll,
     beforeEach,
     describe,
     expect,
     it,
-    suite,
     vi,
 } from 'vitest';
 
-suite('Sveltex', async () => {
-    // const { log, spawnCliInstruction, writeFile } =
-    await spy(
-        ['fancyWrite', 'spawnCliInstruction', 'log', 'mkdir', 'existsSync'],
-        true,
-    );
+describe('Sveltex', () => {
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(
+            ['fancyWrite', 'spawnCliInstruction', 'log', 'mkdir', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
+    });
 
     let sp: Sveltex<'none', 'highlight.js', 'mathjax', 'local'>;
 
@@ -70,7 +73,7 @@ suite('Sveltex', async () => {
                 content: '',
                 attributes: {},
                 markup: '',
-                filename: 'test.svelte',
+                filename: 'baa575e4-2347-4575-abd9-3fff8fb22906.svelte',
             });
             expect(scriptOut).toEqual(undefined);
         });
@@ -79,11 +82,11 @@ suite('Sveltex', async () => {
     describe('Sveltex.markup + Sveltex.script', () => {
         it('works (basic)', async () => {
             const markupOut = await sp.markup({
-                content: '<tex ref="something">x</tex> `code` $x$',
+                content: '<tex ref="something">x</tex>\n`code`\n$x$',
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toContain(
-                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure> <code class="language-plaintext">code</code>',
+                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>\n<code>code</code>',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,
@@ -103,6 +106,7 @@ suite('Sveltex', async () => {
             expect((scriptOut as Processed).code).toEqual(
                 "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
             );
+            expect(log).toHaveBeenCalledTimes(1);
 
             sp.advancedTexHandler.texComponents = {};
         });
@@ -134,18 +138,19 @@ suite('Sveltex', async () => {
                             '7a541239-3058-460b-b3c6-5076a2f3f73b.sveltex',
                     })
                 )?.code,
-            ).not.toContain('Sveltex__');
+            ).toBeUndefined();
             sp.advancedTexHandler.texComponents = {};
         });
 
         it('works', async () => {
             const markupOut = await sp.markup({
                 content:
-                    '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>`code`$x$',
+                    '<tex ref=ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>\n`code`\n$x$',
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
+
             expect((markupOut as Processed).code).toContain(
-                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_as_valueless_attribute} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure><code class="language-plaintext">code</code><mjx-container class="MathJax" jax="SVG">',
+                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>\n<code>code</code>\n<mjx-container class="MathJax" jax="SVG">',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,
@@ -159,11 +164,11 @@ suite('Sveltex', async () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
-                markup: '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>`code`$x$',
+                markup: '<tex ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>`code`$x$',
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
+                "\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -172,11 +177,11 @@ suite('Sveltex', async () => {
         it('works (coffeescript)', async () => {
             const markupOut = await sp.markup({
                 content:
-                    '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>`code`$x$',
+                    '<tex ref=ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>\n`code`\n$x$',
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
             expect((markupOut as Processed).code).toContain(
-                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_as_valueless_attribute} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
+                '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,
@@ -190,11 +195,11 @@ suite('Sveltex', async () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: { lang: 'coffeescript' },
-                markup: '<tex ref-as-valueless-attribute id="something" caption="some text here" caption:id="caption-id" >x</tex>',
+                markup: '<tex ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>',
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\n```\nimport Sveltex__tex__ref_as_valueless_attribute from '/src/sveltex/tex/ref-as-valueless-attribute.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
+                "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
             );
 
             sp.advancedTexHandler.texComponents = {};

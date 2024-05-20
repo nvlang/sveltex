@@ -19,7 +19,7 @@ export interface MathjaxConfiguration {
     mml?: MathjaxMathmlInputProcessorOptions | undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface MathjaxOptions extends MathjaxDocumentOptions {}
 
 /**
@@ -83,7 +83,7 @@ export interface MathjaxConversionOptions {
  * and similar options for the various v2 pre-processors are now document-level
  * options.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface MathjaxCommonInputProcessorOptions {}
 
 /**
@@ -421,8 +421,11 @@ export interface MathjaxTexInputProcessorOptions
      * the less-than sign), as these would be turned into tags by the browser
      * before MathJax has the chance to run. You can only include text, not
      * tags, as your math delimiters.
+     *
+     * @remarks Within Sveltex, the default value is actually
+     * `[['$', '$'], ['\\(', '\\)']]`.
      */
-    inlineMath?: [['\\(', '\\)']];
+    inlineMath?: [string, string][];
 
     /**
      * Start and end delimiter pairs for display math.
@@ -439,7 +442,7 @@ export interface MathjaxTexInputProcessorOptions
      * before MathJax has the chance to run.  You can only include text, not
      * tags, as your math delimiters.
      */
-    displayMath?: [['$$', '$$'], ['\\[', '\\]']];
+    displayMath?: [string, string][];
 
     /**
      * Use `$` to produce a literal dollar sign.
@@ -986,7 +989,7 @@ export interface MathjaxDocumentOptions {
      */
     renderActions?: Record<
         string,
-        // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-redundant-type-constituents
+        // eslint-disable-next-line @typescript-eslint/ban-types
         [number, Function | string, Function | string | boolean]
     >;
 

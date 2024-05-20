@@ -8,25 +8,10 @@
 
 // Types
 import type {
-    BaseNode,
-    BaseNode_ESTree,
-    BaseNode_v4,
-    BaseNode_v5,
-    Fragment_v5,
     LineColumn,
     StartEnd_LineColumn,
     StartEnd_Offset,
 } from '$types/utils/Ast.js';
-
-/**
- * Type guard for `BaseNode`.
- *
- * @param node - The node to check.
- * @returns True if the node is of type `BaseNode`, and false otherwise.
- */
-export function isBaseNode(node: unknown): node is BaseNode {
-    return typeof node === 'object' && node !== null && 'type' in node;
-}
 
 /**
  * Checks that the given object has `start` and `end` properties, no matter
@@ -40,22 +25,6 @@ export function hasStartEndUnknown(
         obj !== null &&
         'start' in obj &&
         'end' in obj
-    );
-}
-
-/**
- * Checks that the given node has `start` and `end` properties, that both of them are
- * numbers, and that 0 ≤ `start` ≤ `end`.
- */
-export function hasStartEnd(
-    node: unknown,
-): node is { start: number; end: number } {
-    return (
-        hasStartEndUnknown(node) &&
-        typeof node.start === 'number' &&
-        typeof node.end === 'number' &&
-        node.start >= 0 &&
-        node.end >= node.start
     );
 }
 
@@ -115,72 +84,5 @@ export function hasStartEnd_LineColumn(
         node.end.line >= node.start.line &&
         (node.end.line > node.start.line ||
             node.end.column >= node.start.column)
-    );
-}
-
-/**
- * ESTree-compliant nodes may have a `range` property, which is an array of two
- * numbers. This type guard checks for the presence of that property.
- */
-export function hasRange(node: unknown): node is { range: [number, number] } {
-    return (
-        typeof node === 'object' &&
-        node !== null &&
-        'range' in node &&
-        node.range instanceof Array &&
-        node.range.length === 2 &&
-        typeof node.range[0] === 'number' &&
-        typeof node.range[1] === 'number' &&
-        node.range[0] <= node.range[1]
-    );
-}
-
-/**
- * Type guard for `BaseNode`.
- *
- * @param node - The node to check.
- * @returns True if the node is of type `BaseNode`, and false otherwise.
- */
-export function isBaseNode_v5(node: unknown): node is BaseNode_v5 {
-    return isBaseNode(node) && hasStartEnd(node);
-}
-
-/**
- * Type guard for `BaseNode_v4`.
- *
- * @param node - The node to check.
- * @returns True if the node is of type `BaseNode_v4`, and false otherwise.
- */
-export function isBaseNode_v4(node: unknown): node is BaseNode_v4 {
-    return isBaseNode(node) && hasStartEnd(node);
-}
-
-/**
- * Type guard for {@link Fragment_v5 | `Fragment_v5`}.
- *
- * @param node - The node to check.
- * @returns True if the node is of type `Fragment_v5`, and false otherwise.
- */
-export function isFragment_v5(node: unknown): node is Fragment_v5 {
-    return (
-        isBaseNode_v5(node) &&
-        node.type === 'Fragment' &&
-        'nodes' in node &&
-        (node['nodes'] === null ||
-            node['nodes'] === undefined ||
-            (typeof node['nodes'] === 'object' &&
-                Array.isArray(node['nodes']) &&
-                node['nodes'].every(isBaseNode_v5)))
-    );
-}
-
-/**
- *
- */
-export function isBaseNode_ESTree(node: unknown): node is BaseNode_ESTree {
-    return (
-        isBaseNode(node) &&
-        (hasRange(node) ||
-            ('loc' in node && hasStartEnd_LineColumn(node['loc'])))
     );
 }

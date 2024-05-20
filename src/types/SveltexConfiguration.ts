@@ -34,6 +34,7 @@ import type {
     FullVerbatimConfiguration,
     VerbatimConfiguration,
 } from '$types/handlers/Verbatim.js';
+import { TexEscapeSettings } from '$types/utils/Escape.js';
 import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 
 /**
@@ -341,24 +342,7 @@ export interface SveltexConfiguration<
         /**
          * General options surrounding SvelTeX's LaTeX support.
          */
-        tex?:
-            | undefined
-            | {
-                  delimiters?: {
-                      /**
-                       * Delimiter to use to render inline TeX blocks (e.g., `$x^2$`).
-                       * @defaultValue `['$', '$']`.
-                       */
-                      inline?: [string, string] | undefined;
-
-                      /**
-                       * Delimiter to use to render display TeX blocks (e.g.,
-                       * `$$x^2$$`).
-                       * @defaultValue `['$$', '$$']`.
-                       */
-                      display?: [string, string] | undefined;
-                  };
-              };
+        tex?: undefined | Omit<TexEscapeSettings, 'enabled'>;
     };
 }
 
@@ -373,7 +357,7 @@ export interface FullSveltexConfiguration<
 > {
     general: NonNullable<
         RequiredNonNullable<SveltexConfiguration<M, C, T, A>['general']>
-    >;
+    > & { tex: { enabled: boolean } };
     markdown: FullMarkdownConfiguration<M>;
     code: FullCodeConfiguration<C>;
     tex: FullTexConfiguration<T>;

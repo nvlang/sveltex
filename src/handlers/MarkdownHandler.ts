@@ -10,7 +10,7 @@ import type {
 } from '$types/handlers/Markdown.js';
 
 // Internal dependencies
-import { missingDeps } from '$utils/globals.js';
+import { missingDeps } from '$utils/env.js';
 import { Handler } from '$handlers/Handler.js';
 import { re } from '$utils/misc.js';
 
@@ -289,7 +289,9 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                             .use(markdownHandler.configuration.remarkPlugins)
                             .use(remarkRehype, { allowDangerousHtml: true })
                             .use(markdownHandler.configuration.rehypePlugins)
-                            .use(rehypeStringify, { allowDangerousHtml: true });
+                            .use(rehypeStringify, {
+                                allowDangerousHtml: true,
+                            });
                     };
                     const process: MarkdownProcessFn<Backend> = async (
                         markdown: string,
@@ -350,7 +352,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
             \n\s*\n                     # multiple newlines
             | ^\s*\#{1,6} \s            # headings
             | ( ^.* \S .*\n )+          # setext heading
-            ^\s*(-+|=+) \s* $         # setext heading underline
+            ^\s*(-+|=+) \s* $           # setext heading underline
             | ^( [*+-] | \d+\. ) \s     # lists
             | ^\s* ( \`{3,} | ~{3,} )   # fenced code blocks
             | ^\s*                      # thematic breaks

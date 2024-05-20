@@ -1,9 +1,12 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
-suite("MarkdownHandler<'unified'>", async () => {
-    const handler = await MarkdownHandler.create('unified');
+describe("MarkdownHandler<'unified'>", () => {
+    let handler: MarkdownHandler<'unified'>;
+    beforeAll(async () => {
+        handler = await MarkdownHandler.create('unified');
+    });
 
     describe("MarkdownHandler.create('unified')", () => {
         it('returns instance of MarkdownHandler', () => {
@@ -21,7 +24,8 @@ suite("MarkdownHandler<'unified'>", async () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = await handler.process('**strong** *em*');
+                const output = (await handler.process('**strong** *em*'))
+                    .processed;
                 const expected = '<p><strong>strong</strong> <em>em</em></p>';
                 expect(output).toEqual(expected);
             });
@@ -39,13 +43,13 @@ suite("MarkdownHandler<'unified'>", async () => {
                     remarkPlugins: undefined,
                     rehypePlugins: undefined,
                 });
-                expect(await handler.process('**strong** *em*')).toEqual(
-                    '<p><strong>strong</strong> <em>em</em></p>',
-                );
+                expect(
+                    (await handler.process('**strong** *em*')).processed,
+                ).toEqual('<p><strong>strong</strong> <em>em</em></p>');
                 await handler.configure({});
-                expect(await handler.process('**strong** *em*')).toEqual(
-                    '<p><strong>strong</strong> <em>em</em></p>',
-                );
+                expect(
+                    (await handler.process('**strong** *em*')).processed,
+                ).toEqual('<p><strong>strong</strong> <em>em</em></p>');
             });
         });
 

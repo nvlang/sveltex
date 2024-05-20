@@ -1,8 +1,11 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
-suite("MarkdownHandler<'none'>", async () => {
-    const handler = await MarkdownHandler.create('none');
+describe("MarkdownHandler<'none'>", () => {
+    let handler: MarkdownHandler<'none'>;
+    beforeAll(async () => {
+        handler = await MarkdownHandler.create('none');
+    });
 
     describe("MarkdownHandler.create('none')", () => {
         it('returns instance of MarkdownHandler', () => {
@@ -20,7 +23,8 @@ suite("MarkdownHandler<'none'>", async () => {
             });
 
             it('leaves markdown as-is', async () => {
-                const output = await handler.process('**strong** *em*');
+                const output = (await handler.process('**strong** *em*'))
+                    .processed;
                 const expected = '**strong** *em*';
                 expect(output).toEqual(expected);
             });

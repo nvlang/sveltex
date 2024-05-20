@@ -1,9 +1,13 @@
-import { suite, describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
-import { missingDeps } from '$utils/globals.js';
+import { missingDeps } from '$utils/env.js';
 
-suite("TexHandler<'none'>", async () => {
-    const handler = await TexHandler.create('none');
+describe("TexHandler<'none'>", () => {
+    let handler: TexHandler<'none'>;
+    beforeAll(async () => {
+        handler = await TexHandler.create('none');
+    });
+
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -25,7 +29,7 @@ suite("TexHandler<'none'>", async () => {
     describe('texHandler', () => {
         describe('process()', () => {
             it('should work, and output the input as-is', async () => {
-                expect(await handler.process('x')).toEqual('x');
+                expect((await handler.process('x')).processed).toEqual('x');
             });
         });
 
@@ -44,9 +48,12 @@ suite("TexHandler<'none'>", async () => {
     });
 });
 
-suite("TexHandler<'custom'>", async () => {
-    const handler = await TexHandler.create('custom', {
-        process: (input: string) => input,
+describe("TexHandler<'custom'>", () => {
+    let handler: TexHandler<'custom'>;
+    beforeAll(async () => {
+        handler = await TexHandler.create('custom', {
+            process: (input: string) => input,
+        });
     });
     describe("TexHandler.create('custom', ...)", () => {
         it('returns instance of TexHandler', () => {
@@ -75,14 +82,7 @@ suite("TexHandler<'custom'>", async () => {
     describe('texHandler', () => {
         describe('process()', () => {
             it('should work, and output the input as-is', async () => {
-                expect(await handler.process('x')).toEqual('x');
-            });
-
-            it('should work strip math delims', async () => {
-                expect(await handler.process('$x$')).toEqual('x');
-                expect(await handler.process('\\(x\\)')).toEqual('x');
-                expect(await handler.process('$$x$$')).toEqual('x');
-                expect(await handler.process('\\[x\\]')).toEqual('x');
+                expect((await handler.process('x')).processed).toEqual('x');
             });
         });
 
@@ -103,7 +103,7 @@ suite("TexHandler<'custom'>", async () => {
     });
 });
 
-suite('TexHandler error handling', () => {
+describe('TexHandler error handling', () => {
     describe("TexHandler.create('mathjax') with mathjax mocked to throw error", () => {
         vi.mock('mathjax-full/js/handlers/html.js', () => {
             throw new Error('MathJax not found');

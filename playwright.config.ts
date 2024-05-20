@@ -61,18 +61,33 @@ export const config = defineConfig({
 
     /* Run your local dev server before starting the tests */
     webServer: [
-        // {
-        //     cwd: './e2e/full-examples/markdown-it',
-        //     command: 'pnpm build && pnpm preview',
-        //     url: 'http://127.0.0.1:3001',
-        //     reuseExistingServer: !process.env['CI'],
-        // },
+        {
+            cwd: './e2e/full-examples/markdown-it/',
+            command: 'pnpm build && pnpm preview',
+            url: 'http://localhost:3001',
+            reuseExistingServer: !process.env['CI'],
+            timeout: 40000,
+        },
+        {
+            cwd: './e2e/full-examples/marked/',
+            command: 'pnpm build && pnpm preview',
+            url: 'http://localhost:3002',
+            reuseExistingServer: !process.env['CI'],
+            timeout: 40000,
+        },
+        {
+            cwd: './e2e/full-examples/micromark/',
+            command: 'pnpm build && pnpm preview',
+            url: 'http://localhost:3003',
+            reuseExistingServer: !process.env['CI'],
+            timeout: 40000,
+        },
         {
             cwd: './e2e/full-examples/unified/',
             command: 'pnpm build && pnpm preview',
             url: 'http://localhost:3004/',
-            // reuseExistingServer: !process.env['CI'],
-            timeout: 20000,
+            reuseExistingServer: !process.env['CI'],
+            timeout: 40000,
         },
     ],
 });

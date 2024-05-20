@@ -5,6 +5,10 @@ import type {
 
 export interface VerbatimProcessOptions {
     filename: string;
+    selfClosing: boolean;
+    attributes: Record<string, string | number | boolean | null | undefined>;
+    tag: string;
+    outerContent: string;
 }
 
 export type FullVerbatimConfiguration =

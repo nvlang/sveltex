@@ -1,27 +1,30 @@
-import { missingDeps } from '$utils/globals.js';
+import { missingDeps } from '$utils/env.js';
 import { sveltex } from '$Sveltex.js';
 import { consoles } from '$utils/debug.js';
-import { afterAll, describe, expect, it, suite, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { spy } from '$tests/fixtures.js';
 
-suite('sveltex error handling', async () => {
-    await spy(['writeFile', 'log', 'mkdir'], true);
+describe('sveltex error handling', () => {
+    beforeAll(async () => {
+        await spy(['writeFile', 'log', 'mkdir'], true);
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
     it('catches errors', async () => {
-        vi.mock('svelte/compiler', async (importOriginal) => {
-            const actual = await importOriginal();
-            if (typeof actual !== 'object') {
-                throw new Error('test error');
-            }
-            return {
-                ...actual,
-                parse: () => {
-                    throw new Error('test error');
-                },
-            };
-        });
+        vi.mock(
+            'mdast-util-from-markdown',
+            async (
+                orig: () => Promise<typeof import('mdast-util-from-markdown')>,
+            ) => {
+                return {
+                    ...(await orig()),
+                    fromMarkdown: () => {
+                        throw new Error('test error');
+                    },
+                };
+            },
+        );
         const consoleErrorMock = vi
             .spyOn(consoles, 'error')
             .mockImplementation(() => undefined);

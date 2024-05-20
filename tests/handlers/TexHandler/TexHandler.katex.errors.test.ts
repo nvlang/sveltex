@@ -1,6 +1,4 @@
-/* eslint-disable vitest/no-commented-out-tests */
 import {
-    suite,
     describe,
     it,
     expect,
@@ -8,6 +6,7 @@ import {
     vi,
     beforeEach,
     beforeAll,
+    MockInstance,
 } from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
@@ -15,14 +14,11 @@ import fetch, { type Response } from 'node-fetch';
 import { v4 as uuid } from 'uuid';
 import { range } from '$tests/utils.js';
 
-suite("TexHandler<'katex'>", async () => {
+describe("TexHandler<'katex'>", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
-    const { log } = await spy(
-        ['writeFile', 'log', 'mkdir', 'existsSync'],
-        true,
-    );
+    let log: MockInstance;
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -32,6 +28,11 @@ suite("TexHandler<'katex'>", async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        const mocks = await spy(
+            ['writeFile', 'log', 'mkdir', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
     });
     afterAll(() => {
         vi.restoreAllMocks();

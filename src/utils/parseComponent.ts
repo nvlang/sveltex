@@ -1,5 +1,8 @@
 // Internal dependencies
-import { escapeWhitespace } from '$utils/debug.js';
+import { is, typeAssert } from '$deps.js';
+import { isBoolean, isNumber, isString } from '$type-guards/utils.js';
+import { InterpretedAttributes, ParsedComponent } from '$types/utils/Escape.js';
+import { escapeWhitespace, log } from '$utils/debug.js';
 import { re } from '$utils/misc.js';
 
 /**
@@ -28,18 +31,34 @@ import { re } from '$utils/misc.js';
  * {
  *     tag: 'Something',
  *     attributes: { a: 'a', b: 'b', c: '42', d: undefined },
- *     content: ' test <div>2</div> <<< !@#$%^&*()_+-=/\\[]{}()\'"`:;.,?! </Something> text',
+ *     innerContent: ' test <div>2</div> <<< !@#$%^&*()_+-=/\\[]{}()\'"`:;.,?! </Something> text',
  *     selfClosing: false,
  * }
  * ```
  */
-export function parseComponent(html: string) {
+export function parseComponent(html: string): ParsedComponent {
     const match = componentRegExp.exec(html);
     if (!match) {
         throw new Error(
             `HTML syntax error: could not parse component: "${escapeWhitespace(html)}"`,
         );
     }
+
+    // Match groups that weren't matched are set to the empty string, so all of
+    // the match groups are guaranteed to be defined.
+    typeAssert(
+        is<{
+            0: string;
+            1: string;
+            2: string;
+            3: string;
+            4: string;
+            5: string;
+            6: string;
+            index: number;
+            input: string;
+        }>(match),
+    );
 
     // According to node-html-parser, in this specific case at least, object
     // destructuring is faster than array destructuring (see
@@ -49,7 +68,7 @@ export function parseComponent(html: string) {
         2: tag,
         3: attributesString,
         4: closingSlash,
-        5: content,
+        5: innerContent,
         6: closingTag,
     } = match;
     // < 1 2 3 4 > 5 6
@@ -57,14 +76,14 @@ export function parseComponent(html: string) {
     // Leading slash must be empty (i.e., must be `undefined`, `null`, or `''`).
     // This is because `parseComponent` is supposed to receive a full component
     // (be it self-closing or not), and so it should not start with `'</'`.
-    if (!isEmpty(leadingSlash)) {
+    if (leadingSlash) {
         throw new Error('HTML syntax error: unexpected `</` in opening tag');
     }
 
     // Tag name must not be empty (i.e., must not be `undefined`, `null`, nor
     // `''`).
     /* v8 ignore next 6 (unreachable code) */
-    if (isEmpty(tag)) {
+    if (!tag) {
         throw new Error(
             "HTML syntax error: couldn't parse tag name in the following:\n\n" +
                 html,
@@ -74,15 +93,14 @@ export function parseComponent(html: string) {
     const selfClosing = closingSlash === '/';
 
     // <tag/></tag> is invalid
-    if (selfClosing && !isEmpty(closingTag)) {
+    if (selfClosing && closingTag) {
         throw new Error(
             'HTML syntax error: self-closing tag should not have closing tag',
         );
     }
 
-    const attributes: Record<string, string | undefined> = {};
-
-    if (!isEmpty(attributesString)) {
+    const rawAttributes: Record<string, string | undefined> = {};
+    if (attributesString) {
         for (
             let attMatch: RegExpExecArray | null;
             (attMatch = attributesRegExp.exec(attributesString));
@@ -90,33 +108,25 @@ export function parseComponent(html: string) {
         ) {
             let { 1: key, 2: val } = attMatch;
             /* v8 ignore next 6 (unreachable code) */
-            if (isEmpty(key)) {
+            if (!key) {
                 throw new Error(
                     'HTML syntax error: could not parse attribute key in the following:\n\n' +
                         attributesString,
                 );
             }
             key = key.toLowerCase();
-            if (!isEmpty(val)) {
+            if (val) {
                 val =
                     val.startsWith("'") || val.startsWith('"')
                         ? val.slice(1, -1)
                         : val;
             }
-            attributes[key] = val;
+            if (val === undefined) val = 'true';
+            rawAttributes[key] = val;
         }
     }
-
-    return {
-        tag,
-        attributes,
-        content: isEmpty(content) ? undefined : content,
-        selfClosing,
-    };
-}
-
-function isEmpty(str: string | undefined | null): str is '' | undefined | null {
-    return str === '' || str === undefined || str === null;
+    const attributes = interpretAttributes(rawAttributes);
+    return { tag, attributes, innerContent, selfClosing };
 }
 
 /**
@@ -189,7 +199,7 @@ export const componentRegExp = re`
         )
         (                       # 3: attributes
             (?:                 # -: optional attribute(s)
-                \s+             # (optional whitespace)
+                \s              # (mandatory whitespace)
                 [^>]*?          # (any character except '>', lazy)
                 (?:
                     (?:         # -: single-quoted attribute value
@@ -206,7 +216,7 @@ export const componentRegExp = re`
             \/?                 # (optional slash)
         )
     >
-    (                           # 5: content
+    (                           # 5: inner content
         .*?                     # (any character, incl. newlines; lazy, so that
                                 # it doesn't eat the closing tag)
     )
@@ -227,3 +237,109 @@ export const componentRegExp = re`
     ${'su'}                     # s = Single line (dot matches newline)
                                 # u = Unicode support
 `;
+
+/**
+ * "Interprets" a string as a boolean, number, null, or undefined, if
+ * applicable. Otherwise, returns the string as is.
+ *
+ * @param str - The string to interpret.
+ * @returns The interpreted value.
+ *
+ * @example
+ * // All of the below are true
+ * interpretString('true') === true;
+ * interpretString('false') === false;
+ * interpretString('null') === null;
+ * interpretString('undefined') === undefined;
+ * interpretString('NaN') === NaN;
+ * interpretString('Infinity') === Infinity;
+ * interpretString('-Infinity') === -Infinity;
+ * interpretString('5') === 5;
+ * interpretString('5.5') === 5.5;
+ * interpretString('something') === 'something';
+ */
+export function interpretString(
+    str: string | number | boolean | null | undefined,
+): string | number | boolean | null | undefined {
+    if (!isString(str)) return str;
+    const trimmedStr = str.trim();
+    switch (trimmedStr) {
+        case 'true':
+            return true;
+        case 'false':
+            return false;
+        case 'null':
+            return null;
+        case 'undefined':
+            return undefined;
+        case 'NaN':
+            return NaN;
+        case 'Infinity':
+            return Infinity;
+    }
+    if (trimmedStr.endsWith('Infinity')) {
+        if (trimmedStr.match(/^[+]\s*Infinity$/)) {
+            return +Infinity;
+        }
+        if (trimmedStr.match(/^[-]\s*Infinity$/)) {
+            return -Infinity;
+        }
+    }
+    if (trimmedStr.replace(/\s*/g, '').match(/^[+-]?(\d+|\d*.\d+)$/)) {
+        const num = Number(trimmedStr);
+        if (!isNaN(num)) {
+            return num;
+        }
+    }
+    return str;
+}
+
+/**
+ * Calls {@link interpretString | `interpretString`} on each value in the given
+ * object.
+ *
+ * @param attrs - The object whose values to interpret.
+ * @returns A new object with the interpreted values.
+ *
+ * @example
+ * ```ts
+ * interpretAttributes({
+ *     a: 'true',
+ *     b: '5',
+ *     c: 'something',
+ * });
+ * ```
+ *
+ * ...would return...
+ *
+ * ```ts
+ * {
+ *     a: true,
+ *     b: 5,
+ *     c: 'something',
+ * }
+ * ```
+ */
+export function interpretAttributes(
+    attrs: Record<string, unknown>,
+    strict: boolean = true,
+): InterpretedAttributes {
+    const rv: InterpretedAttributes = {};
+    for (const [key, value] of Object.entries(attrs)) {
+        if (value !== undefined && !isString(value)) {
+            const supportedValueType: boolean =
+                isBoolean(value) ||
+                isNumber(value) ||
+                (value as unknown) === null;
+            log(
+                strict ? 'error' : 'warn',
+                `Expected string for attribute \`${key}\`, but got \`${String(value)}\`. ${strict || !supportedValueType ? 'Ignoring attribute.' : 'Passing value as-is.'} (Hint: Numbers, booleans, null and undefined, if wrapped in double quotes, will be transformed back into their original types by Sveltex.)`,
+            );
+            if (!strict && supportedValueType)
+                rv[key] = value as boolean | number | null;
+        } else {
+            rv[key] = interpretString(value);
+        }
+    }
+    return rv;
+}

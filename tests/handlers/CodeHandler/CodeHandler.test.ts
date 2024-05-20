@@ -1,14 +1,17 @@
-import { suite, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { CodeHandler } from '$handlers/CodeHandler.js';
-import { missingDeps } from '$utils/globals.js';
+import { missingDeps } from '$utils/env.js';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
-suite("CodeHandler<'custom'>", async () => {
-    const handler = await CodeHandler.create('custom', {
-        process: (input: string) => input,
+describe("CodeHandler<'custom'>", () => {
+    let handler: CodeHandler<'custom'>;
+    beforeAll(async () => {
+        handler = await CodeHandler.create('custom', {
+            process: (input: string) => input,
+        });
     });
     describe("CodeHandler.create('custom', ...)", () => {
         it('returns instance of CodeHandler', () => {
@@ -38,10 +41,10 @@ suite("CodeHandler<'custom'>", async () => {
 
     describe('codeHandler', () => {
         describe('process()', () => {
-            it('should work', async () => {
-                expect(await handler.process('x', {})).toEqual(
-                    '<pre><code>\nx\n</code></pre>',
-                );
+            it('defaults to no language', async () => {
+                const output = (await handler.process('let a')).processed;
+                const expected = '<pre><code>let a\n</code></pre>';
+                expect(output).toEqual(expected);
             });
         });
 
@@ -62,7 +65,7 @@ suite("CodeHandler<'custom'>", async () => {
     });
 });
 
-suite('CodeHandler error handling', () => {
+describe('CodeHandler error handling', () => {
     describe("CodeHandler.create('highlight.js') with highlight.js mocked to throw error", () => {
         vi.mock('highlight.js', () => {
             throw new Error('highlight.js not found');

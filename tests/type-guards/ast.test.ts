@@ -1,7 +1,6 @@
 import {
     hasStartEnd_LineColumn,
     hasStartEnd_Offset,
-    isFragment_v5,
 } from '$type-guards/ast.js';
 
 import { describe, expect, it } from 'vitest';
@@ -160,73 +159,6 @@ describe('hasStartEnd_LineColumn', () => {
         };
 
         const result = hasStartEnd_LineColumn(node);
-
-        expect(result).toBe(false);
-    });
-});
-
-describe('isFragment_v5', () => {
-    it('should return true for a valid Fragment_v5 node', () => {
-        const node = {
-            type: 'Fragment',
-            nodes: [
-                { type: 'Text', data: 'Hello', start: 1, end: 2 },
-                { type: 'Element', name: 'div', start: 3, end: 4 },
-            ],
-            start: 1,
-            end: 4,
-        };
-
-        const result = isFragment_v5(node);
-
-        expect(result).toBe(true);
-    });
-
-    it('should return false for a node with incorrect type', () => {
-        const node = {
-            type: 'Element',
-            name: 'div',
-            start: 1,
-            end: 2,
-        };
-
-        const result = isFragment_v5(node);
-
-        expect(result).toBe(false);
-    });
-
-    it('should return false for a node without "nodes" property', () => {
-        const node = {
-            type: 'Fragment',
-        };
-
-        const result = isFragment_v5(node);
-
-        expect(result).toBe(false);
-    });
-
-    it('should return false for a node with "nodes" property that is not an array', () => {
-        const node = {
-            type: 'Fragment',
-            nodes: {},
-        };
-
-        const result = isFragment_v5(node);
-
-        expect(result).toBe(false);
-    });
-
-    it('should return false for a node with "nodes" property that contains non-BaseNode elements', () => {
-        const node = {
-            type: 'Fragment',
-            nodes: [
-                { type: 'Text', data: 'Hello', start: 1, end: 2 },
-                { type: 'Element', name: 'div', start: 3, end: 4 },
-                'InvalidNode',
-            ],
-        };
-
-        const result = isFragment_v5(node);
 
         expect(result).toBe(false);
     });

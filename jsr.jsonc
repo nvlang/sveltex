@@ -1,0 +1,35 @@
+{
+  "name": "@nvl/sveltex",
+  "version": "0.1.0",
+  "exports": {
+    // Default entry point, which can be imported as `@nvlang/sveltex`
+    ".": "./src/mod.ts"
+  },
+  "publish": {
+    "exclude": [
+      // End-to-end tests
+      "**/e2e/**",
+
+      // Unit tests
+      "**/tests/**",
+
+      // JS distribution files (NPM uses these, but JSR doesn't need them)
+      "**/dist/**",
+
+      // Node modules
+      "**/node_modules/**",
+
+      // Documentation deployed with Mintlify
+      "**/docs/**",
+
+      // GitHub Actions workflows
+      "**/.github/**",
+
+      // Editor settings
+      "**/.vscode/**",
+
+      // Git hooks
+      "**/.husky/**"
+    ]
+  }
+}

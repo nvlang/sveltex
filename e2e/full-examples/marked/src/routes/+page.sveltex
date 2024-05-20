@@ -1,15 +1,86 @@
+<style>
+:root {
+    --some-color: #f6c;
+}
+p, figure {
+    font-family: sans-serif;
+}
+/* { */
+</style>
+
+
+# Heading 1
+###### Heading 6
+
+text **bold** text *italic (asterisks)* text _italic (underscores)_ text
+[kit.svelte.dev](https://kit.svelte.dev) text `inline code` text $$ 1/n < \color{#fc0}\int_0^{1} \color{var(--some-color)}x^{x}\ dx < n. $$
+
+Text: \[ 1/n < \color{#fc0}\int_0^{1} \color{var(--some-color)}x^{x}\ dx < n. \] Mustache tags: {1+1}, {`$1 + $${2 +
+3} = $6`}.
+
+Regexes in mustache tags: {('a$b$c\(d\)e\[f\]g$$h$$'.match(/\$/g))}.
+
+` foo ` text $a$;
+$
+b
+$.
+
+<div>
+> $x^{a}$ `monospaced $x$`
+</div>
+
+<Verb>
+Verbatim $$x^{2}\}$$ {{{ \[ \(
+<Verb> &lt;/Verb> &#60;
+<script>
+    console.log('test');
+</script>
+</Verb>
+
+
+$\texttt{<script>test</script>}\}\\\{\ldots\text{\(f\)}$
+
+\(\texttt{<script>test</script>}\}\\\{\ldots\text{$f$}\)
+
+```ts
+let a = { b: 3 };
+let b = `${2 + 2}a$b$c\(d\)\(e\[f\]\[g$$h$$i$` // {
+let c = `{@html a} b {@debug c} d {@const e} f <script>g</script>`
+```
+
+text
+
+```html
+<!-- opening script -->
 
 <script>
+// {{{{{
+```
+
+text
+
+```html
+<!-- closing script -->
+
 </script>
 
-test1 *italic* test2
+```
+
+An "advanced tex" block:
 
 <tex ref="something">
 \begin{tikzpicture}
-    \draw (0,0) circle (3);
-    \draw (0,-1) circle (1.8);
-    \draw[var(--red), thick] (0,0) rectangle (3, 3);
+    \draw (1,2) circle (2.4);
+    \draw[dashed, var(--some-color), thick] (-.5,0) rectangle (3, 3);
+    \draw[red, thick] (-1,1) rectangle (2.5, 4);
+    \node at (1,2) {\(\int_{0}^{1} \sum x_{i}^{3} \mathrm{d}\text{$x$}\)};
 \end{tikzpicture}
 </tex>
 
-test3 **bold** test4
+That same advanced tex block, referenced with a self-closing tag:
+
+<tex ref="something" />
+
+some *more* text...
+
+

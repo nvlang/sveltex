@@ -3,10 +3,11 @@ import {
     it,
     expect,
     vi,
-    suite,
     afterAll,
     beforeEach,
     afterEach,
+    beforeAll,
+    MockInstance,
 } from 'vitest';
 import {
     getDefaultCodeConfiguration,
@@ -29,12 +30,16 @@ function fixture() {
     });
 }
 
-suite.concurrent('config/defaults', async () => {
+describe.concurrent('config/defaults', () => {
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['log']);
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
     fixture();
-    const { log } = await spy(['log']);
 
     describe('getDefaultTexComponentConfig', () => {
         fixture();
@@ -142,6 +147,7 @@ suite.concurrent('config/defaults', async () => {
                 inline: true,
                 lang: 'javascript',
                 wrapClassPrefix: 'language-',
+                _wrap: true,
             };
             const [openingTag, closingTag] =
                 getDefaultCodeConfiguration('escapeOnly').wrap(opts);
@@ -154,6 +160,7 @@ suite.concurrent('config/defaults', async () => {
                 inline: false,
                 lang: 'typescript',
                 wrapClassPrefix: 'language-',
+                _wrap: true,
             };
             const [openingTag, closingTag] =
                 getDefaultCodeConfiguration('escapeOnly').wrap(opts);
@@ -165,6 +172,7 @@ suite.concurrent('config/defaults', async () => {
             const opts = {
                 inline: false,
                 wrapClassPrefix: 'language-',
+                _wrap: true,
             };
             const [openingTag, closingTag] =
                 getDefaultCodeConfiguration('escapeOnly').wrap(opts);

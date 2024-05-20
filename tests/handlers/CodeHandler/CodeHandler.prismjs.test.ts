@@ -1,5 +1,5 @@
 /* eslint-disable vitest/no-commented-out-tests */
-import { suite, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { getDefaultCodeConfiguration } from '$config/defaults.js';
@@ -8,8 +8,11 @@ import { consoles } from '$utils/debug.js';
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 vi.spyOn(consoles, 'warn').mockImplementation(() => undefined);
 
-suite("CodeHandler<'prismjs'>", async () => {
-    const handler = await CodeHandler.create('prismjs');
+describe("CodeHandler<'prismjs'>", () => {
+    let handler: CodeHandler<'prismjs'>;
+    beforeAll(async () => {
+        handler = await CodeHandler.create('prismjs');
+    });
 
     describe("CodeHandler.create('prismjs')", () => {
         it('returns instance of CodeHandler', () => {
@@ -27,78 +30,51 @@ suite("CodeHandler<'prismjs'>", async () => {
             });
 
             it('processes simple JS code correctly', async () => {
-                const output = await handler.process('let a', { lang: 'js' });
+                const output = (await handler.process('let a', { lang: 'js' }))
+                    .processed;
                 const expected =
-                    '<pre><code class="language-js">\n<span class="token keyword">let</span> a\n</code></pre>';
+                    '<pre><code class="language-js"><span class="token keyword">let</span> a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
-            it.each(['unknown-language', undefined])(
-                'processes code of unknown language correctly',
-                async (lang) => {
-                    expect(
+            it('processes code of unknown language correctly', async () => {
+                expect(
+                    (
                         await handler.process('let a = b', {
-                            lang,
-                        }),
-                    ).toEqual(
-                        `<pre><code${lang ? ` class="language-${lang}"` : ''}>\nlet a = b\n</code></pre>`,
-                    );
-                },
-            );
+                            lang: 'unknown-language',
+                        })
+                    ).processed,
+                ).toEqual(
+                    `<pre><code class="language-unknown-language">let a = b\n</code></pre>`,
+                );
+            });
 
-            it.each([
-                'something',
-                'let a',
-                '/**\n * @remarks comment\n */\nconst a = new Map<string, {prop: number[]}>();',
-            ])('parses info from delimiters if present', async (code) => {
-                await (async () => {
-                    expect(
-                        await handler.process('```\n' + code + '\n```'),
-                    ).toEqual(
-                        expect.stringMatching(
-                            /^<pre><code class="language-plaintext">\n[\w\W]*\n<\/code><\/pre>$/,
-                        ),
-                    );
-                    expect(await handler.process('`' + code + '`')).toEqual(
-                        expect.stringMatching(
-                            /^<code class="language-plaintext">[\w\W]*<\/code>$/,
-                        ),
-                    );
-                    expect(
-                        await handler.process('```js\n' + code + '\n```'),
-                    ).toEqual(
-                        expect.stringMatching(
-                            /^<pre><code class="language-js">\n[\w\W]*\n<\/code><\/pre>$/,
-                        ),
-                    );
-                    expect(
-                        await handler.process(
-                            '```javascript\n' + code + '\n```',
-                        ),
-                    ).toEqual(
-                        expect.stringMatching(
-                            /^<pre><code class="language-javascript">\n[\w\W]*\n<\/code><\/pre>$/,
-                        ),
-                    );
-                })();
+            it('defaults to no language', async () => {
+                const output = (await handler.process('let a')).processed;
+                const expected = '<pre><code>let a\n</code></pre>';
+                expect(output).toEqual(expected);
             });
 
             it('escapes `{`, `}`, `<`, and `>` in plain code correctly', async () => {
-                const output = await handler.process('a <b> {c}', {
-                    lang: 'plaintext',
-                });
+                const output = (
+                    await handler.process('a <b> {c}', {
+                        lang: 'plaintext',
+                    })
+                ).processed;
                 const expected =
-                    '<pre><code class="language-plaintext">\na &lt;b> &lbrace;c&rbrace;\n</code></pre>';
+                    '<pre><code class="language-plaintext">a &lt;b> &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
             it('escapes `{`, `}`, `<`, and `>` in JS code correctly', async () => {
-                const output = await handler.process(
-                    'const a = new Map<string, {prop: number}>();',
-                    { lang: 'js' },
-                );
+                const output = (
+                    await handler.process(
+                        'const a = new Map<string, {prop: number}>();',
+                        { lang: 'js' },
+                    )
+                ).processed;
                 const expected =
-                    '<pre><code class="language-js">\n<span class="token keyword">const</span> a <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token operator">&lt;</span>string<span class="token punctuation">,</span> <span class="token punctuation">&lbrace;</span><span class="token literal-property property">prop</span><span class="token operator">:</span> number<span class="token punctuation">&rbrace;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>\n</code></pre>';
+                    '<pre><code class="language-js"><span class="token keyword">const</span> a <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token operator">&lt;</span>string<span class="token punctuation">,</span> <span class="token punctuation">&lbrace;</span><span class="token literal-property property">prop</span><span class="token operator">:</span> number<span class="token punctuation">&rbrace;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>\n</code></pre>';
                 expect(output).toEqual(expected);
             });
         });
@@ -115,19 +91,19 @@ suite("CodeHandler<'prismjs'>", async () => {
 
             // it('configures code correctly',  () => {
             //     expect(
-            //         await handler.process('\\documentclass{article}\n$math$', {
+            //         (await handler.process('\\documentclass{article}\n$math$', {
             //             lang: 'latex',
-            //         }),
+            //         })).processed,
             //     ).toEqual('\\example');
             // });
 
             // it('can add new languages',  () => {
             //     handler.configure({ languages: [] });
-            //     expect(await handler.process('let a', { lang: 'js' })).toEqual(
+            //     expect((await handler.process('let a', { lang: 'js' })).processed).toEqual(
             //         'let a',
             //     );
             //     handler.configure({ languages: ['js'] });
-            //     expect(await handler.process('let a', { lang: 'js' })).toEqual(
+            //     expect((await handler.process('let a', { lang: 'js' })).processed).toEqual(
             //         '<span class="hljs-keyword">let</span> a',
             //     );
             // });

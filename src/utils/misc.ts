@@ -1,120 +1,31 @@
 // Types
 import type { BinaryToTextEncoding } from '$deps.js';
+import type { Transformation } from '$types/handlers/Tex.js';
 
 // Internal dependencies
-import { isBoolean, isNumber, isString } from '$type-guards/utils.js';
+import { isString } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
 
 // External dependencies
-import { createHash } from '$deps.js';
-import { Transformation } from '$types/handlers/Tex.js';
+import { createHash, htmlTagNames } from '$deps.js';
 
 /**
- * "Interprets" a string as a boolean, number, null, or undefined, if
- * applicable. Otherwise, returns the string as is.
+ * Check if a string is a valid name for a component. For this to be the case,
+ * it has to not be an HTML tag name, and it has to be an alphanumeric string
+ * that starts with a letter.
  *
- * @param str - The string to interpret.
- * @returns The interpreted value.
- *
- * @example
- * // All of the below are true
- * interpretString('true') === true;
- * interpretString('false') === false;
- * interpretString('null') === null;
- * interpretString('undefined') === undefined;
- * interpretString('NaN') === NaN;
- * interpretString('Infinity') === Infinity;
- * interpretString('-Infinity') === -Infinity;
- * interpretString('5') === 5;
- * interpretString('5.5') === 5.5;
- * interpretString('something') === 'something';
- */
-export function interpretString(
-    str: string | undefined,
-): string | number | boolean | null | undefined {
-    if (str === undefined) return undefined;
-    const trimmedStr = str.trim();
-    switch (trimmedStr) {
-        case 'true':
-            return true;
-        case 'false':
-            return false;
-        case 'null':
-            return null;
-        case 'undefined':
-            return undefined;
-        case 'NaN':
-            return NaN;
-        case 'Infinity':
-            return Infinity;
-    }
-    if (trimmedStr.endsWith('Infinity')) {
-        if (trimmedStr.match(/^[+]\s*Infinity$/)) {
-            return +Infinity;
-        }
-        if (trimmedStr.match(/^[-]\s*Infinity$/)) {
-            return -Infinity;
-        }
-    }
-    if (trimmedStr.replace(/\s*/g, '').match(/^[+-]?(\d+|\d*.\d+)$/)) {
-        const num = Number(trimmedStr);
-        if (!isNaN(num)) {
-            return num;
-        }
-    }
-    return str;
-}
-
-/**
- * Calls {@link interpretString | `interpretString`} on each value in the given
- * object.
- *
- * @param attrs - The object whose values to interpret.
- * @returns A new object with the interpreted values.
+ * @param name - The name to check.
+ * @returns `true` if the name is valid, `false` otherwise.
  *
  * @example
  * ```ts
- * interpretAttributes({
- *     a: 'true',
- *     b: '5',
- *     c: 'something',
- * });
- * ```
- *
- * ...would return...
- *
- * ```ts
- * {
- *     a: true,
- *     b: 5,
- *     c: 'something',
- * }
+ * isValidComponentName('div'); // false
+ * isValidComponentName('div2'); // true
+ * isValidComponentName('MyComponent'); // true
  * ```
  */
-export function interpretAttributes(
-    attrs: Record<string, unknown>,
-    strict: boolean = true,
-): Record<string, string | number | boolean | null | undefined> {
-    const rv: Record<string, string | number | boolean | null | undefined> = {};
-    for (const [key, value] of Object.entries(attrs)) {
-        if (value !== undefined && !isString(value)) {
-            const supportedValueType: boolean =
-                isBoolean(value) ||
-                isNumber(value) ||
-                (value as unknown) === null;
-            log(
-                strict ? 'error' : 'warn',
-                `Expected string for attribute \`${key}\`, but got \`${String(value)}\`. ${strict || !supportedValueType ? 'Ignoring attribute.' : 'Passing value as-is.'} (Hint: Numbers, booleans, null and undefined, if wrapped in double quotes, will be transformed back into their original types by Sveltex.)`,
-            );
-            if (!strict && supportedValueType)
-                rv[key] = value as boolean | number | null;
-        } else if (value === undefined) {
-            rv[key] === value;
-        } else {
-            rv[key] = interpretString(value);
-        }
-    }
-    return rv;
+export function isValidComponentName(name: string): boolean {
+    return /^[a-zA-Z][a-zA-Z0-9]*$/.test(name) && !htmlTagNames.includes(name);
 }
 
 /**
@@ -202,60 +113,6 @@ export function re(strings: TemplateStringsArray, ...flags: string[]) {
             ),
         flags.join(''),
     );
-}
-
-/**
- * Splits content into segments based on `<script>` and `<style>` tags,
- * including the content within these tags, and any other text outside these
- * tags.
- *
- * @param content - The HTML or text content to split into segments.
- * @returns An array of strings, where each string is either a `<script>` block,
- * a `<style>` block, or text outside these blocks.
- *
- * @remarks
- *
- * **✓ Invariant**: The following is always true:
- * ```ts
- * splitContent(content).join('') === content // always true
- * ```
- *
- * @example
- * Suppose you have the following content string:
- *
- * ```ts
- * const content = `
- * <script lang='ts'>
- * A
- * </script>
- * B
- * <style lang="postcss">
- * C
- * </style>
- * D
- * `
- * ```
- *
- * Then the output of `splitContent(content)` would be:
- *
- * ```ts
- * [
- *     "<script lang='ts'>\nA\n</script>",
- *     'B',
- *     '<style lang="postcss">\nC\n</style>',
- *     'D'
- * ]
- * ```
- */
-export function splitContent(content: string): string[] {
-    const regex = re`
-        (?:
-            <script [^>]* > .*? <\/script>  # script block
-            | <style [^>]* > .*? <\/style>  # style block
-            | .+? (?=<script|<style|$))
-        ${'gsu'}
-    `;
-    return content.match(regex) ?? [];
 }
 
 /**

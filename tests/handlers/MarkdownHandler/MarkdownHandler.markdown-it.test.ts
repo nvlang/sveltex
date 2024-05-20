@@ -1,11 +1,14 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import multimdTablePlugin from 'markdown-it-multimd-table';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import MarkdownIt from 'markdown-it';
 
-suite("MarkdownHandler<'markdown-it'>", async () => {
-    const handler = await MarkdownHandler.create('markdown-it');
+describe("MarkdownHandler<'markdown-it'>", () => {
+    let handler: MarkdownHandler<'markdown-it'>;
+    beforeAll(async () => {
+        handler = await MarkdownHandler.create('markdown-it');
+    });
 
     describe("MarkdownHandler.create('markdown-it')", () => {
         it('returns instance of MarkdownHandler', () => {
@@ -23,25 +26,28 @@ suite("MarkdownHandler<'markdown-it'>", async () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = await handler.process('**strong** *em*');
+                const output = (await handler.process('**strong** *em*'))
+                    .processed;
                 const expected = '<strong>strong</strong> <em>em</em>';
                 expect(output).toEqual(expected);
             });
 
             it("automatically distinguishes between inline and 'block' markdown", async () => {
-                expect(await handler.process('a\nb')).toEqual('a\nb');
-                expect(await handler.process('a\n\nb')).toEqual(
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a\nb',
+                );
+                expect((await handler.process('a\n\nb')).processed).toEqual(
                     '<p>a</p>\n<p>b</p>\n',
                 );
             });
 
             it('has working `inline` parameter', async () => {
-                expect(await handler.process('a', { inline: true })).toEqual(
-                    'a',
-                );
-                expect(await handler.process('a', { inline: false })).toEqual(
-                    '<p>a</p>\n',
-                );
+                expect(
+                    (await handler.process('a', { inline: true })).processed,
+                ).toEqual('a');
+                expect(
+                    (await handler.process('a', { inline: false })).processed,
+                ).toEqual('<p>a</p>\n');
             });
         });
 
@@ -57,13 +63,17 @@ suite("MarkdownHandler<'markdown-it'>", async () => {
                 });
                 expect(handler.processor.options.breaks).toBeTruthy();
                 expect(handler.processor.options.xhtmlOut).toBeTruthy();
-                expect(handler.process('a\nb')).toEqual('a<br />\nb');
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a<br />\nb',
+                );
                 await handler.configure({
                     options: { breaks: true, xhtmlOut: false },
                 });
                 expect(handler.processor.options.breaks).toBeTruthy();
                 expect(handler.processor.options.xhtmlOut).toBeFalsy();
-                expect(handler.process('a\nb')).toEqual('a<br>\nb');
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a<br>\nb',
+                );
                 expect(handler.configuration).toEqual({
                     options: {
                         breaks: true,
@@ -137,7 +147,9 @@ suite("MarkdownHandler<'markdown-it'>", async () => {
                     '</tr>\n' +
                     '</tbody>\n' +
                     '</table>\n';
-                expect(await handler.process(exampleTable)).toEqual(expected);
+                expect((await handler.process(exampleTable)).processed).toEqual(
+                    expected,
+                );
             });
         });
 

@@ -1,4 +1,9 @@
 // Types
+import type {
+    MarkupPreprocessor,
+    Preprocessor,
+    PreprocessorGroup,
+} from '$deps.js';
 import type { Processed } from '$types/Sveltex.js';
 import type {
     BackendChoices,
@@ -8,13 +13,12 @@ import type {
 import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
-import type { Location } from '$types/utils/Ast.js';
 import type {
-    MarkupPreprocessor,
-    Preprocessor,
-    PreprocessorGroup,
-} from 'svelte/compiler';
+    TexBackend,
+    TexConfiguration,
+    TexProcessOptions,
+} from '$types/handlers/Tex.js';
+import type { ProcessedSnippet, Snippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultSveltexConfig } from '$config/defaults.js';
@@ -24,15 +28,19 @@ import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
 import { TexComponent } from '$utils/TexComponent.js';
-import { parse, pushRangeIf, walk } from '$utils/ast.js';
 import { log, prettifyError } from '$utils/debug.js';
-import { escapeMustacheTags, escapeVerb, unescape } from '$utils/escape.js';
-import { missingDeps, packageManager } from '$utils/globals.js';
-import { mergeConfigs } from '$utils/merge.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
+import { detectPackageManager, missingDeps } from '$utils/env.js';
+import {
+    colonUuid,
+    escape,
+    unescapeColons,
+    unescapeSnippets,
+} from '$utils/escape.js';
+import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { MagicString, sorcery } from '$deps.js';
+import { MagicString, is, typeAssert } from '$deps.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -154,8 +162,12 @@ export class Sveltex<
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
-        script.push(...this.texHandler.scriptLines);
-        script.push(...this.codeHandler.scriptLines);
+        if (this.texPresent[filename]) {
+            script.push(...this.texHandler.scriptLines);
+        }
+        if (this.codePresent[filename]) {
+            script.push(...this.codeHandler.scriptLines);
+        }
 
         if (script.length === 0) return;
 
@@ -194,6 +206,9 @@ export class Sveltex<
         } as Processed;
     };
 
+    private codePresent: Record<string, boolean> = {};
+    private texPresent: Record<string, boolean> = {};
+
     /**
      * @param content - The whole Svelte file content.
      * @param filename - The filename of the Svelte file. (Isn't this actually a
@@ -219,7 +234,7 @@ export class Sveltex<
         // configured for SvelTeX, return early.
         if (
             !filename ||
-            !this.configuration.general.extensions.some((ext) =>
+            !this._configuration.general.extensions.some((ext) =>
                 filename.endsWith(ext),
             )
         ) {
@@ -234,227 +249,135 @@ export class Sveltex<
         try {
             // Step 1: Escape potentially tricky code (fenced code blocks,
             //         inline code, and content inside "verbatim" environments).
-            const {
-                escapedContent: escapedVerb,
-                savedMatches: savedMatchesVerb,
-                map: mapFromEscapingVerb,
-            } = escapeVerb(this, content, filename);
+            const { escapedDocument, escapedSnippets } = escape(
+                content,
+                [
+                    ...this.verbatimHandler.verbEnvs.keys(),
+                    ...this.advancedTexHandler.tccNames,
+                    ...this.advancedTexHandler.tccAliases,
+                ],
+                this.configuration.general.tex,
+            );
+
+            let headId: string | undefined = undefined;
+            let headSnippet: ProcessedSnippet | undefined = undefined;
+            let scriptPresent: boolean = false;
+            const prependToProcessed: string[] = [];
+
+            let codePresent = false;
+            let texPresent = false;
 
             // Step 2: Process the saved matches.
-            const processSavedMatches = Array.from(
-                savedMatchesVerb.entries(),
-            ).map(async ([uuid, content]) => {
-                let processedContent = '';
-                if (content.startsWith('`') || content.startsWith('~')) {
-                    processedContent = await codeHandler.process(content);
-                } else if (content.startsWith('<')) {
-                    processedContent = await verbatimHandler.process(content, {
-                        filename,
-                    });
-                } else {
-                    processedContent = await texHandler.process(content);
-                }
-                savedMatchesVerb.set(uuid, processedContent);
-            });
-            await Promise.all(processSavedMatches);
-
-            // Step 3: Generate an AST of the (once) escaped content of the file
-            //         using Svelte's parser.
-
-            /**
-             * AST (abstract syntax tree) of the (once) escaped markup,
-             * generated using Svelte's parser.
-             */
-            const { ast: astEscapedVerb, scriptPresent: scriptPresentV4 } =
-                parse(escapedVerb, filename);
-
-            // Step 4: Walk the AST and keep track of the ranges of the mustache
-            //         tag nodes.
-
-            /**
-             * Ranges (starting and ending positions in the (once) escaped
-             * source code) of the mustache tags (i.e., nodes of type
-             * `'MustacheTag'`). These are strings of the form `{...}`, which
-             * are used to embed JavaScript expressions in the markup, and, as
-             * far as the markup preprocessor is concerned, should be treated as
-             * plain text (since that is what the contents of the expression
-             * will ultimately return).
-             */
-            const mtRanges: Location[] = [];
-
-            walk(
-                astEscapedVerb,
-                pushRangeIf('MustacheTag', mtRanges, escapedVerb),
-            );
-
-            // Step 5: Escape the mustache tag nodes by replacing them with
-            //         UUIDv4 strings.
-
-            const {
-                escapedContent: escapedVerbAndMT,
-                savedMatches: savedMatchesMT,
-                map: mapFromEscapingMT,
-            } = escapeMustacheTags(
-                escapedVerb,
-                mtRanges,
-                filename + '_escapedVerb',
-            );
-
-            // Step 6: Merge the savedMatches maps (for convenience later on).
-
-            const savedMatches = new Map([
-                ...savedMatchesVerb,
-                ...savedMatchesMT,
-            ]);
-
-            // Step 7: Generate an AST of the (twice) escaped content of the
-            //         file using Svelte's parser.
-
-            /**
-             * AST (abstract syntax tree) of the escaped markup, generated using
-             * Svelte's parser.
-             */
-            const { ast: astEscapedVerbAndMT } = parse(
-                escapedVerbAndMT,
-                filename,
-            );
-
-            // Step 8: Walk the AST and keep track of the ranges of the text
-            //         nodes (which will now include what were formerly mustache
-            //         tag nodes). Also, check if there is a `<script>` tag in
-            //         the file.
-
-            /**
-             * Ranges (starting and ending positions in the escaped source code)
-             * of the text nodes (i.e., nodes of type `'Text'`).
-             */
-            const textRanges: Location[] = [];
-
-            /**
-             * Whether a `<script>` tag is present in the file. If not, we'll
-             * add one ourselves (this is to ensure that the `script` function
-             * of the preprocessor runs, which is important for
-             * `AdvancedTexHandler`).
-             */
-            let scriptPresent: boolean;
-
-            // We're currently only running unit tests with Svelte 4, so
-            // `scriptPresentV4 === undefined` is always false, making that
-            // branch of the if statement unreachable.
-            /* v8 ignore next 8 (unreachable code) */
-            if (scriptPresentV4 === undefined) {
-                scriptPresent = false;
-                walk(astEscapedVerbAndMT, (node) => {
-                    pushRangeIf('Text', textRanges, escapedVerbAndMT)(node);
-                    if (!scriptPresent && node.type === 'Script') {
-                        scriptPresent = true;
+            const processedSnippets: [string, ProcessedSnippet][] = [];
+            const processEscapedSnippets = escapedSnippets.map(
+                async ([uuid, snippet]) => {
+                    let processedSnippet: ProcessedSnippet;
+                    let processed = '';
+                    const { unescapeOptions } = snippet;
+                    if (snippet.type === 'code') {
+                        typeAssert(is<Snippet<'code'>>(snippet));
+                        if (!codePresent) codePresent = true;
+                        processedSnippet = await codeHandler.process(
+                            snippet.processable.innerContent,
+                            snippet.processable.optionsForProcessor,
+                        );
+                    } else if (snippet.type === 'verbatim') {
+                        typeAssert(is<Snippet<'verbatim'>>(snippet));
+                        processedSnippet = await verbatimHandler.process(
+                            snippet.processable.innerContent,
+                            {
+                                filename,
+                                ...snippet.processable.optionsForProcessor,
+                            },
+                        );
+                    } else if (snippet.type === 'tex') {
+                        typeAssert(is<Snippet<'tex'>>(snippet));
+                        if (!texPresent) texPresent = true;
+                        processedSnippet = await texHandler.process(
+                            snippet.processable.innerContent,
+                            snippet.processable
+                                .optionsForProcessor as TexProcessOptions<T>,
+                        );
+                    } else {
+                        typeAssert(
+                            is<Snippet<'svelte' | 'mustacheTag'>>(snippet),
+                        );
+                        processed = snippet.original.outerContent;
+                        if (snippet.type === 'svelte') {
+                            if (
+                                !headId &&
+                                processed.startsWith(`<svelte${colonUuid}head`)
+                            ) {
+                                headId = uuid;
+                            } else if (
+                                !scriptPresent &&
+                                processed.startsWith('<script')
+                            ) {
+                                scriptPresent = true;
+                            }
+                        }
+                        processedSnippet = {
+                            processed,
+                            unescapeOptions,
+                        };
                     }
-                });
-            } else {
-                scriptPresent = scriptPresentV4;
-                walk(
-                    astEscapedVerbAndMT,
-                    pushRangeIf('Text', textRanges, escapedVerbAndMT),
-                );
+
+                    processedSnippets.push([uuid, processedSnippet]);
+                },
+            );
+            await Promise.all(processEscapedSnippets);
+
+            // ESLint doesn't realize that the Promise.all call above may modify
+            // the `texPresent`, `codePresent`, `scriptPresent`, and `headId`
+            // variables, so it thinks they're always false. We need to
+            // temporarily disable the `no-unnecessary-condition` rule to avoid
+            // the warning.
+            /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+            const headLines: string[] = [];
+            if (texPresent) {
+                this.texPresent[filename] = true;
+                headLines.push(...this.texHandler.headLines);
             }
-
-            // Step 9: For each text node, "unescape" the escaped content and
-            //         run the markdown preprocessor on the text content and
-            //         sanitize the output. Use `magic-string` to help keep
-            //         track of everything and generate a source map.
-
-            const s = new MagicString(escapedVerbAndMT);
-
-            const headIdx = escapedVerbAndMT.indexOf('</svelte:head>');
-            const headLines = [
-                ...this.texHandler.headLines,
-                ...this.codeHandler.headLines,
-            ];
+            if (codePresent) {
+                this.codePresent[filename] = true;
+                headLines.push(...this.codeHandler.headLines);
+            }
             if (headLines.length > 0) {
-                if (headIdx === -1) {
-                    s.prepend(
-                        `<svelte:head>\n${headLines.join('\n')}\n</svelte:head>\n`,
+                if (headId) {
+                    headSnippet = processedSnippets.find(
+                        (ps) => ps[0] === headId,
+                    )?.[1];
+                }
+                if (headSnippet) {
+                    headSnippet.processed = headSnippet.processed.replace(
+                        new RegExp(`</\\s*svelte${colonUuid}head\\s*>`),
+                        headLines.join('\n') + '\n$0',
                     );
                 } else {
-                    s.prependRight(headIdx, `${headLines.join('\n')}\n`);
+                    prependToProcessed.push(
+                        `<svelte:head>`,
+                        ...headLines,
+                        `</svelte:head>`,
+                    );
                 }
             }
 
-            /**
-             * Since nodes of type `'Text'` do not have children, the ranges in
-             * `textRanges` are guaranteed to be pairwise disjoint, meaning that
-             * we don't have to worry about the order in which we process them.
-             * We take advantage of this by processing them in parallel using
-             * `Promise.all`.
-             */
-            const tasks = textRanges.map(async ({ start, end }) => {
-                const substring = escapedVerbAndMT.slice(start, end);
-                if (substring.trim() === '')
-                    return { start, end, processedAndUnescaped: undefined };
-                const processedHtml = await markdownHandler.process(substring);
-                const processedAndUnescaped = unescape(
-                    processedHtml,
-                    savedMatches,
-                );
-                return { start, end, processedAndUnescaped };
-            });
-
-            const changes = await Promise.all(tasks);
-
-            /**
-             * The changes, computed in parallel, still need to be applied
-             * synchronously to avoid
-             * {@link https://en.wikipedia.org/wiki/Write-write_conflict | write-write conflicts}.
-             */
-            changes.forEach(({ start, end, processedAndUnescaped }) => {
-                if (processedAndUnescaped)
-                    s.overwrite(start, end, processedAndUnescaped);
-            });
-
             // Add <script> tag if not present
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             if (!scriptPresent) {
-                s.prepend('<script>\n</script>\n');
+                prependToProcessed.push('<script>', '</script>');
+            }
+            /* eslint-enable @typescript-eslint/no-unnecessary-condition */
+
+            const html = (await markdownHandler.process(escapedDocument))
+                .processed;
+
+            let code = unescapeSnippets(html, processedSnippets);
+            code = unescapeColons(code);
+            if (prependToProcessed.length > 0) {
+                code = prependToProcessed.join('\n') + '\n' + code;
             }
 
-            /**
-             * Fully preprocessed content.
-             */
-            const code = s.toString();
-
-            /**
-             * Source map for the unescaping and markdown preprocessing.
-             */
-            const mapFromUnescapingAndMarkdownProcessing = s.generateMap({
-                source: filename + '_escapedVerbAndMT',
-                hires: 'boundary',
-                includeContent: true,
-            });
-
-            const chain = await sorcery.load(filename + '_final', {
-                content: {
-                    [filename + '_final']: code,
-                    [filename + '_escapedVerb']: escapedVerb,
-                    [filename + '_escapedVerbAndMT']: escapedVerbAndMT,
-                    [filename]: content,
-                },
-                sourcemaps: {
-                    [filename + '_final']:
-                        mapFromUnescapingAndMarkdownProcessing,
-                    [filename + '_escapedVerbAndMT']: mapFromEscapingMT,
-                    [filename + '_escapedVerb']: mapFromEscapingVerb,
-                },
-            });
-            const map = chain?.apply() ?? {
-                version: 3,
-                file: filename,
-                mappings: '',
-                names: [],
-                sources: [],
-                sourcesContent: [],
-            };
-
-            return { code, map };
+            return { code };
         } catch (err) {
             log('error', prettifyError(err));
             return;
@@ -721,7 +644,7 @@ export class Sveltex<
         if (errors.length > 0) {
             const install =
                 '\n\nPlease install the necessary dependencies by running:\n\n' +
-                `${packageManager} add -D ${missingDeps.join(' ')}`;
+                `${detectPackageManager()} add -D ${missingDeps.join(' ')}`;
 
             throw Error(`Failed to create Sveltex preprocessor.` + install, {
                 cause:

@@ -44,3 +44,17 @@ async function writeFileEnsureDir(file: string, content: string) {
     if (dir !== '.') await ensureDir(dir);
     await fs.writeFile(file, content, 'utf8');
 }
+
+/**
+ * Checks if a file or directory exists at the specified path.
+ *
+ * @param path - The path to check.
+ * @returns `true` if the path exists, `false` otherwise.
+ */
+export function pathExists(path: string) {
+    try {
+        return fs.existsSync(path);
+    } catch {
+        return false;
+    }
+}

@@ -1,10 +1,9 @@
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
-// import { sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
-import { pathExists } from '$utils/debug.js';
 
 import { rimraf, resolve } from '$deps.js';
 import {
+    type MockInstance,
     afterAll,
     afterEach,
     beforeAll,
@@ -12,11 +11,11 @@ import {
     describe,
     expect,
     it,
-    suite,
     vi,
 } from 'vitest';
 import { sha256 } from '$utils/misc.js';
 import { AdvancedTexConfiguration } from '$mod.js';
+import { pathExists } from '$utils/fs.js';
 
 // async function handlers() {
 //     const ath = await AdvancedTexHandler.create('local');
@@ -101,7 +100,7 @@ function fixture(config?: AdvancedTexConfiguration<'local'>) {
     });
 }
 
-suite("AdvancedTexHandler<'local'>", async () => {
+describe("AdvancedTexHandler<'local'>", () => {
     vi.restoreAllMocks();
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
@@ -112,16 +111,27 @@ suite("AdvancedTexHandler<'local'>", async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        const mocks = await spy(
+            ['writeFile', 'log', 'spawnCliInstruction'],
+            false,
+        );
+        writeFile = mocks.writeFile;
+        log = mocks.log;
+        spawnCliInstruction = mocks.spawnCliInstruction;
+        log.mockImplementation(() => undefined);
     });
     afterAll(() => {
         vi.restoreAllMocks();
     });
     fixture();
-    const { writeFile, log, spawnCliInstruction } = await spy(
-        ['writeFile', 'log', 'spawnCliInstruction'],
-        false,
-    );
-    log.mockImplementation(() => undefined);
+    let writeFile: MockInstance;
+    let log: MockInstance;
+    let spawnCliInstruction: MockInstance;
+    // const { writeFile, log, spawnCliInstruction } = await spy(
+    //     ['writeFile', 'log', 'spawnCliInstruction'],
+    //     false,
+    // );
+
     // writeFile.mockImplementation(
     //     async (path: string, data: string, opts: ObjectEncodingOptions) => {
     //         if (path.endsWith('cache.json')) {
@@ -178,16 +188,15 @@ suite("AdvancedTexHandler<'local'>", async () => {
             );
         });
 
-        it.each([
-            { components: undefined },
-            { components: {} },
-            { components: { newComponent1: {} } },
-            {
-                components: { newComponent2: {}, newComponent3: {} },
-            },
-        ])(
-            'appends new tex components to current array of tex components',
-            async ({ components }) => {
+        describe('adds new tex components to current record of tex components', () => {
+            it.each([
+                { components: undefined },
+                { components: {} },
+                { components: { newComponent1: {} } },
+                {
+                    components: { newComponent2: {}, newComponent3: {} },
+                },
+            ])('adding $components', async ({ components }) => {
                 const origComponents = {
                     ...ath.configuration.components,
                 };
@@ -197,8 +206,8 @@ suite("AdvancedTexHandler<'local'>", async () => {
                     ...origComponents,
                     ...components,
                 });
-            },
-        );
+            });
+        });
     });
 
     describe.each([{}])('advancedTexHandler.noteTcInFile', (config) => {
@@ -254,12 +263,14 @@ suite("AdvancedTexHandler<'local'>", async () => {
         fixture(config);
         it('should work with self-closing components', async () => {
             expect(
-                await ath.process('x', {
-                    tag: 'ExampleAlias',
-                    attributes: { ref: 'ref' },
-                    selfClosing: true,
-                    filename: 'test-73cd8d85.sveltex',
-                }),
+                (
+                    await ath.process('x', {
+                        tag: 'ExampleAlias',
+                        attributes: { ref: 'ref' },
+                        selfClosing: true,
+                        filename: 'test-73cd8d85.sveltex',
+                    })
+                ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__Example__ref} />\n</figure>',
             );
@@ -269,12 +280,14 @@ suite("AdvancedTexHandler<'local'>", async () => {
 
         it('supports aliases', async () => {
             expect(
-                await ath.process('x', {
-                    tag: 'ExampleAlias',
-                    attributes: { ref: 'ref' },
-                    selfClosing: false,
-                    filename: 'test-d9f77b2e.sveltex',
-                }),
+                (
+                    await ath.process('x', {
+                        tag: 'ExampleAlias',
+                        attributes: { ref: 'ref' },
+                        selfClosing: false,
+                        filename: 'test-d9f77b2e.sveltex',
+                    })
+                ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__Example__ref} />\n</figure>',
             );
@@ -358,16 +371,18 @@ suite("AdvancedTexHandler<'local'>", async () => {
 
         it('css variables', async () => {
             expect(
-                await ath.process(
-                    '\\textcolor{var(--some-css-variable)}{$x$}',
-                    {
-                        attributes: { ref: 'ath-something-test-348902' },
-                        selfClosing: false,
-                        tag: 'tex',
-                        filename:
-                            'css variables (ath-something-test-348902).sveltex',
-                    },
-                ),
+                (
+                    await ath.process(
+                        '\\textcolor{var(--some-css-variable)}{$x$}',
+                        {
+                            attributes: { ref: 'ath-something-test-348902' },
+                            selfClosing: false,
+                            tag: 'tex',
+                            filename:
+                                'css variables (ath-something-test-348902).sveltex',
+                        },
+                    )
+                ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__tex__ath_something_test_348902} />\n</figure>',
             );
@@ -471,12 +486,14 @@ describe.each([
 ])("AdvancedTexHandler<'custom'>", (handler) => {
     it('should work', async () => {
         expect(
-            await handler.process('input', {
-                tag: '',
-                attributes: { ref: '' },
-                selfClosing: false,
-                filename: 'test.sveltex',
-            }),
+            (
+                await handler.process('input', {
+                    tag: '',
+                    attributes: { ref: '' },
+                    selfClosing: false,
+                    filename: 'test.sveltex',
+                })
+            ).processed,
         ).toEqual('output');
     });
 });
@@ -494,12 +511,14 @@ describe('AdvancedTexHandler.create', () => {
     it('edge cases', async () => {
         const handler = await AdvancedTexHandler.create('local');
         expect(
-            await handler.process('', {
-                attributes: { ref: 'ref' },
-                selfClosing: false,
-                tag: '',
-                filename: 'test.sveltex',
-            }),
+            (
+                await handler.process('', {
+                    attributes: { ref: 'ref' },
+                    selfClosing: false,
+                    tag: '',
+                    filename: 'test.sveltex',
+                })
+            ).processed,
         ).toEqual('');
     });
 
@@ -516,12 +535,14 @@ describe('AdvancedTexHandler.create', () => {
         expect(handler).not.toBeNull();
         expect(handler).toBeInstanceOf(AdvancedTexHandler);
         expect(
-            handler.process('ath-something-test-908423', {
-                tag: '',
-                attributes: { ref: '' },
-                selfClosing: false,
-                filename: 'test.sveltex',
-            }),
+            (
+                await handler.process('ath-something-test-908423', {
+                    tag: '',
+                    attributes: { ref: '' },
+                    selfClosing: false,
+                    filename: 'test.sveltex',
+                })
+            ).processed,
         ).toEqual('ath-something-test-908423');
     });
 
@@ -555,12 +576,14 @@ describe('AdvancedTexHandler.create', () => {
         expect(handler.processor).toEqual({});
         expect(handler.process).toBeTypeOf('function');
         expect(
-            await handler.process('input', {
-                attributes: { ref: '' },
-                selfClosing: false,
-                tag: '',
-                filename: 'test.sveltex',
-            }),
+            (
+                await handler.process('input', {
+                    attributes: { ref: '' },
+                    selfClosing: false,
+                    tag: '',
+                    filename: 'test.sveltex',
+                })
+            ).processed,
         ).toEqual('custom process');
         // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
         expect(await handler.configure({})).toBeUndefined();

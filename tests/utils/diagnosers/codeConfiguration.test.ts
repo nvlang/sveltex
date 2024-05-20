@@ -2,7 +2,6 @@ import { spy } from '$tests/fixtures.js';
 import { codeBackends, isThemableCodeBackend } from '$type-guards/code.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
 import {
-    suite,
     it,
     expect,
     vi,
@@ -10,6 +9,7 @@ import {
     beforeEach,
     afterEach,
     describe,
+    beforeAll,
 } from 'vitest';
 
 function fixture() {
@@ -21,12 +21,14 @@ function fixture() {
     });
 }
 
-suite('utils/diagnosers/codeConfiguration', async () => {
+describe('utils/diagnosers/codeConfiguration', () => {
     fixture();
+    beforeAll(async () => {
+        await spy(['writeFileEnsureDir', 'log', 'existsSync'], true);
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    await spy(['writeFileEnsureDir', 'log', 'existsSync'], true);
 
     describe.each(codeBackends)('code backend: %o', (b) => {
         it.each([

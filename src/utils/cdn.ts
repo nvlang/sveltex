@@ -65,7 +65,7 @@ export async function fancyFetch(
 
 export async function fetchWithTimeout(
     url: string,
-    timeout: number = 1000,
+    timeout: number = 2000,
 ): Promise<string | undefined> {
     // AbortController was added in node v14.17.0 globally
     const AbortController = globalThis.AbortController;
@@ -101,27 +101,4 @@ export async function fetchWithTimeout(
     }
     clearTimeout(timeoutObj);
     return undefined;
-}
-
-/**
- * Gets the version of the specified package.
- */
-export async function getVersion(
-    pkg: keyof (typeof import('package.json'))['peerDependencies'],
-): Promise<string | undefined> {
-    let backendVersion: string | undefined;
-    try {
-        backendVersion = (
-            (await import(`${pkg}/package.json`, {
-                with: { type: 'json' },
-            })) as { default: { version: string } }
-        ).default.version;
-    } catch (err) {
-        backendVersion = undefined;
-        log(
-            'error',
-            `Error getting ${pkg} version:\n\n${prettifyError(err)}\n\n`,
-        );
-    }
-    return backendVersion;
 }

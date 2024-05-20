@@ -1,7 +1,6 @@
 import { fancyFetch, fetchWithTimeout } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
-    suite,
     describe,
     it,
     expect,
@@ -10,6 +9,7 @@ import {
     beforeEach,
     afterEach,
     beforeAll,
+    type MockInstance,
 } from 'vitest';
 
 function fixture() {
@@ -21,12 +21,16 @@ function fixture() {
     });
 }
 
-suite.sequential('utils/cdn', async () => {
+describe.sequential('utils/cdn', () => {
+    let log: MockInstance;
     fixture();
-    const { log } = await spy(
-        ['writeFileEnsureDir', 'log', 'existsSync'],
-        true,
-    );
+    beforeAll(async () => {
+        const mocks = await spy(
+            ['writeFileEnsureDir', 'log', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
         vi.unmock('node-fetch');

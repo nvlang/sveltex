@@ -1,5 +1,4 @@
 import {
-    suite,
     describe,
     it,
     expect,
@@ -18,8 +17,7 @@ function fixture() {
     });
 }
 
-suite("TexHandler<'mathjax'>", async () => {
-    await spy(['writeFile', 'log', 'existsSync', 'mkdir'], true);
+describe("TexHandler<'mathjax'>", () => {
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -29,6 +27,7 @@ suite("TexHandler<'mathjax'>", async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        await spy(['writeFile', 'log', 'existsSync', 'mkdir'], true);
     });
     afterAll(() => {
         vi.restoreAllMocks();

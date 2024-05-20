@@ -18,7 +18,7 @@ export interface BaseNode extends Record<string, unknown> {
  * `'0123'` and a `Location` object `{ start: 0, end: 2 }`, the `Location` would
  * refer to the substring `'01'`.
  */
-export interface Location {
+export interface Offsets {
     /**
      * The index of the first character of the substring to which this
      * `Location` object refers.

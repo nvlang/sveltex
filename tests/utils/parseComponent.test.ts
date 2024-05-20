@@ -1,15 +1,151 @@
-import { describe, it, expect, suite } from 'vitest';
+import {
+    describe,
+    it,
+    expect,
+    afterAll,
+    vi,
+    beforeEach,
+    beforeAll,
+    type MockInstance,
+} from 'vitest';
+import { spy } from '$tests/fixtures.js';
 import { componentRegExp, parseComponent } from '$utils/parseComponent.js';
+import { interpretString, interpretAttributes } from '$utils/parseComponent.js';
 
-suite('parseComponent', () => {
-    describe('basic functionality', () => {
+describe.concurrent('utils/misc', () => {
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['log']);
+        log = mocks.log;
+    });
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('interpretString', () => {
+        describe('interprets strings correctly', () => {
+            it.each([
+                ['true', true],
+                ['false', false],
+                ['null', null],
+                ['undefined', undefined],
+                ['NaN', NaN],
+                ['Infinity', Infinity],
+                ['+Infinity', +Infinity],
+                ['-Infinity', -Infinity],
+                ['5', 5],
+                ['5.5', 5.5],
+                ['something', 'something'],
+            ])('%o → %o', (str, val) => {
+                expect(interpretString(str)).toEqual(val);
+            });
+        });
+
+        describe('leaves non-strings as they are', () => {
+            it.each(
+                [
+                    true,
+                    false,
+                    null,
+                    undefined,
+                    NaN,
+                    Infinity,
+                    +Infinity,
+                    -Infinity,
+                    5,
+                    5.5,
+                ].map((v) => [v, v]),
+            )('%o → %o', (x) => {
+                expect(interpretString(x)).toEqual(x);
+            });
+        });
+    });
+
+    describe('interpretAttributes', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+        it.each([
+            [
+                {
+                    a1: 'true',
+                    a2: 'false',
+                    a3: 'null',
+                    a4: 'undefined',
+                    a5: 'NaN',
+                    a6: 'Infinity',
+                    a7: '+Infinity',
+                    a8: '-Infinity',
+                    a9: '5',
+                    a10: '5.5',
+                    a11: 'something',
+                    a12: 'undefined',
+                },
+                {
+                    a1: true,
+                    a2: false,
+                    a3: null,
+                    a4: undefined,
+                    a5: NaN,
+                    a6: Infinity,
+                    a7: +Infinity,
+                    a8: -Infinity,
+                    a9: 5,
+                    a10: 5.5,
+                    a11: 'something',
+                    a12: undefined,
+                },
+            ],
+        ])('%o → %o', (raw, interpreted) => {
+            expect(interpretAttributes(raw)).toEqual(interpreted);
+            expect(log).not.toHaveBeenCalled();
+        });
+
+        it('should deal with non-strings gracefully (strict)', () => {
+            expect(interpretAttributes({ a: null })).toEqual({});
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
+                'error',
+                expect.stringContaining('Ignoring attribute.'),
+            );
+        });
+
+        it('should deal with non-strings gracefully (non-strict)', () => {
+            log.mockClear();
+            expect(interpretAttributes({ a: null }, false)).toEqual({
+                a: null,
+            });
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
+                'warn',
+                expect.stringContaining('Passing value as-is.'),
+            );
+        });
+
+        it('should pass `undefined`s as-is', () => {
+            log.mockClear();
+            expect(interpretAttributes({ a: undefined })).toEqual({
+                a: undefined,
+            });
+            expect(log).not.toHaveBeenCalled();
+        });
+    });
+});
+
+describe('parseComponent', () => {
+    describe('core', () => {
         it.each([
             [
                 '<div class="container">Hello, world!</div>',
                 {
                     tag: 'div',
                     attributes: { class: 'container' },
-                    content: 'Hello, world!',
+                    innerContent: 'Hello, world!',
                     selfClosing: false,
                 },
             ],
@@ -18,7 +154,7 @@ suite('parseComponent', () => {
                 {
                     tag: 'tex',
                     attributes: { ref: 'test' },
-                    content: '\\begin{something}&&&;<>>\\end{something}',
+                    innerContent: '\\begin{something}&&&;<>>\\end{something}',
                     selfClosing: false,
                 },
             ],
@@ -27,7 +163,7 @@ suite('parseComponent', () => {
                 {
                     tag: 'tex',
                     attributes: { ref: 'test' },
-                    content: undefined,
+                    innerContent: '',
                     selfClosing: true,
                 },
             ],
@@ -36,21 +172,27 @@ suite('parseComponent', () => {
                 {
                     tag: 'tex',
                     attributes: { ref: 'test' },
-                    content: undefined,
+                    innerContent: '',
                     selfClosing: true,
                 },
             ],
-        ])(
-            'should correctly parse valid HTML components',
-            (input, expected) => {
-                expect(parseComponent(input)).toEqual(expected);
-            },
-        );
+            [
+                '<a:b-c_d test />',
+                {
+                    tag: 'a:b-c_d',
+                    attributes: { test: true },
+                    innerContent: '',
+                    selfClosing: true,
+                },
+            ],
+        ])('%o → %o', (input, expected) => {
+            expect(parseComponent(input)).toEqual(expected);
+        });
     });
 
     describe('error handling', () => {
         it.each(['</div>', '<></>', '<tag/></tag>'])(
-            'should throw on invalid HTML components',
+            'should throw on invalid HTML: %o',
             (input) => {
                 expect(() => parseComponent(input)).toThrow();
             },

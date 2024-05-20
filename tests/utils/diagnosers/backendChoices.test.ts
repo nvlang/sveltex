@@ -6,7 +6,17 @@ import type { TexBackend } from '$types/handlers/Tex.js';
 
 import { spy } from '$tests/fixtures.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
-import { suite, it, expect, vi, afterAll, beforeEach, afterEach } from 'vitest';
+import {
+    it,
+    expect,
+    vi,
+    afterAll,
+    beforeEach,
+    afterEach,
+    type MockInstance,
+    beforeAll,
+    describe,
+} from 'vitest';
 
 function fixture() {
     beforeEach(() => {
@@ -17,15 +27,19 @@ function fixture() {
     });
 }
 
-suite('utils/diagnosers/backendChoices', async () => {
+describe('utils/diagnosers/backendChoices', () => {
     fixture();
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    const { log } = await spy(
-        ['writeFileEnsureDir', 'log', 'existsSync'],
-        true,
-    );
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(
+            ['writeFileEnsureDir', 'log', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
+    });
 
     it.each([
         ['something', 1, 0],

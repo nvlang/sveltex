@@ -1,10 +1,13 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { Marked } from 'marked';
 
-suite("MarkdownHandler<'marked'>", async () => {
-    const handler = await MarkdownHandler.create('marked');
+describe("MarkdownHandler<'marked'>", () => {
+    let handler: MarkdownHandler<'marked'>;
+    beforeAll(async () => {
+        handler = await MarkdownHandler.create('marked');
+    });
 
     describe("MarkdownHandler.create('marked')", () => {
         it('returns instance of MarkdownHandler', () => {
@@ -22,25 +25,28 @@ suite("MarkdownHandler<'marked'>", async () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = await handler.process('**strong** *em*');
+                const output = (await handler.process('**strong** *em*'))
+                    .processed;
                 const expected = '<strong>strong</strong> <em>em</em>';
                 expect(output).toEqual(expected);
             });
 
             it("automatically distinguishes between inline and 'block' markdown", async () => {
-                expect(await handler.process('a\nb')).toEqual('a\nb');
-                expect(await handler.process('a\n\nb')).toEqual(
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a\nb',
+                );
+                expect((await handler.process('a\n\nb')).processed).toEqual(
                     '<p>a</p>\n<p>b</p>\n',
                 );
             });
 
             it('has working `inline` parameter', async () => {
-                expect(await handler.process('a', { inline: true })).toEqual(
-                    'a',
-                );
-                expect(await handler.process('a', { inline: false })).toEqual(
-                    '<p>a</p>\n',
-                );
+                expect(
+                    (await handler.process('a', { inline: true })).processed,
+                ).toEqual('a');
+                expect(
+                    (await handler.process('a', { inline: false })).processed,
+                ).toEqual('<p>a</p>\n');
             });
         });
 
@@ -54,13 +60,19 @@ suite("MarkdownHandler<'marked'>", async () => {
                 await handler.configure({
                     options: { gfm: true, breaks: true },
                 });
-                expect(await handler.process('a\nb')).toEqual('a<br>b');
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a<br>b',
+                );
                 await handler.configure({ extensions: [] });
-                expect(await handler.process('a\nb')).toEqual('a<br>b');
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a<br>b',
+                );
                 await handler.configure({
                     options: { gfm: false, breaks: false },
                 });
-                expect(await handler.process('a\nb')).toEqual('a\nb');
+                expect((await handler.process('a\nb')).processed).toEqual(
+                    'a\nb',
+                );
                 expect(handler.configuration).toEqual({
                     extensions: [],
                     options: { gfm: false, breaks: false },

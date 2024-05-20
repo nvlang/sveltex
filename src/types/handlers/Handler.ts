@@ -1,3 +1,5 @@
+import { ProcessedSnippet } from '$types/utils/Escape.js';
+
 /**
  * Generic type for the a handler's `process` function, as returned by the
  * handler's getter for the function.
@@ -8,7 +10,7 @@
 export type SimplerProcessFn<ProcessOptions extends object> = (
     content: string,
     options: ProcessOptions,
-) => string | Promise<string>;
+) => ProcessedSnippet | Promise<ProcessedSnippet>;
 
 /**
  * Generic type for the a handler's `process` function, as stored internally and
@@ -22,7 +24,7 @@ export type ProcessFn<ProcessOptions extends object, H> = (
     content: string,
     options: ProcessOptions,
     handler: H,
-) => string | Promise<string>;
+) => string | ProcessedSnippet | Promise<string | ProcessedSnippet>;
 
 /**
  * Generic type for a handler's `configure` function.

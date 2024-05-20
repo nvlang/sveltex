@@ -1,7 +1,6 @@
-import { fetchWithTimeout, getVersion, cdnLink } from '$utils/cdn.js';
+import { fetchWithTimeout, cdnLink } from '$utils/cdn.js';
 import { spy } from '$tests/fixtures.js';
 import {
-    suite,
     describe,
     it,
     expect,
@@ -9,6 +8,8 @@ import {
     afterAll,
     beforeEach,
     afterEach,
+    type MockInstance,
+    beforeAll,
 } from 'vitest';
 
 function fixture() {
@@ -20,12 +21,16 @@ function fixture() {
     });
 }
 
-suite('utils/cdn', async () => {
+describe('utils/cdn', () => {
+    let log: MockInstance;
     fixture();
-    const { log } = await spy(
-        ['writeFileEnsureDir', 'log', 'existsSync'],
-        true,
-    );
+    beforeAll(async () => {
+        const mocks = await spy(
+            ['writeFileEnsureDir', 'log', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
@@ -94,16 +99,6 @@ suite('utils/cdn', async () => {
             'linkify(%o, %o, %o, %o) === %o',
             (pkg, resource, version, cdn, expected) => {
                 expect(cdnLink(pkg, resource, version, cdn)).toBe(expected);
-            },
-        );
-    });
-
-    describe('getVersion', () => {
-        fixture();
-        it.each(['katex', 'highlight.js', 'mathjax-full'] as const)(
-            'getVersion(%o) has format "x.y.z"',
-            async (dep) => {
-                expect(await getVersion(dep)).toMatch(/(\d+\.\d+\.\d+)/);
             },
         );
     });

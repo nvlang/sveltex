@@ -1,12 +1,15 @@
-import { suite, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
-suite("CodeHandler<'escapeOnly'>", async () => {
-    const handler = await CodeHandler.create('escapeOnly');
+describe("CodeHandler<'escapeOnly'>", () => {
+    let handler: CodeHandler<'escapeOnly'>;
+    beforeAll(async () => {
+        handler = await CodeHandler.create('escapeOnly');
+    });
 
     describe("CodeHandler.create('escapeOnly')", () => {
         it('returns instance of CodeHandler', () => {
@@ -24,11 +27,13 @@ suite("CodeHandler<'escapeOnly'>", async () => {
             });
 
             it('escapes `{`, `}`, `<`, and `>` in plain code correctly', async () => {
-                const output = await handler.process('a <b> {c}', {
-                    lang: 'plaintext',
-                });
+                const output = (
+                    await handler.process('a <b> {c}', {
+                        lang: 'plaintext',
+                    })
+                ).processed;
                 const expected =
-                    '<pre><code class="language-plaintext">\na &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
+                    '<pre><code class="language-plaintext">a &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
         });

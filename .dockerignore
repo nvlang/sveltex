@@ -1,0 +1,10 @@
+node_modules
+dist
+ideas
+external
+legacy
+docs
+.VSCodeCounter
+.github
+.vscode
+.husky

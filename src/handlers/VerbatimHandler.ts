@@ -12,6 +12,7 @@ import type {
     VerbatimConfiguration,
     VerbatimProcessOptions,
 } from '$types/handlers/Verbatim.js';
+import type { UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultVerbatimEnvironmentConfiguration } from '$config/defaults.js';
@@ -19,12 +20,10 @@ import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
 import { isSimpleEscapeInstruction } from '$type-guards/verbatim.js';
-import { log, prettifyError } from '$utils/debug.js';
+import { log } from '$utils/debug.js';
 import { diagnoseVerbatimEnvironmentConfiguration } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { interpretAttributes } from '$utils/misc.js';
-import { parseComponent } from '$utils/parseComponent.js';
 
 // External dependencies
 import { escapeHtml, nodeAssert, rfdc } from '$deps.js';
@@ -78,172 +77,158 @@ export class VerbatimHandler<
          *
          */
         const process = async (
-            content: string,
+            innerContent: string,
             options: VerbatimProcessOptions,
             verbatimHandler: VerbatimHandler<C, A>,
         ) => {
-            try {
-                const {
-                    tag,
-                    attributes,
-                    content: innerContent,
-                    selfClosing,
-                } = parseComponent(content);
+            const { tag, attributes, selfClosing, outerContent } = options;
 
-                if (selfClosing && innerContent !== undefined) {
-                    log(
-                        'error',
-                        `Self-closing HTML tag "${tag}" should not have content.`,
-                    );
-                    return content;
-                }
+            let processed: string = innerContent;
+            let unescapeOptions: UnescapeOptions | undefined = {
+                removeParagraphTag: !options.attributes['inline'],
+            };
 
-                if (!selfClosing && innerContent === undefined) {
-                    log(
-                        'error',
-                        `HTML tag "${tag}" should have content, but none was found.`,
-                    );
-                    return content;
-                }
-
-                const isVerbEnv = verbatimHandler.verbEnvs.has(tag);
-                const isAdvancedTexComponent =
-                    verbatimHandler.advancedTexHandler.tccMap.has(tag);
-
-                if (!isVerbEnv && !isAdvancedTexComponent) {
-                    log('error', `Unknown verbatim environment "${tag}".`);
-                    return content;
-                }
-
-                if (isVerbEnv && isAdvancedTexComponent) {
-                    log(
-                        'error',
-                        `HTML tag "${tag}" is ambiguous, as it refers to both a verbatim environment and an advanced TeX component.`,
-                    );
-                    return content;
-                }
-
-                if (isVerbEnv) {
-                    const config = verbatimHandler.verbEnvs.get(tag);
-                    nodeAssert(config !== undefined);
-
-                    const defaultAttributes: Record<
-                        string,
-                        string | boolean | number | null | undefined
-                    > = config.defaultAttributes;
-
-                    const mergedAttributes = {
-                        ...defaultAttributes,
-                        ...attributes,
-                    };
-
-                    const fullConfig = mergeConfigs(
-                        getDefaultVerbatimEnvironmentConfiguration(),
-                        config,
-                    );
-
-                    // isVerbEnv === true
-
-                    const processInner = fullConfig.processInner;
-
-                    const component = fullConfig.component ?? tag;
-
-                    let closingBracket = '>';
-                    if (selfClosing && fullConfig.respectSelfClosing) {
-                        if (fullConfig.selfCloseOutputWith === 'auto') {
-                            closingBracket = `${content.match(/\s+\/>\s*$/) ? ' ' : ''}/>`;
-                        } else {
-                            closingBracket = fullConfig.selfCloseOutputWith;
-                        }
-                    }
-
-                    const filteredMergedAttributes = Object.entries(
-                        mergedAttributes,
-                    ).filter(
-                        ([key]) =>
-                            (fullConfig.attributeForwardingAllowlist ===
-                                'all' ||
-                                fullConfig.attributeForwardingAllowlist.includes(
-                                    key,
-                                )) &&
-                            !fullConfig.attributeForwardingBlocklist.includes(
-                                key,
-                            ),
-                    );
-
-                    const returnComponentOpen =
-                        `<${component}` +
-                        (filteredMergedAttributes.length === 0 ? '' : ' ') +
-                        filteredMergedAttributes
-                            .map(
-                                (attr) =>
-                                    `${attr[0]}${attr[1] === undefined ? '' : `="${String(attr[1])}"`}`,
-                            )
-                            .join(' ') +
-                        closingBracket;
-
-                    if (selfClosing || innerContent === undefined) {
-                        return returnComponentOpen;
-                    }
-
-                    let processedInner: string = innerContent;
-                    const returnComponentClose = `</${component}>`;
-
-                    if (isSimpleEscapeInstruction(fullConfig.processInner)) {
-                        let escaped = innerContent;
-                        if (fullConfig.processInner.escapeHtml) {
-                            escaped = escapeHtml(escaped);
-                        }
-                        // NB: It's important to escape braces _after_ escaping HTML, since
-                        // escaping braces will introduce ampersands which escapeHtml would
-                        // escape
-                        if (fullConfig.processInner.escapeBraces) {
-                            escaped = escapeBraces(escaped);
-                        }
-                        processedInner = escaped;
-                    } else if (typeof processInner === 'string') {
-                        if (processInner === 'code') {
-                            processedInner =
-                                await verbatimHandler.codeHandler.process(
-                                    innerContent,
-                                    {
-                                        ...interpretAttributes(
-                                            mergedAttributes,
-                                        ),
-                                        _wrap: config.wrap,
-                                    },
-                                );
-                        }
-                        if (processInner === 'noop') {
-                            processedInner = innerContent;
-                        }
-                    } else if (typeof processInner === 'function') {
-                        processedInner = processInner(
-                            innerContent,
-                            mergedAttributes,
-                        );
-                    }
-
-                    return [
-                        returnComponentOpen,
-                        processedInner,
-                        returnComponentClose,
-                    ].join('');
-                } else {
-                    return verbatimHandler.advancedTexHandler.process(
-                        innerContent ?? '',
-                        {
-                            attributes,
-                            tag,
-                            filename: options.filename,
-                            selfClosing,
-                        },
-                    );
-                }
-            } catch (err) {
-                log('error', prettifyError(err));
-                return content;
+            if (selfClosing && innerContent) {
+                log(
+                    'error',
+                    `Self-closing HTML tag "${tag}" should not have content.`,
+                );
+                return { processed: outerContent, unescapeOptions };
             }
+
+            if (!selfClosing && !innerContent) {
+                log(
+                    'error',
+                    `HTML tag "${tag}" should have content, but none was found.`,
+                );
+                return { processed: outerContent, unescapeOptions };
+            }
+
+            const isVerbEnv = verbatimHandler.verbEnvs.has(tag);
+            const isAdvancedTexComponent =
+                verbatimHandler.advancedTexHandler.tccMap.has(tag);
+
+            if (!isVerbEnv && !isAdvancedTexComponent) {
+                log('error', `Unknown verbatim environment "${tag}".`);
+                return { processed: outerContent, unescapeOptions };
+            }
+
+            if (isVerbEnv && isAdvancedTexComponent) {
+                log(
+                    'error',
+                    `HTML tag "${tag}" is ambiguous, as it refers to both a verbatim environment and an advanced TeX component.`,
+                );
+                return { processed: outerContent, unescapeOptions };
+            }
+
+            if (isVerbEnv) {
+                const config = verbatimHandler.verbEnvs.get(tag);
+                nodeAssert(config !== undefined);
+
+                const mergedAttributes = {
+                    ...config.defaultAttributes,
+                    ...attributes,
+                };
+
+                const fullConfig = mergeConfigs(
+                    getDefaultVerbatimEnvironmentConfiguration(),
+                    config,
+                );
+
+                // isVerbEnv === true
+
+                const processInner = fullConfig.processInner;
+
+                const component = fullConfig.component ?? tag;
+
+                let closingBracket = '>';
+                if (selfClosing && fullConfig.respectSelfClosing) {
+                    if (fullConfig.selfCloseOutputWith === 'auto') {
+                        closingBracket = `${outerContent.match(/\s+\/>\s*$/) ? ' ' : ''}/>`;
+                    } else {
+                        closingBracket = fullConfig.selfCloseOutputWith;
+                    }
+                }
+
+                const filteredMergedAttributes = Object.entries(
+                    mergedAttributes,
+                ).filter(
+                    ([key]) =>
+                        (fullConfig.attributeForwardingAllowlist === 'all' ||
+                            fullConfig.attributeForwardingAllowlist.includes(
+                                key,
+                            )) &&
+                        !fullConfig.attributeForwardingBlocklist.includes(key),
+                );
+
+                const returnComponentOpen =
+                    `<${component}` +
+                    (filteredMergedAttributes.length === 0 ? '' : ' ') +
+                    filteredMergedAttributes
+                        .map(
+                            (attr) =>
+                                `${attr[0]}${attr[1] === undefined ? '' : `="${String(attr[1])}"`}`,
+                        )
+                        .join(' ') +
+                    closingBracket;
+
+                unescapeOptions = {
+                    removeParagraphTag: !mergedAttributes['inline'],
+                };
+
+                if (selfClosing) {
+                    return {
+                        processed: returnComponentOpen,
+                        unescapeOptions,
+                    };
+                }
+
+                const returnComponentClose = `</${component}>`;
+
+                if (isSimpleEscapeInstruction(fullConfig.processInner)) {
+                    if (fullConfig.processInner.escapeHtml) {
+                        processed = escapeHtml(processed);
+                    }
+                    // NB: It's important to escape braces _after_ escaping HTML, since
+                    // escaping braces will introduce ampersands which escapeHtml would
+                    // escape
+                    if (fullConfig.processInner.escapeBraces) {
+                        processed = escapeBraces(processed);
+                    }
+                } else if (typeof processInner === 'string') {
+                    if (processInner === 'code') {
+                        const processedSnippet =
+                            await verbatimHandler.codeHandler.process(
+                                innerContent,
+                                { ...mergedAttributes, _wrap: config.wrap },
+                            );
+                        processed = processedSnippet.processed;
+                        unescapeOptions = processedSnippet.unescapeOptions;
+                    }
+                    if (processInner === 'noop') processed = innerContent;
+                } else if (typeof processInner === 'function') {
+                    processed = processInner(innerContent, mergedAttributes);
+                }
+                processed = [
+                    returnComponentOpen,
+                    processed,
+                    returnComponentClose,
+                ].join('');
+            } else {
+                // Advanced TeX Content
+                const res = await verbatimHandler.advancedTexHandler.process(
+                    innerContent,
+                    {
+                        attributes,
+                        tag,
+                        filename: options.filename,
+                        selfClosing,
+                    },
+                );
+                processed = res.processed;
+                unescapeOptions = res.unescapeOptions ?? unescapeOptions;
+            }
+            return { processed, unescapeOptions };
         };
         const configure = (
             _configuration: VerbatimConfiguration,

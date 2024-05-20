@@ -15,8 +15,8 @@
     "forceConsistentCasingInFileNames": true, // recommended
     "importHelpers": true,
     "lib": ["ESNext"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
@@ -29,7 +29,6 @@
       "$*": ["src/*"],
       "$tests/*": ["tests/*"]
     },
-    // "types": ["sveltex-preprocess"]
     "resolveJsonModule": true,
     // Basic settings
     "rootDir": ".",
@@ -47,6 +46,7 @@
     "examples",
     "external",
     "ideas",
+    "legacy",
     "node_modules",
     "static",
     "tmp"

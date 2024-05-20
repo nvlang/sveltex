@@ -1,18 +1,32 @@
 import { mockFs } from '$dev_deps.js';
-import { fs } from '$utils/fs.js';
-import { describe, it, expect, vi, beforeEach, afterAll, suite } from 'vitest';
+import { fs, pathExists } from '$utils/fs.js';
+import {
+    describe,
+    it,
+    expect,
+    vi,
+    beforeEach,
+    afterAll,
+    beforeAll,
+    type MockInstance,
+} from 'vitest';
 import { spy } from '$tests/fixtures.js';
 
-suite('filesystem utils (`src/utils/fs.ts`)', async () => {
+describe('filesystem utils (`src/utils/fs.ts`)', () => {
+    let existsSync: MockInstance;
+    let mkdir: MockInstance;
+    let writeFile: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['existsSync', 'mkdir', 'writeFile'], true);
+        existsSync = mocks.existsSync;
+        mkdir = mocks.mkdir;
+        writeFile = mocks.writeFile;
+        mockFs({});
+    });
     afterAll(() => {
         vi.restoreAllMocks();
         mockFs.restore();
     });
-    const { existsSync, mkdir, writeFile } = await spy(
-        ['existsSync', 'mkdir', 'writeFile'],
-        true,
-    );
-    mockFs({});
 
     describe.each([
         ['/path/to/file.txt', 'Test data', '/path/to'],
@@ -51,6 +65,33 @@ suite('filesystem utils (`src/utils/fs.ts`)', async () => {
                 });
             }
             expect(writeFile).toHaveBeenCalledWith(testPath, testData, 'utf8');
+        });
+    });
+
+    describe('pathExists', () => {
+        it.each([[{ 'exists.txt': '' }, 'exists.txt']])(
+            'returns true when the path exists',
+            (files, path) => {
+                mockFs(files);
+                const res = pathExists(path);
+                expect(existsSync).toHaveBeenCalledTimes(1);
+                expect(existsSync).toHaveBeenNthCalledWith(1, path);
+                expect(existsSync).toHaveNthReturnedWith(1, true);
+                expect(res).toEqual(true);
+            },
+        );
+
+        it('returns false when the path does not exist', () => {
+            mockFs({});
+            expect(pathExists('does-not-exist')).toEqual(false);
+        });
+
+        it('catches errors and silently returns false', () => {
+            mockFs({});
+            existsSync.mockImplementationOnce(() => {
+                throw new Error();
+            });
+            expect(pathExists('does-not-exist')).toEqual(false);
         });
     });
 });

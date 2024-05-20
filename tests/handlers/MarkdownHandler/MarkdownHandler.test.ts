@@ -1,8 +1,8 @@
-import { suite, describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import { missingDeps } from '$utils/globals.js';
+import { missingDeps } from '$utils/env.js';
 
-suite('MarkdownHandler', () => {
+describe('MarkdownHandler', () => {
     describe('MarkdownHandler.shouldParseAsInline()', () => {
         it('should return true for inline markdown', () => {
             expect(MarkdownHandler.shouldParseAsInline('**strong** *em*')).toBe(
@@ -63,7 +63,7 @@ suite('MarkdownHandler', () => {
     });
 });
 
-suite('MarkdownHandler error handling', () => {
+describe('MarkdownHandler error handling', () => {
     describe("MarkdownHandler.create('marked') with marked mocked to throw error", () => {
         vi.mock('marked', () => {
             throw new Error('marked not found');

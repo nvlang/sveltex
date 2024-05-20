@@ -1,23 +1,19 @@
 import { mockFs } from '$dev_deps.js';
 import {
+    type MockInstance,
     afterAll,
     beforeAll,
     beforeEach,
     describe,
     expect,
     it,
-    suite,
     vi,
 } from 'vitest';
 
 import {
     consoles,
-    detectPackageManager,
     escapeWhitespace,
-    getPmFromLockfile,
-    getPmFromPackageJson,
     log,
-    pathExists,
     prettifyError,
     runWithSpinner,
 } from '$utils/debug.js';
@@ -26,7 +22,8 @@ import { spy } from 'tests/fixtures.js';
 import { readFileSync } from 'node:fs';
 import pc from 'picocolors';
 
-suite('debug', async () => {
+describe('debug', () => {
+    let existsSync: MockInstance;
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -36,21 +33,20 @@ suite('debug', async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        const mocks = await spy(['existsSync'], false);
+        existsSync = mocks.existsSync;
+        existsSync.mockImplementation((path: string) => {
+            try {
+                readFileSync(path);
+                return true;
+            } catch {
+                return false;
+            }
+        });
     });
     afterAll(() => {
         vi.restoreAllMocks();
         mockFs.restore();
-    });
-
-    const { existsSync } = await spy(['existsSync'], false);
-
-    existsSync.mockImplementation((path: string) => {
-        try {
-            readFileSync(path);
-            return true;
-        } catch {
-            return false;
-        }
     });
 
     describe('log', () => {
@@ -185,128 +181,6 @@ suite('debug', async () => {
             const expectedOutput = 'Hello World!';
             const output = escapeWhitespace(input);
             expect(output).toEqual(expectedOutput);
-        });
-    });
-
-    describe('pathExists', () => {
-        it.each([[{ 'exists.txt': '' }, 'exists.txt']])(
-            'returns true when the path exists',
-            (files, path) => {
-                mockFs(files);
-                const res = pathExists(path);
-                expect(existsSync).toHaveBeenCalledTimes(1);
-                expect(existsSync).toHaveBeenNthCalledWith(1, path);
-                expect(existsSync).toHaveNthReturnedWith(1, true);
-                expect(res).toEqual(true);
-            },
-        );
-
-        it('returns false when the path does not exist', () => {
-            mockFs({});
-            expect(pathExists('does-not-exist')).toEqual(false);
-        });
-
-        it('catches errors and silently returns false', () => {
-            mockFs({});
-            existsSync.mockImplementationOnce(() => {
-                throw new Error();
-            });
-            expect(pathExists('does-not-exist')).toEqual(false);
-        });
-    });
-
-    describe('getPmFromPackageJson', () => {
-        it('identifies a valid package manager (pnpm)', () => {
-            mockFs({
-                project: {
-                    'package.json': '{ "packageManager": "pnpm@6.14.2"}',
-                },
-            });
-            expect(getPmFromPackageJson('project')).toEqual('pnpm');
-        });
-
-        it('identifies a valid package manager (bun)', () => {
-            mockFs({
-                project: {
-                    'package.json': JSON.stringify({
-                        packageManager: 'bun@6.14.2',
-                    }),
-                },
-            });
-            expect(getPmFromPackageJson('project')).toEqual('bun');
-        });
-
-        it('identifies a valid package manager (yarn)', () => {
-            mockFs({
-                'package.json': JSON.stringify({
-                    packageManager: 'yarn@6.14.2',
-                }),
-            });
-            expect(getPmFromPackageJson()).toEqual('yarn');
-        });
-
-        it('returns undefined for an unrecognized package manager', () => {
-            mockFs({
-                'project/package.json': JSON.stringify({
-                    packageManager: 'unknown@1.0.0',
-                }),
-            });
-            expect(getPmFromPackageJson('project')).toBeUndefined();
-        });
-
-        it('returns undefined if package.json does not have packageManager set', () => {
-            mockFs({
-                'project/package.json': JSON.stringify({}),
-            });
-            expect(getPmFromPackageJson('project')).toBeUndefined();
-        });
-
-        it('returns undefined if package.json does not exist', () => {
-            mockFs({});
-            expect(getPmFromPackageJson('project')).toBeUndefined();
-        });
-    });
-
-    describe('getPmFromLockfile', () => {
-        it.each([
-            { file: 'pnpm-lock.yaml', pm: 'pnpm' },
-            { file: 'bun.lockb', pm: 'bun' },
-            { file: 'package-lock.json', pm: 'npm' },
-            { file: 'yarn.lock', pm: 'yarn' },
-        ])('detects $pm from the lockfile', ({ file, pm }) => {
-            mockFs({ [file]: '' });
-            expect(getPmFromLockfile()).toEqual(pm);
-        });
-
-        it('returns undefined if no known lock file is found', () => {
-            mockFs({});
-            expect(getPmFromLockfile()).toBeUndefined();
-        });
-    });
-
-    describe('detectPackageManager', () => {
-        it('defaults to npm if no package manager is detected', () => {
-            mockFs({});
-            expect(detectPackageManager('project')).toEqual('npm');
-        });
-
-        it('detects package manager from package.json', () => {
-            mockFs({
-                'project/package.json': JSON.stringify({
-                    packageManager: 'yarn@6.14.2',
-                }),
-            });
-            expect(detectPackageManager('project')).toEqual('yarn');
-        });
-
-        it.each([
-            { file: 'pnpm-lock.yaml', pm: 'pnpm' },
-            { file: 'bun.lockb', pm: 'bun' },
-            { file: 'package-lock.json', pm: 'npm' },
-            { file: 'yarn.lock', pm: 'yarn' },
-        ])('detects package manager from lockfile', ({ file, pm }) => {
-            mockFs({ [file]: 'test' });
-            expect(detectPackageManager()).toEqual(pm);
         });
     });
 });

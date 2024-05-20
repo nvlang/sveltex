@@ -1,6 +1,6 @@
 import { isArray, isString } from '$type-guards/utils.js';
 import { mockFs } from '$dev_deps.js';
-import { type MockInstance, vi, beforeEach, afterAll } from 'vitest';
+import { type MockInstance, vi, beforeEach, afterAll, expect } from 'vitest';
 
 type Mockable = (typeof mockableFunctions)[number];
 
@@ -120,6 +120,17 @@ export function fixture1(
     });
 }
 
+export function removeEmptyLines(input: string = '') {
+    return input
+        .split('\n')
+        .filter((line) => line.trim().length > 0)
+        .join('\n');
+}
+
+export function equalUpToNewlines(a: string = '', b: string = '') {
+    expect(removeEmptyLines(a)).toEqual(removeEmptyLines(b));
+}
+
 // export async function mockNodeFs() {
 //     vi.mock(
 //         'node:fs',
@@ -159,14 +170,6 @@ export function fixture1(
 //         readFileMock: vi.mocked(mockedModule.readFile),
 //     };
 // }
-
-export async function createLogSpy(): Promise<MockInstance> {
-    return vi.spyOn(await import('$utils/debug.js'), 'log');
-}
-
-export async function createSpawnCliInstructionSpy(): Promise<MockInstance> {
-    return vi.spyOn(await import('$utils/cli.js'), 'spawnCliInstruction');
-}
 
 // export async function spy(target: {
 //     module: 'node:fs';

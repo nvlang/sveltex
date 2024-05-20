@@ -11,7 +11,7 @@ import { log } from '$utils/debug.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 
 // External dependencies
-import { assert, type Equals } from '$deps.js';
+import { typeAssert, type Equals } from '$deps.js';
 
 // Constants describing the possible backends
 const markdownBackends = [
@@ -46,11 +46,11 @@ const backendKeys = [
 ] as const;
 
 // Ensure we didn't miss any backend
-assert<Equals<(typeof markdownBackends)[number], MarkdownBackend>>();
-assert<Equals<(typeof codeBackends)[number], CodeBackend>>();
-assert<Equals<(typeof texBackends)[number], TexBackend>>();
-assert<Equals<(typeof advancedTexBackends)[number], AdvancedTexBackend>>();
-assert<
+typeAssert<Equals<(typeof markdownBackends)[number], MarkdownBackend>>();
+typeAssert<Equals<(typeof codeBackends)[number], CodeBackend>>();
+typeAssert<Equals<(typeof texBackends)[number], TexBackend>>();
+typeAssert<Equals<(typeof advancedTexBackends)[number], AdvancedTexBackend>>();
+typeAssert<
     Equals<(typeof backendChoices)[number][0], (typeof backendKeys)[number]>
 >();
 

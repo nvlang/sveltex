@@ -18,21 +18,13 @@ test('unified', async ({ page }) => {
 
     // Expects page to have a heading with the name of Installation.
     await expect(
-        page.getByRole('heading', { name: 'Welcome to SvelteKit' }),
+        page.getByRole('heading', { name: 'Heading 1' }),
     ).toBeVisible();
 
     // expect
     //     <body data-sveltekit-preload-data="hover">
     //         <div style="display: contents"><h1 id="welcome-to-sveltekit" data-svelte-h="svelte-bk2xii">Welcome to SvelteKit</h1> <p data-svelte-h="svelte-jl9sbz">Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p> <div id="svelte-announcer" aria-live="assertive" aria-atomic="true" style="position: absolute; left: 0px; top: 0px; clip: rect(0px, 0px, 0px, 0px); clip-path: inset(50%); overflow: hidden; white-space: nowrap; width: 1px; height: 1px;"></div></div>
     // </body>
-
-    // Expects page to have a paragraph with the text "Visit kit.svelte.dev to read the documentation".
-    await expect(
-        page.getByText('Visit kit.svelte.dev to read the documentation'),
-    ).toBeVisible();
-
-    // Expects page to have a link with the text "kit.svelte.dev".
-    await expect(page.getByText('kit.svelte.dev')).toBeVisible();
 
     // Expects page to have a link with the href "https://kit.svelte.dev".
     await expect(
@@ -41,9 +33,8 @@ test('unified', async ({ page }) => {
 
     // Expect H1 to have ID "welcome-to-sveltekit"
     await expect(
-        page.getByRole('heading', { name: 'Welcome to SvelteKit' }),
-    ).toHaveAttribute('id', 'welcome-to-sveltekit');
+        page.getByRole('heading', { name: 'Heading 1' }),
+    ).toHaveAttribute('id', 'heading-1');
 
-    // Expect there to be a strong "something" within a paragraph on the page
-    await expect(page.getByText('something')).toBeVisible();
+    await expect(page).toHaveScreenshot({ fullPage: true });
 });

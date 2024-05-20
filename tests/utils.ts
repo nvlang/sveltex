@@ -46,7 +46,7 @@ export function expectWith(
 
 export function range(start: number, end: number, step: number = 1): number[] {
     const arr = [];
-    for (let i = start; i < end; i += step) {
+    for (let i = start; i <= end; i += step) {
         arr.push(i);
     }
     return arr;
@@ -62,8 +62,37 @@ interface Variables {
     advancedTex?: boolean | AdvancedTexBackend[];
 }
 
-const cartesianProduct = (...a: unknown[][]) =>
-    a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
+export function cartesianProduct<X1>(x1: X1[]): [X1][];
+export function cartesianProduct<X1, X2>(x1: X1[], x2: X2[]): [X1, X2][];
+export function cartesianProduct<X1, X2, X3>(
+    x1: X1[],
+    x2: X2[],
+    x3: X3[],
+): [X1, X2, X3][];
+export function cartesianProduct<X1, X2, X3, X4>(
+    x1: X1[],
+    x2: X2[],
+    x3: X3[],
+    x4: X4[],
+): [X1, X2, X3, X4][];
+export function cartesianProduct<X1, X2, X3, X4, X5>(
+    x1: X1[],
+    x2: X2[],
+    x3: X3[],
+    x4: X4[],
+    x5: X5[],
+): [X1, X2, X3, X4, X5][];
+export function cartesianProduct<X1, X2, X3, X4, X5, X6>(
+    x1: X1[],
+    x2: X2[],
+    x3: X3[],
+    x4: X4[],
+    x5: X5[],
+    x6: X6[],
+): [X1, X2, X3, X4, X5, X6][];
+export function cartesianProduct(...a: unknown[][]) {
+    return a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
+}
 
 type BackendCombination =
     `${MarkdownBackend}-${CodeBackend}-${TexBackend}-${AdvancedTexBackend}`;

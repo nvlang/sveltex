@@ -1,9 +1,12 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
-suite("MarkdownHandler<'micromark'>", async () => {
-    const handler = await MarkdownHandler.create('micromark');
+describe("MarkdownHandler<'micromark'>", () => {
+    let handler: MarkdownHandler<'micromark'>;
+    beforeAll(async () => {
+        handler = await MarkdownHandler.create('micromark');
+    });
 
     describe("MarkdownHandler.create('micromark')", () => {
         it('returns instance of MarkdownHandler', () => {
@@ -21,7 +24,8 @@ suite("MarkdownHandler<'micromark'>", async () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = await handler.process('**strong** *em*');
+                const output = (await handler.process('**strong** *em*'))
+                    .processed;
                 const expected = '<p><strong>strong</strong> <em>em</em></p>';
                 expect(output).toEqual(expected);
             });
@@ -37,14 +41,16 @@ suite("MarkdownHandler<'micromark'>", async () => {
                 await handler.configure({ allowDangerousProtocol: true });
                 expect(handler.configuration.allowDangerousProtocol).toBe(true);
                 expect(
-                    await handler.process('[example](unsafe://example.com)'),
+                    (await handler.process('[example](unsafe://example.com)'))
+                        .processed,
                 ).toEqual('<p><a href="unsafe://example.com">example</a></p>');
                 await handler.configure({ allowDangerousProtocol: false });
                 expect(handler.configuration.allowDangerousProtocol).toBe(
                     false,
                 );
                 expect(
-                    await handler.process('[example](unsafe://example.com)'),
+                    (await handler.process('[example](unsafe://example.com)'))
+                        .processed,
                 ).toEqual('<p><a href="">example</a></p>');
             });
         });

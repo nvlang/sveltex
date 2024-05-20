@@ -1,76 +1,50 @@
 ---
 title: 'TeX'
-description: 'Choose your markdown ecosystem'
+description: 'Choose your TeX backend'
 icon: 'square-root-variable'
 mode: 'wide'
 ---
 
-SvelTeX natively supports the following backends to render "basic" TeX (listed
-in alphabetical order):
+SvelTeX natively supports two backends to render "basic" TeX (listed in
+alphabetical order):
 
 -   [KaTeX](https://katex.org): "The fastest math typesetting library for the
-    web."
+    web." NPM: [`katex`](https://www.npmjs.com/package/katex).
 -   [MathJax](http://mathjax.org): "Beautiful and accessible math in all
-    browsers."
-    - [MathJax-full](https://github.com/mathjax/MathJax-src):
-    - [MathJax-node](https://github.com/mathjax/MathJax-node): API to call
-      MathJax from Node.js. At the time of writing, it uses MathJax v2, which is
-      a bit outdated (MathJax v3 is mature, and v4 is in beta).
-
-Additionally, you can also provide a **custom** markdown backend.
+    browsers." NPM: [`mathjax-full`](https://github.com/mathjax/MathJax-src).
 
 ### Backend-specific setup
 
 <Tabs>
-<Tab title="Markdown-it">
+<Tab title="KaTeX">
 <Steps>
     <Step title="Install the necessary dependencies">
     <CodeGroup>
         ```bash pnpm
-        pnpm add -D markdown-it
+        pnpm add -D katex
         ```
         ```bash bun
-        bun add -D markdown-it
+        bun add -D katex
         ```
         ```bash npm
-        npm add -D markdown-it
+        npm add -D katex
         ```
         ```bash yarn
-        yarn add -D markdown-it
+        yarn add -D katex
         ```
     </CodeGroup>
     </Step>
     <Step title="Tell Sveltex to use Markdown-it and customize away!" >
         ```js sveltex.config.js
         import { sveltex } from 'sveltex-preprocess';
-        // import multimdTablePlugin from 'markdown-it-multimd-table';
 
         export const sveltexPreprocessor = await sveltex({
-            markdownBackend: 'markdown-it',
+            texBackend: 'katex',
         });
 
         await sveltexPreprocessor.configure({
-            markdown: {
-                options: {
-                    html: false,
-                    xhtmlOut: false,
-                    breaks: false,
-                    linkify: false,
-                    typographer: false,
-                    quotes: '“”‘’',
-                },
-                extensions: [
-                    // [
-                    //     multimdTablePlugin,
-                    //     {
-                    //         multiline: false,
-                    //         rowspan: false,
-                    //         headerless: false,
-                    //         multibody: true,
-                    //         autolabel: true,
-                    //     },
-                    // ],
-                ],
+            tex: {
+                // ... (configuration possible, but not necessary)
             },
         });
         ```
@@ -78,170 +52,40 @@ Additionally, you can also provide a **custom** markdown backend.
 
 </Steps>
 </Tab>
-<Tab title="Marked">
+<Tab title="MathJax">
 <Steps>
     <Step title="Install the necessary dependencies">
     <CodeGroup>
         ```bash pnpm
-        pnpm add -D marked
+        pnpm add -D mathjax-full
         ```
         ```bash bun
-        bun add -D marked
+        bun add -D mathjax-full
         ```
         ```bash npm
-        npm add -D marked
+        npm add -D mathjax-full
         ```
         ```bash yarn
-        yarn add -D marked
+        yarn add -D mathjax-full
         ```
     </CodeGroup>
     </Step>
-    <Step title="Tell SvelTeX to use Marked" >
-        ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
-        // import { gfmHeadingId } from 'marked-gfm-heading-id';
-
-        export const sveltexPreprocessor = await sveltex({
-            markdownBackend: 'marked',
-        });
-
-        await sveltexPreprocessor.configure({
-            markdown: {
-                options: {
-                    async: false,
-                    breaks: true,
-                    gfm: true,
-                    pedantic: false,
-                    silent: false,
-                },
-                extensions: [
-                    // gfmHeadingId()
-                ],
-            },
-        });
-        ```
-    </Step>
-
-</Steps>
-</Tab>
-<Tab title="Micromark">
-<Steps>
-    <Step title="Install the necessary dependencies">
-    <CodeGroup>
-        ```bash pnpm
-        pnpm add -D micromark
-        ```
-        ```bash bun
-        bun add -D micromark
-        ```
-        ```bash npm
-        npm add -D micromark
-        ```
-        ```bash yarn
-        yarn add -D micromark
-        ```
-    </CodeGroup>
-    </Step>
-    <Step title="Tell SvelTeX to use Micromark" >
+    <Step title="Tell SvelTeX to use MathJax" >
         ```js sveltex.config.js
         import { sveltex } from 'sveltex-preprocess';
 
         export const sveltexPreprocessor = await sveltex({
-            'micromark',
+            texBackend: 'mathjax',
         });
 
         await sveltexPreprocessor.configure({
-            markdown: {
-                options: {
-                    gfm: true,
-                },
-                extensions: [],
+            tex: {
+                // ... (configuration possible, but not necessary)
             },
         });
         ```
     </Step>
 
 </Steps>
-</Tab>
-<Tab title="Unified">
-<Steps>
-    <Step title="Install the necessary dependencies">
-    <CodeGroup>
-        ```bash pnpm
-        pnpm add -D unified remark-parse remark-rehype rehype-stringify
-        ```
-        ```bash bun
-        bun add -D unified remark-parse remark-rehype rehype-stringify
-        ```
-        ```bash npm
-        npm add -D unified remark-parse remark-rehype rehype-stringify
-        ```
-        ```bash yarn
-        yarn add -D unified remark-parse remark-rehype rehype-stringify
-        ```
-    </CodeGroup>
-    </Step>
-    <Step title="Tell SvelTeX to use Unified" >
-        ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
-
-        export const sveltexPreprocessor = await sveltex(
-            'unified', // Markdown backend
-            'none', // Code backend (syntax highlighting)
-            'none', // TeX backend
-            'none', // Advanced TeX backend
-        );
-
-        await sveltexPreprocessor.configure({
-            markdown: {
-                options: {
-                    gfm: true,
-                },
-                extensions: [],
-            },
-        });
-        ```
-    </Step>
-
-</Steps>
-</Tab>
-<Tab title="Custom">
-By way of example, here is how you might set up a custom markdown backend to use
-[Marked](https://github.com/markedjs/marked) if it weren't already supported:
-
-```js sveltex.config.js
-import { sveltex, MarkdownHandler } from 'sveltex-preprocess';
-import { Marked } from 'marked';
-
-export const sveltexPreprocessor = await sveltex({
-    markdownBackend: 'custom',
-});
-
-sveltexPreprocessor.markdownHandler = await MarkdownHandler.create(
-    'custom',
-    {
-        configuration: { extensions: [], options: {} },
-        processor: new Marked(),
-        configure: (config, markdownHandler) => {
-            if (config.options) {
-                markdownHandler.processor.setOptions(config.options);
-            }
-            if (config.extensions) {
-                markdownHandler.processor.use(...config.extensions);
-            }
-            // Before calling the `configure` function you provide, the
-            // MarkdownHandler class will always do the following:
-            //     markdownHandler.configuration =
-            //         mergeConfigs(markdownHandler.configuration, config);
-        },
-        process: (markdown: string, inline: boolean, markdownHandler) => {
-            return inline
-                ? await markdownHandler.processor.parseInline(markdown)
-                : await markdownHandler.processor.parse(markdown);
-        },
-    }
-)
-```
-
 </Tab>
 </Tabs>

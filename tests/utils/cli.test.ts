@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { spawnCliInstruction } from '$utils/cli.js';
 
 describe('spawnCliInstruction', () => {

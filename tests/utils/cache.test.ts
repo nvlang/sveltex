@@ -1,15 +1,29 @@
-import { suite, describe, it, expect, vi, afterAll } from 'vitest';
+import {
+    describe,
+    it,
+    expect,
+    vi,
+    afterAll,
+    type MockInstance,
+    beforeAll,
+} from 'vitest';
 
 import { spy } from '$tests/fixtures.js';
 import { mockFs } from '$dev_deps.js';
 import { SveltexCache } from '$utils/cache.js';
 
-suite('SveltexCache', async () => {
+describe('SveltexCache', () => {
+    let writeFile: MockInstance;
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['writeFile', 'log'], true);
+        writeFile = mocks.writeFile;
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
         mockFs.restore();
     });
-    const { writeFile, log } = await spy(['writeFile', 'log'], true);
 
     describe('misc', () => {
         it('is serializable', async () => {

@@ -20,6 +20,8 @@ export default tseslint.config(
             'yarn.lock',
             'external',
             'examples',
+            'legacy',
+            'ideas',
         ],
     },
     {

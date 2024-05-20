@@ -2,24 +2,37 @@ import {
     ensureDoesNotStartWithSlash,
     prefixWithSlash,
     ensureWithinRange,
-    interpretAttributes,
-    interpretString,
     re,
     sha256,
     copyTransformation,
+    isValidComponentName,
 } from '$utils/misc.js';
 import { spy } from '$tests/fixtures.js';
-import { suite, describe, it, expect, afterAll, vi, beforeEach } from 'vitest';
+import {
+    describe,
+    it,
+    expect,
+    afterAll,
+    vi,
+    beforeEach,
+    beforeAll,
+    type MockInstance,
+} from 'vitest';
 import type { Transformation } from '$types/handlers/Tex.js';
+import { interpretString, interpretAttributes } from '$utils/parseComponent.js';
 
-suite.concurrent('utils/misc', async () => {
+describe.concurrent('utils/misc', () => {
+    let log: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['log']);
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
     beforeEach(() => {
         vi.clearAllMocks();
     });
-    const { log } = await spy(['log']);
 
     describe('interpretString', () => {
         it.each([
@@ -111,6 +124,15 @@ suite.concurrent('utils/misc', async () => {
                 a: undefined,
             });
             expect(log).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('isValidTexComponentConfig', () => {
+        it('should return true for a valid configuration', () => {
+            expect(isValidComponentName('something')).toBe(true);
+        });
+        it('should return false for a valid configuration', () => {
+            expect(isValidComponentName('div')).toBe(false);
         });
     });
 

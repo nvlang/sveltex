@@ -88,7 +88,7 @@ export interface GeneralCodeConfiguration {
     wrap?:
         | undefined
         | ((
-              options: CodeProcessOptions & { wrapClassPrefix: string },
+              options: FullCodeProcessOptions & { wrapClassPrefix: string },
           ) => [string, string]);
 }
 
@@ -250,6 +250,14 @@ export interface CodeProcessOptions {
      */
     _wrap?: boolean | undefined;
 }
+
+/**
+ *
+ */
+export type FullCodeProcessOptions = RequiredNonNullable<
+    Omit<CodeProcessOptions, 'info' | 'lang'>
+> &
+    Pick<CodeProcessOptions, 'info' | 'lang'>;
 
 /**
  * Type of the function that configures a code processor of the specified

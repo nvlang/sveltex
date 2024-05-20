@@ -1,13 +1,9 @@
-# Sveltex = Svelte + $\TeX$
+# Sveltex = Svelte + $\mathrm{\TeX}$
 
 [![JSR](https://jsr.io/badges/@nvlang/sveltex?style=flat-square&labelColor=1A3644)](https://jsr.io/@nvlang/sveltex)
 [![NPM Version](https://img.shields.io/npm/v/sveltex-preprocess?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B)](https://npmjs.com/sveltex-preprocess)
 [![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=aaa&label=&labelColor=333&color=333)](https://github.com/nvlang/sveltex)
 [![Codecov](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=aaa&labelColor=333&color=333)]()
-
--   NPM: [sveltex-preprocess](https://npmjs.com/sveltex-preprocess)
--   JSR: [@nvlang/sveltex](https://jsr.io/@nvlang/sveltex)
--   GitHub: [nvlang/sveltex](https://github.com/nvlang/sveltex)
 
 ## Installation
 
@@ -17,7 +13,12 @@
 
 ## Documentation
 
-TODO
+### Quickstart
+
+```js
+// svelte.config.js
+import { sveltex } from 'sveltex-preprocess';
+```
 
 ## How it works
 
@@ -34,6 +35,7 @@ In alphabetical order:
 -   Improve source map support.
 -   Support preprocessing LaTeX content before passing it to MathJax/KaTeX.
 -   VSCode extension for proper syntax highlighting of `.sveltex` files.
+-   Yeoman generator for scaffolding new Sveltex projects.
 
 ## Contributing
 

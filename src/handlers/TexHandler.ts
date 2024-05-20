@@ -15,16 +15,16 @@ import { katexFonts } from '$data/tex.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import { isArray, isOneOf } from '$type-guards/utils.js';
 import { CssApproach, CssApproachLocal } from '$types/handlers/misc.js';
-import { cdnLink, fancyFetch, fancyWrite, getVersion } from '$utils/cdn.js';
+import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
 import { runWithSpinner } from '$utils/debug.js';
 import { escapeBraces } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
-import { missingDeps } from '$utils/globals.js';
+import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { copyTransformation, prefixWithSlash, re } from '$utils/misc.js';
+import { copyTransformation, prefixWithSlash } from '$utils/misc.js';
 
 // External dependencies
-import { CleanCSS, Output, assert, is, join, prettyBytes } from '$deps.js';
+import { CleanCSS, Output, typeAssert, is, join, prettyBytes } from '$deps.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
 
 export class TexHandler<
@@ -48,7 +48,7 @@ export class TexHandler<
 
         // rfdc doesn't handle RegExps well, so we have to copy them manually
         if (isOneOf(this.backend, ['mathjax', 'katex'])) {
-            assert(is<TexHandler<'mathjax' | 'katex'>>(this));
+            typeAssert(is<TexHandler<'mathjax' | 'katex'>>(this));
             clone.transformations = {
                 pre: [
                     ...this._configuration.transformations.pre.map(
@@ -84,47 +84,44 @@ export class TexHandler<
     ];
 
     override get process() {
-        return async (
-            tex: string,
-            options?: TexProcessOptions<B>['options'],
-        ) => {
+        return async (tex: string, options?: TexProcessOptions<B>) => {
             await this.handleCss();
 
-            const displayMath = tex.match(
-                re`^ (?: \$\$ (.*) \$\$ | \\\[ (.*) \\\] ) $ ${'su'}`,
-            );
-            const inlineMath = tex.match(
-                re`^ (?: \$ (.*) \$ | \\\( (.*) \\\) ) $ ${'su'}`,
-            );
-            if (displayMath) {
-                return super.process(
-                    // We ignore the line below because the regex guarantees
-                    // that one of the groups is not null, but TypeScript
-                    // doesn't realize this, and I don't want to use a non-null
-                    // assertion.
-                    /* v8 ignore next */
-                    displayMath[1] ?? displayMath[2] ?? '',
-                    {
-                        options,
-                        inline: false,
-                    } as TexProcessOptions<B>,
-                );
-            }
-            if (inlineMath) {
-                return super.process(
-                    // We ignore the line below because the regex guarantees
-                    // that one of the groups is not null, but TypeScript
-                    // doesn't realize this, and I don't want to use a non-null
-                    // assertion.
-                    /* v8 ignore next */
-                    inlineMath[1] ?? inlineMath[2] ?? '',
-                    {
-                        options,
-                        inline: true,
-                    } as TexProcessOptions<B>,
-                );
-            }
-            return super.process(tex, { options } as TexProcessOptions<B>);
+            // const displayMath = tex.match(
+            //     re`^ (?: \$\$ (.*) \$\$ | \\\[ (.*) \\\] ) $ ${'su'}`,
+            // );
+            // const inlineMath = tex.match(
+            //     re`^ (?: \$ (.*) \$ | \\\( (.*) \\\) ) $ ${'su'}`,
+            // );
+            // if (displayMath) {
+            //     return super.process(
+            //         // We ignore the line below because the regex guarantees
+            //         // that one of the groups is not null, but TypeScript
+            //         // doesn't realize this, and I don't want to use a non-null
+            //         // assertion.
+            //         /* v8 ignore next */
+            //         displayMath[1] ?? displayMath[2] ?? '',
+            //         {
+            //             options,
+            //             inline: false,
+            //         } as TexProcessOptions<B>,
+            //     );
+            // }
+            // if (inlineMath) {
+            //     return super.process(
+            //         // We ignore the line below because the regex guarantees
+            //         // that one of the groups is not null, but TypeScript
+            //         // doesn't realize this, and I don't want to use a non-null
+            //         // assertion.
+            //         /* v8 ignore next */
+            //         inlineMath[1] ?? inlineMath[2] ?? '',
+            //         {
+            //             options,
+            //             inline: true,
+            //         } as TexProcessOptions<B>,
+            //     );
+            // }
+            return super.process(tex, options ?? ({} as TexProcessOptions<B>));
         };
     }
 
@@ -494,7 +491,7 @@ export class TexHandler<
                         {
                             startMessage: `Minifying MathJax stylesheet (${fmt})`,
                             successMessage: (t) =>
-                                `Minified MathJax stylesheet (${fmt}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${String(opt.stats.efficiency * 100)}% reduction) in ${t}`,
+                                `Minified MathJax stylesheet (${fmt}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${(opt.stats.efficiency * 100).toFixed(0)}% reduction) in ${t}`,
                             failMessage: (t) =>
                                 `Error minifying MathJax stylesheet (${fmt}) after ${t}`,
                         },

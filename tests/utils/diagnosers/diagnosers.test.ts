@@ -3,7 +3,6 @@ import { spy } from '$tests/fixtures.js';
 import { isString } from '$type-guards/utils.js';
 import { Diagnoser } from '$utils/diagnosers/Diagnoser.js';
 import {
-    suite,
     describe,
     it,
     expect,
@@ -11,6 +10,8 @@ import {
     afterAll,
     beforeEach,
     afterEach,
+    type MockInstance,
+    beforeAll,
 } from 'vitest';
 
 function fixture() {
@@ -22,15 +23,19 @@ function fixture() {
     });
 }
 
-suite('utils/diagnosers', async () => {
+describe('utils/diagnosers', () => {
+    let log: MockInstance;
     fixture();
+    beforeAll(async () => {
+        const mocks = await spy(
+            ['writeFileEnsureDir', 'log', 'existsSync'],
+            true,
+        );
+        log = mocks.log;
+    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    const { log } = await spy(
-        ['writeFileEnsureDir', 'log', 'existsSync'],
-        true,
-    );
 
     describe('Diagnoser', () => {
         fixture();

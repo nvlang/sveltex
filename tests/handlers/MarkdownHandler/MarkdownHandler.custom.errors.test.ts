@@ -1,10 +1,10 @@
-import { suite, describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 
 import { Marked, type MarkedOptions, type MarkedExtension } from 'marked';
 
-suite("MarkdownHandler<'custom'>", () => {
+describe("MarkdownHandler<'custom'>", () => {
     const customProcessor = new Marked();
     interface Configuration {
         options?: MarkedOptions;

@@ -1,5 +1,5 @@
 // Types
-import { Equals, assert } from '$deps.js';
+import { Equals, typeAssert } from '$deps.js';
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
     CssApproach,
@@ -212,24 +212,24 @@ export type TexProcessOptions<B extends TexBackend> = B extends 'mathjax'
 
 // Compile-time unit tests
 
-assert<
+typeAssert<
     Equals<
         keyof TexConfiguration<'mathjax'>,
         keyof FullTexConfiguration<'mathjax'>
     >
 >();
 
-assert<
+typeAssert<
     Equals<keyof TexConfiguration<'katex'>, keyof FullTexConfiguration<'katex'>>
 >();
 
-assert<
+typeAssert<
     Equals<
         keyof TexConfiguration<'custom'>,
         keyof FullTexConfiguration<'custom'>
     >
 >();
 
-assert<
+typeAssert<
     Equals<keyof TexConfiguration<'none'>, keyof FullTexConfiguration<'none'>>
 >();

@@ -1,12 +1,11 @@
+import { resolve, rimraf } from '$deps.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { unescapeCssColorVars } from '$utils/css.js';
-import { pathExists } from '$utils/debug.js';
+import { pathExists } from '$utils/fs.js';
 import { sha256 } from '$utils/misc.js';
-import { resolve } from 'node:path';
-import { rimraf } from 'rimraf';
 import {
     afterAll,
     afterEach,
@@ -15,8 +14,8 @@ import {
     describe,
     expect,
     it,
-    suite,
     vi,
+    type MockInstance,
 } from 'vitest';
 
 let ath: AdvancedTexHandler<'local'>;
@@ -68,8 +67,12 @@ function fixture() {
     });
 }
 
-suite('TexComponent', async () => {
+describe('TexComponent', () => {
     vi.restoreAllMocks();
+    let log: MockInstance;
+    let writeFile: MockInstance;
+    let spawnCliInstruction: MockInstance;
+    let readFile: MockInstance;
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -79,6 +82,15 @@ suite('TexComponent', async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        const mocks = await spy(
+            ['writeFile', 'log', 'spawnCliInstruction', 'readFile'],
+            false,
+        );
+        log = mocks.log;
+        writeFile = mocks.writeFile;
+        spawnCliInstruction = mocks.spawnCliInstruction;
+        readFile = mocks.readFile;
+        log.mockImplementation(() => undefined);
     });
     afterAll(async () => {
         vi.restoreAllMocks();
@@ -86,12 +98,6 @@ suite('TexComponent', async () => {
             await rimraf(resolve(`tmp/tests`));
         }
     });
-    // fixture();
-    const { writeFile, log, spawnCliInstruction, readFile } = await spy(
-        ['writeFile', 'log', 'spawnCliInstruction', 'readFile'],
-        false,
-    );
-    log.mockImplementation(() => undefined);
 
     describe('create', () => {
         describe('error handling', () => {
@@ -106,61 +112,9 @@ suite('TexComponent', async () => {
                             filename: 'TexComponent_test_ts.sveltex',
                             selfClosing: false,
                         }),
-                    ).toThrowError('TeX component must have a ref attribute.');
+                    ).toThrowError(/ref.*attribute/isu);
                 },
             );
-        });
-
-        describe('valueless attributes', () => {
-            fixture();
-            it('if exactly 1 valueless attribute is provided, but a ref attribute is also provided, log a warning about the valueless attribute', () => {
-                const tc = ath.createTexComponent('content', {
-                    tag: 'tex',
-                    attributes: {
-                        ref: 'something',
-                        someValuelessAttribute: undefined,
-                    },
-                    filename: 'TexComponent_test_ts.sveltex',
-                    selfClosing: false,
-                });
-                expect(tc.ref).toEqual('something');
-                expect(log).toHaveBeenCalledTimes(1);
-                expect(log).toHaveBeenNthCalledWith(
-                    1,
-                    'warn',
-                    'TeX component tex with ref "something" has attributes with no value: someValuelessAttribute. These attributes will be ignored.',
-                );
-            });
-
-            it('if exactly 1 valueless attribute is provided, and no ref attribute, the valueless attribute is used as ref', () => {
-                const tc = ath.createTexComponent('content', {
-                    tag: 'tex',
-                    attributes: { refFromValuelessAttribute: undefined },
-                    filename: 'TexComponent_test_ts.sveltex',
-                    selfClosing: false,
-                });
-                expect(tc.ref).toEqual('refFromValuelessAttribute');
-                expect(log).not.toHaveBeenCalled();
-            });
-
-            it('if ≥1 valueless attributes are provided, and no ref attribute, the first valueless attribute is used as ref', () => {
-                const tc = ath.createTexComponent('content', {
-                    tag: 'tex',
-                    attributes: {
-                        refFromValuelessAttribute: undefined,
-                        anotherValuelessAttribute: undefined,
-                    },
-                    filename: 'TexComponent_test_ts.sveltex',
-                    selfClosing: false,
-                });
-                expect(tc.ref).toEqual('refFromValuelessAttribute');
-                expect(log).toHaveBeenCalledTimes(1);
-                expect(log).toHaveBeenNthCalledWith(
-                    1,
-                    'warn',
-                    'TeX component tex with ref "refFromValuelessAttribute" has attributes with no value: refFromValuelessAttribute, anotherValuelessAttribute. Of these, the first, "refFromValuelessAttribute", is being used as the ref attribute, and the rest will be ignored.',
-                );
-            });
         });
     });
 

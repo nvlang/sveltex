@@ -6,6 +6,10 @@ import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import type {
+    EscapeOptions,
+    InterpretedAttributes,
+} from '$types/utils/Escape.js';
+import type {
     RequiredNonNullable,
     RequiredNonNullableExcept,
 } from '$types/utils/utility-types.js';
@@ -352,9 +356,10 @@ export type AdvancedTexProcessor = object;
 
 export interface AdvancedTexProcessOptions {
     tag: string;
-    attributes: Record<string, string | undefined>;
+    attributes: InterpretedAttributes;
     filename: string;
     selfClosing: boolean;
+    escapeOptions?: EscapeOptions | undefined;
 }
 
 /**

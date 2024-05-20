@@ -1,6 +1,4 @@
-/* eslint-disable vitest/no-commented-out-tests */
 import {
-    suite,
     describe,
     it,
     expect,
@@ -8,6 +6,7 @@ import {
     vi,
     beforeEach,
     beforeAll,
+    MockInstance,
 } from 'vitest';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
@@ -19,13 +18,13 @@ function fixture() {
     });
 }
 
-suite("TexHandler<'katex'>", async () => {
+describe("TexHandler<'katex'>", () => {
+    let handler: TexHandler<'katex'>;
+    let log: MockInstance;
+    let writeFileEnsureDir: MockInstance;
+    let fancyWrite: MockInstance;
+    let existsSync: MockInstance;
     fixture();
-    const { writeFileEnsureDir, fancyWrite, log, existsSync } = await spy(
-        ['writeFileEnsureDir', 'fancyWrite', 'log', 'existsSync', 'mkdir'],
-        true,
-    );
-    const handler = await TexHandler.create('katex');
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -35,6 +34,15 @@ suite("TexHandler<'katex'>", async () => {
                 fail: vi.fn(),
             }),
         })) as unknown as typeof import('ora').default);
+        const mocks = await spy(
+            ['writeFileEnsureDir', 'fancyWrite', 'log', 'existsSync', 'mkdir'],
+            true,
+        );
+        writeFileEnsureDir = mocks.writeFileEnsureDir;
+        fancyWrite = mocks.fancyWrite;
+        log = mocks.log;
+        existsSync = mocks.existsSync;
+        handler = await TexHandler.create('katex');
     });
     afterAll(() => {
         vi.restoreAllMocks();
@@ -103,14 +111,16 @@ suite("TexHandler<'katex'>", async () => {
         describe('process()', () => {
             fixture();
             it('should work for basic inline math', async () => {
-                expect(await handler.process('$x$')).toEqual(
+                expect((await handler.process('x')).processed).toEqual(
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
                 );
                 expect(log).not.toHaveBeenCalled();
             });
 
             it('should work for basic display math', async () => {
-                expect(await handler.process('$$x$$')).toEqual(
+                expect(
+                    (await handler.process('x', { inline: false })).processed,
+                ).toEqual(
                     '<span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></span>',
                 );
                 expect(log).not.toHaveBeenCalled();
@@ -118,7 +128,11 @@ suite("TexHandler<'katex'>", async () => {
 
             it('should support CSS color variables', async () => {
                 expect(
-                    await handler.process('$$\\color{var(--red)}x$$'),
+                    (
+                        await handler.process('\\color{var(--red)}x', {
+                            inline: false,
+                        })
+                    ).processed,
                 ).toEqual(
                     '<span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathcolor="var(--red)"><mi>x</mi></mstyle></mrow><annotation encoding="application/x-tex">\\color&lbrace;var(--red)&rbrace;x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="color:var(--red);">x</span></span></span></span></span>',
                 );
@@ -136,7 +150,10 @@ suite("TexHandler<'katex'>", async () => {
                         post: [[/ xmlns:xlink=".*?"/g, '']],
                     },
                 });
-                expect(await handler.process('$a * b$')).toEqual(
+                expect(
+                    (await handler.process('a * b', { inline: true }))
+                        .processed,
+                ).toEqual(
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
                 );
                 await handler.configure({
@@ -162,7 +179,9 @@ suite("TexHandler<'katex'>", async () => {
 
             it('configures code correctly', async () => {
                 await handler.configure({ katex: { output: 'mathml' } });
-                expect(await handler.process('$x$')).toEqual(
+                expect(
+                    (await handler.process('x', { inline: true })).processed,
+                ).toEqual(
                     '<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span>',
                 );
                 await handler.configure({ katex: { output: 'html' } });

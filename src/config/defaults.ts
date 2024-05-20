@@ -26,10 +26,10 @@ import {
     isPresentAndDefined,
     isString,
 } from '$type-guards/utils.js';
-import { interpretAttributes } from '$utils/misc.js';
 
 // External dependencies
 import { findCacheDirectory, homedir, join, relative, resolve } from '$deps.js';
+import { interpretAttributes } from '$utils/parseComponent.js';
 
 /**
  * Get the default configuration for a TeX backend.
@@ -60,7 +60,14 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
                     timeout: 1000,
                 },
                 outputFormat: 'svg',
-                mathjax: {},
+                mathjax: {
+                    tex: {
+                        inlineMath: [
+                            ['$', '$'],
+                            ['\\(', '\\)'],
+                        ],
+                    },
+                },
                 // mathjax: { chtml: { fontURL:
                 //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                 // }}
@@ -351,11 +358,16 @@ export function getDefaultCodeConfiguration<C extends CodeBackend>(
  * subsequent calls to this function.
  */
 export function getDefaultSveltexConfig<
-    M extends MarkdownBackend,
-    C extends CodeBackend,
-    T extends TexBackend,
-    A extends AdvancedTexBackend,
->(m: M, c: C, t: T, a: A): FullSveltexConfiguration<M, C, T, A> {
+    M extends MarkdownBackend = 'none',
+    C extends CodeBackend = 'none',
+    T extends TexBackend = 'none',
+    A extends AdvancedTexBackend = 'none',
+>(
+    m: M = 'none' as M,
+    c: C = 'none' as C,
+    t: T = 'none' as T,
+    a: A = 'none' as A,
+): FullSveltexConfiguration<M, C, T, A> {
     return {
         general: {
             wrap: {
@@ -364,10 +376,12 @@ export function getDefaultSveltexConfig<
             },
             extensions: ['.sveltex'] as `.${string}`[],
             tex: {
-                delimiters: {
-                    inline: ['$', '$'] as [string, string],
-                    display: ['$$', '$$'] as [string, string],
+                enabled: t !== 'none',
+                delims: {
+                    inline: { escapedParentheses: true, singleDollar: true },
+                    display: { escapedSquareBrackets: true },
                 },
+                $$: { isDisplayMath: 'always' },
             },
         },
         tex: getDefaultTexConfiguration(t),

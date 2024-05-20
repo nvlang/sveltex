@@ -32,6 +32,8 @@ import { sha256 } from '$utils/misc.js';
 
 // External dependencies
 import { join, relative, resolve, ora, pc, svgoOptimize } from '$deps.js';
+import { isString } from '$type-guards/utils.js';
+import { InterpretedAttributes } from '$types/utils/Escape.js';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -363,7 +365,10 @@ export class TexComponent<A extends AdvancedTexBackend> {
         advancedTexHandler,
     }: {
         tag: string;
-        attributes: Record<string, string | undefined>;
+        attributes: Record<
+            string,
+            string | number | boolean | null | undefined
+        >;
         tex: string;
         advancedTexHandler: AdvancedTexHandler<A>;
     }): TexComponent<A> {
@@ -393,7 +398,12 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * @internal
      */
     get handleAttributes() {
-        return (attributes: Record<string, string | undefined>) =>
+        return (
+            attributes: Record<
+                string,
+                string | number | boolean | null | undefined
+            >,
+        ) =>
             this.configuration.handleAttributes(
                 this.extractRefAttribute(attributes),
                 this,
@@ -882,42 +892,15 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * @internal
      */
     private extractRefAttribute(
-        attributes: Record<string, string | undefined>,
+        attributes: InterpretedAttributes,
     ): Record<string, string> {
-        let refFromValuelessAttribute: boolean = false;
-        let { ref } = attributes;
-        // If no `ref` attribute was given, use the first attribute without a
-        // value as the `ref` attribute.
-        if (ref === undefined) {
-            ref = (Object.entries(attributes).find(
-                ([, value]) => value === undefined,
-            ) ?? [])[0];
-            refFromValuelessAttribute = true;
-        }
-        if (ref === undefined || ref.length === 0) {
-            throw new Error('TeX component must have a ref attribute.');
+        const { ref } = attributes;
+        if (!ref || !isString(ref)) {
+            throw new Error('TeX component must have a valid ref attribute.');
         }
         this._ref = ref;
-        const valuelessEntries = Object.entries(attributes).filter(
-            (entry) => entry[1] === undefined,
-        );
-        if (
-            (valuelessEntries.length > 0 && !refFromValuelessAttribute) ||
-            valuelessEntries.length > 1
-        ) {
-            log(
-                'warn',
-                `TeX component ${this.name} with ref "${ref}" has attributes with no value: ${valuelessEntries
-                    .map(([attr]) => attr)
-                    .join(
-                        ', ',
-                    )}.${refFromValuelessAttribute ? ` Of these, the first, "${ref}", is being used as the ref attribute, and the rest` : ' These attributes'} will be ignored.`,
-            );
-        }
         return Object.fromEntries(
-            Object.entries(attributes).filter(
-                (entry) => entry[1] !== undefined && entry[0] !== 'ref',
-            ),
+            Object.entries(attributes).filter((entry) => entry[0] !== 'ref'),
         ) as Record<string, string>;
     }
 }

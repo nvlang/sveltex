@@ -12,7 +12,7 @@ import {
 import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
 
 // External dependencies
-import { assert } from '$deps.js';
+import { typeAssert } from '$deps.js';
 
 export function isThemableCodeBackend(
     input: unknown,
@@ -39,10 +39,12 @@ export function isHighlightJsThemeName(
     return isString(input) && isOneOf(input, highlightJsThemeNames);
 }
 
-assert<Equals<CodeBackend, (typeof codeBackends)[number]>>();
-assert<Equals<ThemableCodeBackend, (typeof themableCodeBackends)[number]>>();
-assert<Extends<ThemableCodeBackend, CodeBackend>>();
-assert<Equals<SupportedCdn, (typeof supportedCdns)[number]>>();
+typeAssert<Equals<CodeBackend, (typeof codeBackends)[number]>>();
+typeAssert<
+    Equals<ThemableCodeBackend, (typeof themableCodeBackends)[number]>
+>();
+typeAssert<Extends<ThemableCodeBackend, CodeBackend>>();
+typeAssert<Equals<SupportedCdn, (typeof supportedCdns)[number]>>();
 
 export const codeBackends = [
     'escapeOnly',

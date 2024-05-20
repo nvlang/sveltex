@@ -24,9 +24,13 @@ export default defineConfig({
                 '**/examples/**',
                 '**/e2e/**',
                 '**/src/types/**',
+                '**/legacy/**',
             ],
         },
-        globals: true, // fixes VS Code Vitest extension issues (see https://github.com/vitest-dev/vscode/issues/47)
+        env: {
+            NODE_ENV: 'development',
+        },
+        // globals: true, // fixes VS Code Vitest extension issues (see https://github.com/vitest-dev/vscode/issues/47)
     },
     // logLevel: 'silent',
     // customLogger: {

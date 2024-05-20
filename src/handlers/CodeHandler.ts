@@ -7,6 +7,7 @@ import type {
     CodeProcessOptions,
     CodeProcessor,
     FullCodeConfiguration,
+    FullCodeProcessOptions,
     ThemableCodeBackend,
 } from '$types/handlers/Code.js';
 
@@ -15,7 +16,7 @@ import { getDefaultCodeConfiguration } from '$config/defaults.js';
 import { Handler } from '$handlers/Handler.js';
 import { isThemableCodeBackend } from '$type-guards/code.js';
 import { isArray } from '$type-guards/utils.js';
-import { cdnLink, fancyFetch, fancyWrite, getVersion } from '$utils/cdn.js';
+import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
 import { log } from '$utils/debug.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
 import {
@@ -24,23 +25,27 @@ import {
     uniqueEscapeSequences,
 } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
-import { missingDeps } from '$utils/globals.js';
+import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { prefixWithSlash, re } from '$utils/misc.js';
+import { prefixWithSlash } from '$utils/misc.js';
 
 // External dependencies
-import { assert, escapeHtml, is, join, pc } from '$deps.js';
+import { typeAssert, escapeHtml, is, join, pc } from '$deps.js';
+import { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
     B,
     CodeBackend,
     CodeProcessor<B>,
-    CodeProcessOptions,
+    FullCodeProcessOptions,
     CodeConfiguration<B>,
     FullCodeConfiguration<B>,
     CodeHandler<B>
 > {
-    override get process() {
+    override get process(): (
+        code: string,
+        options?: CodeProcessOptions | undefined,
+    ) => Promise<ProcessedSnippet> {
         return async (
             code: string,
             options?: CodeProcessOptions | undefined,
@@ -50,36 +55,33 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     diagnoseCodeConfiguration(this.backend, this.configuration)
                         .errors === 0;
             }
-            if (!this.configIsValid) return code;
+
+            let opts: FullCodeProcessOptions = {
+                _wrap: true,
+                inline: false,
+            };
+
+            if (options) opts = mergeConfigs(opts, options);
+
+            let processed = code;
+            if (opts.inline) processed = processed.replace(/\r\n?|\n/gu, ' ');
+            const unescapeOptions: UnescapeOptions = {
+                removeParagraphTag: !opts.inline,
+            };
+
+            if (!this.configIsValid) return { processed, unescapeOptions };
+
             await this.handleCss();
 
-            let innerCode: string = code;
-            let opts: CodeProcessOptions | undefined = { _wrap: true };
-
-            // If the options are provided, interpret `code` as `innerCode` and
-            // don't wrap the output with anything. Similarly, if
-            // optionsFromDelims === undefined, it means that the code snippet
-            // didn't have delimiters, so we should treat `code` as `innerCode`
-            // and not wrap the output with anything.
-            if (options !== undefined) {
-                opts = mergeConfigs(opts, options);
-            } else {
-                const res = this.consumeDelims(code);
-                if (res.optionsFromDelims !== undefined) {
-                    innerCode = res.innerCode;
-                    opts = mergeConfigs(opts, res.optionsFromDelims);
-                }
-            }
-
-            const processedCode = await super.process(innerCode, opts);
+            processed = (await super.process(processed, opts)).processed;
 
             // If the `_wrap` option is set to `false`, don't wrap the output.
             // (This is sometimes used, for example, by the VerbatimHandler.)
-            if (opts._wrap === false) return processedCode;
+            if (!opts._wrap) return { processed, unescapeOptions };
 
             const configuration = this.configuration;
 
-            assert(
+            typeAssert(
                 is<FullCodeConfiguration<ThemableCodeBackend>>(configuration),
             );
 
@@ -88,12 +90,17 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 wrapClassPrefix: configuration.wrapClassPrefix,
             });
 
-            // Add a newline before and after the code block, since
-            // consumeDelims gobbles up the first newline after the opening
-            // delimiter and the last newline before the closing delimiter
-            const n = opts.inline === true ? '' : '\n';
+            // Ensure that fenced code blocks end with newline
+            const n =
+                !opts.inline &&
+                // !processed.match(/(\r\n?|\n)\s*$/u) &&
+                processed !== ''
+                    ? '\n'
+                    : '';
 
-            return wrapArray[0] + n + processedCode + n + wrapArray[1];
+            processed = wrapArray[0] + processed + n + wrapArray[1];
+
+            return { processed, unescapeOptions };
         };
     }
 
@@ -137,7 +144,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
         // Unfortunately, TypeScript doesn't realize that, at this point, B
         // extends ThemableCodeBackend
-        assert(is<CodeHandler<ThemableCodeBackend>>(this));
+        typeAssert(is<CodeHandler<ThemableCodeBackend>>(this));
 
         // Convenience alias + type assertion
         const theme = this.configuration.theme;
@@ -191,120 +198,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
         this._scriptLines = [`import '${prefixWithSlash(path)}';`];
     }
-
-    private static codeBlockDelimsRegex = re`
-        ^                   # start of string
-        \s*                 # leading whitespace
-        ( \`\`\`+ | ~~~+ )  # $1: ≥3 backticks or tildes
-        [\ \t]*             # inline whitespace (spaces or tabs)
-        ([\w-]*)            # $2: language tag
-        [\ \t]*             # inline whitespace (spaces or tabs)
-        (.*)                # $3: info string
-        \r?\n               # newline (supporting both CRLF and LF line endings)
-        ${'u'}              # support unicode`;
-
-    private static codeInlineDelimsRegex = re`
-        ^                   # start of string
-        \s*                 # leading whitespace
-        ( \`+ | ~+ )        # $1: ≥1 backticks or tildes
-        ${'u'}              # support unicode`;
-
-    consumeDelims = (codeInDelims: string) => {
-        let innerCode = codeInDelims;
-        let optionsFromDelims: CodeProcessOptions | undefined = undefined;
-        const codeBlockMatchArray = innerCode.match(
-            CodeHandler.codeBlockDelimsRegex,
-        );
-        if (codeBlockMatchArray) {
-            /* v8 ignore next 9 (unreachable code) */
-            if (!codeBlockMatchArray[1]) {
-                log(
-                    'error',
-                    'Error parsing code snippet' +
-                        "(opening delimiters couldn't be matched): " +
-                        innerCode,
-                );
-                return { innerCode, optionsFromDelims };
-            }
-
-            // If the code block was opened with n≥3 backticks resp. tildes,
-            // it must be closed with k≥n backticks resp. tildes.
-            const closingDelimRegExp = new RegExp(
-                `(\\r?\\n)[ \\t]*${codeBlockMatchArray[1]}+\\s*$`,
-                'u',
-            );
-
-            if (!closingDelimRegExp.test(innerCode)) {
-                log(
-                    'error',
-                    `Error parsing code block (closing delimiters not found); expected the following to end with ≥${String(codeBlockMatchArray[1].length)} ${codeBlockMatchArray[1].includes('`') ? 'backticks' : 'tildes'}:\n${innerCode}`,
-                );
-                return { innerCode, optionsFromDelims };
-            }
-
-            // Extract the language and info string from the opening delimiter
-            let lang = codeBlockMatchArray[2];
-            const info = codeBlockMatchArray[3];
-            if (lang === '') lang = 'plaintext';
-
-            // Remove the opening and closing delimiters
-            innerCode = innerCode
-                .replace(CodeHandler.codeBlockDelimsRegex, '')
-                .replace(closingDelimRegExp, '');
-            optionsFromDelims = { inline: false, lang, info };
-            return { innerCode, optionsFromDelims };
-        }
-
-        // Let's remove the opening and closing delimiters
-        const codeInlineMatchArray = innerCode.match(
-            CodeHandler.codeInlineDelimsRegex,
-        );
-        if (codeInlineMatchArray) {
-            /* v8 ignore next 9 (unreachable code) */
-            if (!codeInlineMatchArray[1]) {
-                log(
-                    'error',
-                    'Error parsing code snippet' +
-                        "(opening delimiters couldn't be matched): " +
-                        innerCode,
-                );
-                return { innerCode, optionsFromDelims };
-            }
-
-            // If the code block was opened with n≥1 backticks resp. tildes,
-            // it must be closed with n backticks resp. tildes.
-            const closingDelimRegExp = new RegExp(
-                `${codeInlineMatchArray[1]}+\\s*$`,
-                'u',
-            );
-
-            if (!closingDelimRegExp.test(innerCode)) {
-                log(
-                    'error',
-                    `Error parsing inline code snippet (closing delimiters not found); expected the following to end with ≥${String(codeInlineMatchArray[1].length)} ${codeInlineMatchArray[1].includes('`') ? 'backticks' : 'tildes'}:\n${innerCode}`,
-                );
-                return { innerCode, optionsFromDelims };
-            }
-
-            // Currently we can't set the language or info string for inline
-            // code snippets, so we'll just set the language to 'plaintext' and
-            // the info string to an empty string.
-            optionsFromDelims = { inline: true, lang: 'plaintext', info: '' };
-
-            // Remove the opening and closing delimiters
-            innerCode = innerCode
-                .replace(CodeHandler.codeInlineDelimsRegex, '')
-                .replace(closingDelimRegExp, '');
-        } else {
-            log(
-                'error',
-                `Error parsing code snippet (no delimiters could be found/matched): ${innerCode}`,
-            );
-            return { innerCode, optionsFromDelims };
-        }
-
-        return { innerCode, optionsFromDelims };
-    };
 
     /**
      * Creates a code handler of the specified type.
@@ -369,18 +262,15 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 try {
                     type Backend = 'highlight.js';
                     const processor = (await import('highlight.js')).default;
-                    return new CodeHandler<Backend>({
+                    const handler = new CodeHandler<Backend>({
                         backend: 'highlight.js',
                         processor,
                         configuration:
                             getDefaultCodeConfiguration('highlight.js'),
-                        process: (code, { lang } = {}, codeHandler) => {
+                        process: (code, { lang }, codeHandler) => {
                             return escapeBraces(
                                 codeHandler.processor.highlight(code, {
-                                    language:
-                                        lang === undefined || lang.length === 0
-                                            ? 'plaintext'
-                                            : lang,
+                                    language: lang ?? 'plaintext',
                                 }).value,
                             );
                         },
@@ -388,6 +278,16 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             codeHandler.processor.configure(config);
                         },
                     });
+                    // Apparently, the highlight.js processor isn't
+                    // serializable. This will upset Vite, so we need to.
+                    // remove it from the object returned by `toJSON`
+                    (handler as unknown as { toJSON: () => object }).toJSON =
+                        () => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { processor, ...rest } = handler;
+                            return rest;
+                        };
+                    return handler;
                 } catch (error) {
                     missingDeps.push('highlight.js');
                     throw error;
@@ -405,7 +305,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     const codeHandler = new CodeHandler<Backend>({
                         backend: 'prismjs',
                         processor,
-                        process: (code, { lang } = {}, codeHandler) => {
+                        process: (code, { lang }, codeHandler) => {
                             const langOrDefault = lang ?? 'plaintext';
                             const grammar =
                                 codeHandler.processor.prism.languages[
@@ -458,9 +358,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     return new CodeHandler<Backend>({
                         backend: 'starry-night',
                         processor,
-                        process: (code, { lang } = {}, codeHandler) => {
+                        process: (code, { lang }, codeHandler) => {
                             if (
-                                lang === undefined ||
+                                !lang ||
                                 [
                                     'plaintext',
                                     'plain',
@@ -539,8 +439,8 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                                                         grammar.dependencies
                                                             .length > 0
                                                     ) {
-                                                        deps = deps.concat(
-                                                            grammar.dependencies,
+                                                        deps.push(
+                                                            ...grammar.dependencies,
                                                         );
                                                     }
                                                     return grammar;
