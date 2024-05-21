@@ -73,7 +73,7 @@ await sveltexPreprocessor.configure({
                     '\\usepackage{tikz}',
                 ].join('\n'),
                 overrides: {
-                    engine: 'lualatex',
+                    engine: 'latex',
                     // overrideSvgPostprocess: null,
                     // svgoOptions: {
                     //     plugins: [],
