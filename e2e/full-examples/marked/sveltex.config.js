@@ -44,14 +44,8 @@ await sveltexPreprocessor.configure({
                 aliases: ['TikZ'],
                 preamble: [
                     '\\usepackage{mathtools}',
-                    '\\usepackage{amssymb}',
                     '\\usepackage{microtype}',
-                    // '\\usepackage{fontspec}',
-                    // '\\usepackage{unicode-math}',
-                    // '\\usepackage{geometry}',
                     '\\usepackage{tikz}',
-                    '\\usetikzlibrary{arrows.meta, calc, matrix, patterns, shadings, shadows, plotmarks, shapes.geometric, shapes.misc}',
-                    '\\usepgflibrary{shadings}',
                 ].join('\n'),
                 overrides: {
                     engine: 'lualatex',
