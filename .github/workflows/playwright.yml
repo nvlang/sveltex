@@ -4,29 +4,47 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - uses: xu-cheng/texlive-action@v2
+
+      - name: Set up TeX Live
+        uses: xu-cheng/texlive-action@v2
         with:
           scheme: small
-          run: |
-            apk add make
-            make
+          run: apt-get update && apt-get install -y make
+
+      - name: Verify Makefile presence
+        run: |
+          if [ ! -f ./Makefile ]; then
+            echo "Makefile not found!"
+            exit 1
+          fi
+
+      - name: Run make
+        run: make
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
       - name: Install PNPM
         run: npm install -g pnpm
+
       - name: Install Node.js dependencies
         run: pnpm install
+
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
+
       - name: Run Playwright tests
         run: pnpm exec playwright test
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
