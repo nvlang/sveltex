@@ -18,12 +18,11 @@ jobs:
         with:
           packages: |
             scheme-basic
-            lualatex
+            luatex
             dvisvgm
-            tikz
+            pgf
             microtype
             mathtools
-            amssymb
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
