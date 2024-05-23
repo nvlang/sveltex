@@ -13,12 +13,19 @@ import {
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
 } from '$utils/dvisvgm.js';
+import { getDefaultDvisvgmOptions } from '$config/defaults.js';
 
 describe.concurrent('bboxToFlagValue', () => {
     it('should return the string representation of a TexDim', () => {
         const bbox: TexDim = [10, 'pt'];
         const result = bboxToFlagValue(bbox);
         expect(result).toEqual('10pt');
+    });
+
+    it('should return the string representation of a TexDim 2', () => {
+        const bbox = getDefaultDvisvgmOptions().svg.bbox ?? 'A1';
+        const result = bboxToFlagValue(bbox);
+        expect(result).toEqual('2pt');
     });
 
     it('should return the string representation of a TexDim with unitless value', () => {

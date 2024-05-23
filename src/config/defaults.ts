@@ -3,7 +3,6 @@ import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
 import type {
     AdvancedTexBackend,
     FullAdvancedTexConfiguration,
-    FullTexComponentConfiguration,
 } from '$types/handlers/AdvancedTex.js';
 import type {
     CodeBackend,
@@ -15,7 +14,14 @@ import type {
     MarkdownBackend,
 } from '$types/handlers/Markdown.js';
 import type { FullTexConfiguration, TexBackend } from '$types/handlers/Tex.js';
-import type { FullVerbatimEnvironmentConfiguration } from '$types/handlers/Verbatim.js';
+import type {
+    FullVerbEnvConfigAdvancedTex,
+    FullVerbEnvConfigBase,
+    FullVerbEnvConfigCode,
+    FullVerbEnvConfigCustom,
+    FullVerbEnvConfigEscapeOnly,
+    VerbatimType,
+} from '$types/handlers/Verbatim.js';
 import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import type { FirstTwoLevelsRequiredNotUndefined } from '$types/utils/utility-types.js';
 
@@ -86,102 +92,102 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
  * created the `TexComponent`.
  * @returns The default configuration for the TeX component.
  */
-export function getDefaultTexComponentConfiguration<
-    A extends AdvancedTexBackend,
->(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _advancedTexBackend: A,
-): FullTexComponentConfiguration<A> {
-    return {
-        documentClass: '\\documentclass{standalone}',
-        preamble: '\\usepackage{microtype}',
-        overrides: {
-            shellEscape: false,
-            saferLua: false,
-            intermediateFiletype: 'pdf',
-            overrideCompilationCommand: undefined,
-            overrideConversionCommand: undefined,
-            overrideSvgPostprocess: undefined,
-        },
-        aliases: [],
-        handleAttributes(attributes, tc) {
-            const entries = Object.entries(interpretAttributes(attributes));
-            // Attributes for the <figure> element
-            const figureAttributes: Record<
-                string,
-                string | number | boolean | null | undefined
-            > = {};
-            // Attributes for the optional <figcaption> element
-            const captionAttributes: Record<
-                string,
-                string | number | boolean | null | undefined
-            > = {};
-            let caption: string | undefined = undefined;
-            for (const [key, value] of entries) {
-                const lowercaseKey = key.toLowerCase();
-                if (lowercaseKey === 'caption') {
-                    caption = String(value);
-                } else if (
-                    lowercaseKey.match(
-                        /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/,
-                    ) !== null
-                ) {
-                    captionAttributes[key.replace(/^.*?caption./i, '')] = value;
-                } else if (key !== 'ref') {
-                    if (lowercaseKey === 'preamble') {
-                        tc.configuration.preamble = String(value);
-                    } else if (lowercaseKey === 'documentclass') {
-                        tc.configuration.documentClass = String(value);
-                    } else {
-                        figureAttributes[key] = value;
-                    }
-                }
-            }
-            return { caption, figureAttributes, captionAttributes };
-        },
-        postprocess(svgComponent, tc) {
-            let figureAttributesString = '';
-            let caption = '';
-            const attributes = tc.handledAttributes;
-            if (
-                isPresentAndDefined(attributes, 'figureAttributes') &&
-                isNonNullObject(attributes.figureAttributes)
-            ) {
-                const figureAttributes = Object.entries(
-                    attributes.figureAttributes,
-                );
-                figureAttributesString = figureAttributes
-                    .map((attr) => `${attr[0]}="${String(attr[1])}"`)
-                    .join(' ');
-                if (figureAttributesString !== '') {
-                    figureAttributesString = ` ${figureAttributesString}`;
-                }
-            }
-            if (
-                isPresentAndDefined(attributes, 'caption') &&
-                isString(attributes.caption)
-            ) {
-                let captionAttributesString = '';
-                if (
-                    isPresentAndDefined(attributes, 'captionAttributes') &&
-                    isNonNullObject(attributes.captionAttributes)
-                ) {
-                    const captionAttributes = Object.entries(
-                        attributes.captionAttributes,
-                    );
-                    captionAttributesString = captionAttributes
-                        .map((attr) => `${attr[0]}="${String(attr[1])}"`)
-                        .join(' ');
-                    if (captionAttributesString !== '') {
-                        captionAttributesString = ` ${captionAttributesString}`;
-                    }
-                    caption = `<figcaption${captionAttributesString}>${attributes.caption}</figcaption>\n`;
-                }
-            }
-            return `<figure${figureAttributesString}>\n${svgComponent}\n${caption}</figure>`;
-        },
-    };
-}
+// export function getDefaultTexComponentConfiguration<
+//     A extends AdvancedTexBackend,
+// >(
+//     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//     _advancedTexBackend: A,
+// ): FullTexComponentConfiguration<A> {
+//     return {
+//         documentClass: '\\documentclass{standalone}',
+//         preamble: '\\usepackage{microtype}',
+//         overrides: {
+//             shellEscape: false,
+//             saferLua: false,
+//             intermediateFiletype: 'pdf',
+//             overrideCompilationCommand: undefined,
+//             overrideConversionCommand: undefined,
+//             overrideSvgPostprocess: undefined,
+//         },
+//         aliases: [],
+//         handleAttributes(attributes, tc) {
+//             const entries = Object.entries(interpretAttributes(attributes));
+//             // Attributes for the <figure> element
+//             const figureAttributes: Record<
+//                 string,
+//                 string | number | boolean | null | undefined
+//             > = {};
+//             // Attributes for the optional <figcaption> element
+//             const captionAttributes: Record<
+//                 string,
+//                 string | number | boolean | null | undefined
+//             > = {};
+//             let caption: string | undefined = undefined;
+//             for (const [key, value] of entries) {
+//                 const lowercaseKey = key.toLowerCase();
+//                 if (lowercaseKey === 'caption') {
+//                     caption = String(value);
+//                 } else if (
+//                     lowercaseKey.match(
+//                         /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/,
+//                     ) !== null
+//                 ) {
+//                     captionAttributes[key.replace(/^.*?caption./i, '')] = value;
+//                 } else if (key !== 'ref') {
+//                     if (lowercaseKey === 'preamble') {
+//                         tc.configuration.preamble = String(value);
+//                     } else if (lowercaseKey === 'documentclass') {
+//                         tc.configuration.documentClass = String(value);
+//                     } else {
+//                         figureAttributes[key] = value;
+//                     }
+//                 }
+//             }
+//             return { caption, figureAttributes, captionAttributes };
+//         },
+//         postprocess(svgComponent, tc) {
+//             let figureAttributesString = '';
+//             let caption = '';
+//             const attributes = tc.handledAttributes;
+//             if (
+//                 isPresentAndDefined(attributes, 'figureAttributes') &&
+//                 isNonNullObject(attributes.figureAttributes)
+//             ) {
+//                 const figureAttributes = Object.entries(
+//                     attributes.figureAttributes,
+//                 );
+//                 figureAttributesString = figureAttributes
+//                     .map((attr) => `${attr[0]}="${String(attr[1])}"`)
+//                     .join(' ');
+//                 if (figureAttributesString !== '') {
+//                     figureAttributesString = ` ${figureAttributesString}`;
+//                 }
+//             }
+//             if (
+//                 isPresentAndDefined(attributes, 'caption') &&
+//                 isString(attributes.caption)
+//             ) {
+//                 let captionAttributesString = '';
+//                 if (
+//                     isPresentAndDefined(attributes, 'captionAttributes') &&
+//                     isNonNullObject(attributes.captionAttributes)
+//                 ) {
+//                     const captionAttributes = Object.entries(
+//                         attributes.captionAttributes,
+//                     );
+//                     captionAttributesString = captionAttributes
+//                         .map((attr) => `${attr[0]}="${String(attr[1])}"`)
+//                         .join(' ');
+//                     if (captionAttributesString !== '') {
+//                         captionAttributesString = ` ${captionAttributesString}`;
+//                     }
+//                     caption = `<figcaption${captionAttributesString}>${attributes.caption}</figcaption>\n`;
+//                 }
+//             }
+//             return `<figure${figureAttributesString}>\n${svgComponent}\n${caption}</figure>`;
+//         },
+//     };
+// }
 
 export function getDefaultDvisvgmOptions(): FirstTwoLevelsRequiredNotUndefined<DvisvgmOptions> {
     return {
@@ -228,7 +234,7 @@ export function getDefaultDvisvgmOptions(): FirstTwoLevelsRequiredNotUndefined<D
     };
 }
 
-const cacheDir = findCacheDirectory({ name: 'sveltex-preprocess' });
+const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
 export const defaultCacheDirectory = cacheDir
     ? relative(process.cwd(), cacheDir)
     : resolve(
@@ -236,7 +242,7 @@ export const defaultCacheDirectory = cacheDir
           'sveltex',
       );
 
-export function getDefaultAdvancedTexConfiguration<
+export function getDefaultTexLiveConfig<
     A extends AdvancedTexBackend,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 >(_advancedTexBackend: A): FullAdvancedTexConfiguration<A> {
@@ -253,7 +259,6 @@ export function getDefaultAdvancedTexConfiguration<
         overrideSvgPostprocess: undefined,
         saferLua: false,
         shellEscape: false,
-        components: {},
         svgoOptions: {
             js2svg: {
                 pretty: false,
@@ -301,7 +306,7 @@ export function getDefaultAdvancedTexConfiguration<
 /**
  * Default CodeConfiguration
  */
-export function getDefaultCodeConfiguration<C extends CodeBackend>(
+export function getDefaultCodeConfig<C extends CodeBackend>(
     codeBackend: C,
 ): FullCodeConfiguration<C> {
     const base: FullCodeConfiguration<
@@ -385,10 +390,10 @@ export function getDefaultSveltexConfig<
             },
         },
         tex: getDefaultTexConfiguration(t),
-        code: getDefaultCodeConfiguration(c),
+        code: getDefaultCodeConfig(c),
         markdown: getDefaultMarkdownConfig(m),
-        advancedTex: getDefaultAdvancedTexConfiguration(a),
-        verbatim: { verbatimEnvironments: {} },
+        advancedTex: getDefaultTexLiveConfig(a),
+        verbatim: {},
     };
 }
 
@@ -411,16 +416,148 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
     }
 }
 
-export function getDefaultVerbatimEnvironmentConfiguration(): FullVerbatimEnvironmentConfiguration {
-    return {
-        processInner: { escapeHtml: true, escapeBraces: true },
+type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'advancedTex'
+    ? FullVerbEnvConfigAdvancedTex
+    : T extends 'code'
+      ? FullVerbEnvConfigCode
+      : T extends 'custom'
+        ? FullVerbEnvConfigCustom
+        : T extends 'escapeOnly'
+          ? FullVerbEnvConfigEscapeOnly
+          : FullVerbEnvConfigBase;
+
+export function getDefaultVerbEnvConfig<T extends VerbatimType>(
+    type: T,
+): DefaultVerbEnvConfig<T> & Record<string, unknown> {
+    const common: FullVerbEnvConfigBase = {
         aliases: [],
+        type,
         attributeForwardingAllowlist: 'all',
-        attributeForwardingBlocklist: ['lang', 'inline', 'info'],
-        component: undefined,
-        respectSelfClosing: true,
+        attributeForwardingBlocklist: [],
         selfCloseOutputWith: 'auto',
         defaultAttributes: {},
-        wrap: false,
+        respectSelfClosing: true,
+        component: 'this',
+        transformations: { pre: [], post: [] },
     };
+    switch (type) {
+        case 'noop':
+            return common as DefaultVerbEnvConfig<T>;
+        case 'escapeOnly':
+            return {
+                ...common,
+                escapeInstructions: { escapeBraces: true, escapeHtml: true },
+            } as DefaultVerbEnvConfig<'escapeOnly'> as DefaultVerbEnvConfig<T>;
+        case 'custom':
+            return {
+                ...common,
+                customProcess: () => '',
+            } as DefaultVerbEnvConfig<'custom'> as DefaultVerbEnvConfig<T>;
+        case 'code':
+            return {
+                ...common,
+                attributeForwardingBlocklist: ['lang', 'inline', 'info'],
+                wrap: true,
+            } as DefaultVerbEnvConfig<'code'> as DefaultVerbEnvConfig<T>;
+        case 'advancedTex':
+            return {
+                ...common,
+                respectSelfClosing: false,
+                component: 'none',
+                documentClass: '\\documentclass{standalone}',
+                preamble: '\\usepackage{microtype}',
+                overrides: {},
+                handleAttributes(attributes, tc) {
+                    const entries = Object.entries(
+                        interpretAttributes(attributes),
+                    );
+                    // Attributes for the <figure> element
+                    const figureAttributes: Record<
+                        string,
+                        string | number | boolean | null | undefined
+                    > = {};
+                    // Attributes for the optional <figcaption> element
+                    const captionAttributes: Record<
+                        string,
+                        string | number | boolean | null | undefined
+                    > = {};
+                    let caption: string | undefined = undefined;
+                    for (const [key, value] of entries) {
+                        const lowercaseKey = key.toLowerCase();
+                        if (lowercaseKey === 'caption') {
+                            caption = String(value);
+                        } else if (
+                            lowercaseKey.match(
+                                /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/,
+                            ) !== null
+                        ) {
+                            captionAttributes[
+                                key.replace(/^.*?caption./i, '')
+                            ] = value;
+                        } else if (key !== 'ref') {
+                            if (lowercaseKey === 'preamble') {
+                                tc.configuration.preamble = String(value);
+                            } else if (lowercaseKey === 'documentclass') {
+                                tc.configuration.documentClass = String(value);
+                            } else {
+                                figureAttributes[key] = value;
+                            }
+                        }
+                    }
+                    return { caption, figureAttributes, captionAttributes };
+                },
+                postprocess(svgComponent, tc) {
+                    let figureAttributesString = '';
+                    let caption = '';
+                    const attributes = tc.handledAttributes;
+                    if (
+                        isPresentAndDefined(attributes, 'figureAttributes') &&
+                        isNonNullObject(attributes.figureAttributes)
+                    ) {
+                        const figureAttributes = Object.entries(
+                            attributes.figureAttributes,
+                        );
+                        figureAttributesString = figureAttributes
+                            .map(
+                                (attr) =>
+                                    `${attr[0]}=${JSON.stringify(String(attr[1]))}`,
+                            )
+                            .join(' ');
+                        if (figureAttributesString !== '') {
+                            figureAttributesString = ` ${figureAttributesString}`;
+                        }
+                    }
+                    if (
+                        isPresentAndDefined(attributes, 'caption') &&
+                        isString(attributes.caption)
+                    ) {
+                        let captionAttributesString = '';
+                        if (
+                            isPresentAndDefined(
+                                attributes,
+                                'captionAttributes',
+                            ) &&
+                            isNonNullObject(attributes.captionAttributes)
+                        ) {
+                            const captionAttributes = Object.entries(
+                                attributes.captionAttributes,
+                            );
+                            captionAttributesString = captionAttributes
+                                .map(
+                                    (attr) =>
+                                        `${attr[0]}=${JSON.stringify(String(attr[1]))}`,
+                                )
+                                .join(' ');
+                            if (captionAttributesString !== '') {
+                                captionAttributesString = ` ${captionAttributesString}`;
+                            }
+                            caption = `<figcaption${captionAttributesString}>${attributes.caption}</figcaption>\n`;
+                        }
+                    }
+                    return `<figure${figureAttributesString}>\n${svgComponent}\n${caption}</figure>`;
+                },
+            } as DefaultVerbEnvConfig<'advancedTex'> as DefaultVerbEnvConfig<T>;
+        default:
+            throw new Error(`Unknown verbatim type: ${type}`);
+    }
 }

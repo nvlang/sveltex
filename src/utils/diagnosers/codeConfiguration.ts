@@ -95,7 +95,6 @@ export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
             );
         }
     }
-    // console.log(`printing ${String(d.stats.problems)} problems`);
     d.printProblems();
     return d.stats;
 }

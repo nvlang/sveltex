@@ -1,7 +1,6 @@
 // Types
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
-    AdvancedTexBackend,
     FullTexComponentConfiguration,
     FullTexLiveConfiguration,
     TexComponentConfiguration,
@@ -12,8 +11,8 @@ import type { KeyPath } from '$utils/cache.js';
 
 // Internal dependencies
 import {
-    getDefaultAdvancedTexConfiguration,
-    getDefaultTexComponentConfiguration,
+    getDefaultTexLiveConfig,
+    getDefaultVerbEnvConfig,
 } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spawnCliInstruction } from '$utils/cli.js';
@@ -42,7 +41,7 @@ import { InterpretedAttributes } from '$types/utils/Escape.js';
  *
  * @internal
  */
-export class TexComponent<A extends AdvancedTexBackend> {
+export class TexComponent {
     /**
      * @param ref - The base filename to use for files associated with this.
      * @param name - The name of the TeX component configuration.
@@ -76,7 +75,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
      */
     get id() {
         return TexComponent.id({
-            name: this.name,
+            name: this.tag,
             ref: this.ref,
         });
     }
@@ -111,7 +110,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
     get svgComponentTag() {
         return TexComponent.svgComponentTag({
             ref: this.ref,
-            name: this.name,
+            name: this.tag,
         });
     }
 
@@ -125,14 +124,14 @@ export class TexComponent<A extends AdvancedTexBackend> {
     /**
      * @internal
      */
-    name: string;
+    tag: string;
 
     /**
      * TeX component config to use to render this component.
      *
      * @internal
      */
-    private _configuration: FullTexComponentConfiguration<A>;
+    private _configuration: FullTexComponentConfiguration;
 
     /**
      * ##### SETTER
@@ -147,7 +146,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
      *
      * @internal
      */
-    set configuration(config: TexComponentConfiguration<A>) {
+    set configuration(config: TexComponentConfiguration) {
         this._configuration = mergeConfigs(this._configuration, config);
     }
 
@@ -161,7 +160,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
      *
      * @internal
      */
-    get configuration(): FullTexComponentConfiguration<A> {
+    get configuration(): FullTexComponentConfiguration {
         return this._configuration;
     }
 
@@ -181,7 +180,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
         delete parentConfig.components;
 
         return mergeConfigs(
-            getDefaultAdvancedTexConfiguration(this.advancedTexHandler.backend),
+            getDefaultTexLiveConfig(this.advancedTexHandler.backend),
             parentConfig,
             this.configuration.overrides,
         );
@@ -249,13 +248,14 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * @internal
      */
     get source(): {
+        /* eslint-disable tsdoc/syntax */
         /**
-         * @example 'node_modules/.cache/sveltex-preprocess/tikz/ref'
+         * @example 'node_modules/.cache/@nvl/sveltex/tikz/ref'
          * @internal
          */
         dir: string;
         /**
-         * @example 'node_modules/.cache/sveltex-preprocess/tikz/myfig/root.tex'
+         * @example 'node_modules/.cache/@nvl/sveltex/tikz/myfig/root.tex'
          * @internal
          */
         texPath: `${string}.tex`;
@@ -265,7 +265,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
          */
         texName: `${string}.tex`;
         /**
-         * @example 'node_modules/.cache/sveltex-preprocess/tikz/myfig/root.pdf'
+         * @example 'node_modules/.cache/@nvl/sveltex/tikz/myfig/root.pdf'
          * @internal
          */
         intPath: `${string}.${'pdf' | 'dvi'}`;
@@ -327,7 +327,7 @@ export class TexComponent<A extends AdvancedTexBackend> {
          */
         svelteName: `${string}.svelte`;
     } {
-        const outDir = join(this.texLiveConfig.outputDirectory, this.name);
+        const outDir = join(this.texLiveConfig.outputDirectory, this.tag);
         const svgName: `${string}.svg` = `${this.ref}.svg`;
         const svgPath = join(outDir, svgName) as `${string}.svg`;
         const svelteName: `${string}.svelte` = `${this.ref}.svelte`;
@@ -358,26 +358,27 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * `ref` attribute nor any valueless attribute.
      * @internal
      */
-    static create<A extends AdvancedTexBackend>({
-        tag,
+    static create({
         attributes,
         tex,
         advancedTexHandler,
+        config,
+        tag,
     }: {
-        tag: string;
         attributes: Record<
             string,
             string | number | boolean | null | undefined
         >;
         tex: string;
-        advancedTexHandler: AdvancedTexHandler<A>;
-    }): TexComponent<A> {
-        const name = advancedTexHandler.resolveTccAlias(tag);
+        advancedTexHandler: AdvancedTexHandler<'local'>;
+        config: TexComponentConfiguration;
+        tag: string;
+    }): TexComponent {
         const tc = new TexComponent({
             advancedTexHandler,
-            name,
-            config: advancedTexHandler.tccMap.get(name),
+            config,
             texDocumentBodyWithCssVars: tex,
+            tag,
         });
         tc._handledAttributes = tc.handleAttributes(attributes);
         return tc;
@@ -433,24 +434,22 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * @internal
      */
     private constructor({
-        name,
         config,
         texDocumentBodyWithCssVars,
         advancedTexHandler,
+        tag,
     }: {
-        name: string;
-        config?: TexComponentConfiguration<A> | undefined;
+        config: TexComponentConfiguration;
         texDocumentBodyWithCssVars: string;
+        tag: string;
         // From parent Sveltex instance
-        advancedTexHandler: AdvancedTexHandler<A>;
+        advancedTexHandler: AdvancedTexHandler<'local'>;
     }) {
-        this.name = name;
         this.advancedTexHandler = advancedTexHandler;
-        this._configuration = getDefaultTexComponentConfiguration(
-            advancedTexHandler.backend,
-        );
-        if (config) this.configuration = config;
+        this._configuration = getDefaultVerbEnvConfig('advancedTex');
+        this.configuration = config;
         this.texDocumentBodyWithCssVars = texDocumentBodyWithCssVars;
+        this.tag = tag;
     }
 
     /**
@@ -460,13 +459,13 @@ export class TexComponent<A extends AdvancedTexBackend> {
      * @internal
      */
     get keyPath() {
-        return join(this.name, this.ref) as KeyPath;
+        return join(this.tag, this.ref) as KeyPath;
     }
 
     /**
      * Advanced TeX handler that created this component.
      */
-    private readonly advancedTexHandler: AdvancedTexHandler<A>;
+    private readonly advancedTexHandler: AdvancedTexHandler<'local'>;
 
     /**
      * The full content of the `.tex` file corresponding to the component, with

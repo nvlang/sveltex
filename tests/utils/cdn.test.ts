@@ -39,10 +39,10 @@ describe('utils/cdn', () => {
         fixture();
         it.each([
             [
-                'https://httpstat.us/418',
+                'https://httpstat.us/503',
                 1000,
                 undefined,
-                "HTTP error 418 \\(I'm a teapot\\): https://httpstat.us/418",
+                'HTTP error 503 (Service Unavailable): https://httpstat.us/503',
             ],
             [
                 'https://httpstat.us/418',
@@ -60,11 +60,7 @@ describe('utils/cdn', () => {
                     expect(log).toHaveBeenNthCalledWith(
                         1,
                         expect.stringMatching(/error|warn/),
-                        expect.stringMatching(
-                            new RegExp(
-                                `(${logMessage}|Timed out.*|HTTP error 503 (Service Unavailable): https://httpstat.us/418)`,
-                            ),
-                        ),
+                        logMessage,
                     );
                 }
             },

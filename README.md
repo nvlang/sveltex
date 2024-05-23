@@ -1,14 +1,14 @@
 # Sveltex = Svelte + $\mathrm{\TeX}$
 
-[![JSR](https://jsr.io/badges/@nvlang/sveltex?style=flat-square&labelColor=1A3644)](https://jsr.io/@nvlang/sveltex)
-[![NPM Version](https://img.shields.io/npm/v/sveltex-preprocess?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B)](https://npmjs.com/sveltex-preprocess)
+[![JSR](https://jsr.io/badges/@nvl/sveltex?style=flat-square&labelColor=1A3644)](https://jsr.io/@nvl/sveltex)
+[![NPM Version](https://img.shields.io/npm/v/@nvl/sveltex?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B)](https://npmjs.com/@nvl/sveltex)
 [![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=aaa&label=&labelColor=333&color=333)](https://github.com/nvlang/sveltex)
 [![Codecov](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=aaa&labelColor=333&color=333)]()
 
 ## Installation
 
 ```sh
-<npm|pnpm|yarn|bun> add -D sveltex-preprocess
+<npm|pnpm|yarn|bun> add -D @nvl/sveltex
 ```
 
 ## Documentation
@@ -17,7 +17,7 @@
 
 ```js
 // svelte.config.js
-import { sveltex } from 'sveltex-preprocess';
+import { sveltex } from '@nvl/sveltex';
 ```
 
 ## How it works

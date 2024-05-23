@@ -11,7 +11,7 @@ import {
     type MockInstance,
 } from 'vitest';
 
-import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$config/defaults.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { isFunction } from '$type-guards/utils.js';
@@ -244,7 +244,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             it('is default', async () => {
                 const handler = await CodeHandler.create('highlight.js');
                 expect('configuration' in handler).toBe(true);
-                const defaultCC = getDefaultCodeConfiguration('highlight.js');
+                const defaultCC = getDefaultCodeConfig('highlight.js');
                 expect(
                     Object.entries(handler.configuration).filter(
                         ([, v]) => !isFunction(v),
@@ -280,6 +280,17 @@ describe("CodeHandler<'highlight.js'>", () => {
         fixture();
         it("is 'highlight.js'", () => {
             expect(handler.backend).toBe('highlight.js');
+        });
+    });
+
+    describe('misc', () => {
+        fixture();
+        it('is serializable', async () => {
+            const handler = await CodeHandler.create('highlight.js');
+            const serialized = JSON.stringify(handler);
+            expect(serialized).toBeTypeOf('string');
+            expect(serialized).not.toBeNull();
+            expect(log).not.toHaveBeenCalled();
         });
     });
 });

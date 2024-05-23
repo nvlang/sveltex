@@ -17,6 +17,7 @@ import {
     isOneOf,
     isPresent,
     isPresentAndDefined,
+    isRecord,
     isString,
 } from '$type-guards/utils.js';
 import { describe, expect, it } from 'vitest';
@@ -410,4 +411,50 @@ describe('isOneOf', () => {
         expect(isOneOf(123, [456, 789])).toBe(false);
         expect(isOneOf(undefined, [])).toBe(false);
     });
+});
+
+describe('isRecord', () => {
+    it.each([
+        ['{}', {}],
+        ['[]', []],
+        ['{ a: 1, b: 2 }', { a: 1, b: 2 }],
+        [
+            '{ a: 1, b: 2 }, ([k, v]) => isString(k) && isNumber(v)',
+            { a: 1, b: 2 },
+            ([k, v]) => isString(k) && isNumber(v),
+        ],
+        ['[1, 2]', [1, 2]],
+        [
+            '[1, 2], ([k, v]) => isNumber(k) && isNumber(v)',
+            [1, 2],
+            ([k, v]) => isNumber(k) && isNumber(v),
+        ],
+    ] as [string, unknown, ((entry: [PropertyKey, unknown]) => boolean)?][])(
+        '%s → true',
+        (_label, input, check) => {
+            expect(isRecord(input, check)).toBe(true);
+        },
+    );
+
+    it.each([
+        ['null', null],
+        ['undefined', undefined],
+        ['123', 123],
+        ["'a'", 'a'],
+        [
+            '{ a: 1, b: 2 }, ([k, v]) => isString(k) && isString(v)',
+            { a: 1, b: 2 },
+            ([k, v]) => isString(k) && isString(v),
+        ],
+        [
+            '[1, 2], ([k, v]) => isString(k) && isNumber(v)',
+            [1, 2],
+            ([k, v]) => isString(k) && isNumber(v),
+        ],
+    ] as [string, unknown, ((entry: [PropertyKey, unknown]) => boolean)?][])(
+        '%s → false',
+        (_label, input, check) => {
+            expect(isRecord(input, check)).toBe(false);
+        },
+    );
 });

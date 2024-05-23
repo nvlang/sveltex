@@ -30,7 +30,7 @@
   "anchors": [
     {
       "name": "NPM",
-      "url": "https://npmjs.com/package/sveltex-preprocess",
+      "url": "https://npmjs.com/package/@nvl/sveltex",
       "icon": "npm",
       "iconType": "brands"
     },

@@ -47,7 +47,7 @@ Additionally, you can also provide a **custom** markdown backend.
     </Step>
     <Step title="Tell Sveltex to use Markdown-it and customize away!" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
         // import multimdTablePlugin from 'markdown-it-multimd-table';
 
         export const sveltexPreprocessor = await sveltex({
@@ -103,7 +103,7 @@ Additionally, you can also provide a **custom** markdown backend.
     </Step>
     <Step title="Tell SvelTeX to use Marked" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
         // import { gfmHeadingId } from 'marked-gfm-heading-id';
 
         export const sveltexPreprocessor = await sveltex({
@@ -149,7 +149,7 @@ Additionally, you can also provide a **custom** markdown backend.
     </Step>
     <Step title="Tell SvelTeX to use Micromark" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
 
         export const sveltexPreprocessor = await sveltex({
             'micromark',
@@ -188,7 +188,7 @@ Additionally, you can also provide a **custom** markdown backend.
     </Step>
     <Step title="Tell SvelTeX to use Unified" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
 
         export const sveltexPreprocessor = await sveltex(
             'unified', // Markdown backend
@@ -215,7 +215,7 @@ By way of example, here is how you might set up a custom markdown backend to use
 [Marked](https://github.com/markedjs/marked) if it weren't already supported:
 
 ```js sveltex.config.js
-import { sveltex, MarkdownHandler } from 'sveltex-preprocess';
+import { sveltex, MarkdownHandler } from '@nvl/sveltex';
 import { Marked } from 'marked';
 
 export const sveltexPreprocessor = await sveltex({

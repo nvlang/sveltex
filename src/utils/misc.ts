@@ -1,13 +1,13 @@
 // Types
 import type { BinaryToTextEncoding } from '$deps.js';
-import type { Transformation } from '$types/handlers/Tex.js';
 
 // Internal dependencies
-import { isString } from '$type-guards/utils.js';
+import { isArray, isString } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
 
 // External dependencies
 import { createHash, htmlTagNames } from '$deps.js';
+import { Transformation } from '$types/handlers/misc.js';
 
 /**
  * Check if a string is a valid name for a component. For this to be the case,
@@ -153,5 +153,20 @@ export function ensureDoesNotStartWithSlash(path: string): string {
  * @returns A copy of the given transformation.
  */
 export function copyTransformation(t: Transformation): Transformation {
-    return [isString(t[0]) ? t[0] : new RegExp(t[0].source, t[0].flags), t[1]];
+    return isArray(t)
+        ? [isString(t[0]) ? t[0] : new RegExp(t[0].source, t[0].flags), t[1]]
+        : t;
+}
+
+/**
+ * @param t - The {@link Transformation | `Transformation`} (or array thereof)
+ * to copy.
+ * @returns A copy of the given transformation(s).
+ */
+export function copyTransformations(
+    t: Transformation | Transformation[],
+): Transformation | Transformation[] {
+    return isArray(t) && !isString(t[1])
+        ? (t as Transformation[]).map(copyTransformation)
+        : copyTransformation(t as Transformation);
 }

@@ -6,6 +6,10 @@ export type FirstTwoLevelsRequiredNotUndefined<T> = {
     [K in keyof T]-?: ExcludeUndefined<RequiredNotUndefined<T[K]>>;
 };
 
+export type FirstTwoLevelsRequiredNonNullable<T> = {
+    [K in keyof T]-?: NonNullable<RequiredNonNullable<T[K]>>;
+};
+
 export type RequiredNotUndefined<T> = {
     [K in keyof T]-?: Exclude<T[K], undefined>;
 };

@@ -1,14 +1,8 @@
 // Types
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
-    AdvancedTexBackend,
-    TexComponentConfiguration,
-    TexLiveConfiguration,
-} from '$types/handlers/AdvancedTex.js';
-import type {
     SimpleEscapeInstruction,
-    VerbatimEnvironmentConfiguration,
-    VerbatimProcessInner,
+    VerbatimType,
 } from '$types/handlers/Verbatim.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
@@ -17,55 +11,27 @@ import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import {
     ifPresentAndDefined,
     isBoolean,
-    isFunction,
     isNonNullObject,
     isOneOf,
     isString,
     isStringArray,
 } from '$type-guards/utils.js';
 
-export function isTexComponentConfig(
-    config: unknown,
-): config is TexComponentConfiguration<AdvancedTexBackend> {
-    return (
-        isNonNullObject(config) &&
-        ifPresentAndDefined(config, 'documentClass', isString) &&
-        ifPresentAndDefined(config, 'preamble', isString) &&
-        ifPresentAndDefined(config, 'overrides', isTexLiveConfig) &&
-        ifPresentAndDefined(config, 'aliases', isStringArray) &&
-        ifPresentAndDefined(config, 'handleAttributes', isFunction)
-    );
-}
+// External dependencies
+import { Equals, typeAssert } from '$deps.js';
 
-export function isTexLiveConfig(x: unknown): x is TexLiveConfiguration {
-    return (
-        isNonNullObject(x) &&
-        ifPresentAndDefined(
-            x,
-            'shellEscape',
-            (v) => isBoolean(v) || v === 'restricted',
-        ) &&
-        ifPresentAndDefined(x, 'saferLua', isBoolean) &&
-        ifPresentAndDefined(x, 'intermediateFiletype', (v) =>
-            isOneOf(v, ['pdf', 'dvi']),
-        ) &&
-        ifPresentAndDefined(
-            x,
-            'overrideCompilationCommand',
-            isCliInstruction,
-        ) &&
-        ifPresentAndDefined(x, 'overrideConversionCommand', isCliInstruction) &&
-        ifPresentAndDefined(x, 'cacheDirectory', isString) &&
-        ifPresentAndDefined(x, 'caching', isBoolean) &&
-        ifPresentAndDefined(x, 'dvisvgmOptions', isDvisvgmOptions) &&
-        ifPresentAndDefined(x, 'verbose', isBoolean) &&
-        ifPresentAndDefined(x, 'outputDirectory', isString) &&
-        ifPresentAndDefined(x, 'texEngine', isSupportedTexEngine)
-    );
-}
+export const supportedTexEngines = [
+    'pdflatex',
+    'lualatex',
+    'lualatexmk',
+    'tex',
+    'latexmk',
+] as const;
+
+typeAssert<Equals<(typeof supportedTexEngines)[number], SupportedTexEngine>>();
 
 export function isSupportedTexEngine(x: unknown): x is SupportedTexEngine {
-    return isOneOf(x, ['pdflatex', 'lualatex', 'lualatexmk', 'tex', 'latexmk']);
+    return isOneOf(x, supportedTexEngines);
 }
 
 export function isDvisvgmOptions(x: unknown): x is DvisvgmOptions {
@@ -83,36 +49,19 @@ export function isCliInstruction(x: unknown): x is CliInstruction {
     );
 }
 
-export function isVerbatimEnvironmentConfiguration(
-    x: unknown,
-): x is VerbatimEnvironmentConfiguration {
-    return (
-        isNonNullObject(x) &&
-        ifPresentAndDefined(x, 'processInner', isVerbatimProcessInner) &&
-        ifPresentAndDefined(x, 'defaultAttributes', isNonNullObject) &&
-        ifPresentAndDefined(x, 'attributeForwardingBlocklist', isStringArray) &&
-        ifPresentAndDefined(
-            x,
-            'attributeForwardingAllowlist',
-            (v) => isStringArray(v) || v === 'all',
-        ) &&
-        ifPresentAndDefined(x, 'component', isString) &&
-        ifPresentAndDefined(x, 'respectSelfClosing', isBoolean) &&
-        ifPresentAndDefined(x, 'selfCloseOutputWith', (v) =>
-            isOneOf(v, ['auto', '/>', ' />']),
-        )
-    );
-}
+export const verbatimTypes = [
+    'advancedTex',
+    'code',
+    'escapeOnly',
+    'custom',
+    'noop',
+] as const;
 
-export function isVerbatimProcessInner(x: unknown): x is VerbatimProcessInner {
-    return (
-        x !== undefined &&
-        x !== null &&
-        (x === 'code' ||
-            x === 'noop' ||
-            isSimpleEscapeInstruction(x) ||
-            typeof x === 'function')
-    );
+// Ensure we didnt miss any Verbatim type
+typeAssert<Equals<(typeof verbatimTypes)[number], VerbatimType>>();
+
+export function isVerbatimType(x: unknown): x is VerbatimType {
+    return isString(x) && isOneOf(x, verbatimTypes);
 }
 
 export function isSimpleEscapeInstruction(

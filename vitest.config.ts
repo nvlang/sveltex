@@ -13,6 +13,7 @@ export default defineConfig({
             enabled: true,
             // processingConcurrency:
             //     os.availableParallelism?.() ?? os.cpus().length,
+            include: ['src/**/*.ts'],
             exclude: [
                 '**/node_modules/**',
                 '**/tests/**',
@@ -25,8 +26,23 @@ export default defineConfig({
                 '**/e2e/**',
                 '**/src/types/**',
                 '**/legacy/**',
+                '**/html/**',
             ],
         },
+        reporters: [
+            'default',
+            'github-actions',
+            'html',
+            // 'basic',
+            // 'dot',
+            // 'hanging-process',
+            // 'json',
+            // 'junit',
+            // 'tap',
+            // 'tap-flat',
+            // 'verbose',
+        ],
+        // ui: true,
         env: {
             NODE_ENV: 'development',
         },

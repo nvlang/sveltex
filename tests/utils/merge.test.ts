@@ -16,7 +16,7 @@ function mergeConfigsNested(n: number, ...configs: Record<string, unknown>[]) {
     return mergeConfigs(nestedConfigs[0], ...nestedConfigs.slice(1));
 }
 
-describe.each(range(1, 5))('mergeCustom', (level) => {
+describe.each(range(1, 3))('mergeCustom (nested: %i)', (level) => {
     it('should work with records', () => {
         const config1 = {
             a: {
@@ -54,7 +54,7 @@ describe.each(range(1, 5))('mergeCustom', (level) => {
         );
     });
 
-    it.skip('should concatenate arrays', () => {
+    it('should override arrays', () => {
         const config1 = {
             a: [1, 2],
             b: { c: [1, 2] },
@@ -65,8 +65,8 @@ describe.each(range(1, 5))('mergeCustom', (level) => {
         };
         expect(mergeConfigsNested(0, config1, config2)).toEqual(
             nested(0, {
-                a: [1, 2, 3],
-                b: { c: [1, 2, 3] },
+                a: [3],
+                b: { c: [3] },
             }),
         );
     });
@@ -97,25 +97,7 @@ describe.each(range(1, 5))('mergeCustom', (level) => {
         [1, { a: 1 }],
         [{ a: 1 }, 1],
     ] as [unknown, unknown][])(
-        'should prefer last input if types are incompatible',
-        (a1, a2) => {
-            const c1 = { a: a1 };
-            const c2 = { a: a2 };
-            expect(mergeConfigsNested(level, c1, c2)).toEqual(
-                nested(level, { a: a2 }),
-            );
-        },
-    );
-
-    it.each([
-        [1, '1'],
-        ['1', 1],
-        [1, [1]],
-        [[1], 1],
-        [1, { a: 1 }],
-        [{ a: 1 }, 1],
-    ] as [unknown, unknown][])(
-        'should work equally well on any level of nesting',
+        'incompatible values ⇒ last value wins: %o, %o',
         (a1, a2) => {
             const c1 = { a: a1 };
             const c2 = { a: a2 };

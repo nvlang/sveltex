@@ -50,10 +50,8 @@ const preprocessors = [
             advancedTexBackend: 'local',
         },
         {
-            advancedTex: {
-                components: {
-                    tex: { aliases: ['TeX'] },
-                },
+            verbatim: {
+                tex: { type: 'advancedTex', aliases: ['TeX'] },
             },
         },
     ),

@@ -319,14 +319,14 @@ export interface SveltexConfiguration<
         //  * ```ts
         //  * {
         //  *     Code: {
-        //  *         processInner: 'code',
+        //  *         type: 'code',
         //  *         defaultAttributes: {
         //  *             inline: false,
         //  *             lang: 'plaintext',
         //  *         }
         //  *     },
         //  *     TeX: {
-        //  *         processInner: 'advancedTex',
+        //  *         type: 'advancedTex',
         //  *         aliases: ['tex', 'LaTeX', 'latex'],
         //  *         defaultAttributes: {
         //  *             inline: false,

@@ -8,25 +8,30 @@ import type { CodeBackend } from '$types/handlers/Code.js';
 import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbatimConfiguration,
-    FullVerbatimEnvironmentConfiguration,
+    FullVerbEnvConfig,
+    FullVerbEnvConfigAdvancedTex,
+    FullVerbEnvConfigCode,
+    FullVerbEnvConfigCustom,
+    FullVerbEnvConfigEscapeOnly,
+    FullVerbEnvConfigNoop,
     VerbatimConfiguration,
     VerbatimProcessOptions,
 } from '$types/handlers/Verbatim.js';
-import type { UnescapeOptions } from '$types/utils/Escape.js';
+import type { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { getDefaultVerbatimEnvironmentConfiguration } from '$config/defaults.js';
+import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
-import { isSimpleEscapeInstruction } from '$type-guards/verbatim.js';
 import { log } from '$utils/debug.js';
-import { diagnoseVerbatimEnvironmentConfiguration } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
+import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { escapeHtml, nodeAssert, rfdc } from '$deps.js';
+import { escapeHtml, is, rfdc, typeAssert } from '$deps.js';
+import { applyTransformations } from '$utils/transformations.js';
 
 const deepClone = rfdc();
 
@@ -80,89 +85,142 @@ export class VerbatimHandler<
             innerContent: string,
             options: VerbatimProcessOptions,
             verbatimHandler: VerbatimHandler<C, A>,
-        ) => {
+        ): Promise<ProcessedSnippet> => {
             const { tag, attributes, selfClosing, outerContent } = options;
 
+            /**
+             * At the beginning, the inner content to process; at the end, the
+             * processed content.
+             */
             let processed: string = innerContent;
-            let unescapeOptions: UnescapeOptions | undefined = {
-                removeParagraphTag: !options.attributes['inline'],
-            };
 
+            // Error handling: it shouldn't be possible for self-closing tags to
+            // have non-empty inner content.
             if (selfClosing && innerContent) {
                 log(
                     'error',
-                    `Self-closing HTML tag "${tag}" should not have content.`,
+                    `Self-closing HTML tag "${tag}" should not have inner content.`,
                 );
-                return { processed: outerContent, unescapeOptions };
-            }
-
-            if (!selfClosing && !innerContent) {
-                log(
-                    'error',
-                    `HTML tag "${tag}" should have content, but none was found.`,
-                );
-                return { processed: outerContent, unescapeOptions };
-            }
-
-            const isVerbEnv = verbatimHandler.verbEnvs.has(tag);
-            const isAdvancedTexComponent =
-                verbatimHandler.advancedTexHandler.tccMap.has(tag);
-
-            if (!isVerbEnv && !isAdvancedTexComponent) {
-                log('error', `Unknown verbatim environment "${tag}".`);
-                return { processed: outerContent, unescapeOptions };
-            }
-
-            if (isVerbEnv && isAdvancedTexComponent) {
-                log(
-                    'error',
-                    `HTML tag "${tag}" is ambiguous, as it refers to both a verbatim environment and an advanced TeX component.`,
-                );
-                return { processed: outerContent, unescapeOptions };
-            }
-
-            if (isVerbEnv) {
-                const config = verbatimHandler.verbEnvs.get(tag);
-                nodeAssert(config !== undefined);
-
-                const mergedAttributes = {
-                    ...config.defaultAttributes,
-                    ...attributes,
+                return {
+                    processed: outerContent ?? innerContent,
                 };
+            }
 
-                const fullConfig = mergeConfigs(
-                    getDefaultVerbatimEnvironmentConfiguration(),
-                    config,
-                );
+            // Get the configuration for the verbatim environment being
+            // processed.
+            const config = verbatimHandler._verbEnvs.get(tag);
 
-                // isVerbEnv === true
+            // Error handling: unknown verbatim environment.
+            if (!config) {
+                log('error', `Unknown verbatim environment "${tag}".`);
+                return {
+                    processed: outerContent ?? innerContent,
+                };
+            }
 
-                const processInner = fullConfig.processInner;
+            const {
+                type,
+                defaultAttributes,
+                respectSelfClosing,
+                selfCloseOutputWith,
+                transformations,
+                component,
+                attributeForwardingAllowlist,
+                attributeForwardingBlocklist,
+            } = config;
 
-                const component = fullConfig.component ?? tag;
+            const { pre, post } = transformations;
 
-                let closingBracket = '>';
-                if (selfClosing && fullConfig.respectSelfClosing) {
-                    if (fullConfig.selfCloseOutputWith === 'auto') {
-                        closingBracket = `${outerContent.match(/\s+\/>\s*$/) ? ' ' : ''}/>`;
-                    } else {
-                        closingBracket = fullConfig.selfCloseOutputWith;
-                    }
+            // Merge default attributes with those provided ad hoc. Shallow
+            // merge is enough, since the attribute values can't be objects.
+            const mergedAttributes = { ...defaultAttributes, ...attributes };
+
+            /**
+             * Unescape options for the processed snippet.
+             */
+            let unescapeOptions: UnescapeOptions | undefined = {
+                removeParagraphTag: !mergedAttributes['inline'],
+            };
+
+            // Apply pre-transformations
+            processed = applyTransformations(processed, options, pre);
+
+            /**
+             * If we should wrap the output in a tag, or return a self-closing
+             * tag, this will be the tag to use. If `component === 'this'`, this
+             * will be the same as the input tag; if `component === 'none'`,
+             * this will be `null`, which will indicate that we shouldn't wrap
+             * the output in a tag.
+             */
+            const outputTag =
+                component === 'this'
+                    ? tag
+                    : component === 'none'
+                      ? null
+                      : component;
+
+            /**
+             * Closing bracket for the opening tag of the output. If we're
+             * expected to return a self-closing tag, this will be set to `'/>'`
+             * or `' />'`; otherwise, it will be set to `'>'`.
+             */
+            let closingBracket: '>' | '/>' | ' />' = '>';
+
+            // If we're supposed to return a self-closing tag, set the closing
+            // bracket accordingly.
+            if (selfClosing && respectSelfClosing) {
+                if (selfCloseOutputWith === 'auto') {
+                    // selfCloseOutputWith is 'auto', so we're expected to look
+                    // at the (self-closing) input tag and check if there was
+                    // whitespace before the closing slash.
+                    const hadSpaceBeforeSlash =
+                        !!outerContent?.match(/\s+\/>\s*$/);
+                    closingBracket = hadSpaceBeforeSlash ? ' />' : '/>';
+                } else {
+                    // selfCloseOutputWith is one of: '/>', ' />'
+                    closingBracket = selfCloseOutputWith;
                 }
+            }
 
-                const filteredMergedAttributes = Object.entries(
-                    mergedAttributes,
-                ).filter(
-                    ([key]) =>
-                        (fullConfig.attributeForwardingAllowlist === 'all' ||
-                            fullConfig.attributeForwardingAllowlist.includes(
-                                key,
-                            )) &&
-                        !fullConfig.attributeForwardingBlocklist.includes(key),
-                );
+            // Filter the attributes to only include those that are allowed by
+            // the allowlist and not blocked by the blocklist. The filtered
+            // attributes will be added to the output tag.
+            const filteredMergedAttributes = Object.entries(
+                mergedAttributes,
+            ).filter(
+                ([key]) =>
+                    (attributeForwardingAllowlist === 'all' ||
+                        attributeForwardingAllowlist.includes(key)) &&
+                    !attributeForwardingBlocklist.includes(key),
+            );
 
-                const returnComponentOpen =
-                    `<${component}` +
+            /**
+             * If we're supposed to...
+             * - wrap the output, then this will be something like
+             *   `<component>`.
+             * - return a self-closing tag, then this will be something like
+             *   `<component/>`.
+             * - return the processed content without wrapping, then this will
+             *   be `''`.
+             */
+            let outputTagOpen: '' | `<${string}${'' | '/' | ' /'}>` = '';
+
+            /**
+             * If we're supposed to...
+             * - wrap the output, then this will be something like
+             *   `</component>`.
+             * - return a self-closing tag, then thiss will be `''`.
+             * - return the processed content without wrapping, then this will
+             *   be `''`.
+             */
+            let outputTagClose: '' | `</${string}>` = '';
+
+            // If `outputTag` is truthy, it means that we're expected to return
+            // either a self-closing tag, or to wrap the processed content with
+            // a tag.
+            if (outputTag) {
+                outputTagOpen =
+                    `<${outputTag}` +
                     (filteredMergedAttributes.length === 0 ? '' : ' ') +
                     filteredMergedAttributes
                         .map(
@@ -172,98 +230,97 @@ export class VerbatimHandler<
                         .join(' ') +
                     closingBracket;
 
-                unescapeOptions = {
-                    removeParagraphTag: !mergedAttributes['inline'],
-                };
-
-                if (selfClosing) {
-                    return {
-                        processed: returnComponentOpen,
-                        unescapeOptions,
-                    };
+                if (!selfClosing || !respectSelfClosing) {
+                    outputTagClose = `</${outputTag}>`;
                 }
+            }
 
-                const returnComponentClose = `</${component}>`;
-
-                if (isSimpleEscapeInstruction(fullConfig.processInner)) {
-                    if (fullConfig.processInner.escapeHtml) {
-                        processed = escapeHtml(processed);
-                    }
-                    // NB: It's important to escape braces _after_ escaping HTML, since
-                    // escaping braces will introduce ampersands which escapeHtml would
-                    // escape
-                    if (fullConfig.processInner.escapeBraces) {
-                        processed = escapeBraces(processed);
-                    }
-                } else if (typeof processInner === 'string') {
-                    if (processInner === 'code') {
-                        const processedSnippet =
-                            await verbatimHandler.codeHandler.process(
-                                innerContent,
-                                { ...mergedAttributes, _wrap: config.wrap },
-                            );
-                        processed = processedSnippet.processed;
-                        unescapeOptions = processedSnippet.unescapeOptions;
-                    }
-                    if (processInner === 'noop') processed = innerContent;
-                } else if (typeof processInner === 'function') {
-                    processed = processInner(innerContent, mergedAttributes);
+            if (type === 'escapeOnly') {
+                typeAssert(is<FullVerbEnvConfigEscapeOnly>(config));
+                if (config.escapeInstructions.escapeHtml) {
+                    processed = escapeHtml(processed);
                 }
-                processed = [
-                    returnComponentOpen,
-                    processed,
-                    returnComponentClose,
-                ].join('');
-            } else {
+                // NB: It's important to escape braces _after_ escaping HTML, since
+                // escaping braces will introduce ampersands which escapeHtml would
+                // escape
+                if (config.escapeInstructions.escapeBraces) {
+                    processed = escapeBraces(processed);
+                }
+            } else if (type === 'code') {
+                typeAssert(is<FullVerbEnvConfigCode>(config));
+                const processedSnippet =
+                    await verbatimHandler.codeHandler.process(innerContent, {
+                        ...mergedAttributes,
+                        _wrap:
+                            selfClosing && respectSelfClosing
+                                ? false
+                                : config.wrap,
+                    });
+                processed = processedSnippet.processed;
+                unescapeOptions = processedSnippet.unescapeOptions;
+            } else if (type === 'advancedTex') {
                 // Advanced TeX Content
+                typeAssert(is<FullVerbEnvConfigAdvancedTex>(config));
                 const res = await verbatimHandler.advancedTexHandler.process(
                     innerContent,
                     {
-                        attributes,
+                        attributes: mergedAttributes,
                         tag,
                         filename: options.filename,
                         selfClosing,
+                        outerContent,
+                        config: config,
                     },
                 );
                 processed = res.processed;
                 unescapeOptions = res.unescapeOptions ?? unescapeOptions;
+            } else if (type === 'custom') {
+                typeAssert(is<FullVerbEnvConfigCustom>(config));
+                processed = config.customProcess(
+                    innerContent,
+                    mergedAttributes,
+                );
+            } else {
+                // type === 'noop'
+                typeAssert(is<FullVerbEnvConfigNoop>(config));
+                processed = innerContent;
             }
+
+            processed = applyTransformations(processed, options, post);
+
+            // If `component !== 'none'`, wrap the processed content in the
+            // output tag, so that `processed` now stores the _outer_ content.
+            if (outputTag) {
+                processed =
+                    selfClosing && respectSelfClosing
+                        ? outputTagOpen
+                        : outputTagOpen + processed + outputTagClose;
+            }
+
             return { processed, unescapeOptions };
         };
         const configure = (
             _configuration: VerbatimConfiguration,
             verbatimHandler: VerbatimHandler<C, A>,
         ) => {
-            const { verbatimEnvironments } = verbatimHandler.configuration;
-            const defaultVerbatimEnvironmentConfiguration =
-                getDefaultVerbatimEnvironmentConfiguration();
+            const verbatimEnvironments = verbatimHandler.configuration;
 
             const verbEnvs = verbatimHandler._verbEnvs;
+            const aliasMap = verbatimHandler._aliasMap;
 
-            const validVerbatimEnvironments: [
-                string,
-                FullVerbatimEnvironmentConfiguration,
-            ][] = Object.entries(verbatimEnvironments)
-                .filter(([env, config]) => {
-                    const diagnosis =
-                        diagnoseVerbatimEnvironmentConfiguration(config);
-                    if (diagnosis.isVerbatimEnvironmentConfiguration) {
-                        return true;
-                    } else {
-                        log(
-                            'error',
-                            `Invalid verbatim environment configuration for "${env}":\n${diagnosis.reasonsForFailure.map((s) => `- ${s}`).join('\n')}\n`,
-                        );
-                        return false;
-                    }
-                })
-                .map(([env, config]) => [
-                    env,
-                    mergeConfigs(
-                        defaultVerbatimEnvironmentConfiguration,
-                        config,
-                    ),
-                ]);
+            const validVerbatimEnvironments: [string, FullVerbEnvConfig][] =
+                Object.entries(verbatimEnvironments)
+                    .filter(
+                        ([env, config]) =>
+                            diagnoseVerbEnvConfig(config, env).errors === 0,
+                    )
+                    .map(([env, config]) => [
+                        env,
+                        mergeConfigs(
+                            getDefaultVerbEnvConfig(config.type),
+                            config,
+                        ) as FullVerbEnvConfig,
+                    ]);
 
             // Add "main" names of verbatim environments
             for (const [env, config] of validVerbatimEnvironments) {
@@ -281,6 +338,7 @@ export class VerbatimHandler<
                             duplicates.push(alias);
                         }
                         verbEnvs.set(alias, config);
+                        aliasMap.set(alias, env);
                     }
                 }
             }
@@ -324,7 +382,7 @@ export class VerbatimHandler<
     }) {
         super({
             backend: backend ?? 'verbatim',
-            configuration: configuration ?? { verbatimEnvironments: {} },
+            configuration: configuration ?? {},
             process,
             processor: processor ?? {},
             configure,
@@ -333,8 +391,19 @@ export class VerbatimHandler<
         this.advancedTexHandler = advancedTexHandler;
     }
 
-    private _verbEnvs: Map<string, FullVerbatimEnvironmentConfiguration> =
-        new Map<string, FullVerbatimEnvironmentConfiguration>();
+    private _verbEnvs: Map<string, FullVerbEnvConfig> = new Map<
+        string,
+        FullVerbEnvConfig
+    >();
+
+    /**
+     * Map from aliases to verbatim environment config name (i.e., map from
+     * aliases to the key of the verbatim environment config within the
+     * `verbatim` prop of the Sveltex config wherein the alias was defined in
+     * the first place). If aliases conflict, the last one defined will take
+     * precedence.
+     */
+    private _aliasMap: Map<string, string> = new Map<string, string>();
 
     /**
      * Verbatim environments.
@@ -343,7 +412,7 @@ export class VerbatimHandler<
      * Mutating this object won't have any effect on the
      * {@link _verbEnvs | `_verbEnvs`} property.
      */
-    get verbEnvs(): Map<string, FullVerbatimEnvironmentConfiguration> {
+    get verbEnvs(): Map<string, FullVerbEnvConfig> {
         return deepClone(this._verbEnvs);
     }
 }

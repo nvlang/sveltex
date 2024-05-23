@@ -1,3 +1,4 @@
+import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 import { resolve, rimraf } from '$deps.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spy } from '$tests/fixtures.js';
@@ -5,6 +6,7 @@ import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { unescapeCssColorVars } from '$utils/css.js';
 import { pathExists } from '$utils/fs.js';
+import { mergeConfigs } from '$utils/merge.js';
 import { sha256 } from '$utils/misc.js';
 import {
     afterAll,
@@ -19,7 +21,9 @@ import {
 } from 'vitest';
 
 let ath: AdvancedTexHandler<'local'>;
-let tc: TexComponent<'local'>;
+let tc: TexComponent;
+
+const defaultConfig = getDefaultVerbEnvConfig('advancedTex');
 
 async function setup(hash: string) {
     if (pathExists(`tmp/tests-${hash}`)) {
@@ -27,7 +31,6 @@ async function setup(hash: string) {
     }
     ath = await AdvancedTexHandler.create('local');
     await ath.configure({
-        components: { tex: {} },
         cacheDirectory: `tmp/tests-${hash}/cache`,
         outputDirectory: `tmp/tests-${hash}/output`,
     });
@@ -36,6 +39,7 @@ async function setup(hash: string) {
         filename: 'TexComponent_test_ts.sveltex',
         selfClosing: false,
         tag: 'tex',
+        config: getDefaultVerbEnvConfig('advancedTex'),
     });
     vi.clearAllMocks();
     tmpTestsDir = `tmp/tests-${hash}`;
@@ -111,6 +115,7 @@ describe('TexComponent', () => {
                             attributes,
                             filename: 'TexComponent_test_ts.sveltex',
                             selfClosing: false,
+                            config: defaultConfig,
                         }),
                     ).toThrowError(/ref.*attribute/isu);
                 },
@@ -122,13 +127,17 @@ describe('TexComponent', () => {
         fixture();
         it('should correctly set configuration', async () => {
             const ath = await AdvancedTexHandler.create('local');
-            const tc = TexComponent.create<'local'>({
+            const tc = TexComponent.create({
                 advancedTexHandler: ath,
-                tag: 'div',
                 attributes: { ref: 'ref' },
                 tex: '',
+                config: defaultConfig,
+                tag: 'tex',
             });
-            tc.configuration = { aliases: ['SomethingElse'] };
+            tc.configuration = {
+                type: 'advancedTex',
+                aliases: ['SomethingElse'],
+            };
             expect(tc.configuration.aliases).toEqual(['SomethingElse']);
         });
     });
@@ -221,7 +230,7 @@ describe('TexComponent', () => {
             expect(log).toHaveBeenCalledWith(
                 'error',
                 expect.stringMatching(
-                    /✖ Error while reading tmp\/tests-.*\/cache\/tex\/TexComponent_test_ref\/root.pdf/,
+                    /✖ Error while reading tmp\/tests-.*\/cache\/tex\/TexComponent_test_ref\/root.(dvi|pdf)/,
                 ),
                 expect.stringContaining(
                     'Error: ENOENT: no such file or directory',
@@ -249,7 +258,7 @@ describe('TexComponent', () => {
                 1,
                 'error',
                 expect.stringContaining(
-                    `✖ Error converting ${tmpTestsDir}/cache/tex/TexComponent_test_ref/root.pdf`,
+                    `✖ Error converting ${tmpTestsDir}/cache/tex/TexComponent_test_ref/root.dvi`,
                 ),
                 expect.stringContaining(
                     'Error: ENOENT: no such file or directory',
@@ -272,7 +281,9 @@ describe('TexComponent', () => {
             expect(writeFile).toHaveBeenNthCalledWith(
                 2,
                 `${tmpTestsDir}/cache/cache.json`,
-                '{"int":{"tex/TexComponent_test_ref":{"sourceHash":"84oQdkLNva39DF_TvAx6Rb39qd0Ml7QemlCu9Zds3nY","hash":"xItOhLUMPCyteMUX4EXGHuxe39GTOkpf8w0G8dU6src"}},"svg":{}}',
+                expect.stringMatching(
+                    /{"int":{"tex\/TexComponent_test_ref":{"sourceHash":".+?","hash":".+?"}},"svg":{}}/,
+                ),
                 'utf8',
             );
         });
@@ -306,7 +317,9 @@ describe('TexComponent', () => {
             expect(writeFile).toHaveBeenNthCalledWith(
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
-                '{"int":{"tex/TexComponent_test_ref":{"sourceHash":"84oQdkLNva39DF_TvAx6Rb39qd0Ml7QemlCu9Zds3nY","hash":"GzbtTYgwJ_sC8wsgEaT_ATk_A5otgMMJMngvHUToHPI"}},"svg":{"tex/TexComponent_test_ref":{"sourceHash":"GzbtTYgwJ_sC8wsgEaT_ATk_A5otgMMJMngvHUToHPI"}}}',
+                expect.stringMatching(
+                    /{"int":{"tex\/TexComponent_test_ref":{"sourceHash":".+?","hash":"(.+?)"}},"svg":{"tex\/TexComponent_test_ref":{"sourceHash":"\1"}}}/,
+                ),
                 'utf8',
             );
             expect(spawnCliInstruction).toHaveBeenCalledTimes(2);
@@ -320,6 +333,7 @@ describe('TexComponent', () => {
                 filename: 'TexComponent_test_ts.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                config: defaultConfig,
             });
             await tc.compile();
             expect(writeFile).toHaveBeenCalledTimes(5);
@@ -330,24 +344,22 @@ describe('TexComponent', () => {
             readFile
                 .mockResolvedValueOnce('test-pdf')
                 .mockResolvedValueOnce('test-svg');
-            await ath.configure({
-                // caching: false,
-                components: {
-                    tex: {
-                        overrides: {
-                            overrideCompilationCommand: { command: 'echo' },
-                            overrideConversionCommand: { command: 'ls' },
-                            overrideSvgPostprocess: () => 'optimized svg',
-                        },
-                    },
-                },
-            });
 
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            overrideCompilationCommand: { command: 'echo' },
+                            overrideConversionCommand: { command: 'ls' },
+                            overrideSvgPostprocess: () => 'optimized svg',
+                        },
+                    },
+                ),
             });
             const code = await tc.compile();
             expect(code).toEqual(0);
@@ -360,17 +372,17 @@ describe('TexComponent', () => {
                     FILENAME_BASE: 'root',
                     FILEPATH: tc.source.texPath,
                     OUTDIR: tc.source.dir,
-                    OUTFILETYPE: 'pdf',
+                    OUTFILETYPE: 'dvi',
                     SOURCE_DATE_EPOCH: '1',
                 },
             });
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(2, {
                 command: 'ls',
                 env: {
-                    FILENAME: 'root.pdf',
+                    FILENAME: 'root.dvi',
                     FILENAME_BASE: 'root',
                     FILEPATH: tc.source.intPath,
-                    FILETYPE: 'pdf',
+                    FILETYPE: 'dvi',
                     OUTDIR: `${tmpTestsDir}/output/tex`,
                     OUTFILEPATH: `${tmpTestsDir}/output/tex/ref.svg`,
                 },
@@ -394,21 +406,20 @@ describe('TexComponent', () => {
 
         it('should log error if plain tex is used and pdf output is requested', async () => {
             const ath = await AdvancedTexHandler.create('local');
-            await ath.configure({
-                components: {
-                    tex: {
-                        overrides: {
-                            engine: 'tex',
-                            intermediateFiletype: 'pdf',
-                        },
-                    },
-                },
-            });
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            engine: 'tex',
+                            intermediateFiletype: 'pdf',
+                        },
+                    },
+                ),
             });
             tc.compileCmd;
             expect(log).toHaveBeenCalledOnce();
@@ -420,24 +431,21 @@ describe('TexComponent', () => {
 
         it('should add the right output flags for lualatexmk (pdf)', async () => {
             const ath = await AdvancedTexHandler.create('local');
-            await ath.configure({
-                // caching: false,
-                components: {
-                    tex: {
-                        overrides: {
-                            // caching: false,
-                            engine: 'lualatexmk',
-                            intermediateFiletype: 'pdf',
-                            saferLua: true,
-                        },
-                    },
-                },
-            });
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            engine: 'lualatexmk',
+                            intermediateFiletype: 'pdf',
+                            saferLua: true,
+                        },
+                    },
+                ),
             });
             expect(tc.compileCmd.args).toContain('-safer');
             expect(tc.compileCmd.args).toContain('-pdflua');
@@ -471,23 +479,20 @@ describe('TexComponent', () => {
 
         it.each(cases)(`should add $flag flag`, async (data) => {
             const ath = await AdvancedTexHandler.create('local');
-            await ath.configure({
-                // caching: false,
-                components: {
-                    tex: {
-                        overrides: {
-                            // caching: false,
-                            engine: data.engine ?? 'lualatex',
-                            [data.option]: data.value,
-                        },
-                    },
-                },
-            });
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            engine: data.engine ?? 'lualatex',
+                            [data.option]: data.value,
+                        },
+                    },
+                ),
             });
             expect(tc.compileCmd.args).toContain(data.flag);
         });

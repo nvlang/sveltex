@@ -12,7 +12,7 @@ import type {
 } from '$types/handlers/Code.js';
 
 // Internal dependencies
-import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$config/defaults.js';
 import { Handler } from '$handlers/Handler.js';
 import { isThemableCodeBackend } from '$type-guards/code.js';
 import { isArray } from '$type-guards/utils.js';
@@ -64,7 +64,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             if (options) opts = mergeConfigs(opts, options);
 
             let processed = code;
-            if (opts.inline) processed = processed.replace(/\r\n?|\n/gu, ' ');
+            if (opts.inline) {
+                processed = processed.replace(/\r\n?|\n/gu, ' ');
+            }
             const unescapeOptions: UnescapeOptions = {
                 removeParagraphTag: !opts.inline,
             };
@@ -81,24 +83,22 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
             const configuration = this.configuration;
 
-            typeAssert(
-                is<FullCodeConfiguration<ThemableCodeBackend>>(configuration),
-            );
-
             const wrapArray = configuration.wrap({
                 ...opts,
                 wrapClassPrefix: configuration.wrapClassPrefix,
             });
 
-            // Ensure that fenced code blocks end with newline
-            const n =
-                !opts.inline &&
-                // !processed.match(/(\r\n?|\n)\s*$/u) &&
-                processed !== ''
-                    ? '\n'
-                    : '';
+            if (!opts.inline) {
+                processed = processed.replace(
+                    /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
+                    '$1',
+                );
+                if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
+                    processed += '\n';
+                }
+            }
 
-            processed = wrapArray[0] + processed + n + wrapArray[1];
+            processed = wrapArray[0] + processed + wrapArray[1];
 
             return { processed, unescapeOptions };
         };
@@ -254,7 +254,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     process: custom.process,
                     configure: custom.configure ?? (() => undefined),
                     configuration: mergeConfigs(
-                        getDefaultCodeConfiguration('custom'),
+                        getDefaultCodeConfig('custom'),
                         custom.configuration ?? {},
                     ),
                 });
@@ -265,8 +265,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     const handler = new CodeHandler<Backend>({
                         backend: 'highlight.js',
                         processor,
-                        configuration:
-                            getDefaultCodeConfiguration('highlight.js'),
+                        configuration: getDefaultCodeConfig('highlight.js'),
                         process: (code, { lang }, codeHandler) => {
                             return escapeBraces(
                                 codeHandler.processor.highlight(code, {
@@ -327,7 +326,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                                 ),
                             );
                         },
-                        configuration: getDefaultCodeConfiguration('prismjs'),
+                        configuration: getDefaultCodeConfig('prismjs'),
                         // configure: (config, codeHandler) => {
                         //     // if (config.languages === 'all') {
                         //     //     codeHandler.processor.loadLanguages();
@@ -397,8 +396,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             ]);
                             return customEscapeSequencesToHtml(toHtml(hast));
                         },
-                        configuration:
-                            getDefaultCodeConfiguration('starry-night'),
+                        configuration: getDefaultCodeConfig('starry-night'),
                         configure: async (config, codeHandler) => {
                             if (config.customLanguages) {
                                 await codeHandler.processor.register(
@@ -475,7 +473,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     backend: 'escapeOnly',
                     processor: {},
                     configuration: {
-                        ...getDefaultCodeConfiguration('escapeOnly'),
+                        ...getDefaultCodeConfig('escapeOnly'),
                         escapeHtml: true,
                         escapeBraces: true,
                     },

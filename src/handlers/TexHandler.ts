@@ -21,11 +21,12 @@ import { escapeBraces } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
 import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { copyTransformation, prefixWithSlash } from '$utils/misc.js';
+import { copyTransformations, prefixWithSlash } from '$utils/misc.js';
 
 // External dependencies
 import { CleanCSS, Output, typeAssert, is, join, prettyBytes } from '$deps.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
+import { applyTransformations } from '$utils/transformations.js';
 
 export class TexHandler<
     B extends TexBackend,
@@ -50,16 +51,12 @@ export class TexHandler<
         if (isOneOf(this.backend, ['mathjax', 'katex'])) {
             typeAssert(is<TexHandler<'mathjax' | 'katex'>>(this));
             clone.transformations = {
-                pre: [
-                    ...this._configuration.transformations.pre.map(
-                        copyTransformation,
-                    ),
-                ],
-                post: [
-                    ...this._configuration.transformations.post.map(
-                        copyTransformation,
-                    ),
-                ],
+                pre: copyTransformations(
+                    this._configuration.transformations.pre,
+                ),
+                post: copyTransformations(
+                    this._configuration.transformations.post,
+                ),
             };
         }
 
@@ -258,11 +255,11 @@ export class TexHandler<
 
                     // Apply pre-transformations
                     let transformedTex = tex;
-                    transformations.pre.forEach((transformation) => {
-                        transformedTex = transformedTex.replaceAll(
-                            ...transformation,
-                        );
-                    });
+                    transformedTex = applyTransformations(
+                        transformedTex,
+                        { inline: inline !== false },
+                        transformations.pre,
+                    );
 
                     // Escape CSS color variables
                     const { escaped, cssColorVars } =
@@ -288,9 +285,11 @@ export class TexHandler<
                     output = unescapeCssColorVars(output, cssColorVars);
 
                     // Apply post-transformations
-                    transformations.post.forEach((transformation) => {
-                        output = output.replaceAll(...transformation);
-                    });
+                    output = applyTransformations(
+                        output,
+                        { inline: inline !== false },
+                        transformations.post,
+                    );
 
                     // Return result, escaping braces (which might otherwise
                     // confuse Svelte).
@@ -519,11 +518,11 @@ export class TexHandler<
 
                         // Apply pre-transformations
                         let transformedTex = tex;
-                        transformations.pre.forEach((transformation) => {
-                            transformedTex = transformedTex.replaceAll(
-                                ...transformation,
-                            );
-                        });
+                        transformedTex = applyTransformations(
+                            transformedTex,
+                            { inline: inline !== false },
+                            transformations.pre,
+                        );
 
                         // Run MathJax
                         const result = await texHandler.processor.convert(
@@ -549,11 +548,11 @@ export class TexHandler<
                         let output = adaptor.outerHTML(result);
 
                         // Apply post-transformations
-                        transformations.post.forEach((transformation) => {
-                            output = output.replaceAll(
-                                ...(transformation as [RegExp, string]),
-                            );
-                        });
+                        output = applyTransformations(
+                            output,
+                            { inline: inline !== false },
+                            transformations.post,
+                        );
 
                         // Return result, escaping braces (which might otherwise
                         // confuse Svelte).

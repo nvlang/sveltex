@@ -23,6 +23,8 @@ export type {
     Code as MdastCodeNode,
     InlineCode as MdastInlineCodeNode,
     Root as MdastRoot,
+    Yaml as MdastYaml,
+    Literal as MdastLiteral,
 } from 'mdast';
 
 /**
@@ -106,4 +108,12 @@ export { is, assert as typeAssert, type Equals, type Extends } from 'tsafe';
 export type { Node as UnistNode } from 'unist';
 export { v4 as uuid } from 'uuid';
 export { default as XRegExp } from 'xregexp';
-export { default as YAML } from 'yaml';
+export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
+export {
+    frontmatterFromMarkdown as mdastFrontmatterFromMarkdown,
+    frontmatterToMarkdown as mdastFrontmatterToMarkdown,
+} from 'mdast-util-frontmatter';
+
+// Parsers for frontmatter
+export { load as parseYaml } from 'js-yaml';
+export { parse as parseToml } from 'smol-toml';

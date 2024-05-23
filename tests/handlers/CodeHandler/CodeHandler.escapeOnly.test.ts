@@ -36,6 +36,17 @@ describe("CodeHandler<'escapeOnly'>", () => {
                     '<pre><code class="language-plaintext">a &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
                 expect(output).toEqual(expected);
             });
+
+            it('understands `_wrap` option', async () => {
+                const output = (
+                    await handler.process('a <b> {c}', {
+                        lang: 'plaintext',
+                        _wrap: false,
+                    })
+                ).processed;
+                const expected = 'a &lt;b&gt; &lbrace;c&rbrace;';
+                expect(output).toEqual(expected);
+            });
         });
 
         describe('configure()', () => {

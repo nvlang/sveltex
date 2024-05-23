@@ -7,17 +7,16 @@ import type {
     AdvancedTexProcessOptions,
     AdvancedTexProcessor,
     FullAdvancedTexConfiguration,
-    TexComponentConfiguration,
     TexComponentImportInfo,
 } from '$types/handlers/AdvancedTex.js';
 
 // Internal dependencies
-import { getDefaultAdvancedTexConfiguration } from '$config/defaults.js';
+import { getDefaultTexLiveConfig } from '$config/defaults.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { SveltexCache } from '$utils/cache.js';
-import { log } from '$utils/debug.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { Handler } from '$handlers/Handler.js';
+import { is, nodeAssert, typeAssert } from '$deps.js';
 
 export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
     B,
@@ -53,98 +52,98 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
         };
     }
 
-    /**
-     * TeX component configurations map.
-     *
-     * - key: component configuration name
-     * - val: component configuration
-     */
-    private _tccMap: Map<string, TexComponentConfiguration<B>> = new Map<
-        string,
-        TexComponentConfiguration<B>
-    >();
+    // /**
+    //  * TeX component configurations map.
+    //  *
+    //  * - key: component configuration name
+    //  * - val: component configuration
+    //  */
+    // private _tccMap: Map<string, TexComponentConfiguration<B>> = new Map<
+    //     string,
+    //     TexComponentConfiguration<B>
+    // >();
 
-    private _tccNames: string[] = [];
+    // private _tccNames: string[] = [];
 
-    /**
-     * Copy of the {@link _tccNames | `_tccNames`} property.
-     *
-     * @remarks Mutating this array will not affect the `_tccNames` property.
-     */
-    public get tccNames(): string[] {
-        return [...this._tccNames];
-    }
+    // /**
+    //  * Copy of the {@link _tccNames | `_tccNames`} property.
+    //  *
+    //  * @remarks Mutating this array will not affect the `_tccNames` property.
+    //  */
+    // public get tccNames(): string[] {
+    //     return [...this._tccNames];
+    // }
 
-    private _tccAliases: string[] = [];
+    // private _tccAliases: string[] = [];
 
-    /**
-     * Copy of the {@link _tccAliases | `_tccAliases`} property.
-     *
-     * @remarks Mutating this array will not affect the `_tccAliases` property.
-     */
-    public get tccAliases(): string[] {
-        return [...this._tccAliases];
-    }
+    // /**
+    //  * Copy of the {@link _tccAliases | `_tccAliases`} property.
+    //  *
+    //  * @remarks Mutating this array will not affect the `_tccAliases` property.
+    //  */
+    // public get tccAliases(): string[] {
+    //     return [...this._tccAliases];
+    // }
 
-    private readonly tccAliasToNameMap: Map<string, string> = new Map<
-        string,
-        string
-    >();
+    // private readonly tccAliasToNameMap: Map<string, string> = new Map<
+    //     string,
+    //     string
+    // >();
 
-    set tccMap(tccs: Record<string, TexComponentConfiguration<B>> | null) {
-        if (tccs === null) {
-            // Reset tccMap, tccNames, tccAliases, and tccAliasToNameMap
-            this._tccMap = new Map<string, TexComponentConfiguration<B>>();
-            this._tccNames = [];
-            this._tccAliases = [];
-            this.tccAliasToNameMap.clear();
-            return;
-        }
+    // set tccMap(tccs: Record<string, TexComponentConfiguration<B>> | null) {
+    //     if (tccs === null) {
+    //         // Reset tccMap, tccNames, tccAliases, and tccAliasToNameMap
+    //         this._tccMap = new Map<string, TexComponentConfiguration<B>>();
+    //         this._tccNames = [];
+    //         this._tccAliases = [];
+    //         this.tccAliasToNameMap.clear();
+    //         return;
+    //     }
 
-        const components = new Map<string, TexComponentConfiguration<B>>();
+    //     const components = new Map<string, TexComponentConfiguration<B>>();
 
-        // Add "main" names of tex components
-        for (const [name, config] of Object.entries(tccs)) {
-            components.set(name, config);
-            if (!this._tccNames.includes(name)) {
-                this._tccNames.push(name);
-            }
-        }
+    //     // Add "main" names of tex components
+    //     for (const [name, config] of Object.entries(tccs)) {
+    //         components.set(name, config);
+    //         if (!this._tccNames.includes(name)) {
+    //             this._tccNames.push(name);
+    //         }
+    //     }
 
-        // Array to store duplicate aliases, for logging
-        const duplicates: string[] = [];
+    //     // Array to store duplicate aliases, for logging
+    //     const duplicates: string[] = [];
 
-        // Add aliases, and check for duplicates
-        for (const [name, config] of Object.entries(tccs)) {
-            if (typeof config === 'object' && 'aliases' in config) {
-                for (const alias of config.aliases) {
-                    if (alias !== name) {
-                        if (components.has(alias)) {
-                            duplicates.push(alias);
-                        }
-                        this.tccAliasToNameMap.set(alias, name);
-                        if (!this._tccAliases.includes(alias)) {
-                            this._tccAliases.push(alias);
-                        }
-                    }
-                }
-            }
-        }
+    //     // Add aliases, and check for duplicates
+    //     for (const [name, config] of Object.entries(tccs)) {
+    //         if (typeof config === 'object' && 'aliases' in config) {
+    //             for (const alias of config.aliases) {
+    //                 if (alias !== name) {
+    //                     if (components.has(alias)) {
+    //                         duplicates.push(alias);
+    //                     }
+    //                     this.tccAliasToNameMap.set(alias, name);
+    //                     if (!this._tccAliases.includes(alias)) {
+    //                         this._tccAliases.push(alias);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        // Log error about duplicates, if present
-        [...new Set(duplicates)].forEach((alias) => {
-            log(
-                'error',
-                `Duplicate advanced TeX component name/alias "${alias}".`,
-            );
-        });
+    //     // Log error about duplicates, if present
+    //     [...new Set(duplicates)].forEach((alias) => {
+    //         log(
+    //             'error',
+    //             `Duplicate advanced TeX component name/alias "${alias}".`,
+    //         );
+    //     });
 
-        this._tccMap = components;
-    }
+    //     this._tccMap = components;
+    // }
 
-    get tccMap(): Map<string, TexComponentConfiguration<B>> {
-        return this._tccMap;
-    }
+    // get tccMap(): Map<string, TexComponentConfiguration<B>> {
+    //     return this._tccMap;
+    // }
 
     /**
      * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the
@@ -186,20 +185,20 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
      */
     texComponents: Record<string, TexComponentImportInfo[]>;
 
-    /**
-     * Resolves an alias to the name of the component it refers to. If the input
-     * string is already a component name, it is returned as is. If the input
-     * string is neither a component name nor an alias, 'unknown' is returned.
-     *
-     * @param alias - The alias to resolve.
-     * @returns The name of the component the alias refers to.
-     */
-    resolveTccAlias(alias: string): string {
-        return (
-            this.tccAliasToNameMap.get(alias) ??
-            (this._tccNames.includes(alias) ? alias : 'unknown')
-        );
-    }
+    // /**
+    //  * Resolves an alias to the name of the component it refers to. If the input
+    //  * string is already a component name, it is returned as is. If the input
+    //  * string is neither a component name nor an alias, 'unknown' is returned.
+    //  *
+    //  * @param alias - The alias to resolve.
+    //  * @returns The name of the component the alias refers to.
+    //  */
+    // resolveTccAlias(alias: string): string {
+    //     return (
+    //         this.tccAliasToNameMap.get(alias) ??
+    //         (this._tccNames.includes(alias) ? alias : 'unknown')
+    //     );
+    // }
 
     /**
      * Notes a tex component in a file.
@@ -231,11 +230,13 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
     createTexComponent(
         content: string,
         options: AdvancedTexProcessOptions,
-    ): TexComponent<B> {
+    ): TexComponent {
+        nodeAssert(this.backend === 'local');
+        typeAssert(is<AdvancedTexHandler<'local'>>(this));
         return TexComponent.create({
             ...options,
             tex: content,
-            advancedTexHandler: this,
+            advancedTexHandler: this as AdvancedTexHandler<'local'>,
         });
     }
 
@@ -273,7 +274,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
         backend: B;
         process: AdvancedTexProcessFn<B>;
         processor: AdvancedTexProcessor;
-        configure: AdvancedTexConfigureFn<B>;
+        configure?: AdvancedTexConfigureFn<B>;
         configuration: FullAdvancedTexConfiguration<B>;
         texComponents: Record<string, TexComponentImportInfo[]>;
     }) {
@@ -348,7 +349,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                     process: custom.process,
                     configure: custom.configure ?? (() => undefined),
                     configuration: mergeConfigs(
-                        getDefaultAdvancedTexConfiguration('custom'),
+                        getDefaultTexLiveConfig('custom'),
                         custom.configuration ?? {},
                     ),
                     texComponents: {},
@@ -380,22 +381,21 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                         );
                         return tc.outputString;
                     };
-                    const configure = (
-                        _configuration: AdvancedTexConfiguration<'local'>,
-                        advancedTexHandler: AdvancedTexHandler<'local'>,
-                    ) => {
-                        advancedTexHandler.tccMap =
-                            _configuration.components === null
-                                ? null
-                                : advancedTexHandler.configuration.components;
-                    };
-                    const configuration =
-                        getDefaultAdvancedTexConfiguration('local');
+                    // const configure = (
+                    //     _configuration: AdvancedTexConfiguration<'local'>,
+                    //     advancedTexHandler: AdvancedTexHandler<'local'>,
+                    // ) => {
+                    //     advancedTexHandler.tccMap =
+                    //         _configuration.components === null
+                    //             ? null
+                    //             : advancedTexHandler.configuration.components;
+                    // };
+                    const configuration = getDefaultTexLiveConfig('local');
                     ath = new AdvancedTexHandler({
                         backend: 'local',
                         process,
                         processor: {},
-                        configure,
+                        // configure,
                         configuration,
                         texComponents: {},
                     });
@@ -407,7 +407,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                     process: (tex: string) => tex,
                     configure: () => undefined,
                     processor: {},
-                    configuration: getDefaultAdvancedTexConfiguration('none'),
+                    configuration: getDefaultTexLiveConfig('none'),
                     texComponents: {},
                 });
                 break;

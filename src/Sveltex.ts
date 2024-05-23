@@ -41,6 +41,7 @@ import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
 import { MagicString, is, typeAssert } from '$deps.js';
+import { handleFrontmatter } from '$utils/frontmatter.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -168,6 +169,8 @@ export class Sveltex<
         if (this.codePresent[filename]) {
             script.push(...this.codeHandler.scriptLines);
         }
+        // From frontmatter
+        script.push(...(this.scriptLines[filename] ?? []));
 
         if (script.length === 0) return;
 
@@ -208,6 +211,8 @@ export class Sveltex<
 
     private codePresent: Record<string, boolean> = {};
     private texPresent: Record<string, boolean> = {};
+
+    private scriptLines: Record<string, string[]> = {};
 
     /**
      * @param content - The whole Svelte file content.
@@ -253,10 +258,11 @@ export class Sveltex<
                 content,
                 [
                     ...this.verbatimHandler.verbEnvs.keys(),
-                    ...this.advancedTexHandler.tccNames,
-                    ...this.advancedTexHandler.tccAliases,
+                    // ...this.advancedTexHandler.tccNames,
+                    // ...this.advancedTexHandler.tccAliases,
                 ],
                 this.configuration.general.tex,
+                this._verbatimHandler.verbEnvs,
             );
 
             let headId: string | undefined = undefined;
@@ -266,6 +272,8 @@ export class Sveltex<
 
             let codePresent = false;
             let texPresent = false;
+
+            const headLines: string[] = [];
 
             // Step 2: Process the saved matches.
             const processedSnippets: [string, ProcessedSnippet][] = [];
@@ -298,6 +306,18 @@ export class Sveltex<
                             snippet.processable
                                 .optionsForProcessor as TexProcessOptions<T>,
                         );
+                    } else if (snippet.type === 'frontmatter') {
+                        typeAssert(is<Snippet<'frontmatter'>>(snippet));
+                        const handledFrontmatter = handleFrontmatter(
+                            snippet.processable,
+                        );
+                        headLines.push(...handledFrontmatter.headLines);
+                        this.scriptLines[filename] =
+                            handledFrontmatter.scriptLines;
+                        processedSnippet = {
+                            processed: '',
+                            unescapeOptions,
+                        };
                     } else {
                         typeAssert(
                             is<Snippet<'svelte' | 'mustacheTag'>>(snippet),
@@ -333,7 +353,6 @@ export class Sveltex<
             // temporarily disable the `no-unnecessary-condition` rule to avoid
             // the warning.
             /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-            const headLines: string[] = [];
             if (texPresent) {
                 this.texPresent[filename] = true;
                 headLines.push(...this.texHandler.headLines);

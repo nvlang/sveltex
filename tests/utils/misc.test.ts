@@ -6,6 +6,7 @@ import {
     sha256,
     copyTransformation,
     isValidComponentName,
+    copyTransformations,
 } from '$utils/misc.js';
 import { spy } from '$tests/fixtures.js';
 import {
@@ -18,8 +19,8 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import type { Transformation } from '$types/handlers/Tex.js';
 import { interpretString, interpretAttributes } from '$utils/parseComponent.js';
+import { Transformation } from '$types/handlers/misc.js';
 
 describe.concurrent('utils/misc', () => {
     let log: MockInstance;
@@ -237,7 +238,7 @@ describe.concurrent('utils/misc', () => {
 
     describe.each([
         [/a/, 'b'],
-        [/$.*(\[)-+/gmsu, '$$1$'],
+        [/.*(\[)-+/gmsu, 'b'],
         ['abc', 'def'],
     ])('copyTransformation([%o, %o])', (r, s) => {
         it('should return equivalent transformation', () => {
@@ -246,6 +247,42 @@ describe.concurrent('utils/misc', () => {
         it('should not return reference to original transformation', () => {
             const t: Transformation = [r, s];
             expect(copyTransformation(t)).not.toBe(t);
+        });
+    });
+
+    describe.each([(str: string) => str + str])(
+        'copyTransformation(%s)',
+        (t) => {
+            it('should return equivalent transformation', () => {
+                expect(copyTransformation(t)).toEqual(t);
+            });
+            it('should return reference to original transformation', () => {
+                expect(copyTransformation(t)).toBe(t);
+            });
+        },
+    );
+
+    describe.each([
+        [[/a/, 'b']],
+        [[/.*(\[)-+/gmsu, 'b']],
+        [['abc', 'def']],
+    ] as Transformation[][])('copyTransformations([%o, %o])', (t) => {
+        it('should return equivalent transformation', () => {
+            expect(copyTransformations(t)).toEqual(t);
+        });
+        it('should not return reference to original transformation', () => {
+            expect(copyTransformations(t)).not.toBe(t);
+        });
+    });
+
+    describe.each([
+        [(str: string) => str + str, (str: string) => 'a' + str + 'b'],
+    ])('copyTransformations(%s)', (t) => {
+        it('should return equivalent transformation', () => {
+            expect(copyTransformations(t)).toEqual(t);
+        });
+        it('should return reference to original transformation', () => {
+            expect(copyTransformations(t)).toBe(t);
         });
     });
 });

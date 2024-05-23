@@ -3,65 +3,8 @@ import {
     isDvisvgmOptions,
     isSimpleEscapeInstruction,
     isSupportedTexEngine,
-    isTexLiveConfig,
-    isVerbatimEnvironmentConfiguration,
 } from '$type-guards/verbatim.js';
-import type { VerbatimEnvironmentConfiguration } from '$types/handlers/Verbatim.js';
 import { describe, expect, it } from 'vitest';
-
-describe('isVerbatimEnvironmentConfiguration', () => {
-    const verbatimEnvironmentConfigurations: VerbatimEnvironmentConfiguration[] =
-        [
-            {
-                processInner: {},
-            },
-            {
-                processInner: {
-                    escapeBraces: true,
-                    escapeHtml: true,
-                },
-            },
-            {
-                respectSelfClosing: true,
-                selfCloseOutputWith: '/>',
-                processInner: 'code',
-            },
-            {
-                processInner: 'noop',
-            },
-            {},
-        ];
-    it.each([
-        ...verbatimEnvironmentConfigurations,
-        {
-            processInner: 'noop',
-            // someUnknownProperty: 'value',
-        },
-    ])(
-        'should return true for valid VerbatimEnvironmentCode objects (%o)',
-        (config) => {
-            expect(isVerbatimEnvironmentConfiguration(config)).toBe(true);
-        },
-    );
-
-    it.each([
-        {
-            processInner: {
-                escapeBraces: 'true',
-                escapeHtml: true,
-            },
-        },
-        {
-            selfCloseOutputWith: '/>',
-            processInner: false,
-        },
-    ])(
-        'should return false for invalid VerbatimEnvironmentCode objects (%o)',
-        (config) => {
-            expect(isVerbatimEnvironmentConfiguration(config)).toBe(false);
-        },
-    );
-});
 
 describe('isCliInstruction', () => {
     it.each([{ command: 'echo' }, { command: 'echo', args: ['something'] }])(
@@ -112,22 +55,6 @@ describe('isSupportedTexEngine', () => {
         'should return false for invalid SupportedTexEngine strings (%o)',
         (engine) => {
             expect(isSupportedTexEngine(engine)).toBe(false);
-        },
-    );
-});
-
-describe('isTexLiveConfig', () => {
-    it.each([{}, { shellEscape: 'restricted' }])(
-        'should return true for valid TexLiveConfig objects (%o)',
-        (config) => {
-            expect(isTexLiveConfig(config)).toBe(true);
-        },
-    );
-
-    it.each([null, '', 123, 'something', undefined])(
-        'should return false for invalid TexLiveConfig objects (%o)',
-        (config) => {
-            expect(isTexLiveConfig(config)).toBe(false);
         },
     );
 });

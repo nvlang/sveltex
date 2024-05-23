@@ -36,7 +36,7 @@ alphabetical order):
     </Step>
     <Step title="Tell Sveltex to use Markdown-it and customize away!" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
 
         export const sveltexPreprocessor = await sveltex({
             texBackend: 'katex',
@@ -72,7 +72,7 @@ alphabetical order):
     </Step>
     <Step title="Tell SvelTeX to use MathJax" >
         ```js sveltex.config.js
-        import { sveltex } from 'sveltex-preprocess';
+        import { sveltex } from '@nvl/sveltex';
 
         export const sveltexPreprocessor = await sveltex({
             texBackend: 'mathjax',

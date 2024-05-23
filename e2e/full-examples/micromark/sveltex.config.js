@@ -55,7 +55,7 @@ await sveltexPreprocessor.configure({
     verbatim: {
         verbatimEnvironments: {
             Verb: {
-                processInner: {
+                type: {
                     escapeBraces: true,
                     escapeHtml: true,
                 },

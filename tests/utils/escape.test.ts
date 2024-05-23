@@ -398,6 +398,21 @@ describe.concurrent.shuffle('escapeSnippets()', () => {
             document: 'a b c',
             type: 'svelte',
             original: { loc: { start: 2, end: 3 } },
+            escapedDocument: 'a □ c',
+            escapedSnippets: [
+                [
+                    '□',
+                    {
+                        type: 'svelte',
+                        original: { loc: { start: 2, end: 3 } },
+                    },
+                ],
+            ],
+        },
+        {
+            document: 'a b c',
+            type: 'svelte',
+            original: { loc: { start: 2, end: 3 } },
             escapeOptions: { pad: false },
             escapedDocument: 'a □ c',
             escapedSnippets: [
@@ -853,6 +868,76 @@ describe.concurrent.shuffle('getMathInSpecialDelimsES()', () => {
 });
 
 describe.concurrent.shuffle('getMdastES()', () => {
+    describe('frontmatter', () => {
+        const tests: [string, string, EscapableSnippet<'frontmatter'>[]][] = (
+            [
+                [
+                    '---\ntitle: Something\n---\n\n...',
+                    'title: Something',
+                    'yaml',
+                ],
+                [
+                    '+++\ntitle = "Something"\n+++\n\n...',
+                    'title = "Something"',
+                    'toml',
+                ],
+                [
+                    '---yaml\ntitle: Something\n---\n\n...',
+                    'title: Something',
+                    'yaml',
+                ],
+                [
+                    '---toml\ntitle = "Something"\n---\n\n...',
+                    'title = "Something"',
+                    'toml',
+                ],
+                [
+                    '---json\n  "title": "Something"\n---\n\n...',
+                    '  "title": "Something"',
+                    'json',
+                ],
+            ] as const
+        ).map(([str, innerContent, type]) => [
+            str,
+            str.slice(0, -5),
+            [
+                {
+                    original: {
+                        loc: { start: 0, end: str.length - 5 },
+                        outerContent: undefined,
+                    },
+                    processable: {
+                        innerContent,
+                        optionsForProcessor: { type },
+                    },
+                    type: 'frontmatter',
+                },
+            ],
+        ]);
+        it.each(tests)(
+            '%o → %o',
+            (document, _innerContent, escapedSnippets) => {
+                // const ast = parseToMdast(document, [
+                //     'script',
+                //     'style',
+                //     'svelte:window',
+                //     'svelte:head',
+                //     'svelte:component',
+                // ]);
+                // removePosition(ast, { force: true });
+                // console.log(inspect(ast, { depth: 10, colors: true }));
+                expect(
+                    getMdastES({
+                        ast: parseToMdast(document),
+                        texSettings: { enabled: true },
+                        document,
+                        lines: document.split('\n'),
+                    }),
+                ).toMatchObject(escapedSnippets);
+            },
+        );
+    });
+
     describe('mustacheTag', () => {
         const tests: [string, string, EscapableSnippet<'mustacheTag'>[]][] = [
             '@html b',

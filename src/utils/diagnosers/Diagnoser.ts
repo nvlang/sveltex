@@ -3,6 +3,7 @@ import {
     isDefined,
     isString,
     ifPresentAndDefined,
+    isArray,
 } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
 
@@ -50,6 +51,21 @@ export class Diagnoser {
             warnings: this.problems.filter((p) => p.severity === 'warn').length,
             problems: this.problems.length,
         };
+    }
+
+    noteUnexpectedProperties(
+        expected: string[],
+        severity: 'error' | 'warn' = 'warn',
+    ) {
+        const subject = this.subject;
+        const keys = Object.keys(subject);
+        const unexpected = keys.filter((k) => !expected.includes(k));
+        unexpected.forEach((k) => {
+            this.problems.push({
+                severity,
+                message: `Unexpected property "${k}" will be ignored.`,
+            });
+        });
     }
 
     /**
@@ -144,7 +160,7 @@ export class Diagnoser {
         prop: PropertyKey,
         expect: string,
         typeGuard: (x: unknown) => boolean,
-        expectType?: PrimitiveTypesAndNull,
+        expectType?: PrimitiveTypesAndNull | PrimitiveTypesAndNull[],
         severity: 'error' | 'warn' = 'error',
     ) {
         let passed = true;
@@ -180,16 +196,21 @@ export function getType(x: unknown): PrimitiveTypesAndNull {
     return x === null ? 'null' : typeof x;
 }
 
-export function insteadGot(x: unknown, expectedType?: PrimitiveTypesAndNull) {
+export function insteadGot(
+    x: unknown,
+    expectedType?: PrimitiveTypesAndNull | PrimitiveTypesAndNull[],
+) {
     const typeStr = getType(x);
-    const showDetails = typeStr === expectedType;
+    const showDetails = isArray(expectedType)
+        ? expectedType.includes(typeStr)
+        : typeStr === expectedType;
     switch (typeStr) {
         case 'object':
-            return `Instead, got${showDetails ? `: ${inspect(x)}` : ' an object.'}`;
+            return `Instead, got${showDetails ? `: ${inspect(x, { depth: 3 })}` : ' an object.'}`;
         case 'null':
         case 'undefined':
             return `Instead, got ${typeStr}.`;
         default:
-            return `Instead, got${showDetails ? `: ${inspect(x)}` : ` a ${typeStr}.`}`;
+            return `Instead, got${showDetails ? `: ${inspect(x, { depth: 3 })}` : ` a ${typeStr}.`}`;
     }
 }

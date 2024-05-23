@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
-import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
@@ -119,7 +119,7 @@ describe("CodeHandler<'prismjs'>", () => {
         describe('configuration', () => {
             it('is default', () => {
                 expect('configuration' in handler).toBe(true);
-                const defaultCC = getDefaultCodeConfiguration('prismjs');
+                const defaultCC = getDefaultCodeConfig('prismjs');
                 expect(handler.configuration.wrapClassPrefix).toEqual(
                     defaultCC.wrapClassPrefix,
                 );

@@ -12,7 +12,7 @@ HMR support.
 ### Setup
 
 First, Sveltex decides what directory to use for its cache. Usually, this will
-be `node_modules/.cache/sveltex-preprocess`. It will then populate it with a
+be `node_modules/.cache/@nvl/sveltex`. It will then populate it with a
 JSON file `cache.json`, as detailed below.
 
 <Accordion
@@ -24,7 +24,7 @@ apply:
 <CodeGroup>
 
 ```js sveltex.config.js
-import { sveltex } from 'sveltex-preprocess';
+import { sveltex } from '@nvl/sveltex';
 
 export const sveltexPreprocessor = await sveltex({
     advancedTexBackend: 'local',
@@ -83,7 +83,7 @@ export default config;
         .
         ├── node_modules/
         │   └── .cache/
-        │       └── sveltex-preprocess/
+        │       └── @nvl/sveltex/
         │           └── cache.json
         └── static/
         ```
@@ -115,7 +115,7 @@ export default config;
     .
     ├── node_modules/
     │   └── .cache/
-    │       └── sveltex-preprocess/
+    │       └── @nvl/sveltex/
     │           ├── cache.json
     │           └── TeX/
     │               ├── [ref].tex
@@ -147,10 +147,10 @@ export default config;
         -   `sources['TeX/[ref].pdf'] = HASH_TEX_2`
     7.
 
-    1.  Does `node_modules/.cache/sveltex-preprocess/TeX/hash_new.tex` exist?
+    1.  Does `node_modules/.cache/@nvl/sveltex/TeX/hash_new.tex` exist?
         -   `true`: noop.
         -   `false`: create it.
-    2.  Does `node_modules/.cache/sveltex-preprocess/TeX/hash_new.pdf` exist?
+    2.  Does `node_modules/.cache/@nvl/sveltex/TeX/hash_new.pdf` exist?
         -   `true`: noop.
         -   `false`: Compile `hash_new.tex` → `hash_new.pdf`
     3.  `static/sveltex/TeX/ref_or_hash_new.svg` exists?
@@ -163,7 +163,7 @@ export default config;
 
     <AccordionGroup>
         <Accordion
-            title="node_modules/.cache/sveltex-preprocess/cache.json"
+            title="node_modules/.cache/@nvl/sveltex/cache.json"
         >
         ```json
         {
@@ -173,7 +173,7 @@ export default config;
         ```
         </Accordion>
         <Accordion
-            title="node_modules/.cache/sveltex-preprocess/"
+            title="node_modules/.cache/@nvl/sveltex/"
         >
         ```gitignore
         cache.json
@@ -201,7 +201,7 @@ will be updated as follows:
 
 <AccordionGroup>
 <Accordion
-    title="node_modules/.cache/sveltex-preprocess/cache.json"
+    title="node_modules/.cache/@nvl/sveltex/cache.json"
 >
 ```json
 {
@@ -214,7 +214,7 @@ will be updated as follows:
 ```
 </Accordion>
 <Accordion
-    title="node_modules/.cache/sveltex-preprocess/"
+    title="node_modules/.cache/@nvl/sveltex/"
 >
 ```gitignore
 cache.json

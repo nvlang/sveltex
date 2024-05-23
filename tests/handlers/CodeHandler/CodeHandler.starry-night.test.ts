@@ -11,7 +11,7 @@ import {
 } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
-import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 import { isFunction } from '$type-guards/utils.js';
 import { spy } from '$tests/fixtures.js';
@@ -274,7 +274,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
             it('is default', async () => {
                 const handler = await CodeHandler.create('starry-night');
                 expect('configuration' in handler).toBe(true);
-                const defaultCC = getDefaultCodeConfiguration('starry-night');
+                const defaultCC = getDefaultCodeConfig('starry-night');
                 expect(
                     Object.entries(handler.configuration).filter(
                         ([, v]) => !isFunction(v),

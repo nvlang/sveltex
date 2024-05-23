@@ -49,7 +49,14 @@ export interface ProcessableSnippet<T extends SnippetType> {
           ? TexProcessOptions<TexBackend>
           : T extends 'verbatim'
             ? Omit<VerbatimProcessOptions, 'filename'>
-            : undefined;
+            : T extends 'frontmatter'
+              ? {
+                    /**
+                     * @internal
+                     */
+                    type: 'yaml' | 'toml' | 'json';
+                }
+              : undefined;
 }
 
 export type PaddingInstruction =
@@ -109,7 +116,8 @@ export type SnippetType =
     | 'code'
     | 'svelte'
     | 'mustacheTag'
-    | 'verbatim';
+    | 'verbatim'
+    | 'frontmatter';
 // | 'advancedTex';
 
 export interface ProcessedSnippet {
@@ -128,7 +136,7 @@ export interface EscapedSnippet<T extends SnippetType = SnippetType>
     unescapeOptions?: UnescapeOptions | undefined;
 }
 
-type ProcessableSnippetType = 'code' | 'tex' | 'verbatim';
+type ProcessableSnippetType = 'code' | 'tex' | 'verbatim' | 'frontmatter';
 
 /**
  * A small segment (or fragment, part, excerpt... or, indeed, snippet) of a
@@ -148,9 +156,9 @@ export interface Snippet<T extends SnippetType = SnippetType> {
      *   - `AdvancedTexHandler`, if the verbatim environment was set up as a TeX
      *     component.
      *   - `CodeHandler`, if the verbatim environment was set up with
-     *     `processInner` set to `code`.
+     *     `type` set to `code`.
      *   - Otherwise: the `VerbatimHandler` will take care of the processing
-     *     itself (this is the case for `processInner` values `noop`,
+     *     itself (this is the case for `type` values `noop`,
      *     `escapeOnly`).
      * - `'mustacheTag'`: A mustache tag, like `{...}`.
      * - `'svelte'`: Svelte syntax (other than mustache tags), like

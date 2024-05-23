@@ -1,11 +1,12 @@
 // Types
-import { Equals, typeAssert } from '$deps.js';
+import { type Equals, typeAssert } from '$deps.js';
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
     CssApproach,
     CssApproachLocal,
     CssConfiguration,
     FullCssConfiguration,
+    PreAndPostTransformations,
 } from '$types/handlers/misc.js';
 import type {
     MathjaxConfiguration,
@@ -87,9 +88,13 @@ interface BaseTexConfiguration<
      */
     css?: CssConfiguration<CA> | undefined | null;
     /**
-     * Regex transformations to apply to the tex content before passing it to
-     * the TeX backend for processing, or to the output produced by the TeX
-     * backend.
+     * Transformations to apply to the tex content before passing it to the TeX
+     * backend for processing, or to the output produced by the TeX backend.
+     */
+    /**
+     * Transformations to apply to
+     * - the tex before passing it to the TeX backend for processing, or to
+     * - the output produced by the TeX backend.
      */
     transformations?: PreAndPostTransformations | undefined | null;
 }
@@ -100,41 +105,6 @@ interface FullBaseTexConfiguration<
 > {
     css: FullCssConfiguration<CA>;
     transformations: RequiredNonNullable<PreAndPostTransformations>;
-}
-
-/**
- * A string transformation, where the first element is a regex or string to
- * match, and the second element is the replacement string. The replacement
- * string can contain `$1`, `$2`, etc. to refer to capture groups in the regex.
- * In particular, the transformation will be performed by calling
- * `.replaceAll()` on the string with the regex and replacement string as first
- * and second arguments, respectively, so any features that the `.replaceAll()`
- * method supports can be used here too.
- */
-export type Transformation = [RegExp | string, string];
-
-interface PreAndPostTransformations {
-    /**
-     * Regex transformations to apply to the tex content before passing it to
-     * the TeX backend for processing.
-     *
-     * @remarks The transformations are applied using `.replaceAll()`, and are
-     * called in the order they are listed on the output of the previous
-     * transformation (or on the original TeX content if it's the first
-     * transformation).
-     */
-    pre?: Transformation[] | undefined | null;
-
-    /**
-     * Regex transformations to apply to the CHTML/SVG/MathML content after the
-     * TeX backend has processed it.
-     *
-     * @remarks The transformations are applied using `.replaceAll()`, and are
-     * called in the order they are listed on the output of the previous
-     * transformation (or on the unmodified TeX backend output if it's the first
-     * transformation).
-     */
-    post?: Transformation[] | undefined | null;
 }
 
 /**

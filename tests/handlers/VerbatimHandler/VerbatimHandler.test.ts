@@ -23,39 +23,37 @@ const sveltexPreprocessor = await sveltex({
 
 await sveltexPreprocessor.configure({
     verbatim: {
-        verbatimEnvironments: {
-            Code: {
-                processInner: 'code',
-                aliases: ['CodeBlock'],
-            },
-            noop: { processInner: 'noop' },
-            JS: {
-                processInner: 'code',
-                defaultAttributes: {
-                    lang: 'js',
-                },
-                attributeForwardingBlocklist: [],
-                component: 'JavaScript',
-            },
-            Verbatim: {
-                processInner: {
-                    escapeBraces: true,
-                    escapeHtml: true,
-                },
-            },
-            Custom: {
-                processInner: (
-                    content: string,
-                    attributes: Record<string, unknown>,
-                ) => 'Custom: ' + content + JSON.stringify(attributes),
-            },
-            Ambiguous: {},
+        Code: {
+            type: 'code',
+            aliases: ['CodeBlock'],
         },
-    },
-    advancedTex: {
-        components: {
-            tex: {},
-            Ambiguous: {},
+        noop: { type: 'noop' },
+        JS: {
+            type: 'code',
+            defaultAttributes: {
+                lang: 'js',
+            },
+            attributeForwardingBlocklist: [],
+            component: 'JavaScript',
+        },
+        Verbatim: {
+            type: 'escapeOnly',
+            escapeInstructions: {
+                escapeBraces: true,
+                escapeHtml: true,
+            },
+        },
+        Custom: {
+            type: 'custom',
+            customProcess: (
+                content: string,
+                attributes: Record<string, unknown>,
+            ) => 'Custom: ' + content + JSON.stringify(attributes),
+        },
+        Ambiguous: { type: 'noop' },
+        tex: {
+            type: 'advancedTex',
+            // aliases: ['Ambiguous'],
         },
     },
 });
@@ -92,15 +90,13 @@ describe('VerbatimHandler', () => {
             });
             await sp.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            processInner: 'noop',
-                            aliases: ['Example'],
-                        },
-                        Example: {
-                            processInner: 'noop',
-                            aliases: ['Code'],
-                        },
+                    Code: {
+                        type: 'noop',
+                        aliases: ['Example'],
+                    },
+                    Example: {
+                        type: 'noop',
+                        aliases: ['Code'],
                     },
                 },
             });
@@ -142,7 +138,7 @@ describe('VerbatimHandler', () => {
         it('should process JS code correctly', async () => {
             const result = (
                 await sveltexPreprocessor.verbatimHandler.process(
-                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    'const a = new Map<string, { prop: number[] }>();',
                     {
                         filename: 'test.sveltex',
                         selfClosing: false,
@@ -154,14 +150,14 @@ describe('VerbatimHandler', () => {
                 )
             ).processed;
             expect(result).toEqual(
-                '<Code>\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</Code>',
+                '<Code><pre><code class="language-js"><span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</code></pre></Code>',
             );
         });
 
         it('should escape plain text correctly', async () => {
             const result = (
                 await sveltexPreprocessor.verbatimHandler.process(
-                    '\nconst a = new Map<string, { prop: number[] }>();\n',
+                    'const a = new Map<string, { prop: number[] }>();',
                     {
                         filename: 'test.sveltex',
                         selfClosing: false,
@@ -173,17 +169,16 @@ describe('VerbatimHandler', () => {
                 )
             ).processed;
             expect(result).toEqual(
-                '<Code>\nconst a = new Map&lt;string, &lbrace; prop: number[] &rbrace;&gt;();\n</Code>',
+                '<Code><pre><code>const a = new Map&lt;string, &lbrace; prop: number[] &rbrace;&gt;();\n</code></pre></Code>',
             );
         });
 
         it('should correctly handle self-closing components', async () => {
             await sveltexPreprocessor.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            selfCloseOutputWith: ' />',
-                        },
+                    Code: {
+                        type: 'code',
+                        selfCloseOutputWith: ' />',
                     },
                 },
             });
@@ -200,10 +195,9 @@ describe('VerbatimHandler', () => {
             ).toEqual('<Code id="something" />');
             await sveltexPreprocessor.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            selfCloseOutputWith: '/>',
-                        },
+                    Code: {
+                        type: 'code',
+                        selfCloseOutputWith: '/>',
                     },
                 },
             });
@@ -223,11 +217,7 @@ describe('VerbatimHandler', () => {
             ).toEqual('<Code id="something"/>');
             await sveltexPreprocessor.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            selfCloseOutputWith: 'auto',
-                        },
-                    },
+                    Code: { type: 'code', selfCloseOutputWith: 'auto' },
                 },
             });
             expect(
@@ -257,10 +247,8 @@ describe('VerbatimHandler', () => {
         it('should correctly handle self-closing components (TeX)', async () => {
             const sp = await sveltex({ advancedTexBackend: 'local' });
             await sp.configure({
-                advancedTex: {
-                    components: {
-                        tex: {},
-                    },
+                verbatim: {
+                    tex: { type: 'advancedTex' },
                 },
             });
             expect(
@@ -282,11 +270,10 @@ describe('VerbatimHandler', () => {
             const sp = await sveltex();
             await sp.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            attributeForwardingAllowlist: ['a', 'b'],
-                            attributeForwardingBlocklist: ['a', 'c'],
-                        },
+                    Code: {
+                        type: 'code',
+                        attributeForwardingAllowlist: ['a', 'b'],
+                        attributeForwardingBlocklist: ['a', 'c'],
                     },
                 },
             });
@@ -344,31 +331,6 @@ describe('VerbatimHandler', () => {
             );
         });
 
-        it('should deal with ambiguous verbatim tags gracefully', async () => {
-            expect(
-                (
-                    await sveltexPreprocessor.verbatimHandler.process(
-                        '<Ambiguous>something</Ambiguous>',
-                        {
-                            filename: 'test.sveltex',
-                            selfClosing: false,
-                            tag: 'Ambiguous',
-                            attributes: {},
-                            outerContent: '<Ambiguous>something</Ambiguous>',
-                        },
-                    )
-                ).processed,
-            ).toEqual('<Ambiguous>something</Ambiguous>');
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining(
-                    'HTML tag "Ambiguous" is ambiguous, as it refers to both a verbatim environment and an advanced TeX component.',
-                ),
-            );
-        });
-
         it('should work with aliases', async () => {
             const result = (
                 await sveltexPreprocessor.verbatimHandler.process(
@@ -384,7 +346,7 @@ describe('VerbatimHandler', () => {
                 )
             ).processed;
             expect(result).toEqual(
-                '<CodeBlock>\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</CodeBlock>',
+                '<CodeBlock><pre><code class="language-js"><span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</code></pre></CodeBlock>',
             );
         });
 
@@ -403,7 +365,7 @@ describe('VerbatimHandler', () => {
                 )
             ).processed;
             expect(result).toEqual(
-                '<JavaScript lang="js">\n<span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</JavaScript>',
+                '<JavaScript lang="js"><pre><code class="language-js"><span class="hljs-keyword">const</span> a = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>&lt;string, &lbrace; <span class="hljs-attr">prop</span>: number[] &rbrace;&gt;();\n</code></pre></JavaScript>',
             );
         });
 
@@ -424,7 +386,7 @@ describe('VerbatimHandler', () => {
             ).toEqual('<Verbatim>\n&lt;&gt;&amp;&lbrace;</Verbatim>');
         });
 
-        it('should support custom processInner functions', async () => {
+        it('should support custom type functions', async () => {
             expect(
                 (
                     await sveltexPreprocessor.verbatimHandler.process(
@@ -460,6 +422,53 @@ describe('VerbatimHandler', () => {
             ).toEqual(
                 '<Custom attr="test" attr2="test2">Custom: content{"attr":"test","attr2":"test2"}</Custom>',
             );
+        });
+
+        describe('error handling', () => {
+            fixture();
+            it("should complain if self-closing === true and innerContent !== ''", async () => {
+                expect(
+                    (
+                        await sveltexPreprocessor.verbatimHandler.process(
+                            'something',
+                            {
+                                filename: 'test.sveltex',
+                                selfClosing: true,
+                                tag: 'test',
+                                attributes: {},
+                            },
+                        )
+                    ).processed,
+                ).toEqual('something');
+                expect(log).toHaveBeenCalledTimes(1);
+                expect(log).toHaveBeenNthCalledWith(
+                    1,
+                    'error',
+                    'Self-closing HTML tag "test" should not have inner content.',
+                );
+            });
+
+            it('should complain if verbatim environment is unknown', async () => {
+                expect(
+                    (
+                        await sveltexPreprocessor.verbatimHandler.process(
+                            'something',
+                            {
+                                filename: 'test.sveltex',
+                                selfClosing: false,
+                                tag: 'test',
+                                attributes: {},
+                            },
+                        )
+                    ).processed,
+                ).toEqual('something');
+                expect(log).toHaveBeenCalledTimes(1);
+                expect(log).toHaveBeenNthCalledWith(
+                    1,
+                    'error',
+                    'Unknown verbatim environment "test".',
+                );
+            });
         });
 
         it('misc', async () => {
@@ -493,40 +502,46 @@ describe('VerbatimHandler', () => {
             const sp = await sveltex();
             await sp.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: {
-                            /* eslint-disable */
-                            processInner: 'something' as any,
-                            aliases: 'something' as any,
-                            attributeForwardingAllowlist: 'something' as any,
-                            attributeForwardingBlocklist: 'something' as any,
-                            component: 5 as any,
-                            defaultAttributes: 'something' as any,
-                            respectSelfClosing: 'something' as any,
-                            selfCloseOutputWith: 'something' as any,
-                            wrap: 'something' as any,
-                            /* eslint-enable */
-                        },
-                        Okay: {},
+                    Code: {
+                        /* eslint-disable */
+                        type: 'something' as any,
+                        aliases: 'something' as any,
+                        attributeForwardingAllowlist: 'something' as any,
+                        attributeForwardingBlocklist: 'something' as any,
+                        component: 5 as any,
+                        defaultAttributes: 'something' as any,
+                        respectSelfClosing: 'something' as any,
+                        selfCloseOutputWith: 'something' as any,
+                        wrap: 'something' as any,
+                        /* eslint-enable */
                     },
+                    Okay: { type: 'code' },
                 },
             });
             expect(sp.verbatimHandler.verbEnvs.has('Okay')).toBe(true);
-            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenCalled();
             expect(log).toHaveBeenNthCalledWith(
                 1,
                 'error',
-                'Invalid verbatim environment configuration for "Code":\n- Expected "processInner" to be a valid description of how the inner content of the verbatim environment should be processed. Instead, got a string.\n- The "defaultAttributes" field must be a non-null object. Instead, got a string.\n- The "attributeForwardingBlocklist" field must be an array of strings. Instead, got a string.\n- The "attributeForwardingAllowlist" field must be an array of strings or the string "all". Instead, got a string.\n- The "component" field must be a string. Instead, got a number.\n- The "respectSelfClosing" field must be a boolean. Instead, got a string.\n- The "selfCloseOutputWith" field must be one of "auto", "/>", or " />". Instead, got a string.\n',
+                'Problems found in configuration of verbatim environment "Code":',
+            );
+            expect(log).toHaveBeenNthCalledWith(
+                2,
+                'error',
+                '- Expected "aliases" to be a (possibly empty) array of strings. Instead, got a string.',
+            );
+            expect(log).toHaveBeenNthCalledWith(
+                3,
+                'error',
+                '- Expected "attributeForwardingAllowlist" to be an array of strings or "all". Instead, got: \'something\'',
             );
         });
         it('should log helpful error if any invalid verbatim configurations are passed 2', async () => {
             const sp = await sveltex();
             await sp.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Code: 'something' as unknown as object,
-                        Okay: {},
-                    },
+                    Code: 'something' as unknown as { type: 'code' },
+                    Okay: { type: 'code' },
                 },
             });
             expect(sp.verbatimHandler.verbEnvs.has('Okay')).toBe(true);
@@ -534,7 +549,7 @@ describe('VerbatimHandler', () => {
             expect(log).toHaveBeenNthCalledWith(
                 1,
                 'error',
-                'Invalid verbatim environment configuration for "Code":\n- Expected configuration to be non-null object. Instead, got a string.\n',
+                'Expected configuration of verbatim environment "Code" to be non-null object. Instead, got a string.',
             );
         });
     });

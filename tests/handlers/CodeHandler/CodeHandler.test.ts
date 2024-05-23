@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { missingDeps } from '$utils/env.js';
-import { getDefaultCodeConfiguration } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
@@ -34,7 +34,7 @@ describe("CodeHandler<'custom'>", () => {
             expect(handler).toBeInstanceOf(CodeHandler);
             expect(handler.processor).toEqual({});
             expect(handler.configuration.wrapClassPrefix).toEqual(
-                getDefaultCodeConfiguration('custom').wrapClassPrefix,
+                getDefaultCodeConfig('custom').wrapClassPrefix,
             );
         });
     });

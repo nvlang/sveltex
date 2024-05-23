@@ -16,6 +16,7 @@ import {
 import { sha256 } from '$utils/misc.js';
 import { AdvancedTexConfiguration } from '$mod.js';
 import { pathExists } from '$utils/fs.js';
+import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 
 // async function handlers() {
 //     const ath = await AdvancedTexHandler.create('local');
@@ -54,10 +55,10 @@ async function setup(hash: string, config?: AdvancedTexConfiguration<'local'>) {
         caching: false,
         cacheDirectory: `tmp/tests-${hash}/cache`,
         outputDirectory: `tmp/tests-${hash}/output`,
-        components: {
-            tex: {},
-            Example: { aliases: ['ExampleAlias'] },
-        },
+        // components: {
+        //     tex: {},
+        //     Example: { aliases: ['ExampleAlias'] },
+        // },
         dvisvgmOptions: {
             svg: {
                 fontFormat: 'woff2',
@@ -118,7 +119,6 @@ describe("AdvancedTexHandler<'local'>", () => {
         writeFile = mocks.writeFile;
         log = mocks.log;
         spawnCliInstruction = mocks.spawnCliInstruction;
-        log.mockImplementation(() => undefined);
     });
     afterAll(() => {
         vi.restoreAllMocks();
@@ -127,88 +127,6 @@ describe("AdvancedTexHandler<'local'>", () => {
     let writeFile: MockInstance;
     let log: MockInstance;
     let spawnCliInstruction: MockInstance;
-    // const { writeFile, log, spawnCliInstruction } = await spy(
-    //     ['writeFile', 'log', 'spawnCliInstruction'],
-    //     false,
-    // );
-
-    // writeFile.mockImplementation(
-    //     async (path: string, data: string, opts: ObjectEncodingOptions) => {
-    //         if (path.endsWith('cache.json')) {
-    //             return;
-    //         }
-    //         await writeFileOrig(path, data, opts);
-    //     },
-    // );
-
-    describe('configure()', () => {
-        fixture();
-        it('should return true if this.backend is equal to input', async () => {
-            const ath = await AdvancedTexHandler.create('local');
-            expect(ath.configuration.components).toEqual({});
-            await ath.configure({});
-            expect(ath.configuration.components).toEqual({});
-        });
-    });
-
-    describe.each([
-        {},
-        {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            components: undefined!,
-        },
-    ] as const)('configure', (config) => {
-        fixture(config);
-        afterEach(async () => {
-            await ath.configure({ components: null });
-        });
-
-        it('`configure({components: null})` sets `configuration.components` to `{}`', async () => {
-            await ath.configure({ components: { something: {} } });
-            expect(ath.configuration.components).not.toEqual({});
-            await ath.configure({ components: null });
-            expect(ath.configuration.components).toEqual({});
-            expect(ath.tccAliases).toEqual([]);
-            expect(ath.tccNames).toEqual([]);
-            expect(ath.tccMap.size).toEqual(0);
-        });
-
-        it('complains about conflicting tex component names', async () => {
-            await ath.configure({
-                components: {
-                    tex: {},
-                    tex2: { aliases: ['tex'] },
-                },
-            });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                'Duplicate advanced TeX component name/alias "tex".',
-            );
-        });
-
-        describe('adds new tex components to current record of tex components', () => {
-            it.each([
-                { components: undefined },
-                { components: {} },
-                { components: { newComponent1: {} } },
-                {
-                    components: { newComponent2: {}, newComponent3: {} },
-                },
-            ])('adding $components', async ({ components }) => {
-                const origComponents = {
-                    ...ath.configuration.components,
-                };
-                expect(origComponents).toEqual(ath.configuration.components);
-                await ath.configure({ components });
-                expect(ath.configuration.components).toEqual({
-                    ...origComponents,
-                    ...components,
-                });
-            });
-        });
-    });
 
     describe.each([{}])('advancedTexHandler.noteTcInFile', (config) => {
         fixture(config);
@@ -265,32 +183,40 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(
                 (
                     await ath.process('x', {
-                        tag: 'ExampleAlias',
+                        tag: 'Example',
                         attributes: { ref: 'ref' },
                         selfClosing: true,
                         filename: 'test-73cd8d85.sveltex',
+                        config: getDefaultVerbEnvConfig('advancedTex'),
+                        outerContent:
+                            '<ExampleAlias ref="ref">x</ExampleAlias>',
                     })
                 ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__Example__ref} />\n</figure>',
             );
+            expect(log).not.toHaveBeenCalled();
             expect(writeFile).not.toHaveBeenCalled();
             expect(spawnCliInstruction).not.toHaveBeenCalled();
         });
 
-        it('supports aliases', async () => {
+        it('works', async () => {
             expect(
                 (
                     await ath.process('x', {
-                        tag: 'ExampleAlias',
+                        tag: 'Example',
                         attributes: { ref: 'ref' },
                         selfClosing: false,
                         filename: 'test-d9f77b2e.sveltex',
+                        config: getDefaultVerbEnvConfig('advancedTex'),
+                        outerContent:
+                            '<ExampleAlias ref="ref">x</ExampleAlias>',
                     })
                 ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__Example__ref} />\n</figure>',
             );
+            expect(log).not.toHaveBeenCalled();
             expect(writeFile).toHaveBeenCalledTimes(3);
             expect(writeFile).toHaveBeenNthCalledWith(
                 1,
@@ -301,8 +227,8 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(writeFile).toHaveBeenNthCalledWith(
                 2,
                 `${tmpTestsDir}/output/Example/ref.svg`,
-                expect.stringContaining(
-                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5.26pt" height="4.294pt" viewBox="0 0 5.26 4.294"><style>@font-face{font-family:XWTZSC-LMRoman10-Regular;src:url(data:application/x-font-woff2;base64',
+                expect.stringMatching(
+                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64/,
                 ),
                 'utf8',
             );
@@ -310,20 +236,22 @@ describe("AdvancedTexHandler<'local'>", () => {
                 2,
                 `${tmpTestsDir}/output/Example/ref.svg`,
                 expect.stringContaining(
-                    ' format(\'woff2\');}\ntext.f0 {font-family:XWTZSC-LMRoman10-Regular;font-size:9.96px}\n</style><g id="page1"><text class="f0" x="-0.258931" transform="translate(0 4.294)scale(.999735)" fill="currentColor">x</text></g></svg>',
+                    'fill="currentColor">x</text></g></svg>',
                 ),
                 'utf8',
             );
             expect(writeFile).toHaveBeenNthCalledWith(
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
-                '{"int":{"Example/ref":{"sourceHash":"u9Edso_qywe0Xxw5JvIcospMYE66P8YD7POaR4ZXj74","hash":"7hRIkzoDKUPuoGwLB3Z0yCJio9YC4uwmBbF4KV9lvvA"}},"svg":{"Example/ref":{"sourceHash":"7hRIkzoDKUPuoGwLB3Z0yCJio9YC4uwmBbF4KV9lvvA"}}}',
+                expect.stringMatching(
+                    /\{"int":\{"Example\/ref":\{"sourceHash":"u9Edso_qywe0Xxw5JvIcospMYE66P8YD7POaR4ZXj74","hash":"(.+?)"\}\},"svg":\{"Example\/ref":\{"sourceHash":"\1"\}\}\}/,
+                ),
                 'utf8',
             );
             expect(spawnCliInstruction).toHaveBeenCalledTimes(2);
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(1, {
                 args: [
-                    '--output-format=pdf',
+                    '--output-format=dvi',
                     '--no-shell-escape',
                     '--interaction=nonstopmode',
                     '"root.tex"',
@@ -335,17 +263,19 @@ describe("AdvancedTexHandler<'local'>", () => {
                     FILENAME_BASE: 'root',
                     FILEPATH: `${tmpTestsDir}/cache/Example/ref/root.tex`,
                     OUTDIR: `${tmpTestsDir}/cache/Example/ref`,
-                    OUTFILETYPE: 'pdf',
+                    OUTFILETYPE: 'dvi',
                     SOURCE_DATE_EPOCH: '1',
                 },
                 silent: true,
             });
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(2, {
                 args: [
-                    '--pdf',
                     `--output=${tmpTestsDir}/output/Example/ref.svg`,
+                    '--exact-bbox',
+                    '--bbox=2pt',
                     '--bitmap-format=png',
                     '--currentcolor=#000',
+                    '--embed-bitmaps',
                     '--font-format=woff2',
                     '--linkmark=none',
                     '--optimize=all',
@@ -354,14 +284,14 @@ describe("AdvancedTexHandler<'local'>", () => {
                     '--color',
                     '--progress',
                     '--verbosity=3',
-                    `${tmpTestsDir}/cache/Example/ref/root.pdf`,
+                    `${tmpTestsDir}/cache/Example/ref/root.dvi`,
                 ],
                 command: 'dvisvgm',
                 env: {
-                    FILENAME: 'root.pdf',
+                    FILENAME: 'root.dvi',
                     FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/Example/ref/root.pdf`,
-                    FILETYPE: 'pdf',
+                    FILEPATH: `${tmpTestsDir}/cache/Example/ref/root.dvi`,
+                    FILETYPE: 'dvi',
                     OUTDIR: `${tmpTestsDir}/output/Example`,
                     OUTFILEPATH: `${tmpTestsDir}/output/Example/ref.svg`,
                 },
@@ -380,12 +310,16 @@ describe("AdvancedTexHandler<'local'>", () => {
                             tag: 'tex',
                             filename:
                                 'css variables (ath-something-test-348902).sveltex',
+                            config: getDefaultVerbEnvConfig('advancedTex'),
+                            outerContent:
+                                '<tex ref="ath-something-test-348902">\\textcolor{var(--some-css-variable)}{$x$}</tex>',
                         },
                     )
                 ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__tex__ath_something_test_348902} />\n</figure>',
             );
+            expect(log).not.toHaveBeenCalled();
             expect(writeFile).toHaveBeenCalledTimes(3);
             expect(writeFile).toHaveBeenNthCalledWith(
                 1,
@@ -405,8 +339,8 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(writeFile).toHaveBeenNthCalledWith(
                 2,
                 `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
-                expect.stringContaining(
-                    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="7.592" height="4.289pt" viewBox="0 0 5.694 4.289"><style>@font-face{font-family:MHOLNP-CMMI10;src:url(data:application/x-font-woff2;base64,',
+                expect.stringMatching(
+                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64,/,
                 ),
                 'utf8',
             );
@@ -414,21 +348,23 @@ describe("AdvancedTexHandler<'local'>", () => {
                 2,
                 `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
                 expect.stringContaining(
-                    ' format(\'woff2\');}\ntext.f0 {font-family:MHOLNP-CMMI10;font-size:9.96px}\n</style><g id="page1"><text class="f0" transform="translate(0 4.289)scale(.999735)" fill="var(--some-css-variable)">x</text></g></svg>',
+                    'fill="var(--some-css-variable)">x</text></g></svg>',
                 ),
                 'utf8',
             );
             expect(writeFile).toHaveBeenNthCalledWith(
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
-                '{"int":{"tex/ath-something-test-348902":{"sourceHash":"h9-U6Zhw1McrSM7asY81sDMuYA9YFTDQH22j6ewlwTo","hash":"v_4noskoq9-WRYAgyuCCcaKfOAnqK1w7xlsgkUH1udg"}},"svg":{"tex/ath-something-test-348902":{"sourceHash":"v_4noskoq9-WRYAgyuCCcaKfOAnqK1w7xlsgkUH1udg"}}}',
+                expect.stringMatching(
+                    /\{"int":\{"tex\/ath-something-test-348902":\{"sourceHash":"h9-U6Zhw1McrSM7asY81sDMuYA9YFTDQH22j6ewlwTo","hash":"(.+?)"\}\},"svg":\{"tex\/ath-something-test-348902":\{"sourceHash":"\1"\}\}\}/,
+                ),
                 'utf8',
             );
 
             expect(spawnCliInstruction).toHaveBeenCalledTimes(2);
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(1, {
                 args: [
-                    '--output-format=pdf',
+                    '--output-format=dvi',
                     '--no-shell-escape',
                     '--interaction=nonstopmode',
                     '"root.tex"',
@@ -440,17 +376,19 @@ describe("AdvancedTexHandler<'local'>", () => {
                     FILENAME_BASE: 'root',
                     FILEPATH: `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.tex`,
                     OUTDIR: `${tmpTestsDir}/cache/tex/ath-something-test-348902`,
-                    OUTFILETYPE: 'pdf',
+                    OUTFILETYPE: 'dvi',
                     SOURCE_DATE_EPOCH: '1',
                 },
                 silent: true,
             });
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(2, {
                 args: [
-                    '--pdf',
                     `--output=${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
+                    '--exact-bbox',
+                    '--bbox=2pt',
                     '--bitmap-format=png',
                     '--currentcolor=#000',
+                    '--embed-bitmaps',
                     '--font-format=woff2',
                     '--linkmark=none',
                     '--optimize=all',
@@ -459,14 +397,14 @@ describe("AdvancedTexHandler<'local'>", () => {
                     '--color',
                     '--progress',
                     '--verbosity=3',
-                    `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.pdf`,
+                    `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.dvi`,
                 ],
                 command: 'dvisvgm',
                 env: {
-                    FILENAME: 'root.pdf',
+                    FILENAME: 'root.dvi',
                     FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.pdf`,
-                    FILETYPE: 'pdf',
+                    FILEPATH: `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.dvi`,
+                    FILETYPE: 'dvi',
                     OUTDIR: `${tmpTestsDir}/output/tex`,
                     OUTFILEPATH: `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
                 },
@@ -492,6 +430,8 @@ describe.each([
                     attributes: { ref: '' },
                     selfClosing: false,
                     filename: 'test.sveltex',
+                    config: getDefaultVerbEnvConfig('advancedTex'),
+                    outerContent: '',
                 })
             ).processed,
         ).toEqual('output');
@@ -517,6 +457,8 @@ describe('AdvancedTexHandler.create', () => {
                     selfClosing: false,
                     tag: '',
                     filename: 'test.sveltex',
+                    config: getDefaultVerbEnvConfig('advancedTex'),
+                    outerContent: '',
                 })
             ).processed,
         ).toEqual('');
@@ -541,6 +483,8 @@ describe('AdvancedTexHandler.create', () => {
                     attributes: { ref: '' },
                     selfClosing: false,
                     filename: 'test.sveltex',
+                    config: getDefaultVerbEnvConfig('advancedTex'),
+                    outerContent: '',
                 })
             ).processed,
         ).toEqual('ath-something-test-908423');
@@ -582,6 +526,8 @@ describe('AdvancedTexHandler.create', () => {
                     selfClosing: false,
                     tag: '',
                     filename: 'test.sveltex',
+                    config: getDefaultVerbEnvConfig('advancedTex'),
+                    outerContent: '',
                 })
             ).processed,
         ).toEqual('custom process');

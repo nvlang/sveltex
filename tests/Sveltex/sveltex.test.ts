@@ -15,6 +15,7 @@ import { TexHandler } from '$handlers/TexHandler.js';
 import { removeEmptyLines, spy } from '$tests/fixtures.js';
 import { range } from '$tests/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -98,6 +99,8 @@ describe.concurrent('Sveltex', () => {
                         selfClosing: false,
                         tag: 'name',
                         filename: 'test.sveltex',
+                        config: getDefaultVerbEnvConfig('advancedTex'),
+                        outerContent: '<name ref="ref"></name>',
                     })
                 ).processed,
             ).toEqual('custom output advanced tex');
@@ -200,9 +203,7 @@ function preprocessFn<
 const preprocess = preprocessFn(preprocessor);
 preprocessor.configure({
     verbatim: {
-        verbatimEnvironments: {
-            Verbatim: {},
-        },
+        Verbatim: { type: 'escapeOnly' },
     },
 });
 
@@ -362,16 +363,10 @@ describe('edge cases', () => {
             codeBackend: 'starry-night',
         });
         await s.configure({
-            advancedTex: {
-                components: {
-                    TeX: {},
-                },
-            },
             verbatim: {
-                verbatimEnvironments: {
-                    Verbatim: {},
-                    Verb: {},
-                },
+                Verbatim: { type: 'escapeOnly' },
+                Verb: { type: 'escapeOnly' },
+                TeX: { type: 'advancedTex' },
             },
             code: {
                 languages: 'common',
@@ -395,7 +390,7 @@ describe('edge cases', () => {
                     ].join('\n'),
                 ),
             ).toEqual(
-                '<script>\n</script>\n<Verbatim>\n&lt;Verb&gt;\ntest\n&lt;/Verb&gt;\n</Verbatim>',
+                '<script>\n</script>\n<Verbatim>\n&lt;Verb&gt;\ntest\n&lt;/Verb&gt;\n</Verbatim>\n',
             );
         });
 
@@ -417,7 +412,7 @@ describe('edge cases', () => {
     });
 });
 
-describe('sveltex()', () => {
+describe('Sveltex.markup()', () => {
     describe('basics', () => {
         it('is defined', () => {
             expect(preprocessor).toBeDefined();
@@ -748,25 +743,46 @@ describe('sveltex()', () => {
             filename?: string,
         ) => Promise<string | undefined>;
         beforeAll(async () => {
-            const preprocessorVerbatim = await sveltex();
+            const preprocessorVerbatim = await sveltex({
+                codeBackend: 'highlight.js',
+            });
             await preprocessorVerbatim.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Verbatim: {
-                            processInner: {
-                                escapeBraces: true,
-                                escapeHtml: true,
-                            },
+                    Verbatim: {
+                        type: 'escapeOnly',
+                        escapeInstructions: {
+                            escapeBraces: true,
+                            escapeHtml: true,
                         },
+                    },
+                    Code: {
+                        type: 'code',
                     },
                 },
             });
             preprocessVerbatim = preprocessFn(preprocessorVerbatim);
         });
+
         it('should work with custom verbatim environments', async () => {
             expect(
                 await preprocessVerbatim('<Verbatim>{test}</Verbatim>'),
             ).toContain('<Verbatim>&lbrace;test&rbrace;</Verbatim>');
+        });
+
+        it('should work with code verbatim environments', async () => {
+            expect(
+                await preprocessVerbatim('<Code>\n{test}\n</Code>'),
+            ).toContain(
+                '<Code><pre><code>&lbrace;test&rbrace;\n</code></pre></Code>',
+            );
+        });
+
+        it('should respect inline attribute', async () => {
+            expect(
+                await preprocessVerbatim(
+                    '<Code inline="true">\n{test}\n</Code>',
+                ),
+            ).toContain('<Code><code>&lbrace;test&rbrace;</code></Code>');
         });
 
         it('should work with TeX verbatim environments', async () => {
@@ -778,18 +794,40 @@ describe('sveltex()', () => {
             });
             await preprocessor.configure({
                 verbatim: {
-                    verbatimEnvironments: {
-                        Verbatim: {
-                            processInner: {
-                                escapeBraces: true,
-                                escapeHtml: true,
-                            },
+                    Verbatim: {
+                        type: 'escapeOnly',
+                        escapeInstructions: {
+                            escapeBraces: true,
+                            escapeHtml: true,
                         },
                     },
                 },
             });
             const preprocess = preprocessFn(preprocessor);
             expect(await preprocess('$x$')).toEqual('<script>\n</script>\n$x$');
+        });
+    });
+
+    describe('frontmatter', () => {
+        it('should work', async () => {
+            const preprocessor = await sveltex({
+                markdownBackend: 'micromark',
+            });
+            const preprocess = preprocessFn(preprocessor);
+            expect(
+                await preprocess(
+                    [
+                        '---',
+                        'foo: bar',
+                        'title: Example',
+                        'author: Jane Doe',
+                        '---',
+                        '*text*',
+                    ].join('\n'),
+                ),
+            ).toEqual(
+                '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n</svelte:head>\n<script>\n</script>\n\n<p><em>text</em></p>',
+            );
         });
     });
 

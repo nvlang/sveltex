@@ -2,6 +2,7 @@
 import type { Offsets } from '$types/utils/Ast.js';
 import type {
     EscapableSnippet,
+    EscapeOptions,
     EscapedSnippet,
     PaddingInstruction,
     ProcessedSnippet,
@@ -37,9 +38,16 @@ import {
     micromarkMdxMd,
     nodeAssert,
     uuid,
+    micromarkFrontmatter,
+    mdastFrontmatterFromMarkdown,
+    MdastYaml,
+    inspect,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
 import { getDefaultSveltexConfig } from '$config/defaults.js';
+import { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
+import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
+import { AdvancedTexBackend, CodeBackend } from '$mod.js';
 
 /**
  * Given an array of ranges, returns an array of the "outermost" ranges.
@@ -267,6 +275,9 @@ function normalAndSelfClosingComponentsRegExp(rawTags: string[]): RegExp {
 function getVerbatimES(
     content: string,
     verbatimTags: string[],
+    verbEnvs?:
+        | VerbatimHandler<CodeBackend, AdvancedTexBackend>['verbEnvs']
+        | undefined,
 ): EscapableSnippet<'verbatim'>[] {
     const es: EscapableSnippet<'verbatim'>[] = [];
     if (verbatimTags.length === 0) return es;
@@ -277,11 +288,25 @@ function getVerbatimES(
         normalAndSelfClosingComponentsRegExp(escapedVerbatimTags);
     for (const match of content.matchAll(verbatimTagsRegExp)) {
         const outerContent = match[0];
-        const { tag, attributes, innerContent, selfClosing } =
-            parseComponent(outerContent);
+        const parsedComponent = parseComponent(outerContent);
+        let { innerContent } = parsedComponent;
+        const { tag, attributes, selfClosing } = parsedComponent;
         const loc = {
             start: match.index,
             end: match.index + outerContent.length,
+        };
+
+        const config = verbEnvs?.get(tag);
+        let inline = config?.defaultAttributes['inline'] === true;
+        if (attributes['inline'] === true) inline = true;
+        if (inline) {
+            innerContent = innerContent.replace(
+                /^(?:\r\n?|\n| )(.*)(?:\r\n?|\n| )$/su,
+                '$1',
+            );
+        }
+        const escapeOptions: EscapeOptions = {
+            pad: inline ? 0 : 2,
         };
         es.push({
             type: 'verbatim',
@@ -295,6 +320,7 @@ function getVerbatimES(
                     outerContent,
                 },
             },
+            escapeOptions,
         });
     }
     return es;
@@ -475,32 +501,40 @@ export function getMdastES({
     document: string;
     lines: string[];
     texSettings: TexEscapeSettings;
-}): EscapableSnippet<'code' | 'mustacheTag' | 'tex' | 'svelte'>[] {
-    const escapableSnippets: EscapableSnippet<
-        'code' | 'mustacheTag' | 'tex' | 'svelte'
-    >[] = [];
+}): EscapableSnippet[] {
+    const escapableSnippets: EscapableSnippet[] = [];
     walkMdast(ast, (node) => {
         // If the node is not one of the interesting types, we don't need to
         // analyze it any further; instead, we just keep walking this branch
         // of the tree.
         if (
             !isOneOf(node.type, [
+                // Math ($...$, $$...$$, etc.)
                 'math',
                 'inlineMath',
+                // Code (`...`, ```...```, etc.)
                 'code',
                 'inlineCode',
+                // Mustache tags ({...})
                 'mdxTextExpression',
                 'mdxFlowExpression',
+                // Frontmatter
+                'yaml',
+                'toml',
+                'json',
             ])
         ) {
             return true;
         }
+        nodeAssert(
+            node.position,
+            `Expected Node to have positional information: ${inspect(node)}`,
+        );
         const loc = getLocationUnist(node, lines);
         // Inline math and display math
         if (isOneOf(node.type, ['inlineMath', 'math'])) {
             if (!texSettings.enabled) return true;
             typeAssert(is<MdastMathNode | MdastInlineMathNode>(node));
-            nodeAssert(node.position, 'Node has positional information.');
             const isDisplayMath = texSettings.$$?.isDisplayMath ?? 'always';
             let inline: boolean = node.type === 'inlineMath';
             // Micromark parses a lot of stuff that some might expect to be
@@ -562,7 +596,6 @@ export function getMdastES({
         // Code spans and fenced code blocks
         else if (isOneOf(node.type, ['inlineCode', 'code'])) {
             typeAssert(is<MdastCodeNode | MdastInlineCodeNode>(node));
-            nodeAssert(node.position, 'Node has positional information.');
             const inline = node.type === 'inlineCode';
             const { start, end } = node.position;
             escapableSnippets.push({
@@ -610,22 +643,20 @@ export function getMdastES({
                 !node.value.startsWith('@html')
             ) {
                 let pad: boolean | [string, string] = true;
-                if (node.position) {
-                    // We don't want a logic block to be caught within a
-                    // paragraph tag with other content, so we pad the escape
-                    // string with newlines if necessary.
-                    pad = [
-                        // `node.position.start.line - 1` = 0-based line number
-                        !lines[node.position.start.line - 1 - 1]?.trim()
-                            ? '\n\n'
-                            : '\n',
-                        // `node.position.end.line - 1` = 0-based line number
-                        !lines[node.position.end.line - 1 + 1]?.trim()
-                            ? '\n\n'
-                            : '\n',
-                    ];
-                    // pad = false;
-                }
+                // We don't want a logic block to be caught within a paragraph
+                // tag with other content, so we pad the escape string with
+                // newlines if necessary.
+                pad = [
+                    // `node.position.start.line - 1` = 0-based line number
+                    !lines[node.position.start.line - 1 - 1]?.trim()
+                        ? '\n\n'
+                        : '\n',
+                    // `node.position.end.line - 1` = 0-based line number
+                    !lines[node.position.end.line - 1 + 1]?.trim()
+                        ? '\n\n'
+                        : '\n',
+                ];
+                // pad = false;
                 escapableSnippets.push({
                     original: { loc, outerContent },
                     processable: undefined,
@@ -642,6 +673,18 @@ export function getMdastES({
                     unescapeOptions: { removeParagraphTag: false },
                 });
             }
+        } else if (isOneOf(node.type, ['yaml', 'toml', 'json'])) {
+            typeAssert(is<MdastYaml | MdastToml | MdastJson>(node));
+            escapableSnippets.push({
+                type: 'frontmatter',
+                original: { loc, outerContent: undefined },
+                processable: {
+                    innerContent: node.value,
+                    optionsForProcessor: { type: node.type },
+                },
+                escapeOptions: { pad: 2 },
+                unescapeOptions: { removeParagraphTag: true },
+            });
         }
         return false;
     });
@@ -747,6 +790,9 @@ export function escape(
     document: string,
     verbatimTags: string[] = [],
     texSettings: TexEscapeSettings = { enabled: true },
+    verbEnvs?:
+        | VerbatimHandler<CodeBackend, AdvancedTexBackend>['verbEnvs']
+        | undefined,
 ) {
     // Escape colons inside special Svelte elements (e.g. <svelte:component>) so
     // that they don't confuse the markdown processor. We don't want to escape
@@ -781,7 +827,7 @@ export function escape(
         ...getSvelteES(escapedDocument),
         // Escape math in \[...\] and \(...\)
         ...getMathInSpecialDelimsES(escapedDocument, texSettings),
-        ...getVerbatimES(document, verbatimTags),
+        ...getVerbatimES(document, verbatimTags, verbEnvs),
     ]);
 }
 
@@ -850,18 +896,31 @@ export function parseToMdast(
 ): MdastRoot {
     return mdastFromMarkdown(document, {
         extensions: [
+            micromarkFrontmatter([
+                'yaml',
+                'toml',
+                { type: 'yaml', fence: { open: '---yaml', close: '---' } },
+                { type: 'toml', fence: { open: '---toml', close: '---' } },
+                { type: 'json', fence: { open: '---json', close: '---' } },
+            ]),
             micromarkMdxMd(),
             micromarkMdxJsx(),
-            // micromarkSkip(verbatimTags),
+            micromarkSkip(verbatimTags),
             micromarkMath({
                 singleDollarTextMath:
                     texSettings.enabled &&
                     (texSettings.delims?.inline?.singleDollar ?? true),
             }),
             micromarkMdxExpression(),
-            micromarkSkip(verbatimTags),
         ],
         mdastExtensions: [
+            mdastFrontmatterFromMarkdown([
+                'yaml',
+                'toml',
+                { type: 'yaml', fence: { open: '---yaml', close: '---' } },
+                { type: 'toml', fence: { open: '---toml', close: '---' } },
+                { type: 'json', fence: { open: '---json', close: '---' } },
+            ]),
             mdastMathFromMarkdown(),
             mdastMdxExpressionFromMarkdown(),
         ],

@@ -158,6 +158,47 @@ export function isFunctionArray(input: unknown): input is UnknownFunction[] {
 }
 
 /**
+ * Type guard to check that an input is Record.
+ *
+ * @param input - The input to check.
+ * @param check - An optional type guard to apply to each entry of the record.
+ * @returns `true` iff the input is a record (i.e., non-null object) and, if
+ * `check` is provided, if every entry of the record passes the check.
+ *
+ * @example
+ * ```ts
+ * // true:
+ * isRecord({});
+ * isRecord([]);
+ * isRecord({ a: 1, b: 2 });
+ * isRecord({ a: 1, b: 2 }, ([k, v]) => isString(k) && isNumber(v));
+ * isRecord([1, 2]);
+ * isRecord([1, 2], ([k, v]) => isNumber(k) && isNumber(v));
+ *
+ * // false:
+ * isRecord(null);
+ * isRecord(undefined);
+ * isRecord(123);
+ * isRecord('a');
+ * isRecord({ a: 1, b: 2 }, ([k, v]) => isString(k) && isString(v));
+ * isRecord([1, 2], ([k, v]) => isString(k) && isNumber(v));
+ * ```
+ */
+export function isRecord(
+    input: unknown,
+    check?: (entry: [PropertyKey, unknown]) => boolean,
+): input is Record<string, unknown> {
+    return (
+        isNonNullObject(input) &&
+        (check
+            ? isArray(input)
+                ? input.every((v, k) => check([k, v]))
+                : Object.entries(input).every(check)
+            : true)
+    );
+}
+
+/**
  * Type guard to check that an input is included in the given array of options.
  */
 export function isOneOf<T>(
