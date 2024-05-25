@@ -1,4 +1,4 @@
-import { sveltex } from 'sveltex-preprocess';
+import { sveltex } from '@nvl/sveltex';
 
 export const sveltexPreprocessor = await sveltex({
     markdownBackend: 'micromark',
@@ -53,56 +53,52 @@ await sveltexPreprocessor.configure({
         // outputFormat: 'chtml',
     },
     verbatim: {
-        verbatimEnvironments: {
-            Verb: {
-                type: {
-                    escapeBraces: true,
-                    escapeHtml: true,
-                },
-                component: 'p',
+        Verb: {
+            type: 'escapeOnly',
+            escapeInstructions: {
+                escapeBraces: true,
+                escapeHtml: true,
             },
+            component: 'p',
         },
-    },
-    advancedTex: {
-        components: {
-            tex: {
-                aliases: ['TikZ'],
-                preamble: [
-                    '\\usepackage{mathtools}',
-                    '\\usepackage{microtype}',
-                    '\\usepackage{tikz}',
-                ].join('\n'),
-                overrides: {
-                    engine: 'lualatex',
-                    // overrideSvgPostprocess: null,
-                    // svgoOptions: {
-                    //     plugins: [],
-                    // },
-                    intermediateFiletype: 'dvi',
-                    dvisvgmOptions: {
-                        svg: {
-                            // fontFormat: 'svg',
-                            bbox: '3pt',
-                            gradSimplify: null,
-                            gradOverlap: null,
-                            gradSegments: null,
-                            bitmapFormat: null,
-                            clipJoin: null,
-                            comments: null,
-                            currentColor: null,
-                            optimize: null,
-                            precision: null,
-                            linkmark: null,
-                            noStyles: null,
-                            relative: null,
-                            zip: null,
-                        },
-                        processing: {},
-                        svgTransformations: {},
+        tex: {
+            type: 'advancedTex',
+            aliases: ['TikZ'],
+            preamble: [
+                '\\usepackage{mathtools}',
+                '\\usepackage{microtype}',
+                '\\usepackage{tikz}',
+            ].join('\n'),
+            overrides: {
+                engine: 'lualatex',
+                // overrideSvgPostprocess: null,
+                // svgoOptions: {
+                //     plugins: [],
+                // },
+                intermediateFiletype: 'dvi',
+                dvisvgmOptions: {
+                    svg: {
+                        // fontFormat: 'svg',
+                        bbox: '3pt',
+                        gradSimplify: null,
+                        gradOverlap: null,
+                        gradSegments: null,
+                        bitmapFormat: null,
+                        clipJoin: null,
+                        comments: null,
+                        currentColor: null,
+                        optimize: null,
+                        precision: null,
+                        linkmark: null,
+                        noStyles: null,
+                        relative: null,
+                        zip: null,
                     },
+                    processing: {},
+                    svgTransformations: {},
                 },
-                documentClass: '\\documentclass{standalone}',
             },
+            documentClass: '\\documentclass{standalone}',
         },
     },
 });
