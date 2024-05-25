@@ -30,14 +30,7 @@ import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import {
-    escapeHtml,
-    inspect,
-    is,
-    nodeAssert,
-    rfdc,
-    typeAssert,
-} from '$deps.js';
+import { escapeHtml, is, nodeAssert, rfdc, typeAssert } from '$deps.js';
 import { applyTransformations } from '$utils/transformations.js';
 import { copyTransformations } from '$utils/misc.js';
 

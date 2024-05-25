@@ -15,7 +15,6 @@ import { sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
 import { FullVerbEnvConfig, VerbEnvConfig } from '$types/handlers/Verbatim.js';
 import { isRegExp } from 'util/types';
-import { inspect } from '$deps.js';
 import { isArray, isDefined } from '$type-guards/utils.js';
 
 const sveltexPreprocessor = await sveltex({
