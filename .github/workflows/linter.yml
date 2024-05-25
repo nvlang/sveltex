@@ -10,6 +10,8 @@ on:
   pull_request:
     branches: [main]
 
+permissions: {}
+
 jobs:
   build:
     name: Lint code base
@@ -33,5 +35,9 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_TYPESCRIPT_STANDARD: false
+          JAVASCRIPT_ES_CONFIG_FILE: eslint.config.js
+          JAVASCRIPT_DEFAULT_STYLE: prettier
+          EDITORCONFIG_FILE_NAME: .github/linters/.ecrc
+          LINTER_RULES_PATH: ./
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

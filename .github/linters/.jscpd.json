@@ -1,0 +1,11 @@
+{
+  "ignore": [
+    "**/e2e/**",
+    "**/tests/**",
+    "**/docs/**"
+  ],
+  "reporters": [
+    "console"
+  ],
+  "gitignore": true
+}
