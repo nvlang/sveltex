@@ -12,7 +12,7 @@ import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
  * and second arguments, respectively, so any features that the `.replaceAll()`
  * method supports can be used here too.
  */
-export type Transformation<Options extends object> =
+export type Transformation<Options extends object = object> =
     | [RegExp | string, string]
     | ((str: string, opts: Options) => string);
 

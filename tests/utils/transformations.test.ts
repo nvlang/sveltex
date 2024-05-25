@@ -46,14 +46,11 @@ describe('applyTransformations()', () => {
             [[/a.*e/g, 'a.e'], 'a.e'],
             [['b', '.'], 'a.cde'],
             [(s: string) => s.replace('d', '.'), 'abc.e'],
-        ] as [Transformation<object>, string][])(
-            '%s',
-            (transformation, expected) => {
-                expect(
-                    applyTransformations('abcde', {}, transformation),
-                ).toEqual(expected);
-            },
-        );
+        ] as [Transformation, string][])('%s', (transformation, expected) => {
+            expect(applyTransformations('abcde', {}, transformation)).toEqual(
+                expected,
+            );
+        });
     });
 
     describe('input: Transformation[]', () => {
@@ -78,7 +75,7 @@ describe('applyTransformations()', () => {
             ],
             [[(s: string) => s.replace('d', 'x'), ['x', '.']], 'abc.e'],
             [[['d', 'x'], (s: string) => s.replace('x', '.')], 'abc.e'],
-        ] as [Transformation<object>[], string][])(
+        ] as [Transformation[], string][])(
             '%s',
             (transformations, expected) => {
                 expect(
