@@ -55,7 +55,7 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
                 },
                 katex: {},
             };
-            return rv as unknown as FullTexConfiguration<T>;
+            return rv as FullTexConfiguration<T>;
         }
         case 'mathjax': {
             const rv: FullTexConfiguration<'mathjax'> = {
@@ -78,10 +78,14 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
                 //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                 // }}
             };
-            return rv as unknown as FullTexConfiguration<T>;
+            return rv as FullTexConfiguration<T>;
         }
         default:
-            return {} as FullTexConfiguration<T>;
+            return {
+                transformations: { pre: [], post: [] },
+            } as FullTexConfiguration<
+                'custom' | 'none'
+            > as FullTexConfiguration<T>;
     }
 }
 
@@ -342,6 +346,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         case 'starry-night':
             return {
                 ...base,
+                languages: 'common',
                 theme: { ...commonThemeProps, mode: 'both' },
             } as FullCodeConfiguration<CodeBackend> as FullCodeConfiguration<C>;
         /* v8 ignore next 2 (unreachable code) */

@@ -152,7 +152,9 @@ export function ensureDoesNotStartWithSlash(path: string): string {
  * @param t - The {@link Transformation | `Transformation`} to copy.
  * @returns A copy of the given transformation.
  */
-export function copyTransformation(t: Transformation): Transformation {
+export function copyTransformation<Options extends object>(
+    t: Transformation<Options>,
+): Transformation<Options> {
     return isArray(t)
         ? [isString(t[0]) ? t[0] : new RegExp(t[0].source, t[0].flags), t[1]]
         : t;
@@ -163,10 +165,10 @@ export function copyTransformation(t: Transformation): Transformation {
  * to copy.
  * @returns A copy of the given transformation(s).
  */
-export function copyTransformations(
-    t: Transformation | Transformation[],
-): Transformation | Transformation[] {
+export function copyTransformations<Options extends object>(
+    t: Transformation<Options> | Transformation<Options>[],
+): Transformation<Options> | Transformation<Options>[] {
     return isArray(t) && !isString(t[1])
-        ? (t as Transformation[]).map(copyTransformation)
-        : copyTransformation(t as Transformation);
+        ? (t as Transformation<Options>[]).map(copyTransformation)
+        : copyTransformation(t as Transformation<Options>);
 }

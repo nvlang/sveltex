@@ -69,13 +69,16 @@ describe("TexHandler<'custom'>", () => {
                 configure: () => {
                     return;
                 },
-                configuration: {},
+                configuration: { test: 'a' },
             });
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
             expect(handler).toBeInstanceOf(TexHandler);
             expect(handler.processor).toEqual({});
-            expect(handler.configuration).toEqual({});
+            expect(handler.configuration).toMatchObject({
+                test: 'a',
+                transformations: { pre: [], post: [] },
+            });
         });
     });
 

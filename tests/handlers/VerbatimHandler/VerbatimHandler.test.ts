@@ -13,6 +13,10 @@ import {
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
 import { sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
+import { FullVerbEnvConfig, VerbEnvConfig } from '$types/handlers/Verbatim.js';
+import { isRegExp } from 'util/types';
+import { inspect } from '$deps.js';
+import { isArray, isDefined } from '$type-guards/utils.js';
 
 const sveltexPreprocessor = await sveltex({
     markdownBackend: 'none',
@@ -78,6 +82,43 @@ describe('VerbatimHandler', () => {
     });
 
     fixture();
+
+    describe('configuration getter', () => {
+        it('returns copy of configuration', async () => {
+            const sp = await sveltex();
+            const config = {
+                Code: {
+                    type: 'code',
+                    transformations: {
+                        pre: [/a/, 'b'],
+                        post: () => 'c',
+                    },
+                },
+            };
+            await sp.configure({
+                verbatim: config as unknown as Record<string, VerbEnvConfig>,
+            });
+            const configCopy: Record<string, FullVerbEnvConfig> =
+                sp.verbatimHandler.configuration;
+            expect(configCopy).toMatchObject(config);
+            expect(configCopy['Code']?.transformations.pre).toEqual(
+                config.Code.transformations.pre,
+            );
+            const regexp = config.Code.transformations.pre[0];
+            if (isRegExp(regexp)) {
+                const pre = configCopy['Code']?.transformations.pre;
+                expect(isArray(pre) && isDefined(pre)).toBe(true);
+                const regexpCopy = (pre as [RegExp, string])[0];
+                expect(isRegExp(regexpCopy)).toEqual(true);
+                expect(regexp.source).toEqual(regexpCopy.source);
+                // Different references
+                expect(regexpCopy).not.toBe(regexp);
+            }
+            expect(configCopy['Code']?.transformations.post).toBe(
+                config.Code.transformations.post,
+            );
+        });
+    });
 
     describe('constructor(sveltex: Sveltex)', () => {
         fixture();
@@ -263,6 +304,38 @@ describe('VerbatimHandler', () => {
                 ).processed,
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>',
+            );
+        });
+
+        it('should work with custom transformations', async () => {
+            const sp = await sveltex({ codeBackend: 'starry-night' });
+            await sp.configure({
+                verbatim: {
+                    Code: {
+                        type: 'code',
+                        transformations: {
+                            pre: [/\/\/(.*)/, ''],
+                            post: ['class="pl-', 'class="code-'],
+                        },
+                    },
+                },
+            });
+            expect(
+                (
+                    await sp.verbatimHandler.process(
+                        '\nconst a = 0;\nlet b: string;\n',
+                        {
+                            filename: 'test.sveltex',
+                            selfClosing: false,
+                            tag: 'Code',
+                            attributes: { lang: 'ts' },
+                            outerContent:
+                                '<Code>\nconst a = 0; // comment 1\nlet b: string; // comment 2\n</Code>',
+                        },
+                    )
+                ).processed,
+            ).toEqual(
+                '<Code><pre><code class="language-ts"><span class="code-k">const</span> <span class="code-c1">a</span> <span class="code-k">=</span> <span class="code-c1">0</span>;\n<span class="code-k">let</span> <span class="code-smi">b</span><span class="code-k">:</span> <span class="code-c1">string</span>;\n</code></pre></Code>',
             );
         });
 

@@ -12,13 +12,11 @@ import { highlightJsThemeNames, starryNightThemeNames } from '$data/code.js';
  * and second arguments, respectively, so any features that the `.replaceAll()`
  * method supports can be used here too.
  */
-export type Transformation<Options extends object = { inline: boolean }> =
+export type Transformation<Options extends object> =
     | [RegExp | string, string]
     | ((str: string, opts: Options) => string);
 
-export interface PreAndPostTransformations<
-    Options extends object = { inline: boolean },
-> {
+export interface PreAndPostTransformations<Options extends object> {
     /**
      * Transformations to apply to the tex content before passing it to the TeX
      * backend for processing.

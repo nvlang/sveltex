@@ -17,7 +17,7 @@ export function applyTransformations<
         if (isArray(transformation)) {
             if (!isString(transformation[0])) {
                 const { flags } = transformation[0];
-                if (!flags.includes('g')) {
+                if (flags === '' || !flags.includes('g')) {
                     transformation[0] = new RegExp(
                         transformation[0],
                         flags + 'g',

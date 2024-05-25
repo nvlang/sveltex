@@ -14,7 +14,6 @@ import { getDefaultTexConfiguration } from '$config/defaults.js';
 import { katexFonts } from '$data/tex.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import { isArray, isOneOf } from '$type-guards/utils.js';
-import { CssApproach, CssApproachLocal } from '$types/handlers/misc.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
 import { runWithSpinner } from '$utils/debug.js';
 import { escapeBraces } from '$utils/escape.js';
@@ -24,43 +23,62 @@ import { mergeConfigs } from '$utils/merge.js';
 import { copyTransformations, prefixWithSlash } from '$utils/misc.js';
 
 // External dependencies
-import { CleanCSS, Output, typeAssert, is, join, prettyBytes } from '$deps.js';
+import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
 import { applyTransformations } from '$utils/transformations.js';
 
-export class TexHandler<
-    B extends TexBackend,
-    CA = B extends 'mathjax'
-        ? CssApproachLocal
-        : B extends 'katex'
-          ? CssApproach
-          : never,
-> extends Handler<
+export class TexHandler<B extends TexBackend> extends Handler<
     B,
     TexBackend,
     TexProcessor<B>,
     TexProcessOptions<B>,
     TexConfiguration<B>,
     FullTexConfiguration<B>,
-    TexHandler<B, CA>
+    TexHandler<B>
 > {
-    override get configuration() {
-        const clone = deepClone(this._configuration);
+    override get configuration(): FullTexConfiguration<B> {
+        // rfdc doesn't handle RegExps well, so we have to copy them manually
+        // return Object.fromEntries(
+        //     Object.entries(deepClone(this._configuration)).map(
+        //         ([k, v]: [string, FullTex]) => {
+        //             const real = this._configuration[k];
+        //             nodeAssert(real?.transformations);
+        //             const { transformations } = real;
+        //             const { pre, post } = transformations;
+        //             return [
+        //                 k,
+        //                 {
+        //                     ...v,
+        //                     transformations: {
+        //                         pre: copyTransformations(pre),
+        //                         post: copyTransformations(post),
+        //                     },
+        //                 },
+        //             ];
+        //         },
+        //     ),
+        // );
+
+        const { pre, post } = this._configuration.transformations;
+        return {
+            ...deepClone(this._configuration),
+            transformations: {
+                pre: copyTransformations(pre),
+                post: copyTransformations(post),
+            },
+        };
 
         // rfdc doesn't handle RegExps well, so we have to copy them manually
-        if (isOneOf(this.backend, ['mathjax', 'katex'])) {
-            typeAssert(is<TexHandler<'mathjax' | 'katex'>>(this));
-            clone.transformations = {
-                pre: copyTransformations(
-                    this._configuration.transformations.pre,
-                ),
-                post: copyTransformations(
-                    this._configuration.transformations.post,
-                ),
-            };
-        }
+        // if (isOneOf(this.backend, ['mathjax', 'katex'])) {
+        // typeAssert(is<TexHandler<'katex'>>(this));
+        // const { pre, post } = this._configuration.transformations;
+        // clone.transformations = {
+        //     pre: copyTransformations(this._configuration.transformations.pre),
+        //     post: copyTransformations(this._configuration.transformations.post),
+        // };
+        // // }
 
-        return clone;
+        // return clone;
     }
 
     override configureNullOverrides: [string, unknown][] = [

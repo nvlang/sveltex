@@ -64,21 +64,25 @@ export type TexConfiguration<
     B extends TexBackend,
     CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
 > = B extends 'katex'
-    ? BaseTexConfiguration<B, CA> & {
-          katex?: Omit<import('katex').KatexOptions, 'displayMode'> | undefined;
-      }
+    ? WithCss<B, CA> &
+          WithTransformations<B> & {
+              katex?:
+                  | Omit<import('katex').KatexOptions, 'displayMode'>
+                  | undefined;
+          }
     : B extends 'mathjax'
-      ? BaseTexConfiguration<B, CA> & {
-            outputFormat?: 'svg' | 'chtml' | undefined;
-            mathjax?: MathjaxConfiguration | undefined;
-        }
+      ? WithCss<B, CA> &
+            WithTransformations<B> & {
+                outputFormat?: 'svg' | 'chtml' | undefined;
+                mathjax?: MathjaxConfiguration | undefined;
+            }
       : B extends 'custom'
-        ? Record<string, unknown>
+        ? WithTransformations<B> & Record<string, unknown>
         : B extends 'none'
-          ? Record<string, unknown>
+          ? WithTransformations<B> & Record<string, unknown>
           : never;
 
-interface BaseTexConfiguration<
+interface WithCss<
     B extends TexBackend,
     CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
 > {
@@ -87,25 +91,41 @@ interface BaseTexConfiguration<
      * of this itself. This property allows you to configure this behavior.
      */
     css?: CssConfiguration<CA> | undefined | null;
-    /**
-     * Transformations to apply to the tex content before passing it to the TeX
-     * backend for processing, or to the output produced by the TeX backend.
-     */
+}
+
+interface WithFullCssConfiguration<
+    B extends TexBackend,
+    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
+> {
+    css: FullCssConfiguration<CA>;
+}
+
+interface WithTransformations<T extends TexBackend> {
     /**
      * Transformations to apply to
      * - the tex before passing it to the TeX backend for processing, or to
      * - the output produced by the TeX backend.
      */
-    transformations?: PreAndPostTransformations | undefined | null;
+    transformations?:
+        | PreAndPostTransformations<TexProcessOptionsWithoutTransformations<T>>
+        | undefined;
 }
 
-interface FullBaseTexConfiguration<
-    B extends TexBackend,
-    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
-> {
-    css: FullCssConfiguration<CA>;
-    transformations: RequiredNonNullable<PreAndPostTransformations>;
+interface WithTransformationsRequiredNonNullable<T extends TexBackend> {
+    transformations: RequiredNonNullable<
+        PreAndPostTransformations<TexProcessOptionsWithoutTransformations<T>>
+    >;
 }
+
+type TexProcessOptionsWithoutTransformations<B extends TexBackend> =
+    B extends 'mathjax'
+        ? TexProcessOptions<B>
+        : Omit<TexProcessOptions<B>, 'options'> & {
+              options?: Omit<
+                  TexProcessOptions<B>['options'],
+                  'transformations'
+              >;
+          };
 
 /**
  * Return type of the
@@ -117,13 +137,14 @@ export type FullTexConfiguration<
     B extends TexBackend,
     CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
 > = B extends 'mathjax' | 'katex'
-    ? RequiredNonNullable<
-          Omit<TexConfiguration<B, CA>, keyof BaseTexConfiguration<B, CA>>
-      > &
-          FullBaseTexConfiguration<B, CA>
-    : TexConfiguration<B, CA>;
+    ? WithFullCssConfiguration<B> &
+          WithTransformationsRequiredNonNullable<B> &
+          RequiredNonNullable<
+              Omit<TexConfiguration<B, CA>, 'transformations' | 'css'>
+          >
+    : WithTransformationsRequiredNonNullable<B> & TexConfiguration<B, CA>;
 
-type PossibleTexCssApproach<B extends TexBackend> = B extends 'mathjax'
+export type PossibleTexCssApproach<B extends TexBackend> = B extends 'mathjax'
     ? CssApproachLocal
     : B extends 'katex'
       ? CssApproach
@@ -170,14 +191,17 @@ export type TexConfigureFn<
         texHandler: TexHandler<B>,
     ) => void | Promise<void>;
 
-export type TexProcessOptions<B extends TexBackend> = B extends 'mathjax'
+export type TexProcessOptions<
+    B extends TexBackend,
+    CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
+> = B extends 'mathjax'
     ? {
           inline?: boolean | undefined;
           options?: Partial<MathjaxConversionOptions> | undefined;
       }
     : {
           inline?: boolean | undefined;
-          options?: TexConfiguration<B, never> | undefined;
+          options?: TexConfiguration<B, CA> | undefined;
       };
 
 // Compile-time unit tests

@@ -30,8 +30,16 @@ import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { escapeHtml, is, rfdc, typeAssert } from '$deps.js';
+import {
+    escapeHtml,
+    inspect,
+    is,
+    nodeAssert,
+    rfdc,
+    typeAssert,
+} from '$deps.js';
 import { applyTransformations } from '$utils/transformations.js';
+import { copyTransformations } from '$utils/misc.js';
 
 const deepClone = rfdc();
 
@@ -60,7 +68,28 @@ export class VerbatimHandler<
      * delegated.
      */
     private readonly advancedTexHandler: AdvancedTexHandler<A>;
-    // private readonly sveltexConfiguration: FullSveltexConfiguration< C, A>;
+
+    override get configuration() {
+        // rfdc doesn't handle RegExps well, so we have to copy them manually
+        return Object.fromEntries(
+            Object.entries(deepClone(this._configuration)).map(([k, v]) => {
+                const real = this._configuration[k];
+                nodeAssert(real?.transformations);
+                const { transformations } = real;
+                const { pre, post } = transformations;
+                return [
+                    k,
+                    {
+                        ...v,
+                        transformations: {
+                            pre: copyTransformations(pre),
+                            post: copyTransformations(post),
+                        },
+                    },
+                ];
+            }),
+        );
+    }
 
     static create<C extends CodeBackend, A extends AdvancedTexBackend>(
         codeHandler: CodeHandler<C>,
@@ -249,7 +278,7 @@ export class VerbatimHandler<
             } else if (type === 'code') {
                 typeAssert(is<FullVerbEnvConfigCode>(config));
                 const processedSnippet =
-                    await verbatimHandler.codeHandler.process(innerContent, {
+                    await verbatimHandler.codeHandler.process(processed, {
                         ...mergedAttributes,
                         _wrap:
                             selfClosing && respectSelfClosing
@@ -262,7 +291,7 @@ export class VerbatimHandler<
                 // Advanced TeX Content
                 typeAssert(is<FullVerbEnvConfigAdvancedTex>(config));
                 const res = await verbatimHandler.advancedTexHandler.process(
-                    innerContent,
+                    processed,
                     {
                         attributes: mergedAttributes,
                         tag,
@@ -276,14 +305,10 @@ export class VerbatimHandler<
                 unescapeOptions = res.unescapeOptions ?? unescapeOptions;
             } else if (type === 'custom') {
                 typeAssert(is<FullVerbEnvConfigCustom>(config));
-                processed = config.customProcess(
-                    innerContent,
-                    mergedAttributes,
-                );
+                processed = config.customProcess(processed, mergedAttributes);
             } else {
                 // type === 'noop'
                 typeAssert(is<FullVerbEnvConfigNoop>(config));
-                processed = innerContent;
             }
 
             processed = applyTransformations(processed, options, post);
@@ -303,7 +328,7 @@ export class VerbatimHandler<
             _configuration: VerbatimConfiguration,
             verbatimHandler: VerbatimHandler<C, A>,
         ) => {
-            const verbatimEnvironments = verbatimHandler.configuration;
+            const verbatimEnvironments = verbatimHandler._configuration;
 
             const verbEnvs = verbatimHandler._verbEnvs;
             const aliasMap = verbatimHandler._aliasMap;
