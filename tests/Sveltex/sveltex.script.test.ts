@@ -35,7 +35,7 @@ describe('Sveltex', () => {
         await sp.configure({
             tex: {
                 css: {
-                    type: 'self-hosted',
+                    type: 'hybrid',
                 },
             },
             code: {
@@ -102,7 +102,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
+                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
             );
             expect(log).toHaveBeenCalledTimes(1);
 
@@ -147,7 +147,7 @@ describe('Sveltex', () => {
             });
 
             expect((markupOut as Processed).code).toContain(
-                '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n</svelte:head>\n<script>\n</script>\n\n<p><em>text</em></p>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax" jax="SVG">',
+                '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href="/src/sveltex/mathjax@3.2.2.svg.min.css">\n</svelte:head>\n<script>\n</script>\n\n<p><em>text</em></p>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax" jax="SVG">',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,
@@ -165,7 +165,7 @@ describe('Sveltex', () => {
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nimport \'/src/sveltex/mathjax@3.2.2.svg.min.css\';\nimport \'/src/sveltex/highlight.js@11.9.0.default.min.css\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
+                '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nimport \'/src/sveltex/highlight.js@11.9.0.default.min.css\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
             );
 
             sp.advancedTexHandler.texComponents = {};
@@ -196,7 +196,7 @@ describe('Sveltex', () => {
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/mathjax@3.2.2.svg.min.css';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
+                "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
             );
 
             sp.advancedTexHandler.texComponents = {};

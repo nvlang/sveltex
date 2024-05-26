@@ -11,6 +11,7 @@ import {
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { v4 as uuid } from 'uuid';
+import { SupportedCdn } from '$types/handlers/misc.js';
 
 function fixture() {
     beforeEach(() => {
@@ -58,31 +59,31 @@ describe("TexHandler<'katex'>", () => {
 
         it('generates CSS', async () => {
             const th = await TexHandler.create('katex');
-            await th.configure({ css: { type: 'self-hosted' } });
+            await th.configure({ css: { type: 'hybrid' } });
             await th.process('');
-            expect(fancyWrite).toHaveBeenCalledTimes(61);
+            expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
                     /src\/sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
                 ),
-                expect.stringContaining('fonts/KaTeX'),
+                expect.stringContaining('font-style'),
             );
             expect(log).not.toHaveBeenCalled();
         });
 
         it("doesn't generate CSS twice", async () => {
             const handler = await TexHandler.create('katex');
-            await handler.configure({ css: { type: 'self-hosted' } });
+            await handler.configure({ css: { type: 'hybrid' } });
             await handler.process('');
             await handler.process('');
-            expect(fancyWrite).toHaveBeenCalledTimes(61);
+            expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
                     /src\/sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
                 ),
-                expect.stringContaining('fonts/KaTeX'),
+                expect.stringContaining('font-style'),
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -90,7 +91,7 @@ describe("TexHandler<'katex'>", () => {
         it("doesn't generate CSS if the file already exists", async () => {
             existsSync.mockReturnValueOnce(true);
             const th = await TexHandler.create('katex');
-            await th.configure({ css: { type: 'self-hosted' } });
+            await th.configure({ css: { type: 'hybrid' } });
             await th.process('');
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
@@ -103,6 +104,16 @@ describe("TexHandler<'katex'>", () => {
             await handler.process('');
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
+        });
+
+        it("complains if type is 'cdn' but empty cdn array was given", async () => {
+            const th = await TexHandler.create('katex');
+            await th.configure({
+                css: { type: 'cdn', cdn: [] as unknown as SupportedCdn },
+            });
+            await expect(
+                async () => await th.process(''),
+            ).rejects.toThrowError();
         });
     });
 
@@ -157,7 +168,7 @@ describe("TexHandler<'katex'>", () => {
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
                 );
                 await handler.configure({
-                    transformations: null,
+                    transformations: { pre: [], post: [] },
                 });
                 expect(log).not.toHaveBeenCalled();
             });
@@ -187,6 +198,17 @@ describe("TexHandler<'katex'>", () => {
                 await handler.configure({ katex: { output: 'html' } });
                 expect(log).not.toHaveBeenCalled();
             });
+
+            it('works with null overrides', async () => {
+                await handler.configure({
+                    transformations: null as unknown as { pre: []; post: [] },
+                });
+                expect(handler.configuration.transformations).toEqual({
+                    pre: [],
+                    post: [],
+                });
+                expect(log).not.toHaveBeenCalled();
+            });
         });
     });
 
@@ -203,7 +225,7 @@ describe("TexHandler<'katex'>", () => {
                 throw new Error(id);
             });
             const th = await TexHandler.create('katex');
-            await th.configure({ css: { type: 'self-hosted' } });
+            await th.configure({ css: { type: 'hybrid' } });
             await th.process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(
@@ -220,25 +242,7 @@ describe("TexHandler<'katex'>", () => {
                 throw new Error(id);
             });
             const th = await TexHandler.create('katex');
-            await th.configure({ css: { type: 'self-hosted' } });
-            await th.process('');
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining(id),
-            );
-        });
-        it.skip("should silently log error if there's a problem writing fonts", async () => {
-            fancyWrite.mockReset();
-            const id = uuid();
-            writeFileEnsureDir
-                .mockImplementationOnce(() => undefined)
-                .mockImplementationOnce(() => {
-                    throw new Error(id);
-                });
-            const th = await TexHandler.create('katex');
-            await th.configure({ css: { type: 'self-hosted' } });
+            await th.configure({ css: { type: 'hybrid' } });
             await th.process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(

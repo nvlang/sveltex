@@ -42,6 +42,7 @@ import {
     mdastFrontmatterFromMarkdown,
     MdastYaml,
     inspect,
+    mdastMdxJsxFromMarkdown,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
 import { getDefaultSveltexConfig } from '$config/defaults.js';
@@ -815,6 +816,7 @@ export function escape(
         ],
         texSettings,
     );
+
     const lines = escapedDocument.split(/\r\n?|\n/);
     return escapeSnippets(escapedDocument, [
         ...getMdastES({
@@ -923,6 +925,7 @@ export function parseToMdast(
             ]),
             mdastMathFromMarkdown(),
             mdastMdxExpressionFromMarkdown(),
+            mdastMdxJsxFromMarkdown(),
         ],
     });
 }

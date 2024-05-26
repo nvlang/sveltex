@@ -1,6 +1,11 @@
+---
+title: something
+exampleProperty: 2
+---
+
 <style>
 :root {
-    --some-color: #f6c;
+    --some-color: #f0f;
 }
 p, figure {
     font-family: sans-serif;
@@ -8,8 +13,7 @@ p, figure {
 /* { */
 </style>
 
-
-# Heading 1
+# Heading 1: {title} {exampleProperty}
 ###### Heading 6
 
 text **bold** text *italic (asterisks)* text _italic (underscores)_ text
@@ -25,8 +29,9 @@ $
 b
 $.
 
+
 <div>
-> $x^{a}$ `monospaced $x$`
+> $x^{a}$ `monospaced $x$` <div>fds<div> fds
 </div>
 
 <Verb>

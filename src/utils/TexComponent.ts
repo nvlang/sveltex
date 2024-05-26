@@ -3,6 +3,7 @@ import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
     FullTexComponentConfiguration,
     FullTexLiveConfiguration,
+    Pdf2svgOptions,
     TexComponentConfiguration,
     TexComponentImportInfo,
 } from '$types/handlers/AdvancedTex.js';
@@ -25,7 +26,7 @@ import {
     timeToString,
 } from '$utils/debug.js';
 import { buildDvisvgmInstruction } from '$utils/dvisvgm.js';
-import { fs } from '$utils/fs.js';
+import { fs, pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { sha256 } from '$utils/misc.js';
 
@@ -33,6 +34,7 @@ import { sha256 } from '$utils/misc.js';
 import { join, relative, resolve, ora, pc, svgoOptimize } from '$deps.js';
 import { isString } from '$type-guards/utils.js';
 import { InterpretedAttributes } from '$types/utils/Escape.js';
+import { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -527,6 +529,10 @@ export class TexComponent {
         // Get cache obect of intermediate file associated with this key-path
         const intCache = cache.data.int[this.keyPath];
 
+        // Check if files exist; if
+        const intFileExists = pathExists(this.source.intPath);
+        const svelteFileExists = pathExists(this.out.sveltePath);
+
         // 2. Check if compilation cache hit
         if (
             // If the cache object exists (i.e., a compilation at this key-path
@@ -537,7 +543,10 @@ export class TexComponent {
             // trying to compile right now...
             intCache.sourceHash === texHash &&
             // ...and caching is enabled in the configuration...
-            caching
+            caching &&
+            // ...and the intermediary and final files already exist...
+            intFileExists &&
+            svelteFileExists
         ) {
             // 3(A). ...then we can skip the compilation step. We can also skip
             // the conversion step, because it either succeeded before on the
@@ -653,7 +662,9 @@ export class TexComponent {
             // that we just generated...
             // svgCache.sourceKeyPath === this.keyPath &&
             // ...and caching is enabled in the configuration...
-            caching
+            caching &&
+            // ...and the final .svelte file already exists...
+            svelteFileExists
         ) {
             // 4(A). ...then we can skip the conversion step and return early;
             // though we still need to update `cache.json` with the new cache
@@ -722,10 +733,26 @@ export class TexComponent {
             // browser. I don't really understand why, since, from what I can
             // gather, the CDATA tag should make perfect sense, and technically
             // make the SVG more robust.
-            const svgFinal = svgOptimized.replace(
+            let svgFinal = svgOptimized.replace(
                 /<style>(.*?)<!\[CDATA\[(.*?)\]\]>(.*?)<\/style>/gsu,
                 '<style>$1$2$3</style>',
             );
+            if (texLiveConfig.conversionCommand === 'pdf2svg') {
+                svgFinal = svgFinal.replace('<svg', '<svg fill="currentColor"');
+                const currentColor = (
+                    texLiveConfig.conversionOptions as Pdf2svgOptions
+                ).currentColor;
+                if (
+                    currentColor &&
+                    isString(currentColor) &&
+                    currentColor.startsWith('#')
+                ) {
+                    svgFinal = svgFinal.replaceAll(
+                        currentColor,
+                        'currentColor',
+                    );
+                }
+            }
 
             await fs.writeFile(this.out.svgPath, svgFinal, 'utf8');
             await fs.rename(this.out.svgPath, this.out.sveltePath);
@@ -765,12 +792,23 @@ export class TexComponent {
      */
     get convertCmd(): CliInstruction {
         const texLiveConfig = this.texLiveConfig;
-        const overrideInstr = texLiveConfig.overrideConversionCommand;
+        let overrideInstr: CliInstruction | undefined | null;
+        if (texLiveConfig.conversionCommand === 'pdf2svg') {
+            overrideInstr = {
+                command: 'pdf2svg',
+                args: [this.source.intPath, this.out.svgPath],
+                silent: true,
+            };
+        }
+        if (texLiveConfig.overrideConversionCommand) {
+            overrideInstr = texLiveConfig.overrideConversionCommand;
+        }
         const instr = overrideInstr
             ? overrideInstr
             : // If no conversion command is specified, use dvisvgm
               buildDvisvgmInstruction({
-                  dvisvgmOptions: texLiveConfig.dvisvgmOptions,
+                  dvisvgmOptions:
+                      texLiveConfig.conversionOptions as DvisvgmOptions,
                   inputType: texLiveConfig.intermediateFiletype,
                   outputPath: this.out.svgPath,
                   texPath: this.source.intPath,

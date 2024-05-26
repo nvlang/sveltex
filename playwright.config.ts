@@ -34,15 +34,18 @@ export const config = defineConfig({
         {
             name: 'chrome',
             use: { ...devices['Desktop Chrome'] },
+            retries: 3,
         },
-        // {
-        //     name: 'firefox',
-        //     use: { ...devices['Desktop Firefox'] },
-        // },
-        // {
-        //     name: 'webkit',
-        //     use: { ...devices['Desktop Safari'] },
-        // },
+        {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+            retries: 3,
+        },
+        {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+            retries: 3,
+        },
         // {
         //     name: 'full-examples/unified',
         //     testDir: './e2e/full-examples/unified',

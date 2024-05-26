@@ -92,18 +92,6 @@ describe('CodeHandler error handling', () => {
         });
     });
 
-    describe("CodeHandler.create('prismjs') with prismjs mocked to throw error", () => {
-        vi.mock('prismjs', () => {
-            throw new Error('PrismJS not found');
-        });
-        it('pushes "prismjs" to missingDeps and then throws error', async () => {
-            await expect(() =>
-                CodeHandler.create('prismjs'),
-            ).rejects.toThrowError();
-            expect(missingDeps).toContain('prismjs');
-        });
-    });
-
     describe("CodeHandler.create('custom')", () => {
         it('throws error if second parameter is missing', async () => {
             await expect(() =>

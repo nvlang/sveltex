@@ -349,7 +349,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                     process: custom.process,
                     configure: custom.configure ?? (() => undefined),
                     configuration: mergeConfigs(
-                        getDefaultTexLiveConfig('custom'),
+                        getDefaultTexLiveConfig('custom', 'dvisvgm'),
                         custom.configuration ?? {},
                     ),
                     texComponents: {},
@@ -390,7 +390,10 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                     //             ? null
                     //             : advancedTexHandler.configuration.components;
                     // };
-                    const configuration = getDefaultTexLiveConfig('local');
+                    const configuration = getDefaultTexLiveConfig(
+                        'local',
+                        'dvisvgm',
+                    );
                     ath = new AdvancedTexHandler({
                         backend: 'local',
                         process,
@@ -407,7 +410,7 @@ export class AdvancedTexHandler<B extends AdvancedTexBackend> extends Handler<
                     process: (tex: string) => tex,
                     configure: () => undefined,
                     processor: {},
-                    configuration: getDefaultTexLiveConfig('none'),
+                    configuration: getDefaultTexLiveConfig('none', 'dvisvgm'),
                     texComponents: {},
                 });
                 break;

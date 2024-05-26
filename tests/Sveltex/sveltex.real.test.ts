@@ -50,9 +50,8 @@ const preprocessors = [
             advancedTexBackend: 'local',
         },
         {
-            verbatim: {
-                tex: { type: 'advancedTex', aliases: ['TeX'] },
-            },
+            tex: { css: { type: 'none' } },
+            verbatim: { tex: { type: 'advancedTex', aliases: ['TeX'] } },
         },
     ),
     await sveltex(
@@ -62,12 +61,8 @@ const preprocessors = [
             texBackend: 'mathjax',
         },
         {
-            tex: {
-                outputFormat: 'chtml',
-            },
-            code: {
-                theme: { type: 'cdn', mode: 'dark', name: 'dimmed' },
-            },
+            tex: { outputFormat: 'chtml', css: { type: 'none' } },
+            code: { theme: { type: 'cdn', mode: 'dark', name: 'dimmed' } },
         },
     ),
     await sveltex(
@@ -93,8 +88,8 @@ const preprocessors = [
             texBackend: 'katex',
         },
         {
-            code: { theme: { type: 'cdn', cdn: [] } },
-            tex: { css: { type: 'cdn', cdn: [] } },
+            code: { theme: { type: 'cdn' } },
+            tex: { css: { type: 'cdn' } },
         },
     ),
     await sveltex(
@@ -302,10 +297,7 @@ function expectedCode<
         const theme = p.configuration.code.theme;
         // script
         // head
-        if (
-            theme.type === 'cdn' &&
-            (isString(theme.cdn) || theme.cdn.length > 0)
-        ) {
+        if (theme.type === 'cdn' && isString(theme.cdn)) {
             expected.push(
                 /<link rel=["']stylesheet["'] href=["']https:.*starry-night.*css.*["']/,
             );
@@ -320,10 +312,7 @@ function expectedCode<
         typeAssert(is<Sveltex<M, 'highlight.js', T, A>>(p));
         const theme = p.configuration.code.theme;
         // head
-        if (
-            theme.type === 'cdn' &&
-            (isString(theme.cdn) || theme.cdn.length > 0)
-        ) {
+        if (theme.type === 'cdn' && isString(theme.cdn)) {
             expected.push(
                 /<link rel=["']stylesheet["'] href=["']https:.*highlight.js.*css.*["']/,
             );
@@ -349,7 +338,7 @@ function expectedTex<
     if (p.texBackend === 'mathjax') {
         typeAssert(is<Sveltex<M, C, 'mathjax', A>>(p));
         // script
-        if (p.configuration.tex.css.type === 'self-hosted') {
+        if (p.configuration.tex.css.type === 'hybrid') {
             // expected.push(/import '.*mathjax.*css.*'/);
         }
         // content
@@ -363,14 +352,13 @@ function expectedTex<
         // head
         if (
             p.configuration.tex.css.type === 'cdn' &&
-            (isString(p.configuration.tex.css.cdn) ||
-                p.configuration.tex.css.cdn.length > 0)
+            isString(p.configuration.tex.css.cdn)
         ) {
             expected.push(/<link rel="stylesheet" href="https:.*katex.*css.*"/);
         }
         // script
-        if (p.configuration.tex.css.type === 'self-hosted') {
-            expected.push(/import '.*katex.*css.*'/);
+        if (p.configuration.tex.css.type === 'hybrid') {
+            expected.push(/<link rel="stylesheet" href=".*katex.*css.*"/);
         }
         // content
         expected.push('<span class="katex');

@@ -16,9 +16,7 @@ await sveltexPreprocessor.configure({
         wrapClassPrefix: 'language-',
         languages: ['ts'],
     },
-    tex: {
-        outputFormat: 'svg',
-    },
+    tex: { outputFormat: 'svg' },
     verbatim: {
         Verb: {
             type: 'escapeOnly',
@@ -43,7 +41,7 @@ await sveltexPreprocessor.configure({
                 //     plugins: [],
                 // },
                 intermediateFiletype: 'dvi',
-                dvisvgmOptions: {
+                conversionOptions: {
                     svg: {
                         // fontFormat: 'svg',
                         bbox: '3pt',

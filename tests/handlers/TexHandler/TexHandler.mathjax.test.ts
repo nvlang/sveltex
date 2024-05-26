@@ -13,6 +13,8 @@ import { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 import { spy } from '$tests/fixtures.js';
 import { v4 as uuid } from 'uuid';
 import { consoles } from '$utils/debug.js';
+import { SupportedCdn } from '$types/handlers/misc.js';
+import { PossibleTexCssApproach } from '$types/handlers/Tex.js';
 
 function fixture() {
     beforeEach(() => {
@@ -120,12 +122,83 @@ describe("TexHandler<'mathjax'>", () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
-            it('should be able to output CHTML', async () => {
-                const handler = await TexHandler.create('mathjax');
-                await handler.configure({ outputFormat: 'chtml' });
-                expect((await handler.process('x')).processed).toEqual(xChtml);
-                await handler.configure({ outputFormat: 'svg' });
-                expect(log).not.toHaveBeenCalled();
+            describe('should be able to output CHTML', () => {
+                it.each([
+                    ['hybrid', 1],
+                    ['none', 0],
+                    ['hybrid', 0, [], {}, undefined, true],
+                    [
+                        'hybrid',
+                        0,
+                        [],
+                        { chtml: { fontURL: undefined } },
+                        undefined,
+                        true,
+                    ],
+                    [
+                        'hybrid',
+                        0,
+                        [],
+                        {
+                            chtml: {
+                                fontURL:
+                                    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/',
+                            },
+                        },
+                        undefined,
+                        true,
+                    ],
+                ] as [
+                    PossibleTexCssApproach<'mathjax'>,
+                    number,
+                    (SupportedCdn | [SupportedCdn, ...SupportedCdn[]])?,
+                    object?,
+                    boolean?,
+                    boolean?,
+                ][])(
+                    '%o, %o, %o',
+                    async (
+                        type,
+                        nWrites,
+                        cdns,
+                        mathjaxConfig,
+                        mockFancyFetch,
+                        expectError,
+                    ) => {
+                        let fancyFetch: MockInstance = vi.fn();
+                        if (mockFancyFetch) {
+                            fancyFetch = vi
+                                .spyOn(
+                                    await import('$utils/cdn.js'),
+                                    'fancyFetch',
+                                )
+                                .mockResolvedValue(undefined);
+                        }
+                        const handler = await TexHandler.create('mathjax');
+                        await handler.configure({
+                            outputFormat: 'chtml',
+                            css:
+                                type === 'none'
+                                    ? { type }
+                                    : { type, cdn: cdns },
+                            mathjax: { ...mathjaxConfig },
+                        });
+
+                        if (expectError) {
+                            await expect(
+                                async () => await handler.process('x'),
+                            ).rejects.toThrowError();
+                        } else {
+                            expect(
+                                (await handler.process('x')).processed,
+                            ).toEqual(xChtml);
+                        }
+                        await handler.configure({ outputFormat: 'svg' });
+                        expect(log).not.toHaveBeenCalled();
+                        expect(fancyWrite).toHaveBeenCalledTimes(nWrites);
+                        if (mockFancyFetch) fancyFetch.mockRestore();
+                    },
+                );
             });
 
             it('should throw error if MathJax did not return a valid node', async () => {

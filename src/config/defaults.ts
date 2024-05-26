@@ -2,7 +2,9 @@
 import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
 import type {
     AdvancedTexBackend,
+    ConversionCommand,
     FullAdvancedTexConfiguration,
+    FullConversionOptions,
 } from '$types/handlers/AdvancedTex.js';
 import type {
     CodeBackend,
@@ -22,8 +24,6 @@ import type {
     FullVerbEnvConfigEscapeOnly,
     VerbatimType,
 } from '$types/handlers/Verbatim.js';
-import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
-import type { FirstTwoLevelsRequiredNotUndefined } from '$types/utils/utility-types.js';
 
 // Internal dependencies
 import { isThemableCodeBackend } from '$type-guards/code.js';
@@ -40,19 +40,39 @@ import { interpretAttributes } from '$utils/parseComponent.js';
 /**
  * Get the default configuration for a TeX backend.
  */
-export function getDefaultTexConfiguration<T extends TexBackend>(
+export function getDefaultTexConfiguration<
+    T extends TexBackend,
+    CA extends 'cdn' | 'hybrid' | 'none' = T extends 'mathjax'
+        ? 'hybrid'
+        : T extends 'katex'
+          ? 'cdn'
+          : 'none',
+>(
     texBackend: T,
+    ca: CA = texBackend === 'mathjax'
+        ? ('hybrid' as CA)
+        : texBackend === 'katex'
+          ? ('cdn' as CA)
+          : ('none' as CA),
 ): FullTexConfiguration<T> {
     switch (texBackend) {
         case 'katex': {
             const rv: FullTexConfiguration<'katex'> = {
                 transformations: { pre: [], post: [] },
-                css: {
-                    type: 'cdn',
-                    cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
-                    dir: 'src/sveltex',
-                    timeout: 1000,
-                },
+                css:
+                    ca === 'cdn'
+                        ? {
+                              type: 'cdn',
+                              cdn: 'jsdelivr',
+                          }
+                        : ca === 'hybrid'
+                          ? {
+                                type: 'hybrid',
+                                cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
+                                dir: 'src/sveltex',
+                                timeout: 2000,
+                            }
+                          : { type: 'none' },
                 katex: {},
             };
             return rv as FullTexConfiguration<T>;
@@ -60,11 +80,15 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
         case 'mathjax': {
             const rv: FullTexConfiguration<'mathjax'> = {
                 transformations: { pre: [], post: [] },
-                css: {
-                    type: 'self-hosted',
-                    dir: 'src/sveltex',
-                    timeout: 1000,
-                },
+                css:
+                    ca === 'hybrid'
+                        ? {
+                              type: 'hybrid',
+                              dir: 'src/sveltex',
+                              timeout: 2000,
+                              cdn: ['jsdelivr', 'esm.sh', 'unpkg'],
+                          }
+                        : { type: 'none' },
                 outputFormat: 'svg',
                 mathjax: {
                     tex: {
@@ -193,7 +217,11 @@ export function getDefaultTexConfiguration<T extends TexBackend>(
 //     };
 // }
 
-export function getDefaultDvisvgmOptions(): FirstTwoLevelsRequiredNotUndefined<DvisvgmOptions> {
+export function getDefaultConversionOptions<CC extends ConversionCommand>(
+    cc: CC,
+): FullConversionOptions<CC> {
+    if (cc === 'pdf2svg')
+        return {} as FullConversionOptions<'pdf2svg'> as unknown as FullConversionOptions<CC>;
     return {
         console: {
             color: true, // overrides dvisvgm default
@@ -235,7 +263,7 @@ export function getDefaultDvisvgmOptions(): FirstTwoLevelsRequiredNotUndefined<D
             translate: null,
             zoom: null,
         },
-    };
+    } as FullConversionOptions<'dvisvgm'> as unknown as FullConversionOptions<CC>;
 }
 
 const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
@@ -248,15 +276,19 @@ export const defaultCacheDirectory = cacheDir
 
 export function getDefaultTexLiveConfig<
     A extends AdvancedTexBackend,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
->(_advancedTexBackend: A): FullAdvancedTexConfiguration<A> {
+    CC extends ConversionCommand = 'dvisvgm',
+>(
+    _advancedTexBackend: A,
+    cc: CC = 'dvisvgm' as CC,
+): FullAdvancedTexConfiguration<A> {
     return {
+        conversionCommand: 'dvisvgm',
         caching: true,
         verbose: false,
         cacheDirectory: defaultCacheDirectory,
         outputDirectory: 'src/sveltex',
         engine: 'lualatex',
-        dvisvgmOptions: getDefaultDvisvgmOptions(),
+        conversionOptions: getDefaultConversionOptions(cc),
         intermediateFiletype: 'dvi',
         overrideCompilationCommand: undefined,
         overrideConversionCommand: undefined,
@@ -313,9 +345,7 @@ export function getDefaultTexLiveConfig<
 export function getDefaultCodeConfig<C extends CodeBackend>(
     codeBackend: C,
 ): FullCodeConfiguration<C> {
-    const base: FullCodeConfiguration<
-        'custom' | 'escapeOnly' | 'none' | 'prismjs'
-    > = {
+    const base: FullCodeConfiguration<'custom' | 'escapeOnly' | 'none'> = {
         wrapClassPrefix: 'language-',
         wrap: (opts: CodeProcessOptions & { wrapClassPrefix: string }) => {
             const attr =

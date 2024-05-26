@@ -11,7 +11,7 @@ import type {
 } from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultDvisvgmOptions } from '$config/defaults.js';
+import { getDefaultConversionOptions } from '$config/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,
@@ -118,7 +118,7 @@ export function buildDvisvgmInstruction({
     inputType: 'dvi' | 'pdf';
 }): CliInstruction {
     const fullDvisvgmOptions = mergeWithoutUndefinedOverrides(
-        getDefaultDvisvgmOptions(),
+        getDefaultConversionOptions('dvisvgm'),
         dvisvgmOptions ?? {},
     );
 

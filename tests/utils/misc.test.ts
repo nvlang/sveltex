@@ -7,6 +7,7 @@ import {
     copyTransformation,
     isValidComponentName,
     copyTransformations,
+    postfixWithSlash,
 } from '$utils/misc.js';
 import { spy } from '$tests/fixtures.js';
 import {
@@ -226,13 +227,23 @@ describe.concurrent('utils/misc', () => {
         });
     });
 
-    describe('ensureStartsWithSlash', () => {
+    describe('prefixWithSlash', () => {
         it('should add leading slash', () => {
             expect(prefixWithSlash('abc')).toEqual('/abc');
         });
         it('should return strings with leading slashes as-is', () => {
             expect(prefixWithSlash('/abc')).toEqual('/abc');
             expect(prefixWithSlash('/abc/')).toEqual('/abc/');
+        });
+    });
+
+    describe('postfixWithSlash', () => {
+        it('should add leading slash', () => {
+            expect(postfixWithSlash('abc')).toEqual('abc/');
+        });
+        it('should return strings with leading slashes as-is', () => {
+            expect(postfixWithSlash('abc/')).toEqual('abc/');
+            expect(postfixWithSlash('/abc/')).toEqual('/abc/');
         });
     });
 

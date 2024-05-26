@@ -124,12 +124,28 @@ export function re(strings: TemplateStringsArray, ...flags: string[]) {
  *
  * @example
  * ```ts
- * ensureStartsWithSlash('path/to/file'); // '/path/to/file'
- * ensureStartsWithSlash('/path/to/file'); // '/path/to/file'
+ * prefixWithSlash('path/to/file'); // '/path/to/file'
+ * prefixWithSlash('/path/to/file'); // '/path/to/file'
  * ```
  */
 export function prefixWithSlash(path: string): `/${string}` {
     return path.startsWith('/') ? (path as `/${string}`) : `/${path}`;
+}
+
+/**
+ * Ensures that the given path ends with a slash.
+ *
+ * @param path - The path to ensure ends with a slash.
+ * @returns The path, with a slash appended if it didn't already end with one.
+ *
+ * @example
+ * ```ts
+ * postfixWithSlash('path/to/file'); // 'path/to/file/'
+ * postfixWithSlash('path/to/file/'); // 'path/to/file/'
+ * ```
+ */
+export function postfixWithSlash(path: string): `${string}/` {
+    return path.endsWith('/') ? (path as `${string}/`) : `${path}/`;
 }
 
 /**

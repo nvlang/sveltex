@@ -1,7 +1,8 @@
 // Types
+import type { HighlightJsThemeName, StarryNightThemeName } from '$data/code.js';
 import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
-import type { CodeTheme, FullCodeTheme } from '$types/handlers/misc.js';
+import type { CssConfiguration } from '$types/handlers/misc.js';
 import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 
 /**
@@ -9,7 +10,6 @@ import type { RequiredNonNullable } from '$types/utils/utility-types.js';
  */
 export type CodeBackend =
     | 'highlight.js'
-    | 'prismjs'
     | 'starry-night'
     | 'escapeOnly'
     | 'custom'
@@ -21,8 +21,6 @@ export type CodeBackend =
  * @typeParam B - Syntax highlighting backend.
  * @returns Depending on `B`:
  * - `highlight.js`: The module's `HLJSApi` type.
- * - `prismjs`: `{prism: Prism; loadLanguages: LoadLanguages }`, where `Prism`
- *   and `LoadLanguages` are types from the `prismjs` module.
  * - `starry-night`: Awaited return type of the module's `createStarryNight`
  *   function.
  * - `escapeOnly`: `object`.
@@ -33,24 +31,17 @@ export type CodeBackend =
  */
 export type CodeProcessor<B extends CodeBackend> = B extends 'highlight.js'
     ? import('highlight.js').HLJSApi
-    : B extends 'prismjs'
-      ? {
-            prism: typeof import('prismjs');
-            loadLanguages: typeof import('prismjs/components');
-        }
-      : B extends 'starry-night'
-        ? Awaited<
-              ReturnType<
-                  typeof import('@wooorm/starry-night').createStarryNight
-              >
-          >
-        : B extends 'escapeOnly'
+    : B extends 'starry-night'
+      ? Awaited<
+            ReturnType<typeof import('@wooorm/starry-night').createStarryNight>
+        >
+      : B extends 'escapeOnly'
+        ? object
+        : B extends 'custom'
           ? object
-          : B extends 'custom'
+          : B extends 'none'
             ? object
-            : B extends 'none'
-              ? object
-              : never;
+            : never;
 
 export interface GeneralCodeConfiguration {
     /**
@@ -98,7 +89,6 @@ export interface GeneralCodeConfiguration {
  * @typeParam B - Syntax highlighting backend.
  * @returns Depending on `B`:
  * - `highlight.js`: The module's `HLJSOptions` type.
- * - `prismjs`: `{ plugins?: string[]; languages?: string[] | 'all' }`.
  * - `starry-night`: `{ customLanguages?: Grammar[]; options?: Options }`, where
  *   `Options` and `Grammar` are types from the `@wooorm/starry-night` module.
  * - `escapeOnly`: {@link SimpleEscapeInstruction | `SimpleEscapeInstruction`}.
@@ -141,15 +131,13 @@ export type SpecificCodeConfiguration<B extends CodeBackend> =
                  */
                 // options?: import('@wooorm/starry-night').Options;
             }
-          : B extends 'prismjs'
-            ? { languages?: string[] | 'all' }
-            : B extends 'escapeOnly'
-              ? SimpleEscapeInstruction
-              : B extends 'custom'
+          : B extends 'escapeOnly'
+            ? SimpleEscapeInstruction
+            : B extends 'custom'
+              ? Record<string, unknown>
+              : B extends 'none'
                 ? Record<string, unknown>
-                : B extends 'none'
-                  ? Record<string, unknown>
-                  : never;
+                : never;
 
 export type ThemableCodeBackend = 'highlight.js' | 'starry-night';
 
@@ -159,7 +147,7 @@ type SpecificCodeAndThemeConfiguration<B extends CodeBackend> =
               /**
                * Configure the theme to use for syntax highlighting.
                */
-              theme?: CodeTheme<B, 'cdn' | 'self-hosted' | 'none'> | undefined;
+              theme?: CodeTheme<B> | undefined;
           }
         : SpecificCodeConfiguration<B>;
 
@@ -169,7 +157,7 @@ type FullSpecificCodeAndThemeConfiguration<B extends CodeBackend> =
               /**
                * Configure the theme to use for syntax highlighting.
                */
-              theme: FullCodeTheme<B, 'cdn' | 'self-hosted' | 'none'>;
+              theme: FullCodeTheme<B>;
           }
         : SpecificCodeConfiguration<B>;
 
@@ -269,3 +257,65 @@ export type CodeConfigureFn<B extends CodeBackend> = (
     config: CodeConfiguration<B>,
     codeHandler: CodeHandler<B>,
 ) => void | Promise<void>;
+
+export type FullCodeTheme<
+    B extends CodeBackend,
+    T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
+> = RequiredNonNullable<CodeTheme<B, T>>;
+
+export type CodeTheme<
+    B extends CodeBackend,
+    T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
+> = {
+    /**
+     * - `'cdn'`: Load the theme's stylesheet from a CDN with a `<link>` tag in
+     *   `<svelte:head>`.
+     * - `'self-hosted'`: Fetch the theme's stylesheet from a CDN once, write it
+     *   to the local filesystem, and then import it with a `<link>` tag in
+     *   `<svelte:head>`. Cache invalidation goes by the filename, which in turn
+     *   might depend on the code backend's semver version string. This means
+     *   that manual modifications to the stylesheet will always be preserved,
+     *   since new versions of the stylesheet will have different filenames. It
+     *   furthermore enables the user to customize the stylesheet to their
+     *   liking and have those changes persist across updates by simply renaming
+     *   the stylesheet in accordance with the version of the code backend
+     *   currently in use.
+     * - `'none'`: Do none of the above.
+     */
+    type?: T | undefined;
+} & CssConfiguration<T> &
+    CodeThemeWithoutCssConfiguration<B>;
+
+export interface CodeThemeWithoutCssConfiguration<B extends CodeBackend> {
+    /**
+     * Name of the theme to use.
+     *
+     * @defaultValue `'default'`
+     */
+    name?:
+        | (B extends 'starry-night'
+              ? StarryNightThemeName
+              : B extends 'highlight.js'
+                ? HighlightJsThemeName
+                : never)
+        | undefined;
+
+    /**
+     * - `'light'`: Fetch the light theme.
+     * - `'dark'`: Fetch the dark theme.
+     * - `'both'`: Fetch CSS file that uses
+     *   [`prefers-color-scheme`](https://developer.mozilla.org/docs/Web/CSS/%40media/prefers-color-scheme)
+     *   to dynamically pick the theme mode.
+     *
+     * @defaultValue `'both'`
+     * @remarks Only applicable to `starry-night` themes.
+     */
+    mode?: B extends 'starry-night' ? 'light' | 'dark' | 'both' : never;
+
+    /**
+     * Whether to fetch the minified version of the theme.
+     *
+     * @defaultValue `true`
+     */
+    min?: B extends 'highlight.js' ? boolean | undefined : never;
+}

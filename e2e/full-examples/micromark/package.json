@@ -10,16 +10,16 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
+    "@nvl/sveltex": "file:../../..",
     "@sveltejs/adapter-auto": "^3.2.0",
     "@sveltejs/kit": "^2.5.9",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "esbuild": "0.20.2",
     "katex": "^0.16.10",
-    "mathjax-full": "^3.2.2",
+    "mathjax-full": "3.2.2",
     "micromark": "^4.0.0",
     "svelte": "^4.2.17",
     "svelte-check": "^3.7.1",
-    "@nvl/sveltex": "file:../../..",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"

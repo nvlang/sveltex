@@ -45,7 +45,7 @@ describe("TexHandler<'katex'>", () => {
                 throw new Error(id);
             });
             const th1 = await TexHandler.create('katex');
-            await th1.configure({ css: { type: 'self-hosted' } });
+            await th1.configure({ css: { type: 'hybrid' } });
             await th1.process('');
             expect(log).toHaveBeenCalledTimes(3);
             range(1, 3).forEach((i) => {
@@ -61,7 +61,7 @@ describe("TexHandler<'katex'>", () => {
                 status: 404,
             } as Response);
             const th2 = await TexHandler.create('katex');
-            await th2.configure({ css: { type: 'self-hosted' } });
+            await th2.configure({ css: { type: 'hybrid' } });
             await th2.process('');
             expect(log).toHaveBeenCalledTimes(3);
             range(1, 3).forEach((i) => {

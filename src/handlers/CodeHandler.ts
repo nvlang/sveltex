@@ -148,9 +148,11 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
         // Convenience alias + type assertion
         const theme = this.configuration.theme;
-        const { name, mode, min, cdn, dir, type } = theme;
+        const { name, mode, min, type } = theme;
 
         if (type === 'none') return;
+
+        const { cdn } = theme;
 
         // The backend version, used to try to ensure that the fetched
         // stylesheet is compatible with the current version of the backend.
@@ -180,6 +182,8 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             }
             return;
         }
+
+        const { dir } = theme;
 
         // Build the path to which we should write the fetched stylesheet
         const path = join(dir, `${this.backend}@${v}.${resourceName}`);
@@ -289,58 +293,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     return handler;
                 } catch (error) {
                     missingDeps.push('highlight.js');
-                    throw error;
-                }
-            case 'prismjs':
-                try {
-                    type Backend = 'prismjs';
-                    const processor = {
-                        prism: (await import('prismjs')).default,
-                        loadLanguages: (await import('prismjs/components'))
-                            .default,
-                    };
-                    // Prevent Prism from trying to automatically highlight all code blocks
-                    processor.prism.manual = true;
-                    const codeHandler = new CodeHandler<Backend>({
-                        backend: 'prismjs',
-                        processor,
-                        process: (code, { lang }, codeHandler) => {
-                            const langOrDefault = lang ?? 'plaintext';
-                            const grammar =
-                                codeHandler.processor.prism.languages[
-                                    langOrDefault
-                                ];
-                            // ?? codeHandler.processor.loadLanguages[langOrDefault];
-                            if (!grammar) {
-                                log(
-                                    'warn',
-                                    `[SvelTeX: Prism] Language not found: ${langOrDefault}`,
-                                );
-                                return escapeBraces(escapeHtml(code));
-                            }
-                            return escapeBraces(
-                                codeHandler.processor.prism.highlight(
-                                    code,
-                                    grammar,
-                                    langOrDefault,
-                                ),
-                            );
-                        },
-                        configuration: getDefaultCodeConfig('prismjs'),
-                        // configure: (config, codeHandler) => {
-                        //     // if (config.languages === 'all') {
-                        //     //     codeHandler.processor.loadLanguages();
-                        //     // } else if (config.languages) {
-                        //     //     codeHandler.processor.loadLanguages(config.languages);
-                        //     // }
-                        // },
-                    });
-                    // load all languages
-                    // if (typeof codeHandler.processor.loadLanguages === 'function')
-                    //     codeHandler.processor.loadLanguages();
-                    return codeHandler;
-                } catch (error) {
-                    missingDeps.push('prismjs');
                     throw error;
                 }
             case 'starry-night':

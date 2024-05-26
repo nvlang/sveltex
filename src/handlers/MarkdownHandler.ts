@@ -13,6 +13,7 @@ import type {
 import { missingDeps } from '$utils/env.js';
 import { Handler } from '$handlers/Handler.js';
 import { re } from '$utils/misc.js';
+import { micromarkMdx } from '$deps.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -204,7 +205,11 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                         processor,
                         process,
                         configure,
-                        configuration: {},
+                        configuration: {
+                            allowDangerousHtml: true,
+                            htmlExtensions: [],
+                            extensions: [micromarkMdx()],
+                        },
                     });
                 } catch (error) {
                     missingDeps.push('micromark');

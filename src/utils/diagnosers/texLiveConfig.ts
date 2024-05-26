@@ -50,7 +50,7 @@ export function diagnoseTexLiveConfig(x: object) {
     );
     d.ifPresent('svgoOptions', 'a non-null object', isNonNullObject, 'object');
     d.ifPresent(
-        'dvisvgmOptions',
+        'conversionOptions',
         'a non-null object',
         isNonNullObject,
         'object',
@@ -63,6 +63,8 @@ export function diagnoseTexLiveConfig(x: object) {
         isSupportedTexEngine,
         'string',
     );
-    d.noteUnexpectedProperties(Object.keys(getDefaultTexLiveConfig('local')));
+    d.noteUnexpectedProperties(
+        Object.keys(getDefaultTexLiveConfig('local', 'dvisvgm')),
+    );
     return d;
 }

@@ -11,7 +11,7 @@ import {
 } from 'vitest';
 import {
     getDefaultCodeConfig,
-    getDefaultDvisvgmOptions,
+    getDefaultConversionOptions,
     getDefaultTexLiveConfig,
     getDefaultVerbEnvConfig,
 } from '$config/defaults.js';
@@ -22,8 +22,9 @@ import { verbatimTypes } from '$type-guards/verbatim.js';
 import { spy } from '$tests/fixtures.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import { VerbatimType } from '$types/handlers/Verbatim.js';
-import { codeBackends, isThemableCodeBackend } from '$type-guards/code.js';
+import { isThemableCodeBackend } from '$type-guards/code.js';
 import { isPresentAndDefined } from '$type-guards/utils.js';
+import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 
 function fixture() {
     beforeEach(() => {
@@ -91,7 +92,12 @@ describe.concurrent('config/defaults', () => {
     describe('getDefaultDvisvgmOptions()', () => {
         fixture();
         it('should be an object', () => {
-            expect(typeof getDefaultDvisvgmOptions()).toBe('object');
+            expect(typeof getDefaultConversionOptions('dvisvgm')).toBe(
+                'object',
+            );
+            expect(typeof getDefaultConversionOptions('pdf2svg')).toBe(
+                'object',
+            );
         });
     });
 

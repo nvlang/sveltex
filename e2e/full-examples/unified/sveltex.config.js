@@ -1,5 +1,6 @@
 import { sveltex } from '@nvl/sveltex';
 import rehypeSlug from 'rehype-slug';
+import remarkMdx from 'remark-mdx';
 
 export const sveltexPreprocessor = await sveltex({
     markdownBackend: 'unified',
@@ -9,15 +10,18 @@ export const sveltexPreprocessor = await sveltex({
 });
 
 await sveltexPreprocessor.configure({
-    markdown: { rehypePlugins: [rehypeSlug] },
+    markdown: {
+        remarkPlugins: [remarkMdx],
+        rehypePlugins: [rehypeSlug],
+    },
     code: {
-        escapeBraces: true,
-        escapeHtml: true,
         wrap: undefined,
         wrapClassPrefix: 'language-',
         languages: 'common',
     },
-    tex: {},
+    tex: {
+        css: { type: 'cdn' },
+    },
     verbatim: {
         Verb: {
             type: 'escapeOnly',
@@ -32,34 +36,21 @@ await sveltexPreprocessor.configure({
             aliases: ['TikZ'],
             preamble: [
                 '\\usepackage{mathtools}',
+                '\\usepackage{amsmath}',
                 '\\usepackage{microtype}',
                 '\\usepackage{tikz}',
             ].join('\n'),
             overrides: {
-                engine: 'lualatex',
+                // engine: 'pdflatex',
                 // overrideSvgPostprocess: null,
                 // svgoOptions: {
                 //     plugins: [],
                 // },
-                intermediateFiletype: 'dvi',
-                dvisvgmOptions: {
-                    svg: {
-                        // fontFormat: 'svg',
-                        bbox: '3pt',
-                        gradSimplify: null,
-                        gradOverlap: null,
-                        gradSegments: null,
-                        bitmapFormat: null,
-                        clipJoin: null,
-                        comments: null,
-                        currentColor: null,
-                        optimize: null,
-                        precision: null,
-                        linkmark: null,
-                        noStyles: null,
-                        relative: null,
-                        zip: null,
-                    },
+                conversionCommand: 'dvisvgm',
+                intermediateFiletype: 'pdf',
+                conversionOptions: {
+                    currentColor: '#000',
+                    svg: { bbox: '3pt' },
                     processing: {},
                     svgTransformations: {},
                 },

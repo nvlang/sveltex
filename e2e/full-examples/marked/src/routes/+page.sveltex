@@ -20,13 +20,23 @@ Text: \[ 1/n < \color{#fc0}\int_0^{1} \color{var(--some-color)}x^{x}\ dx < n. \]
 
 Regexes in mustache tags: {('a$b$c\(d\)e\[f\]g$$h$$'.match(/\$/g))}.
 
-` foo ` text $a$;
+` foo ` text $a$ and <span>*italic*</span>;
 $
 b
 $.
 
 <div>
-> $x^{a}$ `monospaced $x$`
+something <em>italic</em> something else <strong>bold</strong> something else
+</div>
+
+<div>
+> $x^{a}$ `monospaced $x$` *italic*
+</div>
+
+<div>
+
+> $x^{a}$ `monospaced $x$` *italic*
+
 </div>
 
 <Verb>

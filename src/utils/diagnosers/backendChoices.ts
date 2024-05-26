@@ -14,7 +14,7 @@ import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { typeAssert, type Equals } from '$deps.js';
 
 // Constants describing the possible backends
-const markdownBackends = [
+export const markdownBackends = [
     'markdown-it',
     'marked',
     'micromark',
@@ -22,16 +22,15 @@ const markdownBackends = [
     'none',
     'custom',
 ] as const;
-const codeBackends = [
+export const codeBackends: CodeBackend[] = [
     'escapeOnly',
     'highlight.js',
     'starry-night',
     'none',
     'custom',
-    'prismjs',
 ] as const;
-const texBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
-const advancedTexBackends = ['local', 'none', 'custom'] as const;
+export const texBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
+export const advancedTexBackends = ['local', 'none', 'custom'] as const;
 const backendChoices = [
     ['markdownBackend', markdownBackends],
     ['codeBackend', codeBackends],

@@ -1,5 +1,6 @@
 import { spy } from '$tests/fixtures.js';
-import { codeBackends, isThemableCodeBackend } from '$type-guards/code.js';
+import { isThemableCodeBackend } from '$type-guards/code.js';
+import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
 import {
     it,

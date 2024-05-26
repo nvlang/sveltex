@@ -11,7 +11,7 @@ import { fs } from '$utils/fs.js';
 import { AbortError, nodeFetch } from '$deps.js';
 
 export function cdnLink(
-    pkg: 'katex' | '@wooorm/starry-night' | 'highlight.js',
+    pkg: 'mathjax-full' | 'katex' | '@wooorm/starry-night' | 'highlight.js',
     resource: string,
     version: string = 'latest',
     cdn: SupportedCdn = 'jsdelivr',

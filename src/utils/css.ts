@@ -132,7 +132,10 @@ export function unescapeCssColorVars(
 ) {
     let unescaped = svg;
     cssColorVars.forEach((hexColor, cssColorVar) => {
-        unescaped = unescaped.replaceAll(`#${hexColor}`, `var(${cssColorVar})`);
+        unescaped = unescaped.replace(
+            new RegExp(`#${hexColor}`, 'gi'),
+            `var(${cssColorVar})`,
+        );
         const hexColorArray = hexColor.split('');
         if (
             hexColorArray[0] &&

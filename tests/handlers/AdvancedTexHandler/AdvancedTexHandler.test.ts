@@ -29,7 +29,7 @@ import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 //             tex: {},
 //             Example: { aliases: ['ExampleAlias'] },
 //         },
-//         dvisvgmOptions: {
+//         conversionOptions: {
 //             svg: {
 //                 fontFormat: 'woff2',
 //             },
@@ -59,7 +59,7 @@ async function setup(hash: string, config?: AdvancedTexConfiguration<'local'>) {
         //     tex: {},
         //     Example: { aliases: ['ExampleAlias'] },
         // },
-        dvisvgmOptions: {
+        conversionOptions: {
             svg: {
                 fontFormat: 'woff2',
             },

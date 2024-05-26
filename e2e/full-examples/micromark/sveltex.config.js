@@ -8,9 +8,6 @@ export const sveltexPreprocessor = await sveltex({
 });
 
 await sveltexPreprocessor.configure({
-    general: {
-        tex: {},
-    },
     markdown: {},
     code: {
         escapeBraces: true,
@@ -19,22 +16,21 @@ await sveltexPreprocessor.configure({
         wrapClassPrefix: 'language-',
     },
     tex: {
-        // inputConfiguration: {
-        //     svgNode: true,
-        // },
         outputFormat: 'chtml',
-        mathjaxConfiguration: {
-            svg: {
-                // displayIndent: '2em',
-                // displayAlign: 'center',
-            },
+        css: { type: 'self-hosted' },
+        mathjax: {
             chtml: {
-                adaptiveCSS: false,
-                fontURL:
-                    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                fontURL: '/fonts/sveltex/',
             },
-            options: {},
         },
+        // mathjax: {
+        //     chtml: {
+        //         adaptiveCSS: false,
+        //         fontURL:
+        //             'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+        //     },
+        //     options: {},
+        // },
 
         // inputConfiguration: {
         //     html: true,
@@ -71,32 +67,8 @@ await sveltexPreprocessor.configure({
             ].join('\n'),
             overrides: {
                 engine: 'lualatex',
-                // overrideSvgPostprocess: null,
-                // svgoOptions: {
-                //     plugins: [],
-                // },
                 intermediateFiletype: 'dvi',
-                dvisvgmOptions: {
-                    svg: {
-                        // fontFormat: 'svg',
-                        bbox: '3pt',
-                        gradSimplify: null,
-                        gradOverlap: null,
-                        gradSegments: null,
-                        bitmapFormat: null,
-                        clipJoin: null,
-                        comments: null,
-                        currentColor: null,
-                        optimize: null,
-                        precision: null,
-                        linkmark: null,
-                        noStyles: null,
-                        relative: null,
-                        zip: null,
-                    },
-                    processing: {},
-                    svgTransformations: {},
-                },
+                conversionOptions: { svg: { bbox: '3pt' } },
             },
             documentClass: '\\documentclass{standalone}',
         },

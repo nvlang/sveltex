@@ -2,8 +2,6 @@
 import { type Equals, typeAssert } from '$deps.js';
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
-    CssApproach,
-    CssApproachLocal,
     CssConfiguration,
     FullCssConfiguration,
     PreAndPostTransformations,
@@ -145,9 +143,9 @@ export type FullTexConfiguration<
     : WithTransformationsRequiredNonNullable<B> & TexConfiguration<B, CA>;
 
 export type PossibleTexCssApproach<B extends TexBackend> = B extends 'mathjax'
-    ? CssApproachLocal
+    ? 'hybrid' | 'none'
     : B extends 'katex'
-      ? CssApproach
+      ? 'cdn' | 'hybrid' | 'none'
       : never;
 
 /**

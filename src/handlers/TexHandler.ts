@@ -11,7 +11,6 @@ import type {
 
 // Internal dependencies
 import { getDefaultTexConfiguration } from '$config/defaults.js';
-import { katexFonts } from '$data/tex.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import { isArray, isOneOf } from '$type-guards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
@@ -20,7 +19,11 @@ import { escapeBraces } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
 import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { copyTransformations, prefixWithSlash } from '$utils/misc.js';
+import {
+    copyTransformations,
+    postfixWithSlash,
+    prefixWithSlash,
+} from '$utils/misc.js';
 
 // External dependencies
 import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
@@ -38,27 +41,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
 > {
     override get configuration(): FullTexConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
-        // return Object.fromEntries(
-        //     Object.entries(deepClone(this._configuration)).map(
-        //         ([k, v]: [string, FullTex]) => {
-        //             const real = this._configuration[k];
-        //             nodeAssert(real?.transformations);
-        //             const { transformations } = real;
-        //             const { pre, post } = transformations;
-        //             return [
-        //                 k,
-        //                 {
-        //                     ...v,
-        //                     transformations: {
-        //                         pre: copyTransformations(pre),
-        //                         post: copyTransformations(post),
-        //                     },
-        //                 },
-        //             ];
-        //         },
-        //     ),
-        // );
-
         const { pre, post } = this._configuration.transformations;
         return {
             ...deepClone(this._configuration),
@@ -67,18 +49,6 @@ export class TexHandler<B extends TexBackend> extends Handler<
                 post: copyTransformations(post),
             },
         };
-
-        // rfdc doesn't handle RegExps well, so we have to copy them manually
-        // if (isOneOf(this.backend, ['mathjax', 'katex'])) {
-        // typeAssert(is<TexHandler<'katex'>>(this));
-        // const { pre, post } = this._configuration.transformations;
-        // clone.transformations = {
-        //     pre: copyTransformations(this._configuration.transformations.pre),
-        //     post: copyTransformations(this._configuration.transformations.post),
-        // };
-        // // }
-
-        // return clone;
     }
 
     override configureNullOverrides: [string, unknown][] = [
@@ -92,7 +62,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                       type: 'none',
                       dir: 'src/sveltex',
                       timeout: 1000,
-                      cdn: 'undefined',
+                      cdn: 'jsdelivr',
                   }
                 : undefined,
         ],
@@ -149,6 +119,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
             await this._handleCss(this);
         };
     }
+
     private _handledCss: boolean = false;
 
     /**
@@ -317,64 +288,80 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     texHandler: TexHandler<'katex'>,
                 ) => Promise<void> = async (texHandler) => {
                     const cssConfig = texHandler.configuration.css;
-                    const { type, dir, cdn } = cssConfig;
+                    const { type } = cssConfig;
 
                     if (type === 'none') return;
+
+                    // type: 'cdn' | 'hybrid'
+
+                    const { cdn } = cssConfig;
 
                     const v = (await getVersion('katex')) ?? 'latest';
 
                     const cdns = isArray(cdn) ? cdn : [cdn];
-                    if (cdns.length === 0) return;
+                    // if (cdns.length === 0) return;
                     const links = cdns.map((c) =>
                         cdnLink('katex', 'dist/katex.min.css', v, c),
                     );
 
-                    if (type === 'cdn' && links[0]) {
-                        texHandler._headLines = [
-                            `<link rel="stylesheet" href="${links[0]}">`,
-                        ];
+                    if (type === 'cdn') {
+                        if (links[0]) {
+                            texHandler._headLines = [
+                                `<link rel="stylesheet" href="${links[0]}">`,
+                            ];
+                        } else {
+                            throw new Error(
+                                'No CDN specified for KaTeX. If you want to deactivate Sveltex CSS handling for KaTeX, set the `tex.css.type` property of the Sveltex configuration to `none`.',
+                            );
+                        }
                         return;
                     }
 
+                    // type: 'hybrid'
+
+                    const { dir } = cssConfig;
+
                     const path = join(dir, `katex@${v}.min.css`);
 
-                    texHandler._scriptLines = [
-                        `import '${prefixWithSlash(path)}';`,
+                    texHandler._headLines = [
+                        `<link rel="stylesheet" href="${prefixWithSlash(path)}">`,
                     ];
 
                     if (fs.existsSync(path)) return;
 
-                    const css = await fancyFetch(links);
+                    let css = await fancyFetch(links);
 
                     if (!css) return;
 
+                    const firstCdn = isArray(cdn) ? cdn[0] : cdn;
+
+                    const linkPrefix = cdnLink(
+                        'katex',
+                        'dist/fonts/',
+                        v,
+                        firstCdn,
+                    );
+
+                    css = css.replaceAll('fonts/', linkPrefix);
+
                     // Write the CSS to the specified path
                     await fancyWrite(path, css);
-
-                    await Promise.all(
-                        katexFonts.map(async (fontName) => {
-                            const links = cdns.map((c) =>
-                                cdnLink(
-                                    'katex',
-                                    `dist/fonts/${fontName}`,
-                                    v,
-                                    c,
-                                ),
-                            );
-                            const fontFile = await fancyFetch(links);
-                            if (!fontFile) return;
-                            await fancyWrite(
-                                join(dir, 'fonts', fontName),
-                                fontFile,
-                            );
-                        }),
-                    );
                 };
                 const th = new TexHandler<'katex'>({
                     backend: 'katex',
                     configuration: getDefaultTexConfiguration('katex'),
                     process,
-                    configure: () => undefined,
+                    configure: (configuration, handler) => {
+                        if (configuration.css?.type) {
+                            handler._configuration.css = mergeConfigs(
+                                getDefaultTexConfiguration(
+                                    'katex',
+                                    handler._configuration.css.type,
+                                ).css,
+                                configuration.css ?? {},
+                            );
+                        }
+                    },
                     processor: {},
                     handleCss,
                 });
@@ -416,6 +403,8 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     // Convenience alias
                     const config = texHandler.configuration;
 
+                    const type = config.css.type;
+
                     // With MathJax, there's no CSS available from CDNs (as far
                     // as I could tell). For SVG output, I don't know why, but
                     // for CHTML output this makes sense, as newer versions of
@@ -426,7 +415,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     // (~200kB) CSS file that enables MathJax's entire feature
                     // set. Because of this, I recommend using the SVG output
                     // format with MathJax within Sveltex.
-                    if (config.css.type !== 'self-hosted') return;
+                    if (type === 'none') return;
 
                     /**
                      * The installed version of `mathjax-full`, as set in the
@@ -457,8 +446,8 @@ export class TexHandler<B extends TexBackend> extends Handler<
                      */
                     const path = join(dir, `mathjax@${v}.${fmt}.min.css`);
 
-                    texHandler._scriptLines = [
-                        `import '${prefixWithSlash(path)}';`,
+                    texHandler._headLines = [
+                        `<link rel="stylesheet" href="${prefixWithSlash(path)}">`,
                     ];
 
                     // If the CSS file already exists, return early. Aside from
@@ -491,6 +480,38 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     // If MathJax failed to generate the CSS, return early
                     if (codeGen !== 0) return;
 
+                    // If the output format is `chtml`, we need to modify the
+                    // CSS to point to the correct font URLs. This is because
+                    // MathJax's CSS assumes that the fonts are in the same
+                    // directory as the CSS file, but we're writing self-hosting
+                    // the CSS here, so we'll need to replace the relative URLs
+                    // with URLs pointing to the fonts on a CDN.
+                    if (fmt === 'chtml') {
+                        const { cdn } = config.css;
+                        const firstCdn = isArray(cdn) ? cdn[0] : cdn;
+
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        if (!firstCdn) {
+                            throw new Error(
+                                'No CDN specified for MathJax. If you want to deactivate Sveltex CSS handling for MathJax, set the `tex.css.type` property of the Sveltex configuration to `none`.',
+                            );
+                        }
+
+                        const linkPrefix = postfixWithSlash(
+                            config.mathjax.chtml?.fontURL ??
+                                cdnLink(
+                                    'mathjax-full',
+                                    'es5/output/chtml/fonts/woff-v2/',
+                                    v,
+                                    firstCdn,
+                                ),
+                        );
+                        css = css.replaceAll(
+                            'js/output/chtml/fonts/tex-woff-v2/',
+                            linkPrefix,
+                        );
+                    }
+
                     // Minify the CSS
                     let opt: Output;
                     await runWithSpinner(
@@ -520,8 +541,19 @@ export class TexHandler<B extends TexBackend> extends Handler<
 
                 const handler = new TexHandler<'mathjax'>({
                     backend: 'mathjax',
-                    configure: (_configuration, handler) => {
+                    configure: (configuration, handler) => {
+                        if (configuration.css?.type) {
+                            handler._configuration.css = mergeConfigs(
+                                getDefaultTexConfiguration(
+                                    'mathjax',
+                                    handler._configuration.css.type,
+                                ).css,
+                                configuration.css ?? {},
+                            );
+                        }
+
                         const config = handler._configuration;
+
                         handler.processor = mathjax.document('', {
                             InputJax: new TeX(config.mathjax.tex),
                             OutputJax:

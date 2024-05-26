@@ -1,3 +1,6 @@
+export type StarryNightThemeName = (typeof starryNightThemeNames)[number];
+export type HighlightJsThemeName = (typeof highlightJsThemeNames)[number];
+
 /**
  * `starry-night` themes.
  */

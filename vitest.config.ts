@@ -32,7 +32,7 @@ export default defineConfig({
         reporters: [
             'default',
             'github-actions',
-            ['html', { outputFile: 'vitest-report/index.html' }],
+            'html',
             // 'basic',
             // 'dot',
             // 'hanging-process',

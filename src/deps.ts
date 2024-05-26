@@ -69,10 +69,12 @@ export {
     type MdxFlowExpression as MdastMdxFlowExpressionNode,
     type MdxTextExpression as MdastMdxTextExpressionNode,
 } from 'mdast-util-mdx-expression';
+export { mdxJsxFromMarkdown as mdastMdxJsxFromMarkdown } from 'mdast-util-mdx-jsx';
 export {
     math as micromarkMath,
     type Options as MicromarkMathOptions,
 } from 'micromark-extension-math';
+export { mdx as micromarkMdx } from 'micromark-extension-mdx';
 export {
     mdxExpression as micromarkMdxExpression,
     type Options as MicromarkMdxExpressionOptions,

@@ -10,7 +10,10 @@ import type {
 } from '$types/handlers/Verbatim.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
-import type { RequiredNonNullableExcept } from '$types/utils/utility-types.js';
+import type {
+    FirstTwoLevelsRequiredNotUndefined,
+    RequiredNonNullableExcept,
+} from '$types/utils/utility-types.js';
 import type { TexComponent } from '$utils/TexComponent.js';
 
 /**
@@ -18,14 +21,53 @@ import type { TexComponent } from '$utils/TexComponent.js';
  */
 export type AdvancedTexBackend = 'local' | 'custom' | 'none';
 
-export type FullTexLiveConfiguration = RequiredNonNullableExcept<
-    TexLiveConfiguration,
+export type FullTexLiveConfiguration<
+    CC extends ConversionCommand = ConversionCommand,
+> = RequiredNonNullableExcept<
+    TexLiveConfiguration<CC>,
     | 'overrideCompilationCommand'
     | 'overrideConversionCommand'
     | 'overrideSvgPostprocess'
 >;
 
-export interface TexLiveConfiguration {
+export type ConversionCommand = 'dvisvgm' | 'pdf2svg';
+
+export type ConversionOptions<CC extends ConversionCommand> =
+    CC extends 'dvisvgm'
+        ? DvisvgmOptions
+        : CC extends 'pdf2svg'
+          ? Pdf2svgOptions
+          : never;
+
+export type FullConversionOptions<CC extends ConversionCommand> =
+    FirstTwoLevelsRequiredNotUndefined<ConversionOptions<CC>>;
+
+interface HasPdf2svgOptions {
+    conversionCommand: 'pdf2svg';
+
+    /**
+     * Options to pass to `pdf2svg` when converting PDF files to SVG.
+     */
+    conversionOptions?: ConversionOptions<'pdf2svg'> | undefined;
+}
+
+interface HasDvisvgmOptions {
+    conversionCommand?: 'dvisvgm' | undefined;
+
+    /**
+     * Options to pass to `dvisvgm` when converting PDF or DVI files to SVG.
+     */
+    conversionOptions?: ConversionOptions<'dvisvgm'> | undefined;
+}
+
+export type TexLiveConfiguration<
+    CC extends ConversionCommand = ConversionCommand,
+> = TexLiveConfigurationWithoutConversionOptions<CC> &
+    (HasDvisvgmOptions | HasPdf2svgOptions);
+
+export interface TexLiveConfigurationWithoutConversionOptions<
+    CC extends ConversionCommand = ConversionCommand,
+> {
     /**
      * If `false`, shell escape is disabled, meaning that the TeX engine will
      * not be able to execute shell commands (i.e., e.g., the `minted` LaTeX
@@ -146,7 +188,7 @@ export interface TexLiveConfiguration {
      * @remarks
      * ⚠ **Warning**: The following properties will be useless if
      * `overrideConversionCommand` is set:
-     * - {@link dvisvgmOptions | `dvisvgmOptions`}
+     * - {@link conversionOptions | `conversionOptions`}
      */
     overrideConversionCommand?: CliInstruction | null | undefined;
 
@@ -175,10 +217,7 @@ export interface TexLiveConfiguration {
      */
     svgoOptions?: Omit<SvgoOptions, 'path'> | undefined;
 
-    /**
-     * Options to pass to `dvisvgm` when converting DVI files to SVG.
-     */
-    dvisvgmOptions?: DvisvgmOptions | undefined;
+    conversionCommand?: CC | undefined;
 
     /**
      * Whether to output verbose logs.
@@ -218,23 +257,35 @@ export interface TexLiveConfiguration {
     engine?: SupportedTexEngine | undefined;
 }
 
+export interface Pdf2svgOptions {
+    currentColor?: `#${string}` | undefined;
+}
+
 export type FullTexComponentConfiguration = FullVerbEnvConfigAdvancedTex;
 
 export type TexComponentConfiguration = VerbEnvConfigAdvancedTex;
 
-type AdvancedTexBaseConfiguration = TexLiveConfiguration;
+type AdvancedTexBaseConfiguration<
+    CC extends ConversionCommand = ConversionCommand,
+> = TexLiveConfiguration<CC>;
 
-type FullAdvancedTexBaseConfiguration = FullTexLiveConfiguration;
+type FullAdvancedTexBaseConfiguration<
+    CC extends ConversionCommand = ConversionCommand,
+> = FullTexLiveConfiguration<CC>;
 
-export type AdvancedTexConfiguration<A extends AdvancedTexBackend> =
-    A extends 'custom'
-        ? AdvancedTexBaseConfiguration & Record<string, unknown>
-        : AdvancedTexBaseConfiguration;
+export type AdvancedTexConfiguration<
+    A extends AdvancedTexBackend,
+    CC extends ConversionCommand = 'dvisvgm',
+> = A extends 'custom'
+    ? AdvancedTexBaseConfiguration<CC> & Record<string, unknown>
+    : AdvancedTexBaseConfiguration<CC>;
 
-export type FullAdvancedTexConfiguration<A extends AdvancedTexBackend> =
-    A extends 'custom'
-        ? FullAdvancedTexBaseConfiguration
-        : FullAdvancedTexBaseConfiguration & Record<string, unknown>;
+export type FullAdvancedTexConfiguration<
+    A extends AdvancedTexBackend,
+    CC extends ConversionCommand = 'dvisvgm',
+> = A extends 'custom'
+    ? FullAdvancedTexBaseConfiguration<CC>
+    : FullAdvancedTexBaseConfiguration<CC> & Record<string, unknown>;
 
 /**
  * Type of the function that processes an advanced TeX string.

@@ -11,22 +11,20 @@ export const sveltexPreprocessor = await sveltex({
 await sveltexPreprocessor.configure({
     markdown: {
         options: {
-            async: false,
-            breaks: true,
-            gfm: true,
-            pedantic: false,
-            silent: false,
+            // async: false,
+            // breaks: true,
+            // gfm: true,
+            // pedantic: false,
+            // silent: false,
         },
         extensions: [gfmHeadingId()],
     },
     code: {
-        escapeBraces: true,
-        escapeHtml: true,
         wrap: undefined,
         wrapClassPrefix: 'language-',
         languages: ['ts'],
     },
-    tex: {},
+    tex: { outputFormat: 'chtml', css: { type: 'cdn' } },
     verbatim: {
         Verb: {
             type: 'escapeOnly',
@@ -41,34 +39,15 @@ await sveltexPreprocessor.configure({
             aliases: ['TikZ'],
             preamble: [
                 '\\usepackage{mathtools}',
+                '\\usepackage{amsmath}',
                 '\\usepackage{microtype}',
                 '\\usepackage{tikz}',
             ].join('\n'),
             overrides: {
                 engine: 'lualatex',
-                // overrideSvgPostprocess: null,
-                // svgoOptions: {
-                //     plugins: [],
-                // },
                 intermediateFiletype: 'dvi',
-                dvisvgmOptions: {
-                    svg: {
-                        // fontFormat: 'svg',
-                        bbox: '3pt',
-                        gradSimplify: null,
-                        gradOverlap: null,
-                        gradSegments: null,
-                        bitmapFormat: null,
-                        clipJoin: null,
-                        comments: null,
-                        currentColor: null,
-                        optimize: null,
-                        precision: null,
-                        linkmark: null,
-                        noStyles: null,
-                        relative: null,
-                        zip: null,
-                    },
+                conversionOptions: {
+                    svg: { bbox: '3pt' },
                     processing: {},
                     svgTransformations: {},
                 },
