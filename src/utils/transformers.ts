@@ -1,19 +1,19 @@
 import { isArray, isString } from '$type-guards/utils.js';
-import { Transformation } from '$types/handlers/misc.js';
+import type { Transformer } from '$types/handlers/Handler.js';
 
 export function applyTransformations<
     Options extends object = { inline: boolean },
 >(
     str: string,
     opts: Options,
-    transformationsRaw: Transformation<Options> | Transformation<Options>[],
+    transformationsRaw: Transformer<Options> | Transformer<Options>[],
 ): string {
     let transformed = str;
-    const transformations =
+    const transformers =
         isArray(transformationsRaw) && !isString(transformationsRaw[1])
-            ? (transformationsRaw as Transformation<Options>[])
-            : [transformationsRaw as Transformation<Options>];
-    transformations.forEach((transformation) => {
+            ? (transformationsRaw as Transformer<Options>[])
+            : [transformationsRaw as Transformer<Options>];
+    transformers.forEach((transformation) => {
         if (isArray(transformation)) {
             if (!isString(transformation[0])) {
                 const { flags } = transformation[0];

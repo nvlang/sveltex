@@ -1,14 +1,13 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
-import { consoles } from '$utils/debug.js';
 
-vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
+// vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
 describe("CodeHandler<'escapeOnly'>", () => {
     let handler: CodeHandler<'escapeOnly'>;
     beforeAll(async () => {
-        handler = await CodeHandler.create('escapeOnly');
+        handler = await CodeHandler.create('escapeOnly', {});
     });
 
     describe("CodeHandler.create('escapeOnly')", () => {
@@ -34,17 +33,6 @@ describe("CodeHandler<'escapeOnly'>", () => {
                 ).processed;
                 const expected =
                     '<pre><code class="language-plaintext">a &lt;b&gt; &lbrace;c&rbrace;\n</code></pre>';
-                expect(output).toEqual(expected);
-            });
-
-            it('understands `_wrap` option', async () => {
-                const output = (
-                    await handler.process('a <b> {c}', {
-                        lang: 'plaintext',
-                        _wrap: false,
-                    })
-                ).processed;
-                const expected = 'a &lt;b&gt; &lbrace;c&rbrace;';
                 expect(output).toEqual(expected);
             });
         });

@@ -11,9 +11,10 @@ import {
 } from 'vitest';
 import {
     getDefaultCodeConfig,
-    getDefaultConversionOptions,
-    getDefaultTexLiveConfig,
+    getDefaultAdvancedTexConfig,
     getDefaultVerbEnvConfig,
+    sanitizePopplerSvgOptions,
+    getAdvancedTexPresetDefaults,
 } from '$config/defaults.js';
 import path from 'node:path';
 import os from 'node:os';
@@ -21,10 +22,19 @@ import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { verbatimTypes } from '$type-guards/verbatim.js';
 import { spy } from '$tests/fixtures.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
-import { VerbatimType } from '$types/handlers/Verbatim.js';
-import { isThemableCodeBackend } from '$type-guards/code.js';
+import {
+    FullVerbEnvConfigAdvancedTex,
+    VerbatimType,
+} from '$types/handlers/Verbatim.js';
+import { isCodeBackendWithCss } from '$type-guards/code.js';
 import { isPresentAndDefined } from '$type-guards/utils.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
+import { is, typeAssert } from '$deps.js';
+import {
+    CleanPopplerSvgOptions,
+    PopplerSvgOptions,
+} from '$types/utils/PopplerOptions.js';
+import { MakePropertiesNotUndefined } from '$types/utils/utility-types.js';
 
 function fixture() {
     beforeEach(() => {
@@ -74,6 +84,76 @@ describe.concurrent('config/defaults', () => {
                             ).toEqual('');
                         });
                     }
+
+                    if (type === 'advancedTex') {
+                        it('provides default for handleAttributes', async () => {
+                            typeAssert(
+                                is<FullVerbEnvConfigAdvancedTex>(
+                                    defaultVerbEnvConfig,
+                                ),
+                            );
+                            expect(
+                                defaultVerbEnvConfig.handleAttributes,
+                            ).toBeDefined();
+                            const ath = await AdvancedTexHandler.create();
+                            const tc = ath.createTexComponent(
+                                'TexComponent.test.ts content',
+                                {
+                                    attributes: {
+                                        ref: 'TexComponent_test_ref',
+                                    },
+                                    filename: 'TexComponent_test_ts.sveltex',
+                                    selfClosing: false,
+                                    tag: 'tex',
+                                    config: getDefaultVerbEnvConfig(
+                                        'advancedTex',
+                                    ),
+                                },
+                            );
+
+                            expect(
+                                tc.configuration.overrides.conversion
+                                    ?.converter,
+                            ).toBeUndefined();
+                            expect(tc.configuration.documentClass).toEqual({
+                                name: 'standalone',
+                                options: [],
+                            });
+                            tc.configuration.overrides.conversion = {
+                                converter: 'poppler',
+                            };
+                            tc.configuration.documentClass = 'article';
+                            expect(
+                                tc.configuration.overrides.conversion.converter,
+                            ).toEqual('poppler');
+                            expect(tc.configuration.documentClass).toEqual(
+                                'article',
+                            );
+                            const rv = defaultVerbEnvConfig.handleAttributes(
+                                {
+                                    engine: 'pdflatex',
+                                    converter: undefined,
+                                    documentClass: undefined,
+                                },
+                                tc,
+                            );
+                            expect(
+                                tc.configuration.overrides.compilation?.engine,
+                            ).toEqual('pdflatex');
+                            expect(
+                                tc.configuration.overrides.conversion.converter,
+                            ).toEqual('dvisvgm');
+                            expect(tc.configuration.documentClass).toEqual({
+                                name: 'standalone',
+                                options: [],
+                            });
+                            expect(rv).toEqual({
+                                caption: undefined,
+                                captionAttributes: {},
+                                figureAttributes: {},
+                            });
+                        });
+                    }
                 },
             );
         });
@@ -89,23 +169,11 @@ describe.concurrent('config/defaults', () => {
         });
     });
 
-    describe('getDefaultDvisvgmOptions()', () => {
-        fixture();
-        it('should be an object', () => {
-            expect(typeof getDefaultConversionOptions('dvisvgm')).toBe(
-                'object',
-            );
-            expect(typeof getDefaultConversionOptions('pdf2svg')).toBe(
-                'object',
-            );
-        });
-    });
-
     // defaultAdvancedTexConfiguration
     describe('getDefaultAdvancedTexConfiguration()', () => {
         fixture();
         it('should return an object', () => {
-            expect(typeof getDefaultTexLiveConfig('local')).toBe('object');
+            expect(typeof getDefaultAdvancedTexConfig()).toBe('object');
         });
 
         it('should have cacheDirectory set even if findCacheDirectory returns undefined', () => {
@@ -119,9 +187,9 @@ describe.concurrent('config/defaults', () => {
                     };
                 },
             );
-            const config = getDefaultTexLiveConfig('local');
-            expect(config.cacheDirectory).toBeDefined();
-            expect(config.cacheDirectory).toEqual(
+            const config = getDefaultAdvancedTexConfig();
+            expect(config.caching.cacheDirectory).toBeDefined();
+            expect(config.caching.cacheDirectory).toEqual(
                 path.resolve(
                     process.env['XDG_CACHE_HOME'] ??
                         path.join(os.homedir(), '.cache'),
@@ -143,9 +211,9 @@ describe.concurrent('config/defaults', () => {
             );
             const originalXDGCacheHome = process.env['XDG_CACHE_HOME'];
             process.env['XDG_CACHE_HOME'] = undefined;
-            const config = getDefaultTexLiveConfig('local');
-            expect(config.cacheDirectory).toBeDefined();
-            expect(config.cacheDirectory).toEqual(
+            const config = getDefaultAdvancedTexConfig();
+            expect(config.caching.cacheDirectory).toBeDefined();
+            expect(config.caching.cacheDirectory).toEqual(
                 path.resolve(path.join(os.homedir(), '.cache'), 'sveltex'),
             );
             process.env['XDG_CACHE_HOME'] = originalXDGCacheHome;
@@ -159,63 +227,16 @@ describe.concurrent('config/defaults', () => {
                 expect(typeof getDefaultCodeConfig(backend)).toBe('object');
             });
 
-            it('should have wrapClassPrefix property', () => {
+            it('should have addLanguageClass property', () => {
                 expect(
-                    getDefaultCodeConfig(backend).wrapClassPrefix,
+                    getDefaultCodeConfig(backend).addLanguageClass,
                 ).toBeDefined();
                 expect(
-                    typeof getDefaultCodeConfig(backend).wrapClassPrefix,
+                    typeof getDefaultCodeConfig(backend).addLanguageClass,
                 ).toBe('string');
             });
 
-            it('should have wrap property', () => {
-                expect(getDefaultCodeConfig(backend).wrap).toBeDefined();
-                expect(typeof getDefaultCodeConfig(backend).wrap).toBe(
-                    'function',
-                );
-            });
-
-            it('should return correct wrapping elements for inline code', () => {
-                const opts = {
-                    inline: true,
-                    lang: 'javascript',
-                    wrapClassPrefix: 'language-',
-                    _wrap: true,
-                };
-                const [openingTag, closingTag] =
-                    getDefaultCodeConfig(backend).wrap(opts);
-                expect(openingTag).toBe('<code class="language-javascript">');
-                expect(closingTag).toBe('</code>');
-            });
-
-            it('should return correct wrapping elements for block code', () => {
-                const opts = {
-                    inline: false,
-                    lang: 'typescript',
-                    wrapClassPrefix: 'language-',
-                    _wrap: true,
-                };
-                const [openingTag, closingTag] =
-                    getDefaultCodeConfig(backend).wrap(opts);
-                expect(openingTag).toBe(
-                    '<pre><code class="language-typescript">',
-                );
-                expect(closingTag).toBe('</code></pre>');
-            });
-
-            it('should return correct wrapping elements even if lang is undefined', () => {
-                const opts = {
-                    inline: false,
-                    wrapClassPrefix: 'language-',
-                    _wrap: true,
-                };
-                const [openingTag, closingTag] =
-                    getDefaultCodeConfig(backend).wrap(opts);
-                expect(openingTag).toBe('<pre><code>');
-                expect(closingTag).toBe('</code></pre>');
-            });
-
-            if (isThemableCodeBackend(backend)) {
+            if (isCodeBackendWithCss(backend)) {
                 describe('should have customProcess property', () => {
                     it('should have theme property', () => {
                         expect(
@@ -244,7 +265,7 @@ describe.concurrent('config/defaults', () => {
     describe('postprocess()', () => {
         fixture();
         it('should work', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
@@ -262,7 +283,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -287,7 +308,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -311,7 +332,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption attributes', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -337,7 +358,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes + caption attributes', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -367,7 +388,7 @@ describe.concurrent('config/defaults', () => {
     describe('handleAttributes', () => {
         fixture();
         it.skip('should complain if non-string attributes are passed', async () => {
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref', something: 123 },
                 filename: 'test.sveltex',
@@ -396,9 +417,9 @@ describe.concurrent('config/defaults', () => {
                 'caption-style': 'italic',
                 ref: 'figure-ref',
                 preamble: '\\usepackage{amsmath}',
-                documentclass: 'article',
+                documentClass: 'article',
             };
-            const ath = await AdvancedTexHandler.create('local');
+            const ath = await AdvancedTexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
@@ -421,6 +442,35 @@ describe.concurrent('config/defaults', () => {
             });
             expect(tc.configuration.preamble).toBe('\\usepackage{amsmath}');
             expect(tc.configuration.documentClass).toBe('article');
+        });
+    });
+
+    describe('sanitizePopplerSvgOptions()', () => {
+        it.each([
+            [{}, { svgFile: true }],
+            [{ antialias: null }, { svgFile: true }],
+            [{ antialias: 'default' }, { antialias: 'default', svgFile: true }],
+            [{ antialias: 'best' }, { antialias: 'best', svgFile: true }],
+        ] as [
+            MakePropertiesNotUndefined<PopplerSvgOptions>,
+            CleanPopplerSvgOptions & {
+                svgFile: true;
+            },
+        ][])('%o → %o', (input, expected) => {
+            expect(sanitizePopplerSvgOptions(input)).toEqual(expected);
+        });
+    });
+
+    describe('getAdvancedTexPresetDefaults()', () => {
+        it('tikz', () => {
+            expect(getAdvancedTexPresetDefaults('tikz')).toMatchObject({
+                name: 'tikz',
+                libraries: {
+                    babel: true,
+                    arrows: { meta: true },
+                    calc: true,
+                },
+            });
         });
     });
 });

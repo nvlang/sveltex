@@ -27,7 +27,7 @@ import {
     MdastRoot,
     XRegExp,
     typeAssert,
-    getKey,
+    getProperty,
     is,
     mdastFromMarkdown,
     mdastMathFromMarkdown,
@@ -48,7 +48,7 @@ import { micromarkSkip } from '$utils/micromark/syntax.js';
 import { getDefaultSveltexConfig } from '$config/defaults.js';
 import { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
-import { AdvancedTexBackend, CodeBackend } from '$mod.js';
+import { CodeBackend } from '$mod.js';
 
 /**
  * Given an array of ranges, returns an array of the "outermost" ranges.
@@ -116,7 +116,9 @@ export function outermostRanges<
     Range extends PositionProperty extends undefined ? Offsets : object,
 >(ranges: Range[], positionProperty?: PositionProperty): Range[] {
     const getLoc: (range: Range) => Offsets = (range) =>
-        positionProperty ? getKey(range, positionProperty) : (range as Offsets);
+        positionProperty
+            ? getProperty(range, positionProperty)
+            : (range as Offsets);
     const sortedRanges = ranges.sort((a, b) => {
         const startDiff = getLoc(a).start - getLoc(b).start;
         if (startDiff !== 0) return startDiff;
@@ -276,9 +278,7 @@ function normalAndSelfClosingComponentsRegExp(rawTags: string[]): RegExp {
 function getVerbatimES(
     content: string,
     verbatimTags: string[],
-    verbEnvs?:
-        | VerbatimHandler<CodeBackend, AdvancedTexBackend>['verbEnvs']
-        | undefined,
+    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
 ): EscapableSnippet<'verbatim'>[] {
     const es: EscapableSnippet<'verbatim'>[] = [];
     if (verbatimTags.length === 0) return es;
@@ -599,18 +599,17 @@ export function getMdastES({
             typeAssert(is<MdastCodeNode | MdastInlineCodeNode>(node));
             const inline = node.type === 'inlineCode';
             const { start, end } = node.position;
-            escapableSnippets.push({
+            const s: EscapableSnippet<'code'> = {
                 type: 'code',
                 original: { loc, outerContent: undefined },
                 processable: {
                     innerContent: node.value,
                     optionsForProcessor: inline
-                        ? { _wrap: true, inline }
+                        ? { inline: inline }
                         : {
-                              _wrap: true,
                               lang: node.lang ?? undefined,
                               inline,
-                              info: node.meta ?? undefined,
+                              metaString: node.meta ?? undefined,
                           },
                 },
                 escapeOptions: {
@@ -622,7 +621,8 @@ export function getMdastES({
                           ],
                 },
                 unescapeOptions: { removeParagraphTag: !inline },
-            });
+            };
+            escapableSnippets.push(s);
         } else if (
             isOneOf(node.type, ['mdxTextExpression', 'mdxFlowExpression'])
         ) {
@@ -791,9 +791,7 @@ export function escape(
     document: string,
     verbatimTags: string[] = [],
     texSettings: TexEscapeSettings = { enabled: true },
-    verbEnvs?:
-        | VerbatimHandler<CodeBackend, AdvancedTexBackend>['verbEnvs']
-        | undefined,
+    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
 ) {
     // Escape colons inside special Svelte elements (e.g. <svelte:component>) so
     // that they don't confuse the markdown processor. We don't want to escape
@@ -863,7 +861,7 @@ export function unescapeSnippets(
             const processedSnippet = processedSnippetsRecord[key];
             if (!processedSnippet) return key;
             if (
-                !processedSnippet.unescapeOptions?.removeParagraphTag &&
+                !processedSnippet.unescapeOptions.removeParagraphTag &&
                 match[2]
             ) {
                 nodeAssert(

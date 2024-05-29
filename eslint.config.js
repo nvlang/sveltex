@@ -21,7 +21,9 @@ export default tseslint.config(
             'external',
             'examples',
             'legacy',
+            'coverage',
             'ideas',
+            'docs',
         ],
     },
     {

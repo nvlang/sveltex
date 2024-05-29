@@ -131,12 +131,7 @@ export async function generateTests(
             : isArray(vary.tex)
               ? vary.tex
               : ['none'];
-    const advancedTexBackends =
-        vary.advancedTex === true
-            ? ['local', 'none']
-            : isArray(vary.advancedTex)
-              ? vary.advancedTex
-              : ['none'];
+    const advancedTexBackends = ['local'];
 
     const testsNew: {
         label: string;
@@ -161,7 +156,6 @@ export async function generateTests(
             markdownBackend: markdown,
             codeBackend: code,
             texBackend: tex,
-            advancedTexBackend: advancedTex,
         });
         const preprocess = async (
             input: string,

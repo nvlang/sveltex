@@ -16,6 +16,8 @@ export { escape as escapeHtml } from 'html-escaper';
 export { htmlTagNames } from 'html-tag-names';
 export { default as MagicString, type SourceMap } from 'magic-string';
 
+export { isRegExp } from 'node:util/types';
+
 /**
  * MDAST types for better type-safety.
  */
@@ -96,7 +98,11 @@ export { default as ora, type Ora } from 'ora';
 export { default as pc } from 'picocolors';
 export type { Colors } from 'picocolors/types.js';
 export { default as prettyBytes } from 'pretty-bytes';
-export { get as getKey, get as getProperty, set as setProperty } from 'radash';
+export {
+    get as getProperty,
+    set as setProperty,
+    crush as flattenObject,
+} from 'radash';
 export { default as rfdc } from 'rfdc'; // "Really Fast Deep Clone"
 export { rimraf } from 'rimraf';
 export type {
@@ -115,6 +121,8 @@ export {
     frontmatterFromMarkdown as mdastFrontmatterFromMarkdown,
     frontmatterToMarkdown as mdastFrontmatterToMarkdown,
 } from 'mdast-util-frontmatter';
+
+export { Poppler } from 'node-poppler';
 
 // Parsers for frontmatter
 export { load as parseYaml } from 'js-yaml';

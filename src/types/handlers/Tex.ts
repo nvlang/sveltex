@@ -4,13 +4,13 @@ import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
     CssConfiguration,
     FullCssConfiguration,
-    PreAndPostTransformations,
-} from '$types/handlers/misc.js';
+} from '$types/handlers/Css.js';
+import type { Transformers } from '$types/handlers/Handler.js';
 import type {
     MathjaxConfiguration,
     MathjaxConversionOptions,
 } from '$types/utils/MathjaxOptions.js';
-import type { RequiredNonNullable } from '$types/utils/utility-types.js';
+import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
 
 /**
  * Supported TeX backends.
@@ -63,21 +63,21 @@ export type TexConfiguration<
     CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
 > = B extends 'katex'
     ? WithCss<B, CA> &
-          WithTransformations<B> & {
+          WithTransformers<B> & {
               katex?:
                   | Omit<import('katex').KatexOptions, 'displayMode'>
                   | undefined;
           }
     : B extends 'mathjax'
       ? WithCss<B, CA> &
-            WithTransformations<B> & {
+            WithTransformers<B> & {
                 outputFormat?: 'svg' | 'chtml' | undefined;
                 mathjax?: MathjaxConfiguration | undefined;
             }
       : B extends 'custom'
-        ? WithTransformations<B> & Record<string, unknown>
+        ? WithTransformers<B> & Record<string, unknown>
         : B extends 'none'
-          ? WithTransformations<B> & Record<string, unknown>
+          ? WithTransformers<B> & Record<string, unknown>
           : never;
 
 interface WithCss<
@@ -98,31 +98,28 @@ interface WithFullCssConfiguration<
     css: FullCssConfiguration<CA>;
 }
 
-interface WithTransformations<T extends TexBackend> {
+interface WithTransformers<T extends TexBackend> {
     /**
-     * Transformations to apply to
+     * Transformers to apply to
      * - the tex before passing it to the TeX backend for processing, or to
      * - the output produced by the TeX backend.
      */
-    transformations?:
-        | PreAndPostTransformations<TexProcessOptionsWithoutTransformations<T>>
+    transformers?:
+        | Transformers<TexProcessOptionsWithoutTransformers<T>>
         | undefined;
 }
 
-interface WithTransformationsRequiredNonNullable<T extends TexBackend> {
-    transformations: RequiredNonNullable<
-        PreAndPostTransformations<TexProcessOptionsWithoutTransformations<T>>
+interface WithTransformersRequiredNonNullable<T extends TexBackend> {
+    transformers: RequiredNotNullOrUndefined<
+        Transformers<TexProcessOptionsWithoutTransformers<T>>
     >;
 }
 
-type TexProcessOptionsWithoutTransformations<B extends TexBackend> =
+type TexProcessOptionsWithoutTransformers<B extends TexBackend> =
     B extends 'mathjax'
         ? TexProcessOptions<B>
         : Omit<TexProcessOptions<B>, 'options'> & {
-              options?: Omit<
-                  TexProcessOptions<B>['options'],
-                  'transformations'
-              >;
+              options?: Omit<TexProcessOptions<B>['options'], 'transformers'>;
           };
 
 /**
@@ -136,11 +133,11 @@ export type FullTexConfiguration<
     CA extends PossibleTexCssApproach<B> = PossibleTexCssApproach<B>,
 > = B extends 'mathjax' | 'katex'
     ? WithFullCssConfiguration<B> &
-          WithTransformationsRequiredNonNullable<B> &
-          RequiredNonNullable<
-              Omit<TexConfiguration<B, CA>, 'transformations' | 'css'>
+          WithTransformersRequiredNonNullable<B> &
+          RequiredNotNullOrUndefined<
+              Omit<TexConfiguration<B, CA>, 'transformers' | 'css'>
           >
-    : WithTransformationsRequiredNonNullable<B> & TexConfiguration<B, CA>;
+    : WithTransformersRequiredNonNullable<B> & TexConfiguration<B, CA>;
 
 export type PossibleTexCssApproach<B extends TexBackend> = B extends 'mathjax'
     ? 'hybrid' | 'none'

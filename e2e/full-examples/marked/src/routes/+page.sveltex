@@ -1,6 +1,11 @@
+---
+title: something
+exampleProperty: 2
+---
+
 <style>
 :root {
-    --some-color: #f6c;
+    --some-color: #f0f;
 }
 p, figure {
     font-family: sans-serif;
@@ -8,8 +13,11 @@ p, figure {
 /* { */
 </style>
 
+<script>
+import Example from '$lib/Example.svelte';
+</script>
 
-# Heading 1
+# Heading 1: {title} {exampleProperty}
 ###### Heading 6
 
 text **bold** text *italic (asterisks)* text _italic (underscores)_ text
@@ -20,23 +28,16 @@ Text: \[ 1/n < \color{#fc0}\int_0^{1} \color{var(--some-color)}x^{x}\ dx < n. \]
 
 Regexes in mustache tags: {('a$b$c\(d\)e\[f\]g$$h$$'.match(/\$/g))}.
 
-` foo ` text $a$ and <span>*italic*</span>;
+` foo ` text $a$;
 $
 b
 $.
 
-<div>
-something <em>italic</em> something else <strong>bold</strong> something else
-</div>
+
+
 
 <div>
-> $x^{a}$ `monospaced $x$` *italic*
-</div>
-
-<div>
-
-> $x^{a}$ `monospaced $x$` *italic*
-
+> $x^{a}$ `monospaced $x$` fds <em> fds </em> and <Example title="something"> a <em> b </em> c </Example> fds
 </div>
 
 <Verb>
@@ -79,8 +80,9 @@ text
 An "advanced tex" block:
 
 <tex ref="something">
+something
 \begin{tikzpicture}
-    \draw (1,2) circle (2.4);
+    \draw (1,2) circle (2.44);
     \draw[dashed, var(--some-color), thick] (-.5,0) rectangle (3, 3);
     \draw[red, thick] (-1,1) rectangle (2.5, 4);
     \node at (1,2) {\(\int_{0}^{1} \sum x_{i}^{3} \mathrm{d}\text{$x$}\)};

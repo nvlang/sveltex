@@ -87,7 +87,11 @@ describe.concurrent.shuffle('escape()', () => {
                         type: 'code',
                         processable: {
                             innerContent: 'b',
-                            optionsForProcessor: { inline: false, lang, info },
+                            optionsForProcessor: {
+                                inline: false,
+                                lang,
+                                metaString: info,
+                            },
                         },
                     } as Partial<EscapedSnippet<'code'>>,
                 ],
@@ -1117,7 +1121,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                 optionsForProcessor: {
                                     inline: false,
                                     lang,
-                                    info,
+                                    metaString: info,
                                 },
                             },
                             type: 'code',

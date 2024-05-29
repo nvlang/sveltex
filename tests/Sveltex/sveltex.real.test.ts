@@ -1,7 +1,6 @@
 /**
  * Realistic tests for the Sveltex processor.
  */
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { TexBackend } from '$types/handlers/Tex.js';
@@ -47,7 +46,6 @@ const preprocessors = [
             markdownBackend: 'micromark',
             codeBackend: 'escapeOnly',
             texBackend: 'mathjax',
-            advancedTexBackend: 'local',
         },
         {
             tex: { css: { type: 'none' } },
@@ -100,7 +98,7 @@ const preprocessors = [
             code: { theme: { type: 'none' } },
         },
     ),
-] as Sveltex<MarkdownBackend, CodeBackend, TexBackend, AdvancedTexBackend>[];
+] as Sveltex<MarkdownBackend, CodeBackend, TexBackend>[];
 
 function splitContent(content: string): string[] {
     return content.match(splitContentRegExp) ?? [];
@@ -118,9 +116,8 @@ async function preprocess<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
 >(
-    preprocessor: Sveltex<M, C, T, A>,
+    preprocessor: Sveltex<M, C, T>,
     content: string,
     filename: string = `${uuid()}.sveltex`,
 ) {
@@ -287,13 +284,12 @@ function expectedCode<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
->(p: Sveltex<M, C, T, A>, _content?: string): (string | RegExp)[] {
+>(p: Sveltex<M, C, T>, _content?: string): (string | RegExp)[] {
     const expected: (string | RegExp)[] = [];
 
     if (p.codeBackend === 'starry-night') {
-        typeAssert(is<Sveltex<M, 'starry-night', T, A>>(p));
+        typeAssert(is<Sveltex<M, 'starry-night', T>>(p));
         const theme = p.configuration.code.theme;
         // script
         // head
@@ -309,7 +305,7 @@ function expectedCode<
         // content
         expected.push('<code');
     } else if (p.codeBackend === 'highlight.js') {
-        typeAssert(is<Sveltex<M, 'highlight.js', T, A>>(p));
+        typeAssert(is<Sveltex<M, 'highlight.js', T>>(p));
         const theme = p.configuration.code.theme;
         // head
         if (theme.type === 'cdn' && isString(theme.cdn)) {
@@ -331,12 +327,11 @@ function expectedTex<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
->(p: Sveltex<M, C, T, A>, _content?: string): (string | RegExp)[] {
+>(p: Sveltex<M, C, T>, _content?: string): (string | RegExp)[] {
     const expected: (string | RegExp)[] = [];
     if (p.texBackend === 'mathjax') {
-        typeAssert(is<Sveltex<M, C, 'mathjax', A>>(p));
+        typeAssert(is<Sveltex<M, C, 'mathjax'>>(p));
         // script
         if (p.configuration.tex.css.type === 'hybrid') {
             // expected.push(/import '.*mathjax.*css.*'/);
@@ -348,7 +343,7 @@ function expectedTex<
             expected.push('<mjx-container class="MathJax"');
         }
     } else if (p.texBackend === 'katex') {
-        typeAssert(is<Sveltex<M, C, 'katex', A>>(p));
+        typeAssert(is<Sveltex<M, C, 'katex'>>(p));
         // head
         if (
             p.configuration.tex.css.type === 'cdn' &&

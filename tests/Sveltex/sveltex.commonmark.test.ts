@@ -39,7 +39,7 @@ const processors = [
     }),
 ];
 
-describe('CommonMark compliance', () => {
+describe('CommonMark compliance (partial)', () => {
     fixture();
     let log: MockInstance;
 

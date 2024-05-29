@@ -1,5 +1,4 @@
 import type { BackendChoices } from '$types/SveltexConfiguration.js';
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { TexBackend } from '$types/handlers/Tex.js';
@@ -75,12 +74,7 @@ describe('utils/diagnosers/backendChoices', () => {
         'diagnoseBackendChoices(%o) === { errors: %i, warnings: %i }',
         (bc, errors, warnings) => {
             const res = diagnoseBackendChoices(
-                bc as BackendChoices<
-                    MarkdownBackend,
-                    CodeBackend,
-                    TexBackend,
-                    AdvancedTexBackend
-                >,
+                bc as BackendChoices<MarkdownBackend, CodeBackend, TexBackend>,
             );
             expect(res.errors).toEqual(errors);
             expect(res.warnings).toEqual(warnings);

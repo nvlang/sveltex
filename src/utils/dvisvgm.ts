@@ -11,7 +11,7 @@ import type {
 } from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultConversionOptions } from '$config/defaults.js';
+import { getDefaultAdvancedTexConfig } from '$config/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,
@@ -93,7 +93,7 @@ export function texDimToString(texDim: TexDim): string {
  * Build a {@link CliInstruction | `CliInstruction`} to convert a DVI or PDF file
  * to SVG using `dvisvgm`.
  *
- * @param dvisvgmOptions - Options for the conversion.
+ * @param dvisvgm - Options for the conversion.
  * @param outputPath - The path to the output SVG file.
  * @param texPath - The path to the input TeX file.
  * @param inputType - The type of the input file (DVI or PDF).
@@ -107,19 +107,19 @@ export function texDimToString(texDim: TexDim): string {
  * @internal
  */
 export function buildDvisvgmInstruction({
-    dvisvgmOptions,
+    dvisvgm,
     outputPath,
     texPath,
     inputType,
 }: {
-    dvisvgmOptions?: DvisvgmOptions | undefined;
+    dvisvgm?: DvisvgmOptions | undefined;
     outputPath: FilepathWithExtension;
     texPath: FilepathWithExtension;
     inputType: 'dvi' | 'pdf';
 }): CliInstruction {
     const fullDvisvgmOptions = mergeWithoutUndefinedOverrides(
-        getDefaultConversionOptions('dvisvgm'),
-        dvisvgmOptions ?? {},
+        getDefaultAdvancedTexConfig().conversion.dvisvgm,
+        dvisvgm ?? {},
     );
 
     // The args array to pass to the `spawn` function. We initialize it with an

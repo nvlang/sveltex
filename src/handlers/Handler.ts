@@ -124,7 +124,11 @@ export class Handler<
                 options,
                 this as unknown as ActualHandler,
             );
-            if (isString(res)) return { processed: res };
+            if (isString(res))
+                return {
+                    processed: res,
+                    unescapeOptions: { removeParagraphTag: true },
+                };
             return res;
         };
     }
@@ -259,9 +263,9 @@ export class Handler<
      * on the new configuration, except for the configuration itself, which will
      * be updated automatically *before* this function is run.)
      *
-     * @param configuration - A deep copy of this object is used to initialize
-     * the readonly property
-     * {@link Handler._configuration | `Handler._configuration`}.
+     * @param configuration - This object is used to initialize the readonly
+     * property {@link Handler._configuration | `Handler._configuration`}.
+     * Careful: the original is used, not a copy.
      *
      * @param processor - The processor object, *passed by reference*. Used to
      * initialize {@link Handler.processor | `Handler.processor`}. If no
@@ -291,6 +295,6 @@ export class Handler<
             (() => {
                 return;
             });
-        this._configuration = deepClone(configuration);
+        this._configuration = configuration;
     }
 }

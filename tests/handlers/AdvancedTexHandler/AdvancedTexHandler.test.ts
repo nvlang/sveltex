@@ -19,7 +19,7 @@ import { pathExists } from '$utils/fs.js';
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 
 // async function handlers() {
-//     const ath = await AdvancedTexHandler.create('local');
+//     const ath = await AdvancedTexHandler.create();
 //     await ath.configure({
 //         engine: 'lualatex',
 //         caching: false,
@@ -29,7 +29,7 @@ import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 //             tex: {},
 //             Example: { aliases: ['ExampleAlias'] },
 //         },
-//         conversionOptions: {
+//         conversion: {
 //             svg: {
 //                 fontFormat: 'woff2',
 //             },
@@ -43,25 +43,25 @@ import { getDefaultVerbEnvConfig } from '$config/defaults.js';
  */
 let tmpTestsDir: string;
 
-let ath: AdvancedTexHandler<'local'>;
+let ath: AdvancedTexHandler;
 
-async function setup(hash: string, config?: AdvancedTexConfiguration<'local'>) {
+async function setup(hash: string, config?: AdvancedTexConfiguration) {
     if (pathExists(`tmp/tests-${hash}`)) {
         await rimraf(resolve(`tmp/tests-${hash}`));
     }
-    ath = await AdvancedTexHandler.create('local');
+    ath = await AdvancedTexHandler.create();
     await ath.configure({
-        engine: 'lualatex',
-        caching: false,
-        cacheDirectory: `tmp/tests-${hash}/cache`,
-        outputDirectory: `tmp/tests-${hash}/output`,
-        // components: {
-        //     tex: {},
-        //     Example: { aliases: ['ExampleAlias'] },
-        // },
-        conversionOptions: {
-            svg: {
-                fontFormat: 'woff2',
+        compilation: { engine: 'lualatex' },
+        caching: {
+            enabled: false,
+            cacheDirectory: `tmp/tests-${hash}/cache`,
+        },
+        conversion: {
+            outputDirectory: `tmp/tests-${hash}/output`,
+            dvisvgm: {
+                svg: {
+                    fontFormat: 'woff2',
+                },
             },
         },
         ...config,
@@ -70,7 +70,7 @@ async function setup(hash: string, config?: AdvancedTexConfiguration<'local'>) {
     tmpTestsDir = `tmp/tests-${hash}`;
 }
 
-// async function setup(handler?: AdvancedTexHandler<'local'>) {
+// async function setup(handler?: AdvancedTexHandler) {
 //     if (handler) {
 //         handler.cache.data.int = {};
 //         handler.cache.data.svg = {};
@@ -85,10 +85,10 @@ async function teardown(hash: string) {
     }
     vi.clearAllMocks();
     tmpTestsDir = '';
-    ath = null as unknown as AdvancedTexHandler<'local'>;
+    ath = null as unknown as AdvancedTexHandler;
 }
 
-function fixture(config?: AdvancedTexConfiguration<'local'>) {
+function fixture(config?: AdvancedTexConfiguration) {
     beforeEach(async ({ task }) => {
         const hash = sha256(task.name, 'hex').slice(0, 16);
         await setup(hash, config);
@@ -101,7 +101,7 @@ function fixture(config?: AdvancedTexConfiguration<'local'>) {
     });
 }
 
-describe("AdvancedTexHandler<'local'>", () => {
+describe('AdvancedTexHandler', () => {
     vi.restoreAllMocks();
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
@@ -218,10 +218,18 @@ describe("AdvancedTexHandler<'local'>", () => {
             );
             expect(log).not.toHaveBeenCalled();
             expect(writeFile).toHaveBeenCalledTimes(3);
+
+            // \\ExplSyntaxOn
+            // \\str_if_exist:NF \\c_sys_backend_str
+            //   { \\sys_load_backend:n { dvisvgm } }
+            // \\ExplSyntaxOff
+
             expect(writeFile).toHaveBeenNthCalledWith(
                 1,
                 `${tmpTestsDir}/cache/Example/ref/root.tex`,
-                '\\documentclass{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\n\\begin{document}\nx\n\\end{document}\n',
+                expect.stringMatching(
+                    /\\documentclass\[dvisvgm\]{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\s*\\begin{document}\nx\n\\end{document}\n/s,
+                ),
                 'utf8',
             );
             expect(writeFile).toHaveBeenNthCalledWith(
@@ -244,7 +252,7 @@ describe("AdvancedTexHandler<'local'>", () => {
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
                 expect.stringMatching(
-                    /\{"int":\{"Example\/ref":\{"sourceHash":"u9Edso_qywe0Xxw5JvIcospMYE66P8YD7POaR4ZXj74","hash":"(.+?)"\}\},"svg":\{"Example\/ref":\{"sourceHash":"\1"\}\}\}/,
+                    /\{"int":\{"Example\/ref":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"Example\/ref":\{"sourceHash":"\1"\}\}\}/,
                 ),
                 'utf8',
             );
@@ -252,20 +260,14 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(1, {
                 args: [
                     '--output-format=dvi',
+                    '--output-comment=""',
                     '--no-shell-escape',
                     '--interaction=nonstopmode',
-                    '"root.tex"',
+                    'root.tex',
                 ],
                 command: 'lualatex',
                 cwd: `${tmpTestsDir}/cache/Example/ref`,
-                env: {
-                    FILENAME: 'root.tex',
-                    FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/Example/ref/root.tex`,
-                    OUTDIR: `${tmpTestsDir}/cache/Example/ref`,
-                    OUTFILETYPE: 'dvi',
-                    SOURCE_DATE_EPOCH: '1',
-                },
+                env: { SOURCE_DATE_EPOCH: '1' },
                 silent: true,
             });
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(2, {
@@ -287,14 +289,6 @@ describe("AdvancedTexHandler<'local'>", () => {
                     `${tmpTestsDir}/cache/Example/ref/root.dvi`,
                 ],
                 command: 'dvisvgm',
-                env: {
-                    FILENAME: 'root.dvi',
-                    FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/Example/ref/root.dvi`,
-                    FILETYPE: 'dvi',
-                    OUTDIR: `${tmpTestsDir}/output/Example`,
-                    OUTFILEPATH: `${tmpTestsDir}/output/Example/ref.svg`,
-                },
                 silent: true,
             });
         });
@@ -324,11 +318,13 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(writeFile).toHaveBeenNthCalledWith(
                 1,
                 `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.tex`,
-                '\\documentclass{standalone}\n' +
+                '\\documentclass[dvisvgm]{standalone}\n' +
                     '\\usepackage{microtype}\n' +
                     '\\makeatletter\n' +
                     '\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n' +
                     '\\makeatother\n' +
+                    '\n' +
+                    '\n' +
                     '\\definecolor{sveltexf2a5bd}{HTML}{f2a5bd}\n' +
                     '\n' +
                     '\\begin{document}\n' +
@@ -356,7 +352,7 @@ describe("AdvancedTexHandler<'local'>", () => {
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
                 expect.stringMatching(
-                    /\{"int":\{"tex\/ath-something-test-348902":\{"sourceHash":"h9-U6Zhw1McrSM7asY81sDMuYA9YFTDQH22j6ewlwTo","hash":"(.+?)"\}\},"svg":\{"tex\/ath-something-test-348902":\{"sourceHash":"\1"\}\}\}/,
+                    /\{"int":\{"tex\/ath-something-test-348902":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"tex\/ath-something-test-348902":\{"sourceHash":"\1"\}\}\}/,
                 ),
                 'utf8',
             );
@@ -365,20 +361,14 @@ describe("AdvancedTexHandler<'local'>", () => {
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(1, {
                 args: [
                     '--output-format=dvi',
+                    '--output-comment=""',
                     '--no-shell-escape',
                     '--interaction=nonstopmode',
-                    '"root.tex"',
+                    'root.tex',
                 ],
                 command: 'lualatex',
                 cwd: `${tmpTestsDir}/cache/tex/ath-something-test-348902`,
-                env: {
-                    FILENAME: 'root.tex',
-                    FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.tex`,
-                    OUTDIR: `${tmpTestsDir}/cache/tex/ath-something-test-348902`,
-                    OUTFILETYPE: 'dvi',
-                    SOURCE_DATE_EPOCH: '1',
-                },
+                env: { SOURCE_DATE_EPOCH: '1' },
                 silent: true,
             });
             expect(spawnCliInstruction).toHaveBeenNthCalledWith(2, {
@@ -400,41 +390,9 @@ describe("AdvancedTexHandler<'local'>", () => {
                     `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.dvi`,
                 ],
                 command: 'dvisvgm',
-                env: {
-                    FILENAME: 'root.dvi',
-                    FILENAME_BASE: 'root',
-                    FILEPATH: `${tmpTestsDir}/cache/tex/ath-something-test-348902/root.dvi`,
-                    FILETYPE: 'dvi',
-                    OUTDIR: `${tmpTestsDir}/output/tex`,
-                    OUTFILEPATH: `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
-                },
                 silent: true,
             });
         });
-    });
-});
-
-describe.each([
-    await AdvancedTexHandler.create('custom', {
-        process: () => 'output',
-        configure: () => {
-            return;
-        },
-    }),
-])("AdvancedTexHandler<'custom'>", (handler) => {
-    it('should work', async () => {
-        expect(
-            (
-                await handler.process('input', {
-                    tag: '',
-                    attributes: { ref: '' },
-                    selfClosing: false,
-                    filename: 'test.sveltex',
-                    config: getDefaultVerbEnvConfig('advancedTex'),
-                    outerContent: '',
-                })
-            ).processed,
-        ).toEqual('output');
     });
 });
 
@@ -442,14 +400,14 @@ describe('AdvancedTexHandler.create', () => {
     fixture();
 
     it('returns instance of AdvancedTexHandler', async () => {
-        const handler = await AdvancedTexHandler.create('local');
+        const handler = await AdvancedTexHandler.create();
         expect(handler).toBeTypeOf('object');
         expect(handler).not.toBeNull();
         expect(handler).toBeInstanceOf(AdvancedTexHandler);
     });
 
     it('edge cases', async () => {
-        const handler = await AdvancedTexHandler.create('local');
+        const handler = await AdvancedTexHandler.create();
         expect(
             (
                 await handler.process('', {
@@ -462,76 +420,5 @@ describe('AdvancedTexHandler.create', () => {
                 })
             ).processed,
         ).toEqual('');
-    });
-
-    it("should require custom param if backend is 'custom'", async () => {
-        await expect(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            AdvancedTexHandler.create('custom', undefined!),
-        ).rejects.toThrowError('');
-    });
-
-    it('should accept "none" backend', async () => {
-        const handler = await AdvancedTexHandler.create('none');
-        expect(handler).toBeTypeOf('object');
-        expect(handler).not.toBeNull();
-        expect(handler).toBeInstanceOf(AdvancedTexHandler);
-        expect(
-            (
-                await handler.process('ath-something-test-908423', {
-                    tag: '',
-                    attributes: { ref: '' },
-                    selfClosing: false,
-                    filename: 'test.sveltex',
-                    config: getDefaultVerbEnvConfig('advancedTex'),
-                    outerContent: '',
-                })
-            ).processed,
-        ).toEqual('ath-something-test-908423');
-    });
-
-    it('should throw error if unsupported backend is requested', async () => {
-        await expect(() =>
-            AdvancedTexHandler.create('unsupported' as 'none'),
-        ).rejects.toThrowError();
-    });
-
-    it("should set `configure` to noop by default if backend is 'custom'", async () => {
-        const handler = await AdvancedTexHandler.create('custom', {
-            process: () => 'output',
-        });
-        expect(handler.configure).toBeTypeOf('function');
-        // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-        expect(await handler.configure({})).toBeUndefined();
-    });
-
-    it('should support all expected params', async () => {
-        const handler = await AdvancedTexHandler.create('custom', {
-            process: () => 'custom process',
-            configuration: {
-                cacheDirectory: `${tmpTestsDir}/cache`,
-            },
-            configure: () => {
-                return;
-            },
-            processor: {},
-        });
-        expect(handler.configure).toBeTypeOf('function');
-        expect(handler.processor).toEqual({});
-        expect(handler.process).toBeTypeOf('function');
-        expect(
-            (
-                await handler.process('input', {
-                    attributes: { ref: '' },
-                    selfClosing: false,
-                    tag: '',
-                    filename: 'test.sveltex',
-                    config: getDefaultVerbEnvConfig('advancedTex'),
-                    outerContent: '',
-                })
-            ).processed,
-        ).toEqual('custom process');
-        // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-        expect(await handler.configure({})).toBeUndefined();
     });
 });

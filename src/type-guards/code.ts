@@ -3,8 +3,8 @@ import type { Equals, Extends } from '$deps.js';
 
 // Internal dependencies
 import { isOneOf, isString } from '$type-guards/utils.js';
-import { CodeBackend, ThemableCodeBackend } from '$types/handlers/Code.js';
-import { SupportedCdn } from '$types/handlers/misc.js';
+import { CodeBackend, CodeBackendWithCss } from '$types/handlers/Code.js';
+import { SupportedCdn } from '$types/handlers/Css.js';
 import {
     HighlightJsThemeName,
     StarryNightThemeName,
@@ -15,12 +15,12 @@ import {
 // External dependencies
 import { typeAssert } from '$deps.js';
 
-export function isThemableCodeBackend(
+export function isCodeBackendWithCss(
     input: unknown,
-): input is ThemableCodeBackend {
+): input is CodeBackendWithCss {
     return (
         isString(input) &&
-        themableCodeBackends.includes(input as ThemableCodeBackend)
+        codeBackendsWithCss.includes(input as CodeBackendWithCss)
     );
 }
 
@@ -40,12 +40,10 @@ export function isHighlightJsThemeName(
     return isString(input) && isOneOf(input, highlightJsThemeNames);
 }
 
-typeAssert<
-    Equals<ThemableCodeBackend, (typeof themableCodeBackends)[number]>
->();
-typeAssert<Extends<ThemableCodeBackend, CodeBackend>>();
+typeAssert<Equals<CodeBackendWithCss, (typeof codeBackendsWithCss)[number]>>();
+typeAssert<Extends<CodeBackendWithCss, CodeBackend>>();
 typeAssert<Equals<SupportedCdn, (typeof supportedCdns)[number]>>();
 
-export const themableCodeBackends = ['highlight.js', 'starry-night'] as const;
+export const codeBackendsWithCss = ['highlight.js', 'starry-night'] as const;
 
-export const supportedCdns = ['jsdelivr', 'esm.sh', 'unpkg'] as const;
+export const supportedCdns = ['jsdelivr', 'esm.sh', 'unpkg', 'cdnjs'] as const;

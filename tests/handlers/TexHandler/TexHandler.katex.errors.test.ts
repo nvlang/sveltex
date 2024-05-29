@@ -47,8 +47,8 @@ describe("TexHandler<'katex'>", () => {
             const th1 = await TexHandler.create('katex');
             await th1.configure({ css: { type: 'hybrid' } });
             await th1.process('');
-            expect(log).toHaveBeenCalledTimes(3);
-            range(1, 3).forEach((i) => {
+            expect(log).toHaveBeenCalledTimes(4);
+            range(1, 4).forEach((i) => {
                 expect(log).toHaveBeenNthCalledWith(
                     i,
                     'error',
@@ -63,8 +63,8 @@ describe("TexHandler<'katex'>", () => {
             const th2 = await TexHandler.create('katex');
             await th2.configure({ css: { type: 'hybrid' } });
             await th2.process('');
-            expect(log).toHaveBeenCalledTimes(3);
-            range(1, 3).forEach((i) => {
+            expect(log).toHaveBeenCalledTimes(4);
+            range(1, 4).forEach((i) => {
                 expect(log).toHaveBeenNthCalledWith(
                     i,
                     'error',

@@ -104,27 +104,12 @@ describe.concurrent('utils/misc', () => {
             expect(log).not.toHaveBeenCalled();
         });
 
-        it('should deal with non-strings gracefully (strict)', () => {
-            expect(interpretAttributes({ a: null })).toEqual({});
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining('Ignoring attribute.'),
-            );
-        });
-
-        it('should deal with non-strings gracefully (non-strict)', () => {
+        it('should deal with non-strings gracefully', () => {
             log.mockClear();
-            expect(interpretAttributes({ a: null }, false)).toEqual({
+            expect(interpretAttributes({ a: null })).toEqual({
                 a: null,
             });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'warn',
-                expect.stringContaining('Passing value as-is.'),
-            );
+            expect(log).toHaveBeenCalledTimes(0);
         });
 
         it('should pass `undefined`s as-is', () => {

@@ -1,14 +1,8 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "SvelTeX",
-  "feedback": {
-    "suggestEdit": true,
-    "raiseIssue": true
-  },
-  "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
-  },
+  "feedback": { "suggestEdit": true, "raiseIssue": true },
+  "logo": { "dark": "/logo/dark.svg", "light": "/logo/light.svg" },
   "topbarCtaButton": {
     "type": "github",
     "url": "https://github.com/nvlang/sveltex"
@@ -18,14 +12,8 @@
     "primary": "#ea580c",
     "light": "#fb923c",
     "dark": "#431407",
-    "background": {
-      "light": "#fff",
-      "dark": "#171717"
-    },
-    "anchors": {
-      "from": "#7c2d12",
-      "to": "#7c2d12"
-    }
+    "background": { "light": "#fff", "dark": "#1b1b1d" },
+    "anchors": { "from": "#7c2d12", "to": "#7c2d12" }
   },
   "anchors": [
     {
@@ -36,20 +24,14 @@
     },
     {
       "name": "JSR",
-      "url": "https://jsr.io/@nvlang/sveltex",
+      "url": "https://jsr.io/@nvl/sveltex",
       "icon": "brackets-curly",
       "iconType": "solid"
     }
   ],
   "tabs": [
-    {
-      "name": "Advanced",
-      "url": "advanced"
-    },
-    {
-      "name": "Examples",
-      "url": "https://www.latex-project.org"
-    }
+    { "name": "Advanced", "url": "advanced" },
+    { "name": "Examples", "url": "https://www.latex-project.org" }
   ],
   "navigation": [
     {
@@ -101,10 +83,10 @@
     },
     {
       "group": "Miscellaneous",
-      "pages": ["advanced/misc/verbatim-environments"]
+      "pages": [
+        "advanced/misc/verbatim-environments"
+      ]
     }
   ],
-  "footerSocials": {
-    "github": "https://github.com/nvlang/sveltex"
-  }
+  "footerSocials": { "github": "https://github.com/nvlang/sveltex" }
 }

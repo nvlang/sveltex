@@ -23,14 +23,13 @@ describe('Sveltex', () => {
         log = mocks.log;
     });
 
-    let sp: Sveltex<'micromark', 'highlight.js', 'mathjax', 'local'>;
+    let sp: Sveltex<'micromark', 'highlight.js', 'mathjax'>;
 
     beforeAll(async () => {
         sp = await sveltex({
             markdownBackend: 'micromark',
             codeBackend: 'highlight.js',
             texBackend: 'mathjax',
-            advancedTexBackend: 'local',
         });
         await sp.configure({
             tex: {
@@ -84,7 +83,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toContain(
-                '<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax"',
+                '<svelte:head>\n<link rel="stylesheet" href="/src/sveltex/mathjax@3.2.2.svg.min.css">\n</svelte:head>\n<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax"',
             );
             expect(
                 Object.keys(sp.advancedTexHandler.texComponents).length,

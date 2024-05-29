@@ -13,7 +13,7 @@ import {
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
 } from '$utils/dvisvgm.js';
-import { getDefaultConversionOptions } from '$config/defaults.js';
+import { getDefaultAdvancedTexConfig } from '$config/defaults.js';
 
 describe.concurrent('bboxToFlagValue', () => {
     it('should return the string representation of a TexDim', () => {
@@ -23,7 +23,8 @@ describe.concurrent('bboxToFlagValue', () => {
     });
 
     it('should return the string representation of a TexDim 2', () => {
-        const bbox = getDefaultConversionOptions('dvisvgm').svg.bbox ?? 'A1';
+        const bbox =
+            getDefaultAdvancedTexConfig().conversion.dvisvgm.svg.bbox ?? 'A1';
         const result = bboxToFlagValue(bbox);
         expect(result).toEqual('2pt');
     });
@@ -108,7 +109,7 @@ describe.concurrent('buildDvisvgmInstruction', () => {
             outputPath: '/path/to/output.svg',
             texPath: '/path/to/input.tex',
             inputType: 'dvi',
-            dvisvgmOptions: {
+            dvisvgm: {
                 processing: {
                     cache: '/path/to/cache',
                     exactBbox: true,
@@ -205,7 +206,7 @@ describe.concurrent('buildDvisvgmInstruction', () => {
             outputPath: '/path/to/output.svg',
             texPath: '/path/to/input.tex',
             inputType: 'pdf',
-            dvisvgmOptions: {
+            dvisvgm: {
                 processing: {
                     cache: '/path/to/cache',
                     exactBbox: true,
@@ -297,7 +298,7 @@ describe.concurrent('buildDvisvgmInstruction', () => {
             outputPath: '/path/to/output.svg',
             texPath: '/path/to/input.tex',
             inputType: 'dvi',
-            dvisvgmOptions: {
+            dvisvgm: {
                 processing: {
                     noSpecials: 'html',
                     traceAll: true,

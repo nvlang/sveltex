@@ -3,7 +3,6 @@
 // remove them because I want to keep type assertions to a minimum.
 
 // Types
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type {
@@ -31,7 +30,7 @@ import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
 import { escapeHtml, is, nodeAssert, rfdc, typeAssert } from '$deps.js';
-import { applyTransformations } from '$utils/transformations.js';
+import { applyTransformations } from '$utils/transformers.js';
 import { copyTransformations } from '$utils/misc.js';
 
 const deepClone = rfdc();
@@ -39,17 +38,14 @@ const deepClone = rfdc();
 /**
  * Handler for verbatim environments.
  */
-export class VerbatimHandler<
-    C extends CodeBackend,
-    A extends AdvancedTexBackend,
-> extends Handler<
+export class VerbatimHandler<C extends CodeBackend> extends Handler<
     'verbatim',
     'verbatim',
     Record<string, never>,
     VerbatimProcessOptions,
     VerbatimConfiguration,
     FullVerbatimConfiguration,
-    VerbatimHandler<C, A>
+    VerbatimHandler<C>
 > {
     /**
      * Code handler to which code processing should be delegated.
@@ -60,21 +56,21 @@ export class VerbatimHandler<
      * Advanced TeX handler to which advanced TeX processing should be
      * delegated.
      */
-    private readonly advancedTexHandler: AdvancedTexHandler<A>;
+    private readonly advancedTexHandler: AdvancedTexHandler;
 
     override get configuration() {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
         return Object.fromEntries(
             Object.entries(deepClone(this._configuration)).map(([k, v]) => {
                 const real = this._configuration[k];
-                nodeAssert(real?.transformations);
-                const { transformations } = real;
-                const { pre, post } = transformations;
+                nodeAssert(real?.transformers);
+                const { transformers: transformers } = real;
+                const { pre, post } = transformers;
                 return [
                     k,
                     {
                         ...v,
-                        transformations: {
+                        transformers: {
                             pre: copyTransformations(pre),
                             post: copyTransformations(post),
                         },
@@ -84,9 +80,9 @@ export class VerbatimHandler<
         );
     }
 
-    static create<C extends CodeBackend, A extends AdvancedTexBackend>(
+    static create<C extends CodeBackend>(
         codeHandler: CodeHandler<C>,
-        advancedTexHandler: AdvancedTexHandler<A>,
+        advancedTexHandler: AdvancedTexHandler,
     ) {
         /**
          * @param content - The content to process (incl. HTML tag)
@@ -106,7 +102,7 @@ export class VerbatimHandler<
         const process = async (
             innerContent: string,
             options: VerbatimProcessOptions,
-            verbatimHandler: VerbatimHandler<C, A>,
+            verbatimHandler: VerbatimHandler<C>,
         ): Promise<ProcessedSnippet> => {
             const { tag, attributes, selfClosing, outerContent } = options;
 
@@ -125,6 +121,12 @@ export class VerbatimHandler<
                 );
                 return {
                     processed: outerContent ?? innerContent,
+                    unescapeOptions: {
+                        // We'll remove the paragraph tag iff we added padding
+                        // around the content, which we only do if the tag is
+                        // supposed to be a flow element (as opposed to inline).
+                        removeParagraphTag: !!options.escapeOptions?.pad,
+                    },
                 };
             }
 
@@ -137,6 +139,9 @@ export class VerbatimHandler<
                 log('error', `Unknown verbatim environment "${tag}".`);
                 return {
                     processed: outerContent ?? innerContent,
+                    unescapeOptions: {
+                        removeParagraphTag: false,
+                    },
                 };
             }
 
@@ -145,13 +150,13 @@ export class VerbatimHandler<
                 defaultAttributes,
                 respectSelfClosing,
                 selfCloseOutputWith,
-                transformations,
+                transformers: transformers,
                 component,
                 attributeForwardingAllowlist,
                 attributeForwardingBlocklist,
             } = config;
 
-            const { pre, post } = transformations;
+            const { pre, post } = transformers;
 
             // Merge default attributes with those provided ad hoc. Shallow
             // merge is enough, since the attribute values can't be objects.
@@ -164,7 +169,7 @@ export class VerbatimHandler<
                 removeParagraphTag: !mergedAttributes['inline'],
             };
 
-            // Apply pre-transformations
+            // Apply pre-transformers
             processed = applyTransformations(processed, options, pre);
 
             /**
@@ -273,10 +278,6 @@ export class VerbatimHandler<
                 const processedSnippet =
                     await verbatimHandler.codeHandler.process(processed, {
                         ...mergedAttributes,
-                        _wrap:
-                            selfClosing && respectSelfClosing
-                                ? false
-                                : config.wrap,
                     });
                 processed = processedSnippet.processed;
                 unescapeOptions = processedSnippet.unescapeOptions;
@@ -295,7 +296,7 @@ export class VerbatimHandler<
                     },
                 );
                 processed = res.processed;
-                unescapeOptions = res.unescapeOptions ?? unescapeOptions;
+                unescapeOptions = res.unescapeOptions;
             } else if (type === 'custom') {
                 typeAssert(is<FullVerbEnvConfigCustom>(config));
                 processed = config.customProcess(processed, mergedAttributes);
@@ -319,7 +320,7 @@ export class VerbatimHandler<
         };
         const configure = (
             _configuration: VerbatimConfiguration,
-            verbatimHandler: VerbatimHandler<C, A>,
+            verbatimHandler: VerbatimHandler<C>,
         ) => {
             const verbatimEnvironments = verbatimHandler._configuration;
 
@@ -371,7 +372,7 @@ export class VerbatimHandler<
 
             verbatimHandler._verbEnvs = verbEnvs;
         };
-        return new VerbatimHandler<C, A>({
+        return new VerbatimHandler<C>({
             process,
             configure,
             codeHandler,
@@ -389,14 +390,14 @@ export class VerbatimHandler<
         advancedTexHandler,
     }: {
         backend?: 'verbatim' | undefined;
-        process: ProcessFn<VerbatimProcessOptions, VerbatimHandler<C, A>>;
+        process: ProcessFn<VerbatimProcessOptions, VerbatimHandler<C>>;
         processor?: Record<string, never> | undefined;
         configure?:
-            | ConfigureFn<VerbatimConfiguration, VerbatimHandler<C, A>>
+            | ConfigureFn<VerbatimConfiguration, VerbatimHandler<C>>
             | undefined;
         configuration?: FullVerbatimConfiguration | undefined;
         codeHandler: CodeHandler<C>;
-        advancedTexHandler: AdvancedTexHandler<A>;
+        advancedTexHandler: AdvancedTexHandler;
     }) {
         super({
             backend: backend ?? 'verbatim',

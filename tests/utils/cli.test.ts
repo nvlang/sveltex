@@ -10,7 +10,7 @@ describe('spawnCliInstruction', () => {
         vi.restoreAllMocks();
     });
 
-    it('should spawn a CLI instruction and resolve with the exit code', async () => {
+    it('should spawn a CLI instruction and resolve with the right exit code', async () => {
         const instr = {
             command: 'echo',
             args: ['Hello, World!'],

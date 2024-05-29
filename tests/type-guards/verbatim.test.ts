@@ -3,6 +3,7 @@ import {
     isDvisvgmOptions,
     isSimpleEscapeInstruction,
     isSupportedTexEngine,
+    supportedTexEngines,
 } from '$type-guards/verbatim.js';
 import { describe, expect, it } from 'vitest';
 
@@ -44,7 +45,7 @@ describe('isDvisvgmOptions', () => {
 });
 
 describe('isSupportedTexEngine', () => {
-    it.each(['pdflatex', 'lualatex', 'lualatexmk', 'tex', 'latexmk'])(
+    it.each(supportedTexEngines)(
         'should return true for valid SupportedTexEngine strings (%o)',
         (engine) => {
             expect(isSupportedTexEngine(engine)).toBe(true);

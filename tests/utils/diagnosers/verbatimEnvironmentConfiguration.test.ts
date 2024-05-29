@@ -7,26 +7,23 @@ import {
     it,
     expect,
     vi,
-    afterAll,
     beforeEach,
     afterEach,
     describe,
     beforeAll,
+    afterAll,
 } from 'vitest';
 
-function fixture() {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-    afterEach(() => {
-        vi.clearAllMocks();
-    });
-}
+beforeEach(() => {
+    vi.clearAllMocks();
+});
+afterEach(() => {
+    vi.clearAllMocks();
+});
 
 describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
-    fixture();
     beforeAll(async () => {
-        await spy(['writeFileEnsureDir', 'log', 'existsSync']);
+        await spy('log');
     });
     afterAll(() => {
         vi.restoreAllMocks();
@@ -41,7 +38,12 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
         getDefaultVerbEnvConfig('advancedTex'),
         {
             type: 'advancedTex',
-            overrides: { engine: 'tex', shellEscape: 'restricted' },
+            overrides: {
+                compilation: {
+                    engine: 'pdflatexmk',
+                    shellEscape: 'restricted',
+                },
+            },
         },
         { attributeForwardingAllowlist: 'all' },
         { attributeForwardingAllowlist: ['1', 'all', '2'] },
@@ -59,7 +61,13 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
         [{ aliases: 'something' }, 1],
         [{ type: 'advancedTex', overrides: 'something' }, 1],
         [
-            { type: 'advancedTex', overrides: { engine: 'something', a: 1 } },
+            {
+                type: 'advancedTex',
+                overrides: {
+                    compilation: { engine: 'something' },
+                    a: 1,
+                },
+            },
             1,
             1,
         ],

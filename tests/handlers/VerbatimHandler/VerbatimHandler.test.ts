@@ -21,7 +21,6 @@ const sveltexPreprocessor = await sveltex({
     markdownBackend: 'none',
     codeBackend: 'highlight.js',
     texBackend: 'none',
-    advancedTexBackend: 'local',
 });
 
 await sveltexPreprocessor.configure({
@@ -88,7 +87,7 @@ describe('VerbatimHandler', () => {
             const config = {
                 Code: {
                     type: 'code',
-                    transformations: {
+                    transformers: {
                         pre: [/a/, 'b'],
                         post: () => 'c',
                     },
@@ -100,12 +99,12 @@ describe('VerbatimHandler', () => {
             const configCopy: Record<string, FullVerbEnvConfig> =
                 sp.verbatimHandler.configuration;
             expect(configCopy).toMatchObject(config);
-            expect(configCopy['Code']?.transformations.pre).toEqual(
-                config.Code.transformations.pre,
+            expect(configCopy['Code']?.transformers.pre).toEqual(
+                config.Code.transformers.pre,
             );
-            const regexp = config.Code.transformations.pre[0];
+            const regexp = config.Code.transformers.pre[0];
             if (isRegExp(regexp)) {
-                const pre = configCopy['Code']?.transformations.pre;
+                const pre = configCopy['Code']?.transformers.pre;
                 expect(isArray(pre) && isDefined(pre)).toBe(true);
                 const regexpCopy = (pre as [RegExp, string])[0];
                 expect(isRegExp(regexpCopy)).toEqual(true);
@@ -113,8 +112,8 @@ describe('VerbatimHandler', () => {
                 // Different references
                 expect(regexpCopy).not.toBe(regexp);
             }
-            expect(configCopy['Code']?.transformations.post).toBe(
-                config.Code.transformations.post,
+            expect(configCopy['Code']?.transformers.post).toBe(
+                config.Code.transformers.post,
             );
         });
     });
@@ -126,7 +125,6 @@ describe('VerbatimHandler', () => {
                 markdownBackend: 'none',
                 codeBackend: 'none',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await sp.configure({
                 verbatim: {
@@ -162,7 +160,6 @@ describe('VerbatimHandler', () => {
                 markdownBackend: 'none',
                 codeBackend: 'none',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await sp.configure({
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -285,12 +282,8 @@ describe('VerbatimHandler', () => {
         });
 
         it('should correctly handle self-closing components (TeX)', async () => {
-            const sp = await sveltex({ advancedTexBackend: 'local' });
-            await sp.configure({
-                verbatim: {
-                    tex: { type: 'advancedTex' },
-                },
-            });
+            const sp = await sveltex();
+            await sp.configure({ verbatim: { tex: { type: 'advancedTex' } } });
             expect(
                 (
                     await sp.verbatimHandler.process('', {
@@ -306,13 +299,13 @@ describe('VerbatimHandler', () => {
             );
         });
 
-        it('should work with custom transformations', async () => {
+        it('should work with custom transformers', async () => {
             const sp = await sveltex({ codeBackend: 'starry-night' });
             await sp.configure({
                 verbatim: {
                     Code: {
                         type: 'code',
-                        transformations: {
+                        transformers: {
                             pre: [/\/\/(.*)/, ''],
                             post: ['class="pl-', 'class="code-'],
                         },

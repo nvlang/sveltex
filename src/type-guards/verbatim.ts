@@ -21,11 +21,12 @@ import {
 import { Equals, typeAssert } from '$deps.js';
 
 export const supportedTexEngines = [
-    'pdflatex',
     'lualatex',
     'lualatexmk',
-    'tex',
-    'latexmk',
+    'pdflatex',
+    'pdflatexmk',
+    'xelatex',
+    // 'xelatexmk',
 ] as const;
 
 typeAssert<Equals<(typeof supportedTexEngines)[number], SupportedTexEngine>>();

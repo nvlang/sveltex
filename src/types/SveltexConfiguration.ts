@@ -11,7 +11,6 @@
  */
 
 import type {
-    AdvancedTexBackend,
     AdvancedTexConfiguration,
     FullAdvancedTexConfiguration,
 } from '$types/handlers/AdvancedTex.js';
@@ -35,23 +34,23 @@ import type {
     VerbatimConfiguration,
 } from '$types/handlers/Verbatim.js';
 import { TexEscapeSettings } from '$types/utils/Escape.js';
-import type { RequiredNonNullable } from '$types/utils/utility-types.js';
+import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
 
 /**
  * Supported TeX engines.
  */
 export type SupportedTexEngine =
+    | 'pdflatexmk'
     | 'lualatex'
+    | 'lualatexmk'
     | 'pdflatex'
-    | 'tex'
-    | 'latexmk'
-    | 'lualatexmk';
+    | 'xelatex';
+// | 'xelatexmk';
 
 export interface BackendChoices<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
 > {
     /**
      * Backend to use to parse Markdown. Affects extensibility.
@@ -179,7 +178,7 @@ export interface BackendChoices<
      *
      * @defaultValue `'none'`.
      */
-    advancedTexBackend?: A | undefined;
+    // advancedTexBackend?: A | undefined;
 }
 
 /**
@@ -189,7 +188,6 @@ export interface SveltexConfiguration<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
 > {
     /**
      * Configuration options for the markdown parser (e.g., `marked`, `unified`,
@@ -250,7 +248,7 @@ export interface SveltexConfiguration<
     /**
      * Configuration options for the advanced TeX processor.
      */
-    advancedTex?: AdvancedTexConfiguration<A>;
+    advancedTex?: AdvancedTexConfiguration;
 
     /**
      *
@@ -258,36 +256,6 @@ export interface SveltexConfiguration<
     verbatim?: VerbatimConfiguration;
 
     general?: {
-        /**
-         * Code which will surround the preprocessor output.
-         *
-         * @remarks Because of how SvelTeX works internally, these "delimiters"
-         * can appear more than once within the output of a single file.
-         *
-         * @example
-         * ```ts
-         * {
-         *     wrap: {
-         *         begin: '<div class="sveltex-output">',
-         *         end: '</div>',
-         *     }
-         * }
-         * ```
-         */
-        wrap?:
-            | undefined
-            | {
-                  /**
-                   * @defaultValue `''` (empty string)
-                   */
-                  begin: string;
-
-                  /**
-                   * @defaultValue `''` (empty string)
-                   */
-                  end: string;
-              };
-
         /**
          * File extensions which will be processed by the preprocessor.
          *
@@ -353,14 +321,13 @@ export interface FullSveltexConfiguration<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
 > {
     general: NonNullable<
-        RequiredNonNullable<SveltexConfiguration<M, C, T, A>['general']>
+        RequiredNotNullOrUndefined<SveltexConfiguration<M, C, T>['general']>
     > & { tex: { enabled: boolean } };
     markdown: FullMarkdownConfiguration<M>;
     code: FullCodeConfiguration<C>;
     tex: FullTexConfiguration<T>;
-    advancedTex: FullAdvancedTexConfiguration<A>;
+    advancedTex: FullAdvancedTexConfiguration;
     verbatim: FullVerbatimConfiguration;
 }

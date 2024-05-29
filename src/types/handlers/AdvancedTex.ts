@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 // Types
 import type { SvgoOptions } from '$deps.js';
 import type { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
@@ -5,226 +6,139 @@ import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbEnvConfigAdvancedTex,
-    VerbEnvConfigAdvancedTex,
     VerbatimProcessOptions,
 } from '$types/handlers/Verbatim.js';
-import type { CliInstruction } from '$types/utils/CliInstruction.js';
-import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import type {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    CliInstruction,
+    CompilationCliInstruction,
+    ConversionCliInstruction,
+} from '$types/utils/CliInstruction.js';
+import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
+import type { PopplerSvgOptions } from '$types/utils/PopplerOptions.js';
+import type {
+    DeepRequiredNotUndefined,
     FirstTwoLevelsRequiredNotUndefined,
-    RequiredNonNullableExcept,
 } from '$types/utils/utility-types.js';
 import type { TexComponent } from '$utils/TexComponent.js';
 
 /**
  * Supported advanced TeX backends.
  */
-export type AdvancedTexBackend = 'local' | 'custom' | 'none';
+export type AdvancedTexBackend = 'local';
 
-export type FullTexLiveConfiguration<
-    CC extends ConversionCommand = ConversionCommand,
-> = RequiredNonNullableExcept<
-    TexLiveConfiguration<CC>,
-    | 'overrideCompilationCommand'
-    | 'overrideConversionCommand'
-    | 'overrideSvgPostprocess'
->;
+export type Converter = 'dvisvgm' | 'poppler';
 
-export type ConversionCommand = 'dvisvgm' | 'pdf2svg';
-
-export type ConversionOptions<CC extends ConversionCommand> =
-    CC extends 'dvisvgm'
-        ? DvisvgmOptions
-        : CC extends 'pdf2svg'
-          ? Pdf2svgOptions
-          : never;
-
-export type FullConversionOptions<CC extends ConversionCommand> =
-    FirstTwoLevelsRequiredNotUndefined<ConversionOptions<CC>>;
-
-interface HasPdf2svgOptions {
-    conversionCommand: 'pdf2svg';
-
+export interface ConversionOptions {
     /**
-     * Options to pass to `pdf2svg` when converting PDF files to SVG.
-     */
-    conversionOptions?: ConversionOptions<'pdf2svg'> | undefined;
-}
-
-interface HasDvisvgmOptions {
-    conversionCommand?: 'dvisvgm' | undefined;
-
-    /**
-     * Options to pass to `dvisvgm` when converting PDF or DVI files to SVG.
-     */
-    conversionOptions?: ConversionOptions<'dvisvgm'> | undefined;
-}
-
-export type TexLiveConfiguration<
-    CC extends ConversionCommand = ConversionCommand,
-> = TexLiveConfigurationWithoutConversionOptions<CC> &
-    (HasDvisvgmOptions | HasPdf2svgOptions);
-
-export interface TexLiveConfigurationWithoutConversionOptions<
-    CC extends ConversionCommand = ConversionCommand,
-> {
-    /**
-     * If `false`, shell escape is disabled, meaning that the TeX engine will
-     * not be able to execute shell commands (i.e., e.g., the `minted` LaTeX
-     * package won't work).
+     * Library to use to convert PDF or DVI files to SVG.
      *
-     * If equal to `'restricted'`, shell escape will be enabled, but only for a
-     * restricted set of commands; these are defined by the `texmf.cnf` file of
-     * the TeX distribution.
-     *
-     * If `true`, shell escape is enabled without restrictions. Use this option
-     * with caution, and only if you trust the TeX code you are compiling.
-     *
-     * @defaultValue `false`
-     */
-    shellEscape?: 'restricted' | boolean | undefined;
-
-    /**
-     * Intermediate filetype to use when compiling the TeX block.
-     *
-     * @defaultValue `'pdf'`.
-     *
-     * @remarks
-     * Not all engines support all intermediate filetypes. For example, `tex`
-     * (plain TeX) only supports `'dvi'`.
-     */
-    intermediateFiletype?: 'pdf' | 'dvi' | undefined;
-
-    /**
-     * If `true`, some easily exploitable Lua functions will be disabled.
-     *
-     * ⚠ **Warning**: [`luaotfload`](https://github.com/latex3/luaotfload) won't
-     * work if this setting is set to `true`.
-     *
-     * @defaultValue `false`
-     */
-    saferLua?: boolean | undefined;
-
-    /**
-     * If `true`, auxiliary files of *named* TeX blocks won't be removed from
-     * the cache directory after compilation. Auxiliary files of *unnamed* TeX
-     * blocks will still be removed from the cache directory after compilation.
-     *
-     * If `false`, all auxiliary files will be removed from the cache directory
-     * after compilation.
-     *
-     * @defaultValue `true`
-     */
-    caching?: boolean | undefined;
-
-    /**
-     * Directory in which to cache auxiliary files.
+     * - `'dvisvgm'`: Performant and feature-rich converter, bundled with TeX
+     *   live. Produces high-quality, highly optimized SVGs.
+     * - `'poppler'` (PDF only): Robust library which relies on
+     *   [Cairo](https://www.cairographics.org) for its PDF to SVG conversion.
+     *   Sveltex interacts with it via the
+     *   [`node-poppler`](https://www.npmjs.com/package/node-poppler) package.
+     *   Poppler produces high-quality — if sometimes rather large — SVGs.
      *
      * @defaultValue
      * ```ts
-     * `node_modules/.cache/@nvl/sveltex`
+     * 'dvisvgm'
      * ```
+     *
+     * @remarks
+     * ⚠ **Warning**: For the `'poppler'` option to work, you should install the
+     * [`node-poppler`](https://www.npmjs.com/package/node-poppler) package,
+     * which isn't a regular dependency of Sveltex (it's a peer dependency
+     * instead, given its large size and the fact that Sveltex won't use it by
+     * default). Depending on your package manager, you can do this with one
+     * of the following commands:
+     * ```sh
+     *     pnpm add -D node-poppler # if using PNPM
+     *     bun add -D node-poppler # if using Bun
+     *     npm add -D node-popple # if using NPM
+     *     yarn add -D node-poppler # if using Yarn
+     * ```
+     * Furthermore, depending on your operating system, you may need to
+     * install some additional dependencies:
+     * - Linux: Install
+     *   [`poppler-utils`](https://packages.ubuntu.com/noble/poppler-utils) and
+     *   [`poppler-data`](https://packages.ubuntu.com/noble/poppler-data):
+     *   ```sh
+     *       sudo apt-get install -y poppler-data
+     *       sudo apt-get install -y poppler-utils
+     *   ```
+     * - macOS: Install the
+     *   [`poppler`](https://formulae.brew.sh/formula/poppler) formula from
+     *   [Homebrew](https://brew.sh):
+     *   ```sh
+     *       brew install poppler
+     *   ```
+     * - Windows: Binaries are already included with `node-poppler`, so no
+     *   additional steps are needed.
+     *
+     * ---
+     *
+     * #### LINKS
+     *
+     * `dvisvgm`:
+     * - Website: https://dvisvgm.de/
+     *   - Manual page ("manpage"): https://dvisvgm.de/Manpage
+     * - Repository: https://github.com/mgieseki/dvisvgm
+     *
+     * Poppler & related:
+     * - `node-poppler` on NPM: https://www.npmjs.com/package/node-poppler
+     * - `node-poppler` repository: https://github.com/Fdawgs/node-poppler
+     * - Poppler website: https://poppler.freedesktop.org
+     * - Poppler repository: https://gitlab.freedesktop.org/poppler/poppler
+     * - Cairo website: https://www.cairographics.org
      */
-    cacheDirectory?: string | undefined;
+    converter?: Converter | undefined;
 
     /**
-     * Override the compilation command for this component.
+     * Options to pass to `dvisvgm` when converting PDF or DVI files to SVG.
      *
-     * @remarks
-     * The following environment variables will be available, in addition to the
-     * ones from {@link process.env | `process.env`} and any manually set
-     * environment variables:
+     * The documentation of the options herein are adapted from the official
+     * dvisvgm [manpage](https://dvisvgm.de/Manpage/).
      *
-     * - Input file:
-     *   - `$FILEPATH`: `node_modules/.cache/@nvl/sveltex/tikz/example.tex`
-     *   - `$FILENAME`: `example.tex`
-     *   - `$FILENAME_BASE`: `example`
+     * @remarks Setting any given option to `null` defers its assignment to
+     * `dvisvgm`, meaning that `dvisvgm`'s default value for the option will be
+     * used. Meanwhile, setting an option to `undefined` will set it to
+     * Sveltex's default value for the option, as specified in the
+     * `@defaultValue` TSDoc tag for the option. Note that Sveltex's default
+     * value will often be `null` itself, in which case setting the option to
+     * `undefined` will have the same effect as setting it to `null`. Sveltex's
+     * default value may also sometimes coincide with `dvisvgm`'s default value
+     * for the option, even if Sveltex's default value isn't `null`.
      *
-     * - Output file:
-     *   - `$OUTDIR`: `node_modules/.cache/@nvl/sveltex/tikz`
-     *   - `$OUTFILETYPE`: `pdf`
+     * @remarks These options will only have an effect if the `converter` property
+     * is set to `'dvisvgm'`.
      *
-     * @remarks
-     * **✓ Invariants**:
-     * - `FILEPATH === OUTDIR + '/' + FILENAME`
-     * - `FILENAME === FILENAME_BASE + '.tex'`
-     *
-     * @remarks
-     * ⚠ **Warning**: Make sure that the command either generates a PDF file at
-     * `OUTDIR + '/' + FILENAME_BASE + '.' + OUTFILETYPE`, or that you set the
-     * `overrideConversionCommand` property to properly deal with the output of
-     * the compilation command.
-     *
-     * @remarks
-     * ⚠ **Warning**: The following properties will be useless if this property
-     * is set:
-     * - {@link engine | `engine`}
-     * - {@link shellEscape | `shellEscape`}
-     * - {@link caching | `caching`}
+     * @see https://dvisvgm.de/Manpage/
+     * @see https://github.com/mgieseki/dvisvgm
      */
-    overrideCompilationCommand?: CliInstruction | null | undefined;
+    dvisvgm?: DvisvgmOptions | undefined;
 
     /**
-     * Override the PDF/DVI to SVG conversion command for this component.
+     * Options to pass to `poppler` when converting PDF or DVI files to SVG.
      *
-     * @defaultValue `undefined`
+     * @remarks Setting any given option to `null` defers its assignment to
+     * [`node-poppler`](https://www.npmjs.com/package/node-poppler), meaning
+     * that the external library's default value for the option will be used.
+     * Meanwhile, setting an option to `undefined` will set it to Sveltex's
+     * default value for the option, as specified in the `@defaultValue` TSDoc
+     * tag for the option. Note that Sveltex's default value will often be
+     * `null` itself, in which case setting the option to `undefined` will have
+     * the same effect as setting it to `null`. Sveltex's default value may also
+     * sometimes coincide with `node-popler`'s default value for the option,
+     * even if Sveltex's default value isn't `null`.
      *
-     * @remarks
-     * The following environment variables will be available, in addition to the
-     * ones from {@link process.env | `process.env`} and any manually set
-     * environment variables:
+     * @remarks These options will only have an effect if the `converter` property
+     * is set to `'poppler'`.
      *
-     * - Variables describing input file:
-     *   - `$FILEPATH`:
-     *     `node_modules/.cache/@nvl/sveltex/tikz/Example.pdf`
-     *   - `$FILENAME`: `Example.pdf`
-     *   - `$FILENAME_BASE`: `Example`
-     *   - `$FILETYPE`: `pdf`
-     *
-     * - Variables describing output file:
-     *   - `$OUTDIR`: `src/sveltex/tikz`
-     *   - `$OUTFILEPATH`: `src/sveltex/tikz/Example.svg`
-     *
-     * @remarks
-     * ⚠ **Warning**: The following properties will be useless if
-     * `overrideConversionCommand` is set:
-     * - {@link conversionOptions | `conversionOptions`}
+     * @see https://www.npmjs.com/package/node-poppler
      */
-    overrideConversionCommand?: CliInstruction | null | undefined;
-
-    /**
-     * Override the SVG optimization function for this component.
-     *
-     * @defaultValue `undefined`
-     * @remarks Set to `null` to disable SVG optimization.
-     * @remarks
-     * ⚠ **Warning**: The following properties will be useless if
-     * `overrideSvgPostprocess` is set:
-     * - {@link svgoOptions | `svgoOptions`}
-     *
-     * @param svg - The SVG code to optimize.
-     * @param tc - The TeX component whose output SVG code is being optimized.
-     * @returns The optimized SVG code.
-     */
-    overrideSvgPostprocess?:
-        | ((svg: string, tc: TexComponent) => string)
-        | null
-        | undefined;
-
-    /**
-     * Options to pass to [SVGO](https://www.npmjs.com/package/svgo)'s
-     * `optimize` function when optimizing SVG files.
-     */
-    svgoOptions?: Omit<SvgoOptions, 'path'> | undefined;
-
-    conversionCommand?: CC | undefined;
-
-    /**
-     * Whether to output verbose logs.
-     *
-     * @defaultValue `false`
-     */
-    verbose?: boolean | undefined;
+    poppler?: PopplerSvgOptions | undefined;
 
     /**
      * Output directory. This is where the generated SVG files will be placed,
@@ -248,53 +162,331 @@ export interface TexLiveConfigurationWithoutConversionOptions<
     outputDirectory?: string | undefined;
 
     /**
-     * TeX engine to use by default to render "advanced" TeX code. This setting
-     * can be overridden by the `engine` property of a specific
-     * TexComponentConfig object.
+     * Override the PDF/DVI to SVG conversion command for this component.
      *
-     * @defaultValue `'lualatex'`
+     * @defaultValue `null`
+     *
+     * @remarks
+     * ⚠ **Warning**: Make sure that the command generates an SVG file at
+     * `opts.output.path`.
+     *
+     * @remarks
+     * ⚠ **Warning**: The following properties will be useless if
+     * `overrideConversion` is set:
+     * - {@link dvisvgm | `dvisvgm`}
+     * - {@link poppler | `poppler`}
+     * - {@link converter | `converter`}
+     *
+     * ---
+     * #### FUNCTION PARAMETERS
+     *
+     * @param opts - An object describing the location of the PDF/DVI file and the
+     * location at which the output file should be placed.
+     * @returns A {@link CliInstruction | `CliInstruction`} object that will be
+     * used to convert the PDF/DVI file to SVG.
+     */
+    overrideConversion?: ConversionCliInstruction | null | undefined;
+}
+
+export interface CompilationOptions {
+    /**
+     * TeX engine to use to render "advanced" TeX code. Possible values,
+     * alongside with the commands they use to compile the TeX code (depending
+     * on {@link intermediateFiletype | `intermediateFiletype`}):
+     *
+     * - `'pdflatexmk'`: Uses [LaTeXmk](https://ctan.org/pkg/latexmk), a Perl
+     *   script which aims to simplify the compilation of complex LaTeX files
+     *   which would usually require multiple compilation steps by determining
+     *   the necessary steps and number of compilations, and performing them
+     *   automatically.
+     *   - `latexmk -dvi` to output DVI using pdfLaTeX.
+     *   - `latexmk -pdf` to output PDF using pdfLaTeX.
+     * - `'lualatex'`: Uses LuaLaTeX,
+     *   - `lualatex --output-format=dvi` to output DVI.
+     *   - `lualatex --output-format=pdf` to output PDF.
+     * - `'lualatexmk'`: Uses LaTeXmk.
+     *   - `latexmk -dvilua` to output DVI using LuaLaTeX.
+     *   - `latexmk -pdflua` to output PDF using LuaLaTeX.
+     * - `'pdflatex'`: Uses pdfLaTeX.
+     *   - `pdflatex -output-format=dvi` to output DVI.
+     *   - `pdflatex -output-format=pdf` to output PDF.
+     * - `'xelatex'`: Uses XeLaTeX.
+     *   - `xelatex -no-pdf` to output XDV.
+     *   - `xelatex` to output PDF.
+     *
+     * @defaultValue
+     * ```ts
+     * 'pdflatex'
+     * ```
+     *
+     * @remarks
+     * Despite its name, `pdflatex` can indeed also output DVI files.
+     *
+     * @remarks
+     * Why is `pdflatex` the default? — Speed. LuaLaTeX was significantly slower
+     * in my testing, LaTeXmk was marginally slower (but the working assumption
+     * is that the LaTeX files Sveltex will be dealing with will usually be
+     * simple enough to be compiled in a single step, limiting the benefit of
+     * LaTeXmk), and XeTeX was also marginally slower and is less wide-spread.
+     *
+     * **Disclaimer**: my testing was very limited; in particular, I tested the
+     * different compilation commands on just four different TeX files, each of
+     * which were single-page documents (this is because single-page documents
+     * is the main use-case for Sveltex).
      */
     engine?: SupportedTexEngine | undefined;
+
+    /**
+     * Intermediate filetype to use when compiling the TeX block. Possible
+     * values:
+     *
+     * - [`'dvi'`](https://texfaq.org/FAQ-dvi) (strongly recommended): The DVI
+     *   (device independent file format) is TeX's original output format, and
+     *   presents many advantages over PDF for the purposes of SVG conversion.
+     * - `'pdf'`: If for some reason you need to use PDF as the intermediate
+     *   filetype, you can set this property to `'pdf'`, which dvisvgm or
+     *   Poppler can then convert to an SVG.
+     *
+     * @defaultValue
+     * ```ts
+     * 'dvi'
+     * ```
+     *
+     * @remarks This option is only relevant when
+     * {@link ConversionOptions.converter | `conversion.converter`} is set to
+     * `'dvisvgm'`, as Poppler doesn't support DVI/XDV files.
+     *
+     * @remarks
+     * If {@link engine | `engine`} is set to `'xelatex'`, then setting this
+     * property to `'dvi'` will result in the generation of XDV (extended DVI))
+     * files instead of DVI files.
+     *
+     * @remarks
+     * Not all TeX engines and conversion libraries support all intermediate
+     * filetypes. All of the supported engines support PDF and DVI, or, in the
+     * case of XeTeX-based engines, PDF and XDV. The conversion library dvisvgm
+     * can handle PDF, DVI, and XDV, while Poppler can only handle PDF of these
+     * formats. In a table:
+     *
+     * | TeX Engine   |  `dvisvgm`  | `poppler` |
+     * |:-------------|:-----------:|:---------:|
+     * | `latexmk`    | `dvi`/`pdf` |   `pdf`   |
+     * | `lualatex`   | `dvi`/`pdf` |   `pdf`   |
+     * | `lualatexmk` | `dvi`/`pdf` |   `pdf`   |
+     * | `pdflatex`   | `dvi`/`pdf` |   `pdf`   |
+     * | `xelatex`    | `xdv`/`pdf` |   `pdf`   |
+     *
+     * When using `dvisvgm`, it is almost always better to use `'dvi'` as the
+     * intermediate filetype, since this is where `dvisvgm` really shines: it
+     * will produce much more optimized SVGs from DVI/XDV files than from PDF
+     * files, and has more features available when converting DVI/XDV files.
+     */
+    intermediateFiletype?: 'pdf' | 'dvi' | undefined;
+
+    /**
+     * Override the compilation command for this component.
+     *
+     * @defaultValue
+     * ```ts
+     * null
+     * ```
+     *
+     * @remarks
+     * ⚠ **Warning**: Make sure that the command either generates a DVI/XDV (if
+     * {@link intermediateFiletype | `intermediateFiletype`} is `'dvi'`) or PDF
+     * (if {@link intermediateFiletype | `intermediateFiletype`} is `'pdf'`)
+     * file at `opts.output.path`.
+     *
+     * @remarks
+     * ⚠ **Warning**: The following properties will be useless if this property
+     * is set:
+     * - {@link engine | `engine`}.
+     * - {@link shellEscape | `shellEscape`}.
+     * - {@link saferLua | `saferLua`}.
+     *
+     * **Note**: The {@link intermediateFiletype | `intermediateFiletype`}
+     * property will still be relevant, as it will help Sveltex determine how to
+     * convert the intermediate file to SVG. In particular, you should make sure
+     * that the command you set here generates a file of the type specified by
+     * the `intermediateFiletype` property.
+     *
+     * ---
+     * #### FUNCTION PARAMETERS
+     *
+     * @param opts - An object describing the location of the TeX code and the
+     * location at which the output file should be placed.
+     * @returns A {@link CliInstruction | `CliInstruction`} object that will be
+     * used to compile the TeX code.
+     */
+    overrideCompilation?: CompilationCliInstruction | null | undefined;
+
+    /**
+     * If `true`, some easily exploitable Lua functions will be disabled.
+     *
+     * ⚠ **Warning**: [`luaotfload`](https://github.com/latex3/luaotfload) won't
+     * work if this setting is set to `true`.
+     *
+     * @defaultValue `false`
+     */
+    saferLua?: boolean | undefined;
+
+    /**
+     * If `false`, shell escape is disabled, meaning that the TeX engine will
+     * not be able to execute shell commands (i.e., e.g., the `minted` LaTeX
+     * package won't work).
+     *
+     * If equal to `'restricted'`, shell escape will be enabled, but only for a
+     * restricted set of commands; these are defined by the `texmf.cnf` file of
+     * the TeX distribution.
+     *
+     * If `true`, shell escape is enabled without restrictions. Use this option
+     * with caution, and only if you trust the TeX code you are compiling.
+     *
+     * @defaultValue `false`
+     */
+    shellEscape?: 'restricted' | boolean | undefined;
 }
 
-export interface Pdf2svgOptions {
-    currentColor?: `#${string}` | undefined;
+export interface CachingOptions {
+    /**
+     * If `true`, auxiliary files of *named* TeX blocks won't be removed from
+     * the cache directory after compilation. Auxiliary files of *unnamed* TeX
+     * blocks will still be removed from the cache directory after compilation.
+     *
+     * If `false`, all auxiliary files will be removed from the cache directory
+     * after compilation.
+     *
+     * @defaultValue `true`
+     */
+    enabled?: boolean | undefined;
+
+    /**
+     * Directory in which to cache auxiliary files.
+     *
+     * @defaultValue
+     * ```ts
+     * `node_modules/.cache/@nvl/sveltex`
+     * ```
+     */
+    cacheDirectory?: string | undefined;
 }
 
-export type FullTexComponentConfiguration = FullVerbEnvConfigAdvancedTex;
+export interface OptimizationOptions {
+    /**
+     * @experimental
+     *
+     * _Try_ to make the SVG use `currentColor` as its default color.
+     *
+     * @defaultValue
+     * ```ts
+     * '#000'
+     * ```
+     *
+     * Suppose this property is set to `'#000'`. Sveltex will then replace all
+     * occurrences of `'#000'"`, `'#000000'`, and `'black'` with `'currentColor'`.
+     *
+     * Furthermore, if
+     * {@link ConversionOptions.converter | `conversion.converter`} is set to
+     * `'poppler'`, it will add `fill="currentColor"` to the (outermost) `<svg>`
+     * tag by default.
+     *
+     * **Note**: `dvisvgm` already includes options to achieve the behavior that
+     * this property aims to achieve (namely, the
+     * {@link DvisvgmSvgOutputOptions.currentColor | `DvisvgmOptions.svg.currentColor`}).
+     * However, this present option might still be useful to take care of any
+     * potential edge cases that `dvisvgm`'s `currentColor` option might not
+     * cover.
+     */
+    currentColor?: `#${string}` | null | undefined;
 
-export type TexComponentConfiguration = VerbEnvConfigAdvancedTex;
+    /**
+     * Override the SVG optimization function for this component.
+     *
+     * @defaultValue
+     * ```ts
+     * null
+     * ```
+     *
+     * @remarks
+     * ⚠ **Warning**: The following properties will be useless if
+     * `overrideOptimization` is set to anything other than `null` or
+     * `undefined`:
+     * - {@link svgo | `svgo`}.
+     *
+     * ---
+     * #### FUNCTION PARAMETERS
+     *
+     * @param svg - The SVG code to optimize.
+     * @param tc - The TeX component whose output SVG code is being optimized.
+     * @returns The optimized SVG code.
+     */
+    overrideOptimization?:
+        | ((svg: string, tc: TexComponent) => string)
+        | null
+        | undefined;
 
-type AdvancedTexBaseConfiguration<
-    CC extends ConversionCommand = ConversionCommand,
-> = TexLiveConfiguration<CC>;
+    /**
+     * Options to pass to [SVGO](https://www.npmjs.com/package/svgo)'s
+     * `optimize` function when optimizing SVG files.
+     */
+    svgo?: Omit<SvgoOptions, 'path'> | undefined;
+}
 
-type FullAdvancedTexBaseConfiguration<
-    CC extends ConversionCommand = ConversionCommand,
-> = FullTexLiveConfiguration<CC>;
+export interface DebugOptions {
+    /**
+     * Whether to output verbose logs.
+     *
+     * @defaultValue `false`
+     */
+    verbose?: boolean | undefined;
+}
 
-export type AdvancedTexConfiguration<
-    A extends AdvancedTexBackend,
-    CC extends ConversionCommand = 'dvisvgm',
-> = A extends 'custom'
-    ? AdvancedTexBaseConfiguration<CC> & Record<string, unknown>
-    : AdvancedTexBaseConfiguration<CC>;
+export interface AdvancedTexConfiguration {
+    /**
+     * Options relating to Sveltex's caching mechanism for the compilation
+     * (`.tex` → DVI/PDF) and conversion + optimization (DVI/PDF → SVG →
+     * `.svelte`) steps.
+     */
+    caching?: CachingOptions | undefined;
 
-export type FullAdvancedTexConfiguration<
-    A extends AdvancedTexBackend,
-    CC extends ConversionCommand = 'dvisvgm',
-> = A extends 'custom'
-    ? FullAdvancedTexBaseConfiguration<CC>
-    : FullAdvancedTexBaseConfiguration<CC> & Record<string, unknown>;
+    /**
+     * Options relating to the compilation of TeX content to DVI/PDF files.
+     */
+    compilation?: CompilationOptions | undefined;
+
+    /**
+     * Options relating to the conversion of DVI/PDF output to SVG files.
+     */
+    conversion?: ConversionOptions | undefined;
+
+    /**
+     * Options relating to the console output produced by Sveltex while dealing
+     * with advanced TeX content.
+     */
+
+    debug?: DebugOptions | undefined;
+
+    /**
+     * Options relating to the optimization of SVG files (SVG → `.svelte` step).
+     */
+    optimization?: OptimizationOptions | undefined;
+}
+
+export type FullAdvancedTexConfiguration = DeepRequiredNotUndefined<
+    Omit<AdvancedTexConfiguration, 'optimization'>
+> &
+    FirstTwoLevelsRequiredNotUndefined<
+        Pick<AdvancedTexConfiguration, 'optimization'>
+    >;
 
 /**
  * Type of the function that processes an advanced TeX string.
  *
  * @typeParam B - Advanced TeX backend.
  */
-export type AdvancedTexProcessFn<B extends AdvancedTexBackend> = ProcessFn<
+export type AdvancedTexProcessFn = ProcessFn<
     AdvancedTexProcessOptions,
-    AdvancedTexHandler<B>
+    AdvancedTexHandler
 >;
 
 /**
@@ -302,15 +494,15 @@ export type AdvancedTexProcessFn<B extends AdvancedTexBackend> = ProcessFn<
  *
  * @typeParam B - Advanced TeX backend.
  */
-export type AdvancedTexConfigureFn<B extends AdvancedTexBackend> = ConfigureFn<
-    AdvancedTexConfiguration<B>,
-    AdvancedTexHandler<B>
+export type AdvancedTexConfigureFn = ConfigureFn<
+    AdvancedTexConfiguration,
+    AdvancedTexHandler
 >;
 
 export type AdvancedTexProcessor = object;
 
 export interface AdvancedTexProcessOptions extends VerbatimProcessOptions {
-    config: FullTexComponentConfiguration;
+    config: FullVerbEnvConfigAdvancedTex;
 }
 
 /**

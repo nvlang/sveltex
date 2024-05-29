@@ -2,7 +2,7 @@
 import { is, typeAssert } from '$deps.js';
 import { isBoolean, isNumber, isString } from '$type-guards/utils.js';
 import { InterpretedAttributes, ParsedComponent } from '$types/utils/Escape.js';
-import { escapeWhitespace, log } from '$utils/debug.js';
+import { escapeWhitespace } from '$utils/debug.js';
 import { re } from '$utils/misc.js';
 
 /**
@@ -322,7 +322,6 @@ export function interpretString(
  */
 export function interpretAttributes(
     attrs: Record<string, unknown>,
-    strict: boolean = true,
 ): InterpretedAttributes {
     const rv: InterpretedAttributes = {};
     for (const [key, value] of Object.entries(attrs)) {
@@ -331,12 +330,7 @@ export function interpretAttributes(
                 isBoolean(value) ||
                 isNumber(value) ||
                 (value as unknown) === null;
-            log(
-                strict ? 'error' : 'warn',
-                `Expected string for attribute \`${key}\`, but got \`${String(value)}\`. ${strict || !supportedValueType ? 'Ignoring attribute.' : 'Passing value as-is.'} (Hint: Numbers, booleans, null and undefined, if wrapped in double quotes, will be transformed back into their original types by Sveltex.)`,
-            );
-            if (!strict && supportedValueType)
-                rv[key] = value as boolean | number | null;
+            if (supportedValueType) rv[key] = value as boolean | number | null;
         } else {
             rv[key] = interpretString(value);
         }

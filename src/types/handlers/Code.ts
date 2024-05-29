@@ -1,9 +1,19 @@
+/* eslint-disable tsdoc/syntax */
 // Types
-import type { HighlightJsThemeName, StarryNightThemeName } from '$data/code.js';
+import type {
+    HighlightJsLanguage,
+    HighlightJsThemeName,
+    StarryNightLanguage,
+    StarryNightThemeName,
+} from '$data/code.js';
 import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
-import type { CssConfiguration } from '$types/handlers/misc.js';
-import type { RequiredNonNullable } from '$types/utils/utility-types.js';
+import type { CssConfiguration } from '$types/handlers/Css.js';
+import type {
+    RequiredNotNullOrUndefined,
+    StringLiteralUnion,
+} from '$types/utils/utility-types.js';
+import { Transformers } from '$types/handlers/Handler.js';
 
 /**
  * Union type of supported code backends.
@@ -11,8 +21,8 @@ import type { RequiredNonNullable } from '$types/utils/utility-types.js';
 export type CodeBackend =
     | 'highlight.js'
     | 'starry-night'
+    | 'shiki'
     | 'escapeOnly'
-    | 'custom'
     | 'none';
 
 /**
@@ -23,8 +33,8 @@ export type CodeBackend =
  * - `highlight.js`: The module's `HLJSApi` type.
  * - `starry-night`: Awaited return type of the module's `createStarryNight`
  *   function.
+ * - `shiki`: Shiki's `HighlighterGeneric` type.
  * - `escapeOnly`: `object`.
- * - `custom`: `object`.
  * - `none`: `object`.
  *
  * @remarks This is the type of the `processor` property of the code handler.
@@ -35,17 +45,19 @@ export type CodeProcessor<B extends CodeBackend> = B extends 'highlight.js'
       ? Awaited<
             ReturnType<typeof import('@wooorm/starry-night').createStarryNight>
         >
-      : B extends 'escapeOnly'
+      : B extends 'shiki'
         ? object
-        : B extends 'custom'
+        : B extends 'escapeOnly'
           ? object
           : B extends 'none'
             ? object
             : never;
 
-export interface GeneralCodeConfiguration {
+export interface CommonCodeConfiguration {
     /**
-     * Prefix to use for the language class name of the wrapper tag(s).
+     * Whether to add a class to the `<code>` tag with the name of the language
+     * of the code it contains. If a string is provided, a class will be added
+     * and the provided string will be used as the prefix for the class name.
      *
      * @defaultValue
      * ```ts
@@ -53,34 +65,107 @@ export interface GeneralCodeConfiguration {
      * ```
      *
      * @example
-     * Setting
-     *
-     * ```ts
-     * {
-     *     wrapClassPrefix: 'abc-',
-     * }
-     * ```
-     *
-     * will result in output like
-     *
      * ```html
-     * <pre><code class="abc-javascript">
+     * <pre><code class="language-javascript">
      * ...
      * </code></pre>
      * ```
-     *
      */
-    wrapClassPrefix?: string | undefined;
+    addLanguageClass?: boolean | string | undefined;
 
     /**
-     * Defines what HTML tags (or, more generally, strings) to use to wrap code
-     * found in SvelTeX markdown.
+     * Transformers to apply to
+     * - the inner content of the input which `CodeHandler` will receive for
+     *   processing, or to
+     * - the inner content of the output produced by the `CodeHandler` (or by
+     *   whatever handler it forwards the content to).
      */
-    wrap?:
-        | undefined
-        | ((
-              options: FullCodeProcessOptions & { wrapClassPrefix: string },
-          ) => [string, string]);
+    transformers?: Transformers<CodeProcessOptionsBase> | undefined;
+
+    /**
+     * Sveltex supports inline code highlighting, provided that the inline code
+     * span contains a special string of some sort that acts as a language tag
+     * and possibly meta string. However, the question is what part of the
+     * inline code span should be considered to be this special string (if any).
+     *
+     * Unfortunately, as far as I'm aware, there is no widespread convention for
+     * this, let alone a formal specification. As such, this option allows you
+     * to specify a custom function that will be used to extract the special
+     * string from the inline code span:
+     *
+     * @param inlineCode - The inner content of the code span (i.e., if the code
+     * span is `` `example` ``, it would receive the string `'example'`).
+     * @param validLanguageTag - A function that takes a string and returns
+     * `true` if that string is a valid language tag for the current code
+     * handler, or `false` otherwise. Aliases defined in `langAlias` are also
+     * taken into account.
+     *
+     * @returns An object with the following properties:
+     *
+     * - `lang?: string`: The language tag, if any.
+     * - `meta?: string`: The meta string, if any.
+     * - `code: string`: The code that should be highlighted.
+     *
+     * @defaultValue
+     * ```ts
+     * (inlineCode, validLanguageTag) => {
+     *     let code = inlineCode;
+     *     let lang: string | undefined;
+     *     let meta: string | undefined;
+     *     if (code.startsWith('{')) {
+     *         const m = code.match(/^\{(.+?)\}\s(\s*\S[\w\W]*)$/);
+     *         const specialCandidate = m?.[1];
+     *         const codeCandidate = m?.[2];
+     *         if (specialCandidate && codeCandidate) {
+     *             const space = specialCandidate.match(/\s/)?.index;
+     *             const tag = specialCandidate.slice(0, space);
+     *             if (validLanguageTag(tag)) {
+     *                 code = codeCandidate;
+     *                 lang = tag;
+     *                 if (space) meta = specialCandidate.slice(space + 1);
+     *             }
+     *         }
+     *     } else {
+     *         const m = code.match(/^([\w-]['\w-]*)\s(\s*\S[\w\W]*)$/);
+     *         const tag = m?.[1];
+     *         const codeCandidate = m?.[2];
+     *         if (tag && codeCandidate && validLanguageTag(tag)) {
+     *             code = codeCandidate;
+     *             lang = tag;
+     *         }
+     *     }
+     *     return { code, lang, meta };
+     * };
+     * ```
+     *
+     * @remarks
+     * Since this function only receives the inner content of the code span,
+     * syntaxes such as `` `code`{js} `` are not supported.
+     */
+    inlineMeta?: (
+        inlineCode: string,
+        validLanguageTag: (tag: string) => boolean,
+    ) =>
+        | {
+              lang?: string | undefined;
+              meta?: string | undefined;
+              code: string;
+          }
+        | null
+        | undefined;
+
+    /**
+     * Whether to append a newline to code blocks. Should have no visual impact
+     * whatsoever, as `<pre><code>example</code></pre>` and
+     * `<pre><code>example\n</code></pre>` render identically. Defaults to
+     * `true` for the sake of CommonMark compliance.
+     *
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
+     */
+    appendNewline?: boolean | undefined;
 }
 
 /**
@@ -96,70 +181,205 @@ export interface GeneralCodeConfiguration {
  * - `none`: `Record<string, unknown>`.
  *
  * @remarks This is the type of the argument passed to the code handler's
- * `configure` function, together with {@link GeneralCodeConfiguration | `GeneralCodeConfiguration`}.
+ * `configure` function, together with {@link CommonCodeConfiguration | `GeneralCodeConfiguration`}.
  */
 export type SpecificCodeConfiguration<B extends CodeBackend> =
     B extends 'highlight.js'
-        ? Partial<import('highlight.js').HLJSOptions>
+        ? HighlightJsConfig
         : B extends 'starry-night'
-          ? {
-                /**
-                 * Languages to register. If `'all'`, all languages are
-                 * registered. If `'common'`, some ≈35 common languages are
-                 * registered.
-                 *
-                 * If an array of strings is provided, each string should be a
-                 * scope name to register. The supported scope names can be found
-                 * on the `starry-night`
-                 * [README](https://github.com/wooorm/starry-night/?tab=readme-ov-file#languages)
-                 * on GitHub.
-                 *
-                 * @remarks The scopes upon which any given scope depends will be
-                 * registered automatically.
-                 *
-                 * @defaultValue None.
-                 */
-                languages?: string[] | 'all' | 'common';
-
-                /**
-                 * Custom grammars to register.
-                 */
-                customLanguages?: import('@wooorm/starry-night').Grammar[];
-
-                /**
-                 * Options to pass to the `createStarryNight` function.
-                 */
-                // options?: import('@wooorm/starry-night').Options;
-            }
-          : B extends 'escapeOnly'
-            ? SimpleEscapeInstruction
-            : B extends 'custom'
-              ? Record<string, unknown>
+          ? StarryNightConfig
+          : B extends 'shiki'
+            ? ShikiConfig
+            : B extends 'escapeOnly'
+              ? SimpleEscapeInstruction
               : B extends 'none'
-                ? Record<string, unknown>
+                ? object
                 : never;
 
-export type ThemableCodeBackend = 'highlight.js' | 'starry-night';
+export interface HighlightJsConfig {
+    /**
+     * Configure the theme to use for syntax highlighting.
+     */
+    theme?: CodeTheme<'highlight.js'> | undefined;
 
-type SpecificCodeAndThemeConfiguration<B extends CodeBackend> =
-    B extends ThemableCodeBackend
-        ? SpecificCodeConfiguration<B> & {
-              /**
-               * Configure the theme to use for syntax highlighting.
-               */
-              theme?: CodeTheme<B> | undefined;
-          }
-        : SpecificCodeConfiguration<B>;
+    /**
+     * Options to pass to the `highlight` function from
+     * `highlight.js`.
+     */
+    'highlight.js'?: Partial<import('highlight.js').HLJSOptions> | undefined;
 
-type FullSpecificCodeAndThemeConfiguration<B extends CodeBackend> =
-    B extends ThemableCodeBackend
-        ? SpecificCodeConfiguration<B> & {
-              /**
-               * Configure the theme to use for syntax highlighting.
-               */
-              theme: FullCodeTheme<B>;
-          }
-        : SpecificCodeConfiguration<B>;
+    /**
+     * Record of language aliases.
+     *
+     * @example
+     * ```ts
+     * {
+     *    'example-alias': 'JavaScript',
+     * }
+     * ```
+     */
+    langAlias?:
+        | Record<string, StringLiteralUnion<HighlightJsLanguage>>
+        | undefined;
+}
+
+export interface StarryNightConfig {
+    /**
+     * Configure the theme to use for syntax highlighting.
+     */
+    theme?: CodeTheme<'starry-night'> | undefined;
+
+    /**
+     * Languages to register. If `'all'`, all languages are
+     * registered. If `'common'`, some ≈35 common languages are
+     * registered.
+     *
+     * If an array is provided, each entry will be treated as a
+     * language or custom grammar to register. Furthermore, the
+     * first entry of the array may be `'all'` or `'common'` to
+     * extend the respective sets of languages.
+     *
+     * @defaultValue
+     * ```ts
+     * 'common'
+     * ```
+     */
+    languages?:
+        | (StarryNightLanguage | import('@wooorm/starry-night').Grammar)[]
+        | [
+              'common',
+              ...(
+                  | StarryNightLanguage
+                  | import('@wooorm/starry-night').Grammar
+              )[],
+          ]
+        | 'common'
+        | ['all', ...import('@wooorm/starry-night').Grammar[]]
+        | 'all'
+        | undefined;
+
+    /**
+     * Default language.
+     *
+     * @defaultValue
+     * ```ts
+     * 'plaintext'
+     * ```
+     */
+    lang?: StarryNightLanguage | undefined;
+
+    /**
+     * Record of language aliases.
+     *
+     * @example
+     * ```ts
+     * {
+     *    'example-alias': 'JavaScript',
+     * }
+     * ```
+     */
+    langAlias?:
+        | Record<string, StringLiteralUnion<StarryNightLanguage>>
+        | undefined;
+}
+
+export interface ShikiConfig {
+    /**
+     * Default options for Shiki's highlighter.
+     */
+    shiki?:
+        | (Omit<
+              Partial<
+                  import('shiki').CodeToHastOptions<
+                      import('shiki').BundledLanguage,
+                      import('shiki').BundledTheme
+                  >
+              >,
+              'structure'
+          > &
+              // For some reason, the `theme` and `themes` props disappear after
+              // `Omit`ting them from the `CodeToHastOptions` type, so we have
+              // to add them again.
+              Partial<
+                  import('shiki').CodeOptionsThemes<
+                      import('shiki').BundledTheme
+                  >
+              >)
+        | undefined;
+
+    /**
+     * Customize how the meta string is parsed, if present. The result will be
+     * merged into the `meta` prop that is passed to any plugins/transformers in
+     * Shiki's pipeline.
+     *
+     * @defaultValue
+     * ```ts
+     * (metaString) => {
+     *     return Object.fromEntries(
+     *         metaString
+     *             .split(' ')
+     *             .reduce(
+     *                 (
+     *                     prev: [string, boolean | string][],
+     *                     curr: string,
+     *                 ) => {
+     *                     const [key, value] = curr.split('=');
+     *                     const isNormalKey =
+     *                         key && /^[A-Z0-9]+$/i.test(key);
+     *                     if (isNormalKey)
+     *                         prev = [...prev, [key, value ?? true]];
+     *                     return prev;
+     *                 },
+     *                 [],
+     *             ),
+     *     );
+     * }
+     * ```
+     *
+     * @example
+     * Consider the following code block:
+     *
+     * ````md
+     * ```js key1=value1 key2 key3=false
+     * console.log('Hello, world!');
+     * ```
+     * ````
+     *
+     * The meta string is `'key1=value key2 key3=false'`, and the default
+     * `parseMetaString` function will parse the meta string as follows:
+     *
+     * ```ts
+     * {
+     *     key1: 'value1',
+     *     key2: true,
+     *     key3: 'false'
+     * }
+     * ```
+     */
+    parseMetaString?:
+        | undefined
+        | ((
+              metaString: string,
+              code: string,
+              lang: string,
+          ) => Record<string, unknown> | undefined | null);
+
+    /**
+     * Record of language aliases.
+     *
+     * @example
+     * ```ts
+     * {
+     *    'example-alias': 'javascript',
+     * }
+     * ```
+     */
+    langAlias?:
+        | Record<string, StringLiteralUnion<import('shiki').BundledLanguage>>
+        | undefined;
+}
+
+export type CodeBackendWithCss = 'highlight.js' | 'starry-night';
 
 /**
  * Type of the input passed to the {@link CodeHandler | `CodeHandler`}'s
@@ -167,8 +387,8 @@ type FullSpecificCodeAndThemeConfiguration<B extends CodeBackend> =
  *
  * @typeParam B - Code backend.
  */
-export type CodeConfiguration<B extends CodeBackend> =
-    GeneralCodeConfiguration & SpecificCodeAndThemeConfiguration<B>;
+export type CodeConfiguration<B extends CodeBackend> = CommonCodeConfiguration &
+    SpecificCodeConfiguration<B>;
 
 /**
  * Return type of the {@link CodeHandler | `CodeHandler`}'s
@@ -177,14 +397,45 @@ export type CodeConfiguration<B extends CodeBackend> =
  * @typeParam B - Code backend.
  */
 export type FullCodeConfiguration<B extends CodeBackend> =
-    RequiredNonNullable<GeneralCodeConfiguration> &
-        FullSpecificCodeAndThemeConfiguration<B>;
-
+    RequiredNotNullOrUndefined<CommonCodeConfiguration> &
+        (B extends CodeBackendWithCss
+            ? Omit<SpecificCodeConfiguration<B>, 'theme'> & {
+                  theme: FullCodeTheme<B>;
+              }
+            : // Shiki's configuration specifies that either `theme` or `themes`
+              // be set, but not both. This is by design, and it's good for the
+              // user (intellisense, type safety, etc.), but unfortunately, TS
+              // is making it very difficult to work with implementation-wise.
+              // In particular, I've found it often complaining about `theme`
+              // or `themes` not being a property of the Shiki configuration,
+              // presumably because, well, only one of them can be a property of
+              // the configuration, and which one that is cannot be determined a
+              // priori. Because of this, I'm modifying the configuration type
+              // to make it weaker; instead of
+              // `... & ({ theme: ... } | { themes: ... })`, I'm changing it to
+              // `... & { theme?: ... } & { themes?: ... }`. This comes with the
+              // caveat of requiring some added care to ensure that the behavior
+              // that the stronger type dictated is still enforced, but has the
+              // benefit of making TS complain less.
+              B extends 'shiki'
+              ? SpecificCodeConfiguration<B> & {
+                    shiki: Partial<
+                        import('shiki').CodeOptionsMultipleThemes<
+                            import('shiki').BundledTheme
+                        >
+                    > &
+                        Partial<
+                            import('shiki').CodeOptionsSingleTheme<
+                                import('shiki').BundledTheme
+                            >
+                        >;
+                }
+              : SpecificCodeConfiguration<B>);
 /**
  * Type of the {@link CodeHandler | `CodeHandler`}'s
  * {@link CodeHandler.process | `process`} function.
  *
- * @typeParam B - Code backend.
+ * @typeParam  B - Code backend.
  */
 export type CodeProcessFn<B extends CodeBackend> =
     /**
@@ -196,7 +447,7 @@ export type CodeProcessFn<B extends CodeBackend> =
      */
     (
         code: string,
-        options: CodeProcessOptions | undefined,
+        options: CodeProcessOptionsBase,
         codeHandler: CodeHandler<B>,
     ) => string | Promise<string>;
 
@@ -205,7 +456,7 @@ export type CodeProcessFn<B extends CodeBackend> =
  * {@link CodeHandler | `CodeHandler`}'s {@link CodeHandler.process | `process`}
  * function.
  */
-export interface CodeProcessOptions {
+export interface CodeProcessOptionsBase {
     /**
      * The language of the code.
      *
@@ -228,24 +479,25 @@ export interface CodeProcessOptions {
      * no such string is present. How this property is used is
      * configuraton-specific. By default, it isn't used at all.
      */
-    info?: string | undefined;
-
-    /**
-     * Whether to wrap the code in a `<code>` (or `<pre><code>`) tag or not.
-     *
-     * @defaultValue `true`
-     * @internal
-     */
-    _wrap?: boolean | undefined;
+    metaString?: string | undefined;
 }
+
+// export type CodeProcessOptions<B extends CodeBackend> = CodeProcessOptionsBase &
+// CodeConfiguration<B>;
 
 /**
  *
  */
-export type FullCodeProcessOptions = RequiredNonNullable<
-    Omit<CodeProcessOptions, 'info' | 'lang'>
-> &
-    Pick<CodeProcessOptions, 'info' | 'lang'>;
+// export type FullCodeProcessOptions<B extends CodeBackend> = {
+//     inline: boolean;
+// } & CodeProcessOptionsBase &
+//     FullCodeConfiguration<B>;
+
+export interface FullCodeProcessOptions<B extends CodeBackend>
+    extends CodeProcessOptionsBase {
+    inline: boolean;
+    configuration: FullCodeConfiguration<B>;
+}
 
 /**
  * Type of the function that configures a code processor of the specified
@@ -259,12 +511,12 @@ export type CodeConfigureFn<B extends CodeBackend> = (
 ) => void | Promise<void>;
 
 export type FullCodeTheme<
-    B extends CodeBackend,
+    B extends CodeBackendWithCss,
     T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
-> = RequiredNonNullable<CodeTheme<B, T>>;
+> = RequiredNotNullOrUndefined<CodeTheme<B, T>>;
 
 export type CodeTheme<
-    B extends CodeBackend,
+    B extends CodeBackendWithCss,
     T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
 > = {
     /**
@@ -284,21 +536,17 @@ export type CodeTheme<
      */
     type?: T | undefined;
 } & CssConfiguration<T> &
-    CodeThemeWithoutCssConfiguration<B>;
+    (B extends 'starry-night'
+        ? CodeThemeConfigStarryNight
+        : CodeThemeConfigHighlightJs);
 
-export interface CodeThemeWithoutCssConfiguration<B extends CodeBackend> {
+export interface CodeThemeConfigStarryNight {
     /**
      * Name of the theme to use.
      *
      * @defaultValue `'default'`
      */
-    name?:
-        | (B extends 'starry-night'
-              ? StarryNightThemeName
-              : B extends 'highlight.js'
-                ? HighlightJsThemeName
-                : never)
-        | undefined;
+    name?: StarryNightThemeName | undefined;
 
     /**
      * - `'light'`: Fetch the light theme.
@@ -308,14 +556,22 @@ export interface CodeThemeWithoutCssConfiguration<B extends CodeBackend> {
      *   to dynamically pick the theme mode.
      *
      * @defaultValue `'both'`
-     * @remarks Only applicable to `starry-night` themes.
      */
-    mode?: B extends 'starry-night' ? 'light' | 'dark' | 'both' : never;
+    mode?: 'light' | 'dark' | 'both' | undefined;
+}
+
+export interface CodeThemeConfigHighlightJs {
+    /**
+     * Name of the theme to use.
+     *
+     * @defaultValue `'default'`
+     */
+    name?: HighlightJsThemeName | undefined;
 
     /**
      * Whether to fetch the minified version of the theme.
      *
      * @defaultValue `true`
      */
-    min?: B extends 'highlight.js' ? boolean | undefined : never;
+    min?: boolean | undefined;
 }

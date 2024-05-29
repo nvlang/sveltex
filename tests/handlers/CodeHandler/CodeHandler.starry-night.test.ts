@@ -11,9 +11,7 @@ import {
 } from 'vitest';
 
 import { CodeHandler } from '$handlers/CodeHandler.js';
-import { getDefaultCodeConfig } from '$config/defaults.js';
 import { consoles } from '$utils/debug.js';
-import { isFunction } from '$type-guards/utils.js';
 import { spy } from '$tests/fixtures.js';
 
 function fixture() {
@@ -32,8 +30,9 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
     let writeFileEnsureDir: MockInstance;
 
     beforeAll(async () => {
-        handler = await CodeHandler.create('starry-night');
-        await handler.configure({ languages: 'common' });
+        handler = await CodeHandler.create('starry-night', {
+            languages: 'common',
+        });
         const mocks = await spy(['writeFileEnsureDir', 'existsSync'], true);
         writeFileEnsureDir = mocks.writeFileEnsureDir;
     });
@@ -53,8 +52,9 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
     describe('css', () => {
         fixture();
         it('fetches and generates CSS if run for the first time', async () => {
-            const handler = await CodeHandler.create('starry-night');
-            await handler.configure({ theme: { type: 'self-hosted' } });
+            const handler = await CodeHandler.create('starry-night', {
+                theme: { type: 'self-hosted' },
+            });
             (await handler.process('')).processed;
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
@@ -86,7 +86,8 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
 
             it('defaults to no language', async () => {
                 const output = (await handler.process('let a')).processed;
-                const expected = '<pre><code>let a\n</code></pre>';
+                const expected =
+                    '<pre><code class="language-text">let a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -102,6 +103,9 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
             });
 
             it('escapes `{`, `}`, `<`, and `>` in plain code correctly', async () => {
+                const handler = await CodeHandler.create('starry-night', {
+                    languages: 'all',
+                });
                 const output = (
                     await handler.process('a <b> {c}', {
                         lang: 'plaintext',
@@ -127,12 +131,10 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
 
         describe.sequential('configure()', () => {
             fixture();
-            const consoleWarnMock = vi
-                .spyOn(consoles, 'warn')
-                .mockImplementation(() => undefined);
-            const consoleErrorMock = vi
-                .spyOn(consoles, 'error')
-                .mockImplementation(() => undefined);
+            const consoleWarnMock = vi.spyOn(consoles, 'warn');
+            // .mockImplementation(() => undefined);
+            const consoleErrorMock = vi.spyOn(consoles, 'error');
+            // .mockImplementation(() => undefined);
 
             beforeEach(() => {
                 consoleWarnMock.mockClear();
@@ -152,7 +154,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     '<pre><code class="language-tex">\\example\n</code></pre>',
                 );
                 await handler.configure({
-                    languages: ['text.tex.latex'],
+                    languages: ['TeX'],
                 });
                 expect(
                     (await handler.process('\\example', { lang: 'tex' }))
@@ -174,7 +176,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                 ).toEqual(
                     '<pre><code class="language-ebnf"><span class="pl-en">a</span> <span class="pl-k">::=</span> <span class="pl-v">b</span>\n</code></pre>',
                 );
-                // can't unload languages though...
+                // can't "unload" languages though...
                 await handler.configure({ languages: [] });
                 expect(
                     (await handler.process('a ::= b', { lang: 'ebnf' }))
@@ -195,7 +197,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
             });
 
             it('can add new languages', async () => {
-                const handler = await CodeHandler.create('starry-night');
+                const handler = await CodeHandler.create('starry-night', {});
                 expect(
                     (await handler.process('a ::= b', { lang: 'ebnf' }))
                         .processed,
@@ -207,7 +209,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     1,
                     expect.stringContaining('Language "ebnf" not found.'),
                 );
-                await handler.configure({ languages: ['source.ebnf'] });
+                await handler.configure({ languages: ['EBNF'] });
                 expect(
                     (await handler.process('a ::= b', { lang: 'ebnf' }))
                         .processed,
@@ -217,7 +219,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
             });
 
             it('can add new custom languages', async () => {
-                const handler = await CodeHandler.create('starry-night');
+                const handler = await CodeHandler.create('starry-night', {});
                 expect(
                     (
                         await handler.process('something a', {
@@ -235,7 +237,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     ),
                 );
                 await handler.configure({
-                    customLanguages: [
+                    languages: [
                         {
                             extensions: ['.custom'],
                             names: ['Custom Language', 'custom-language'],
@@ -266,52 +268,6 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
             it('is object', () => {
                 expect(handler.processor).toBeTypeOf('object');
                 expect(handler.processor).not.toBeNull();
-            });
-        });
-
-        describe.concurrent('configuration', () => {
-            fixture();
-            it('is default', async () => {
-                const handler = await CodeHandler.create('starry-night');
-                expect('configuration' in handler).toBe(true);
-                const defaultCC = getDefaultCodeConfig('starry-night');
-                expect(
-                    Object.entries(handler.configuration).filter(
-                        ([, v]) => !isFunction(v),
-                    ),
-                ).toEqual(
-                    Object.entries(defaultCC).filter(([, v]) => !isFunction(v)),
-                );
-                const defaultOptions = {
-                    lang: 'plaintext',
-                    _wrap: true,
-                    inline: false,
-                    wrapClassPrefix: 'test-',
-                };
-                expect(
-                    handler.configuration.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                    }),
-                ).toEqual(
-                    defaultCC.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                    }),
-                );
-                expect(
-                    handler.configuration.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                        inline: true,
-                    }),
-                ).toEqual(
-                    defaultCC.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                        inline: true,
-                    }),
-                );
             });
         });
     });

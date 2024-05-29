@@ -6,6 +6,8 @@
  */
 
 // Internal dependencies
+import { namedColors } from '$data/css.js';
+import { is, typeAssert } from '$deps.js';
 import { sha256 } from '$utils/misc.js';
 
 /**
@@ -132,26 +134,65 @@ export function unescapeCssColorVars(
 ) {
     let unescaped = svg;
     cssColorVars.forEach((hexColor, cssColorVar) => {
-        unescaped = unescaped.replace(
-            new RegExp(`#${hexColor}`, 'gi'),
-            `var(${cssColorVar})`,
-        );
-        const hexColorArray = hexColor.split('');
-        if (
-            hexColorArray[0] &&
-            hexColorArray[2] &&
-            hexColorArray[4] &&
-            hexColorArray[0] === hexColorArray[1] &&
-            hexColorArray[2] === hexColorArray[3] &&
-            hexColorArray[4] === hexColorArray[5]
-        ) {
-            unescaped = unescaped.replaceAll(
-                '#' + hexColorArray[0] + hexColorArray[2] + hexColorArray[4],
-                `var(${cssColorVar})`,
-            );
-        }
+        const regExp = getHexRegExp(hexColor);
+        if (!regExp) return;
+        unescaped = unescaped.replaceAll(regExp, `var(${cssColorVar})`);
     });
     return unescaped;
+}
+
+export function getHexRegExp(hex: string) {
+    if (hex.startsWith('#')) hex = hex.slice(1);
+    if (!/^[0-9A-Fa-f]+$/i.test(hex)) {
+        const name = hex.toLowerCase();
+        const entry = Object.entries(namedColors).find(([, v]) =>
+            v.includes(name),
+        );
+        if (entry) {
+            hex = entry[0];
+        } else {
+            return undefined;
+        }
+    }
+    if (![3, 4, 6, 8].includes(hex.length)) return undefined;
+    hex = hex.toLowerCase();
+    const hexArray: string[] = hex.split('');
+    const names: string[] = [`#${hex}`];
+    let longHex: string;
+    if (hexArray.length <= 4) {
+        longHex = hexArray.map((c) => c + c).join('');
+        names.push('#' + longHex);
+    } else {
+        typeAssert(
+            is<[string, string, string, string, string, string, ...string[]]>(
+                hexArray,
+            ),
+        );
+        longHex = hex;
+        if (
+            hexArray[0] === hexArray[1] &&
+            hexArray[2] === hexArray[3] &&
+            hexArray[4] === hexArray[5] &&
+            (hexArray.length === 6 || hexArray[6] === hexArray[7])
+        ) {
+            names.push(
+                '#' +
+                    hexArray[0] +
+                    hexArray[2] +
+                    hexArray[4] +
+                    (hexArray[6] ?? ''),
+            );
+        }
+    }
+    if (longHex.length === 6) names.push(...(namedColors[longHex] ?? []));
+    return new RegExp(
+        `(?<=(?:[="'&;:<>(){}\\[\\]\\s]|^))` + // Positive lookbehind
+            `[ ]?` + // Optional space
+            `(${names.join('|')})` + // Color (e.g., (#000|#000000|black))
+            `[ ]?` + // Optional space
+            `(?=(?:[="'&;:<>(){}\\[\\]\\s]|$))`, // Positive lookahead
+        'gi',
+    );
 }
 
 /**
@@ -217,9 +258,9 @@ export function escapeCssColorVars(tex: string, preamble?: string) {
             preamble +
                 '\n' +
                 // Ensure xcolor is loaded
-                '\\makeatletter\n' +
-                '\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n' +
-                '\\makeatother\n' +
+                // '\\makeatletter\n' +
+                // '\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n' +
+                // '\\makeatother\n' +
                 // Append color definitions
                 texDefineHexColors(cssColorVars),
         );

@@ -209,7 +209,7 @@ export interface DvisvgmOptions {
     svg?: DvisvgmSvgOutputOptions | undefined;
 
     /**
-     * Configuration options for optional transformations applied to the SVG
+     * Configuration options for optional transformers applied to the SVG
      * output.
      *
      * @see https://dvisvgm.de/Manpage/
@@ -546,7 +546,7 @@ export interface DvisvgmSvgOutputOptions {
      * - `'simplify-transform'`: Tries to shorten all `transform` attributes.
      *   This module combines the transformation commands of each attribute and
      *   decomposes the resulting transformation matrix into a sequence of basic
-     *   transformations, i.e. translation, scaling, rotation, and skewing. If
+     *   transformers, i.e. translation, scaling, rotation, and skewing. If
      *   this sequence is shorter than the equivalent matrix expression, it's
      *   assigned to the attribute. Otherwise, the matrix expression is used.
      *
@@ -719,7 +719,7 @@ export interface SvgTransformations {
     scale?: number | [number, number] | undefined | null;
 
     /**
-     * Applies a sequence of transformations to the SVG content. See the dvisvgm
+     * Applies a sequence of transformers to the SVG content. See the dvisvgm
      * manpage for more information on the syntax of the transformation string —
      * this string is appended verbatim to the `--transform=` CLI flag, and is
      * not quoted or escaped in any way.

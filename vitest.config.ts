@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
-// import os from 'node:os';
+import os from 'node:os';
 
 export default defineConfig({
     plugins: [tsconfigPaths()],
@@ -11,8 +11,8 @@ export default defineConfig({
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
             enabled: true,
-            // processingConcurrency:
-            //     os.availableParallelism?.() ?? os.cpus().length,
+            processingConcurrency:
+                os.availableParallelism?.() ?? os.cpus().length,
             include: ['src/**/*.ts'],
             exclude: [
                 '**/node_modules/**',
@@ -28,6 +28,8 @@ export default defineConfig({
                 '**/legacy/**',
                 '**/html/**',
             ],
+            ignoreEmptyLines: true,
+            reportOnFailure: true,
         },
         reporters: [
             'default',

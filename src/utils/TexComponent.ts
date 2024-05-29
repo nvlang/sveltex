@@ -1,10 +1,7 @@
 // Types
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {
-    FullTexComponentConfiguration,
-    FullTexLiveConfiguration,
-    Pdf2svgOptions,
-    TexComponentConfiguration,
+    FullAdvancedTexConfiguration,
     TexComponentImportInfo,
 } from '$types/handlers/AdvancedTex.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
@@ -12,12 +9,17 @@ import type { KeyPath } from '$utils/cache.js';
 
 // Internal dependencies
 import {
-    getDefaultTexLiveConfig,
+    getAdvancedTexPresetDefaults,
     getDefaultVerbEnvConfig,
+    sanitizePopplerSvgOptions,
 } from '$config/defaults.js';
 import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
 import { spawnCliInstruction } from '$utils/cli.js';
-import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
+import {
+    escapeCssColorVars,
+    getHexRegExp,
+    unescapeCssColorVars,
+} from '$utils/css.js';
 import {
     log,
     prettifyError,
@@ -31,10 +33,23 @@ import { mergeConfigs } from '$utils/merge.js';
 import { sha256 } from '$utils/misc.js';
 
 // External dependencies
-import { join, relative, resolve, ora, pc, svgoOptimize } from '$deps.js';
-import { isString } from '$type-guards/utils.js';
+import {
+    join,
+    relative,
+    ora,
+    pc,
+    svgoOptimize,
+    flattenObject,
+    prettyBytes,
+} from '$deps.js';
+import { isArray, isObject, isString } from '$type-guards/utils.js';
 import { InterpretedAttributes } from '$types/utils/Escape.js';
-import { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
+import {
+    FullVerbEnvConfigAdvancedTex,
+    VerbEnvConfigAdvancedTex,
+} from '$types/handlers/Verbatim.js';
+import { insteadGot } from '$utils/diagnosers/Diagnoser.js';
+import { stat } from 'fs/promises';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -130,10 +145,9 @@ export class TexComponent {
 
     /**
      * TeX component config to use to render this component.
-     *
-     * @internal
      */
-    private _configuration: FullTexComponentConfiguration;
+    private _configuration: FullVerbEnvConfigAdvancedTex =
+        getDefaultVerbEnvConfig('advancedTex');
 
     /**
      * ##### SETTER
@@ -148,8 +162,28 @@ export class TexComponent {
      *
      * @internal
      */
-    set configuration(config: TexComponentConfiguration) {
+    set configuration(config: VerbEnvConfigAdvancedTex) {
         this._configuration = mergeConfigs(this._configuration, config);
+        let needsCorrection = false;
+        const { compilation: compilation, conversion: conversion } =
+            this.advancedTexConfig;
+
+        if (
+            conversion.converter === 'poppler' &&
+            compilation.intermediateFiletype === 'dvi'
+        ) {
+            log(
+                'warn',
+                "Poppler does not support conversion of DVI files; setting `intermediateFiletype` to `'pdf'` instead.",
+            );
+            compilation.intermediateFiletype = 'pdf';
+            needsCorrection = true;
+        }
+        if (needsCorrection) {
+            this._configuration = mergeConfigs(this._configuration, {
+                overrides: { compilation, conversion },
+            });
+        }
     }
 
     /**
@@ -162,7 +196,7 @@ export class TexComponent {
      *
      * @internal
      */
-    get configuration(): FullTexComponentConfiguration {
+    get configuration(): FullVerbEnvConfigAdvancedTex {
         return this._configuration;
     }
 
@@ -176,15 +210,10 @@ export class TexComponent {
         return this.advancedTexHandler.cache;
     }
 
-    get texLiveConfig(): FullTexLiveConfiguration {
-        const parentConfig = this.advancedTexHandler
-            .configuration as FullTexLiveConfiguration & { components?: never };
-        delete parentConfig.components;
-
+    get advancedTexConfig() {
         return mergeConfigs(
-            getDefaultTexLiveConfig(this.advancedTexHandler.backend),
-            parentConfig,
-            this.configuration.overrides,
+            this.advancedTexHandler.configuration,
+            this._configuration.overrides,
         );
     }
 
@@ -266,31 +295,51 @@ export class TexComponent {
          * @internal
          */
         texName: `${string}.tex`;
+        texExt: 'tex';
+        texBaseName: string;
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/myfig/root.pdf'
          * @internal
          */
-        intPath: `${string}.${'pdf' | 'dvi'}`;
+        intPath: `${string}.${'pdf' | 'dvi' | 'xdv'}`;
+        intExt: 'pdf' | 'dvi' | 'xdv';
         /**
          * @example 'root.pdf'
          * @internal
          */
-        intName: `${string}.${'pdf' | 'dvi'}`;
+        intName: `${string}.${'pdf' | 'dvi' | 'xdv'}`;
+        intBaseName: string;
     } {
-        const texLiveConfig = this.texLiveConfig;
-        const sourceDir = join(texLiveConfig.cacheDirectory, this.keyPath);
+        const advancedTexConfig = this.advancedTexConfig;
+        const sourceDir = join(
+            advancedTexConfig.caching.cacheDirectory,
+            this.keyPath,
+        );
+        const { intermediateFiletype, engine } = advancedTexConfig.compilation;
+        const extenstion: 'pdf' | 'dvi' | 'xdv' =
+            intermediateFiletype === 'dvi'
+                ? engine === 'xelatex' // ['xelatex', 'xelatexmk'].includes(engine)
+                    ? 'xdv'
+                    : 'dvi'
+                : 'pdf';
+        const texBaseName = this.jobname;
         const texName: `${string}.tex` = `${this.jobname}.tex`;
         const texPath = join(sourceDir, texName) as `${string}.tex`;
-        const intName: `${string}.${'pdf' | 'dvi'}` = `${this.jobname}.${texLiveConfig.intermediateFiletype}`;
+        const intBaseName = this.jobname;
+        const intName: `${string}.${'pdf' | 'dvi' | 'xdv'}` = `${this.jobname}.${extenstion}`;
         const intPath = join(
             sourceDir,
             intName,
-        ) as `${string}.${'pdf' | 'dvi'}`;
+        ) as `${string}.${'pdf' | 'dvi' | 'xdv'}`;
 
         return {
             dir: sourceDir,
+            texExt: 'tex',
+            texBaseName,
             texName,
             texPath,
+            intExt: extenstion,
+            intBaseName,
             intName,
             intPath,
         };
@@ -305,42 +354,56 @@ export class TexComponent {
     get out(): {
         /**
          * @example 'src/sveltex/tikz'
-         * @internal
          */
         dir: string;
         /**
          * @example 'src/sveltex/tikz/ref.svg'
-         * @internal
          */
         svgPath: `${string}.svg`;
         /**
          * @example 'ref.svg'
-         * @internal
          */
         svgName: `${string}.svg`;
         /**
+         * @example 'ref'
+         */
+        svgBaseName: string;
+        svgExt: 'svg';
+        /**
          * @example 'src/sveltex/tikz/ref.svelte'
-         * @internal
          */
         sveltePath: `${string}.svelte`;
         /**
          * @example 'ref.svelte'
-         * @internal
          */
         svelteName: `${string}.svelte`;
+        /**
+         * @example 'ref'
+         */
+        svelteBaseName: string;
+        svelteExt: 'svelte';
     } {
-        const outDir = join(this.texLiveConfig.outputDirectory, this.tag);
+        const outDir = join(
+            this.advancedTexConfig.conversion.outputDirectory,
+            this.tag,
+        );
+        const svgBaseName = this.ref;
         const svgName: `${string}.svg` = `${this.ref}.svg`;
         const svgPath = join(outDir, svgName) as `${string}.svg`;
+        const svelteBaseName = this.ref;
         const svelteName: `${string}.svelte` = `${this.ref}.svelte`;
         const sveltePath = join(outDir, svelteName) as `${string}.svelte`;
 
         return {
             dir: outDir,
+            svgBaseName,
             svgName,
             svgPath,
+            svgExt: 'svg',
+            svelteBaseName,
             svelteName,
             sveltePath,
+            svelteExt: 'svelte',
         };
     }
 
@@ -372,8 +435,8 @@ export class TexComponent {
             string | number | boolean | null | undefined
         >;
         tex: string;
-        advancedTexHandler: AdvancedTexHandler<'local'>;
-        config: TexComponentConfiguration;
+        advancedTexHandler: AdvancedTexHandler;
+        config: VerbEnvConfigAdvancedTex;
         tag: string;
     }): TexComponent {
         const tc = new TexComponent({
@@ -393,7 +456,7 @@ export class TexComponent {
      * 1. Extract the `ref` attribute from the attributes object and return the
      *    remaining attributes, excluding valueless attributes.
      * 2. Call the
-     *    {@link TexComponentConfiguration.handleAttributes | `handleAttributes`}
+     *    {@link VerbEnvConfigAdvancedTex.handleAttributes | `handleAttributes`}
      *    method (as determined by the TeX component's
      *    {@link configuration | `configuration`}) on the attributes object
      *    returned by the previous step.
@@ -415,9 +478,9 @@ export class TexComponent {
 
     /**
      * Object containing the output of the
-     * {@link TexComponentConfiguration.handleAttributes | `handleAttributes`}
+     * {@link VerbEnvConfigAdvancedTex.handleAttributes | `handleAttributes`}
      * method. This object is intended to be used by the
-     * {@link TexComponentConfiguration.postprocess | `postprocess`} method.
+     * {@link VerbEnvConfigAdvancedTex.postprocess | `postprocess`} method.
      *
      * @internal
      */
@@ -441,18 +504,21 @@ export class TexComponent {
         advancedTexHandler,
         tag,
     }: {
-        config: TexComponentConfiguration;
+        config: VerbEnvConfigAdvancedTex;
         texDocumentBodyWithCssVars: string;
         tag: string;
         // From parent Sveltex instance
-        advancedTexHandler: AdvancedTexHandler<'local'>;
+        advancedTexHandler: AdvancedTexHandler;
     }) {
         this.advancedTexHandler = advancedTexHandler;
-        this._configuration = getDefaultVerbEnvConfig('advancedTex');
         this.configuration = config;
         this.texDocumentBodyWithCssVars = texDocumentBodyWithCssVars;
         this.tag = tag;
+
+        // preambleMainstays = this.advancedTexConfig.compilation.engine;
     }
+
+    // private get preambleMainstays();
 
     /**
      * "Key path" of the component, which is the path to the component's source
@@ -467,7 +533,7 @@ export class TexComponent {
     /**
      * Advanced TeX handler that created this component.
      */
-    private readonly advancedTexHandler: AdvancedTexHandler<'local'>;
+    private readonly advancedTexHandler: AdvancedTexHandler;
 
     /**
      * The full content of the `.tex` file corresponding to the component, with
@@ -486,12 +552,36 @@ export class TexComponent {
      */
     get contentWithCssVars(): string {
         return [
-            this.configuration.documentClass,
-            this.configuration.preamble,
+            this.documentClass,
+            this.preamble,
             '\\begin{document}',
             this.texDocumentBodyWithCssVars,
             '\\end{document}\n',
         ].join('\n');
+    }
+
+    get documentClass(): string {
+        const advancedTexConfig = this.advancedTexConfig;
+        const documentClass = this.configuration.documentClass;
+        const propIsString = isString(documentClass);
+        const name: string = propIsString
+            ? documentClass
+            : documentClass.name ?? 'standalone';
+        const options: string[] = propIsString
+            ? []
+            : documentClass.options ?? [];
+        if (
+            advancedTexConfig.compilation.intermediateFiletype === 'dvi' &&
+            !options.includes('dvisvgm')
+        ) {
+            options.unshift('dvisvgm');
+        }
+        if (options.length === 0) return `\\documentclass{${name}}`;
+        return `\\documentclass[${options.join(',')}]{${name}}`;
+    }
+
+    get preamble(): string {
+        return extendedPreamble(this.configuration, this.advancedTexConfig);
     }
 
     /**
@@ -507,18 +597,43 @@ export class TexComponent {
     readonly compile = async (): Promise<number | null> => {
         // 1. Get the escaped TeX content.
         const { escaped: compilableTexContent, cssColorVars } =
-            escapeCssColorVars(
-                this.contentWithCssVars,
-                this.configuration.preamble,
-            );
+            escapeCssColorVars(this.contentWithCssVars, this.preamble);
 
-        const texLiveConfig = this.texLiveConfig;
+        const advancedTexConfig = this.advancedTexConfig;
+
+        // Compilation options
+        const { engine, intermediateFiletype } = advancedTexConfig.compilation;
+
+        // Conversion options
+        const {
+            overrideConversion: overrideConversion,
+            converter: conversionLibrary,
+            poppler: poppler,
+        } = advancedTexConfig.conversion;
+
+        // Optimization options
+        const {
+            svgo: svgo,
+            currentColor,
+            overrideOptimization,
+        } = advancedTexConfig.optimization;
+
+        // Derived variables
+        const format =
+            conversionLibrary === 'poppler' ? 'pdf' : intermediateFiletype;
+        const formatPretty = format.toUpperCase();
+        const enginePretty = enginePrettyName[engine];
+        const converter = overrideConversion
+            ? `custom converter`
+            : conversionLibrary;
+
+        // Paths
+        const { texPath, intPath } = this.source;
+        const { svgPath, sveltePath, dir: outDir } = this.out;
+        const keyPath = this.keyPath;
 
         // Determine if caching is enabled in the configuration
-        const caching =
-            this.configuration.overrides.caching === true ||
-            (texLiveConfig.caching &&
-                this.configuration.overrides.caching !== false);
+        const caching = advancedTexConfig.caching.enabled;
 
         // Declare `cache` "alias" to `this.cache` for convenience
         const cache = this.cache;
@@ -526,12 +641,26 @@ export class TexComponent {
         // Get hash of TeX source
         const texHash = sha256(compilableTexContent);
 
+        // Declare variable for hash of intermediate DVI/PDF/XDV file (assigned
+        // after compilation)
+        let intHash;
+
         // Get cache obect of intermediate file associated with this key-path
-        const intCache = cache.data.int[this.keyPath];
+        const intCache = cache.data.int[keyPath];
 
         // Check if files exist; if
-        const intFileExists = pathExists(this.source.intPath);
-        const svelteFileExists = pathExists(this.out.sveltePath);
+        const intFileExists = pathExists(intPath);
+        const svelteFileExists = pathExists(sveltePath);
+
+        const debugInfo = [
+            '',
+            `    Engine: ${enginePretty}`,
+            `    Converter: ${converter}`,
+            `    - TeX: ${texPath}`,
+            `    ? ${formatPretty}: ${intPath}`,
+            `    ? SVG: ${svgPath}`,
+            `    ? Svelte: ${sveltePath}`,
+        ].join('\n');
 
         // 2. Check if compilation cache hit
         if (
@@ -555,23 +684,21 @@ export class TexComponent {
             return 0;
         }
 
+        // Start timer
+        const startTex = time();
+
+        // Start spinner
+        const spinnerTex = ora(`Compiling "${texPath}"`).start();
+
         // 3(B). Compile the TeX file using the specified TeX engine.
         try {
-            const texFilepath = this.source.texPath;
-
             // Write the escaped TeX content to a temporary TeX file (creating
             // any missing intermediate directories along the way, if
             // necessary).
-            await fs.writeFileEnsureDir(texFilepath, compilableTexContent);
+            await fs.writeFileEnsureDir(texPath, compilableTexContent);
 
             // Declare convenience alias for `this.compileCmd`
             const compileCmd = this.compileCmd;
-
-            // Start timer
-            const startTex = time();
-
-            // Start spinner
-            const spinnerTex = ora(`Compiling "${texFilepath}"`).start();
 
             // Compile the TeX file
             const compilation = await spawnCliInstruction(compileCmd);
@@ -580,13 +707,16 @@ export class TexComponent {
                 // Stop spinner and replace with "failure message"
                 spinnerTex.fail(
                     pc.red(
-                        `TeX compilation failed for "${texFilepath}" a ${timeToString(timeSince(startTex))}. See ${texFilepath.replace(/\.tex$/, '.log')} for details.`,
+                        `${keyPath}: TeX → ${formatPretty} with ${enginePretty} failed after ${timeToString(timeSince(startTex))}`,
                     ),
                 );
 
                 // Get string representation of the compilation command that
                 // failed.
-                const compileCmdString = `${compileCmd.command} ${compileCmd.args?.join(' ') ?? ''}`;
+                const compileCmdString =
+                    compileCmd.command +
+                    ' ' +
+                    (compileCmd.args?.join(' ') ?? '');
 
                 // Log error message
                 log(
@@ -598,18 +728,32 @@ export class TexComponent {
                 // returned.
                 return compilation.code;
             } else {
+                const { size } = await stat(intPath);
+
+                intHash = sha256(
+                    await fs.readFile(intPath, { encoding: 'utf8' }),
+                );
+
                 // Stop spinner and replace with "success message"
                 spinnerTex.succeed(
                     pc.green(
-                        `Compiled "${this.keyPath}" in ${timeToString(timeSince(startTex))}`,
+                        `${keyPath}: TeX → ${formatPretty} (${prettyBytes(size)}) with ${enginePretty} in ${timeToString(timeSince(startTex))}`,
                     ),
                 );
             }
         } catch (err: unknown) {
+            // Stop spinner and replace with "failure message"
+            spinnerTex.fail(
+                pc.red(
+                    `${keyPath}: TeX → ${formatPretty} with ${enginePretty} failed after ${timeToString(timeSince(startTex))}` +
+                        debugInfo,
+                ),
+            );
+
             // Catch unexpected errors during compilation and log them.
             log(
                 'error',
-                `✖ Error while compiling ${this.source.texPath}:\n\n`,
+                `✖ Error while compiling ${texPath}:\n\n`,
                 prettifyError(err),
             );
             // Since the error is unknown, we can't return a more specific error
@@ -617,50 +761,30 @@ export class TexComponent {
             return 1;
         }
 
-        // Declare variable for hash of intermediate PDF/DVI file
-        let intHash;
-        try {
-            // Compute hash of intermediate PDF/DVI file
-            intHash = sha256(
-                await fs.readFile(resolve(this.source.intPath), {
-                    encoding: 'utf8',
-                }),
-            );
-        } catch (err: unknown) {
-            // Log error if reading the intermediate file failed (presumably due
-            // to an ENOENT error, i.e., the PDF/DVI file not existing), and
-            // return early.
-            log(
-                'error',
-                `✖ Error while reading ${this.source.intPath}:\n\n`,
-                prettifyError(err),
-            );
-            return 2;
-        }
-
-        // Cache the hashes of the TeX source and the intermediate PDF/DVI file
-        cache.data.int[this.keyPath] = {
+        // Cache the hashes of the TeX source and the intermediate DVI/PDF/XDV
+        // file.
+        cache.data.int[keyPath] = {
             sourceHash: texHash,
             hash: intHash,
         };
 
         // Convenience alias for the SVG cache object associated with this
         // key-path.
-        const svgCache = cache.data.svg[this.keyPath];
+        const svgCache = cache.data.svg[keyPath];
 
         // Check if conversion cache hit
         if (
             // If the cache object exists (i.e., a conversion at this key-path
             // has taken place before)...
             svgCache !== undefined &&
-            // ...and the hash of the intermediate PDF/DVI file which was
+            // ...and the hash of the intermediate DVI/PDF/XDV file which was
             // converted to an SVG matches the hash of the intermediate file
             // that we just generated...
             svgCache.sourceHash === intHash &&
             // ...and the key-path at which the intermediate file from which the
             // SVG was generated matches the key-path of the intermediate file
             // that we just generated...
-            // svgCache.sourceKeyPath === this.keyPath &&
+            // svgCache.sourceKeyPath === keyPath &&
             // ...and caching is enabled in the configuration...
             caching &&
             // ...and the final .svelte file already exists...
@@ -673,43 +797,78 @@ export class TexComponent {
             return 0;
         }
 
-        // 4(B). Convert the resulting PDF/DVI to an SVG using the specified
+        let svg: string | undefined = undefined;
+
+        // Start timer
+        const startSvg = time();
+
+        // Start spinner
+        const spinnerSvg = ora(`${keyPath}: ${formatPretty} → SVG`).start();
+
+        // 4(B). Convert the resulting DVI/PDF/XDV to an SVG using the specified
         // conversion command.
         try {
-            // Declare convenience alias for `this.convertCmd`
-            const convertCmd = this.convertCmd;
-
             // Create output directory if it doesn't exist
-            await fs.ensureDir(this.out.dir);
+            await fs.ensureDir(outDir);
 
-            // Start timer
-            const startSvg = time();
+            let conversion: {
+                code: number | null;
+                stderr: string;
+                stdout: string;
+            };
+            let errorMessage: string | undefined = undefined;
 
-            // Start spinner
-            const spinnerSvg = ora(
-                `Converting "${this.source.intName}" to SVG`,
-            ).start();
+            if (conversionLibrary === 'poppler' && !overrideConversion) {
+                let stdout = '';
+                let code = 0;
+                try {
+                    if (this.advancedTexHandler.poppler === undefined) {
+                        const Poppler = (await import('node-poppler')).Poppler;
+                        this.advancedTexHandler.poppler = new Poppler();
+                    }
+                    stdout = await this.advancedTexHandler.poppler.pdfToCairo(
+                        intPath,
+                        svgPath,
+                        sanitizePopplerSvgOptions(poppler),
+                    );
+                } catch (err) {
+                    code = 1;
+                    errorMessage = prettifyError(err);
+                }
+                conversion = { code, stdout, stderr: '' };
+            } else {
+                // Declare convenience alias for `this.convertCmd`
+                const convertCmd = this.convertCmd;
 
-            // Convert the PDF/DVI to an SVG
-            const conversion = await spawnCliInstruction(convertCmd);
+                // Convert the DVI/PDF/XDV to an SVG
+                conversion = await spawnCliInstruction(convertCmd);
+
+                if (conversion.code !== 0) {
+                    // Get string representation of the conversion command that
+                    // failed.
+                    const convertCmdString = `${convertCmd.command}${convertCmd.args ? ' ' + convertCmd.args.join(' ') : ''}`;
+
+                    // Set error message
+                    errorMessage = `\nThe conversion was attempted by running the following command from within "${String(convertCmd.cwd ?? process.cwd())}":\n\n${convertCmdString}\n\nThe following stderr was produced:${conversion.stderr.length > 0 ? '\n\n' + conversion.stderr : pc.italic(' (no stderr output)')}\n\nThe following stdout was produced: ${conversion.stdout.length > 0 ? '\n\n' + conversion.stdout : pc.italic(' (no stdout output)')}\n`;
+                }
+            }
 
             if (conversion.code !== 0) {
                 // Stop spinner and replace with "failure message"
                 spinnerSvg.fail(
                     pc.red(
-                        `${texLiveConfig.intermediateFiletype.toUpperCase()} to SVG conversion failed for "${this.source.intPath}" after ${timeToString(timeSince(startSvg))}.`,
+                        `${keyPath}: ` +
+                            format.toUpperCase() +
+                            ` → SVG with ` +
+                            converter +
+                            ` failed after ` +
+                            timeToString(timeSince(startSvg)) +
+                            `\n${debugInfo}`,
                     ),
                 );
 
-                // Get string representation of the conversion command that
-                // failed.
-                const convertCmdString = `${convertCmd.command} ${convertCmd.args?.join(' ') ?? ''}`;
-
                 // Log error message
-                log(
-                    { severity: 'error', style: 'dim' },
-                    `\nThe conversion was attempted by running the following command from within "${String(convertCmd.cwd ?? process.cwd())}":\n\n${convertCmdString}\n\nThe following stderr was produced:${conversion.stderr.length > 0 ? '\n\n' + conversion.stderr : pc.italic(' (no stderr output)')}\n\nThe following stdout was produced: ${conversion.stdout.length > 0 ? '\n\n' + conversion.stdout : pc.italic(' (no stdout output)')}\n`,
-                );
+                log({ severity: 'error', style: 'dim' }, errorMessage);
 
                 // Update `cache.json` with the new cache object
                 await this.cache.save();
@@ -719,64 +878,105 @@ export class TexComponent {
                 return conversion.code;
             }
 
+            const { size } = await stat(svgPath);
+
             //
-            const svg = await fs.readFile(this.out.svgPath, 'utf8');
+            svg = await fs.readFile(svgPath, 'utf8');
 
-            const unescaped = unescapeCssColorVars(svg, cssColorVars);
+            if (svg === '') {
+                throw new Error(
+                    `Conversion of ${intPath} to SVG failed: Empty SVG file found at ${svgPath}.`,
+                );
+            }
 
-            const svgOptimized = texLiveConfig.overrideSvgPostprocess
-                ? texLiveConfig.overrideSvgPostprocess(unescaped, this)
-                : svgoOptimize(unescaped, texLiveConfig.svgoOptions).data;
+            spinnerSvg.succeed(
+                pc.green(
+                    `${keyPath}: ${formatPretty} → SVG (${prettyBytes(size)}) with ${converter} in ${timeToString(timeSince(startSvg))}`,
+                ),
+            );
+        } catch (err: unknown) {
+            spinnerSvg.fail(
+                pc.red(
+                    `${keyPath}: ${formatPretty} → SVG failed after ${timeToString(timeSince(startSvg))}` +
+                        debugInfo,
+                ),
+            );
+            log(
+                'error',
+                `✖ Error converting ${intPath}:\n\n`,
+                prettifyError(err),
+            );
+            await this.cache.save();
+            await this.cache.cleanup();
+            return 2;
+        }
+
+        // Start timer
+        const startOpt = time();
+
+        // Start spinner
+        const spinnerOpt = ora(`${keyPath}: SVG → Svelte`).start();
+
+        // SVG → Svelte
+        try {
+            let unescaped = unescapeCssColorVars(svg, cssColorVars);
+
+            if (currentColor) {
+                if (conversionLibrary === 'poppler') {
+                    unescaped = unescaped.replace(
+                        '<svg',
+                        '<svg fill="currentColor"',
+                    );
+                }
+                const regExp = getHexRegExp(currentColor);
+                if (regExp) {
+                    unescaped = unescaped.replaceAll(regExp, 'currentColor');
+                }
+            }
+
+            const svgOptimized = overrideOptimization
+                ? overrideOptimization(unescaped, this)
+                : svgoOptimize(unescaped, svgo).data;
 
             // SVGO (or dvisvgm?) seems to add CDATA tags to the SVG, which in
             // turn seem to cause issues with how the SVG is rendered in the
             // browser. I don't really understand why, since, from what I can
             // gather, the CDATA tag should make perfect sense, and technically
             // make the SVG more robust.
-            let svgFinal = svgOptimized.replace(
+            const svgFinal = svgOptimized.replace(
                 /<style>(.*?)<!\[CDATA\[(.*?)\]\]>(.*?)<\/style>/gsu,
                 '<style>$1$2$3</style>',
             );
-            if (texLiveConfig.conversionCommand === 'pdf2svg') {
-                svgFinal = svgFinal.replace('<svg', '<svg fill="currentColor"');
-                const currentColor = (
-                    texLiveConfig.conversionOptions as Pdf2svgOptions
-                ).currentColor;
-                if (
-                    currentColor &&
-                    isString(currentColor) &&
-                    currentColor.startsWith('#')
-                ) {
-                    svgFinal = svgFinal.replaceAll(
-                        currentColor,
-                        'currentColor',
-                    );
-                }
-            }
 
-            await fs.writeFile(this.out.svgPath, svgFinal, 'utf8');
-            await fs.rename(this.out.svgPath, this.out.sveltePath);
+            await fs.writeFile(svgPath, svgFinal, 'utf8');
+            await fs.rename(svgPath, sveltePath);
 
-            spinnerSvg.succeed(
-                pc.green(
-                    `Converted "${this.keyPath}" in ${timeToString(timeSince(startSvg))}`,
-                ),
-            );
+            const { size } = await stat(sveltePath);
 
-            // Cache the hash of the intermediate PDF/DVI file
-            cache.data.svg[this.keyPath] = {
-                sourceHash: intHash,
-            };
+            // Cache the hash of the intermediate DVI/PDF/XDV file
+            cache.data.svg[keyPath] = { sourceHash: intHash };
 
             await this.cache.save();
             await this.cache.cleanup();
 
+            spinnerOpt.succeed(
+                pc.green(
+                    `${keyPath}: SVG → Svelte (${prettyBytes(size)}) with ${overrideOptimization ? 'custom optimizer' : 'SVGO'} in ${timeToString(timeSince(startOpt))}`,
+                ),
+            );
+
             // Return success code
             return 0;
-        } catch (err: unknown) {
+        } catch (err) {
+            spinnerOpt.fail(
+                pc.red(
+                    `${keyPath}: SVG → Svelte failed after ${timeToString(timeSince(startOpt))}` +
+                        debugInfo,
+                ),
+            );
             log(
                 'error',
-                `✖ Error converting ${this.source.intPath}:\n\n`,
+                `✖ Error optimizing ${svgPath}:\n\n`,
                 prettifyError(err),
             );
             await this.cache.save();
@@ -786,77 +986,105 @@ export class TexComponent {
     };
 
     /**
-     * CLI instruction with which to convert the TeX output PDF/DVI to an SVG.
+     * CLI instruction with which to convert the TeX output DVI/PDF/XDV to an SVG.
      *
      * @internal
      */
     get convertCmd(): CliInstruction {
-        const texLiveConfig = this.texLiveConfig;
-        let overrideInstr: CliInstruction | undefined | null;
-        if (texLiveConfig.conversionCommand === 'pdf2svg') {
-            overrideInstr = {
-                command: 'pdf2svg',
-                args: [this.source.intPath, this.out.svgPath],
-                silent: true,
-            };
-        }
-        if (texLiveConfig.overrideConversionCommand) {
-            overrideInstr = texLiveConfig.overrideConversionCommand;
-        }
-        const instr = overrideInstr
-            ? overrideInstr
+        const advancedTexConfig = this.advancedTexConfig;
+        const { overrideConversion: overrideConversion } =
+            advancedTexConfig.conversion;
+        const { svgExt, svgBaseName, svgName, svgPath, dir: svgDir } = this.out;
+        const {
+            intExt,
+            intBaseName,
+            intName,
+            intPath,
+            dir: intDir,
+        } = this.source;
+        const instr = overrideConversion
+            ? overrideConversion({
+                  input: {
+                      dir: intDir,
+                      path: intPath,
+                      name: intName,
+                      basename: intBaseName,
+                      ext: intExt,
+                  },
+                  output: {
+                      dir: svgDir,
+                      path: svgPath,
+                      name: svgName,
+                      basename: svgBaseName,
+                      ext: svgExt,
+                  },
+              })
             : // If no conversion command is specified, use dvisvgm
               buildDvisvgmInstruction({
-                  dvisvgmOptions:
-                      texLiveConfig.conversionOptions as DvisvgmOptions,
-                  inputType: texLiveConfig.intermediateFiletype,
-                  outputPath: this.out.svgPath,
-                  texPath: this.source.intPath,
+                  dvisvgm: advancedTexConfig.conversion.dvisvgm,
+                  inputType: advancedTexConfig.compilation.intermediateFiletype,
+                  outputPath: svgPath,
+                  texPath: intPath,
               });
-        const env = {
-            FILEPATH: this.source.intPath,
-            FILENAME: this.source.intName,
-            FILENAME_BASE: this.jobname,
-            FILETYPE: texLiveConfig.intermediateFiletype,
-            OUTDIR: this.out.dir,
-            OUTFILEPATH: this.out.svgPath,
-        };
-        instr.env = { ...instr.env, ...env };
         instr.silent = true;
         return instr;
     }
 
     /**
      * CLI instruction with which to compile the `.tex` file.
-     *
-     * @internal
      */
     get compileCmd(): CliInstruction {
-        const texLiveConfig = this.texLiveConfig;
+        const advancedTexConfig = this.advancedTexConfig;
+        const {
+            engine,
+            intermediateFiletype,
+            saferLua,
+            shellEscape,
+            overrideCompilation: overrideCompilation,
+        } = advancedTexConfig.compilation;
+
         const env = {
-            FILEPATH: this.source.texPath,
-            FILENAME: this.source.texName,
-            FILENAME_BASE: this.jobname,
-            OUTDIR: this.source.dir,
-            OUTFILETYPE: texLiveConfig.intermediateFiletype,
             // SOURCE_DATE_EPOCH is used to ensure reproducibility of the
-            // compilation process. In other words, it ensures that the
-            // compilation process is deterministic and will produce the same
-            // output when given the same input, regardless of the time at which
-            // it is run.
+            // compilation process (with PDFs). In other words, it ensures that
+            // the compilation process is deterministic and will produce the
+            // same output when given the same input, regardless of the time at
+            // which it is run. This helps with caching.
             SOURCE_DATE_EPOCH: '1',
         };
 
-        const override = texLiveConfig.overrideCompilationCommand;
-        if (override) {
-            override.env = { ...override.env, ...env };
-            return override;
+        if (overrideCompilation) {
+            const {
+                dir,
+                intBaseName,
+                intExt,
+                intName,
+                intPath,
+                texBaseName,
+                texExt,
+                texName,
+                texPath,
+            } = this.source;
+            const instr = overrideCompilation({
+                input: {
+                    dir,
+                    path: texPath,
+                    name: texName,
+                    basename: texBaseName,
+                    ext: texExt,
+                },
+                output: {
+                    dir,
+                    path: intPath,
+                    name: intName,
+                    basename: intBaseName,
+                    ext: intExt,
+                },
+            });
+            return instr;
         }
 
         const cwd = this.source.dir;
         const args: string[] = [];
-        const engine = texLiveConfig.engine;
-        const filetype = texLiveConfig.intermediateFiletype;
         const silent = true;
 
         /**
@@ -871,31 +1099,34 @@ export class TexComponent {
         // Add the filetype flag
         switch (engine) {
             case 'lualatex':
-            case 'latexmk':
+            case 'pdflatexmk':
             case 'pdflatex':
-                args.push(pre + 'output-format=' + filetype);
+                args.push(pre + 'output-format=' + intermediateFiletype);
                 break;
-            case 'tex':
-                if (filetype === 'pdf') {
-                    log('error', 'Plain TeX does not support PDF output.');
-                }
+            case 'xelatex':
+                if (intermediateFiletype === 'dvi') args.push('-no-pdf');
                 break;
             case 'lualatexmk':
-                args.push(filetype === 'pdf' ? '-pdflua' : '-dvilua');
+                args.push(
+                    intermediateFiletype === 'pdf' ? '-pdflua' : '-dvilua',
+                );
                 break;
+            // case 'xelatexmk':
+            //     args.push(intermediateFiletype === 'dvi' ? '-xdv' : '-pdfxe');
+        }
+
+        if (intermediateFiletype === 'dvi') {
+            // Make compilation to DVI somewhat more deterministic
+            args.push(pre + 'output-comment=""');
         }
 
         // Add --safer resp. -safer flag for lualatex resp. lualatexmk, if
         // saferLua is set to true
-        if (
-            (engine === 'lualatex' || engine === 'lualatexmk') &&
-            texLiveConfig.saferLua
-        ) {
+        if ((engine === 'lualatex' || engine === 'lualatexmk') && saferLua) {
             args.push(pre + 'safer');
         }
 
         // Add shell escape flags
-        const shellEscape = texLiveConfig.shellEscape;
         if (shellEscape === 'restricted') {
             args.push(pre + 'shell-restricted');
         } else {
@@ -913,7 +1144,7 @@ export class TexComponent {
         // args.push(`${pre}silent`);
 
         // Add the filename
-        args.push(`"${this.source.texName}"`);
+        args.push(this.source.texName);
 
         return { command, args, env, cwd, silent };
     }
@@ -942,15 +1173,113 @@ export class TexComponent {
     }
 }
 
-const texBaseCommand: Record<SupportedTexEngine, string> = {
+export const texBaseCommand: Record<SupportedTexEngine, string> = {
     lualatex: 'lualatex',
     pdflatex: 'pdflatex',
-    tex: 'tex',
-    latexmk: 'latexmk',
-    // The output format flag will take care of making this actually use
-    // lualatex
+    xelatex: 'xelatex',
+    pdflatexmk: 'latexmk',
+    // A CLI flag will take care of making this actually use LuaLaTeX
     lualatexmk: 'latexmk',
-};
+    // A CLI flag will take care of making this actually use XeLaTeX
+    // xelatexmk: 'latexmk',
+} as const;
+
+export const enginePrettyName: Record<SupportedTexEngine, string> = {
+    lualatex: 'LuaLaTeX',
+    pdflatex: 'pdfLaTeX',
+    xelatex: 'XeLaTeX',
+    pdflatexmk: 'LaTeXmk (pdfLaTeX)',
+    lualatexmk: 'LaTeXmk (LuaLaTeX)',
+} as const;
+
+export function extendedPreamble(
+    verbEnvConfig: FullVerbEnvConfigAdvancedTex,
+    advancedTexConfig: FullAdvancedTexConfiguration,
+) {
+    // let backendConfig = '';
+    // if (advancedTexConfig.compilation.intermediateFiletype === 'dvi') {
+    //     backendConfig =
+    //         '\\ExplSyntaxOn\n' +
+    //         '\\str_if_exist:NF \\c_sys_backend_str\n' +
+    //         '  { \\sys_load_backend:n { dvisvgm } }\n' +
+    //         '\\ExplSyntaxOff\n';
+    // }
+    const preamble = verbEnvConfig.preamble;
+    const { packages, gdlibraries, tikzlibraries } = enactPresets(
+        verbEnvConfig,
+        advancedTexConfig,
+    );
+    packages.unshift('xcolor');
+    const usepackage = [
+        '\\makeatletter',
+        ...packages.map(
+            (pkg) => `\\@ifpackageloaded{${pkg}}{}{\\usepackage{${pkg}}}`,
+        ),
+        '\\makeatother',
+    ].join('\n');
+    const usetikzlibrary =
+        tikzlibraries.length > 0
+            ? '\\usetikzlibrary{' + tikzlibraries.join(',') + '}'
+            : '';
+    const usegdlibrary =
+        gdlibraries.length > 0
+            ? '\\usegdlibrary{' + gdlibraries.join(',') + '}'
+            : '';
+    return [
+        preamble,
+        usepackage,
+        usetikzlibrary,
+        usegdlibrary,
+        // backendConfig,
+    ].join('\n');
+}
+
+function extractTrueKeys(obj: object) {
+    return Object.entries(obj)
+        .filter(([, value]) => value === true)
+        .map(([key]) => key);
+}
+
+export function enactPresets(
+    verbEnvConfig: FullVerbEnvConfigAdvancedTex,
+    advancedTexConfig: FullAdvancedTexConfiguration,
+) {
+    const presets = isArray(verbEnvConfig.preset)
+        ? verbEnvConfig.preset
+        : [verbEnvConfig.preset];
+    // Currently, only tikz presets are supported. Last one takes precedence.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const preset = presets.findLast((p) => p.name === 'tikz');
+    if (!preset) return { tikzlibraries: [], gdlibraries: [], packages: [] };
+    const tikzlibraries = [];
+    const gdlibraries = [];
+    const packages = ['tikz'];
+    const merged = mergeConfigs(
+        getAdvancedTexPresetDefaults('tikz').libraries,
+        preset.libraries,
+    );
+    const { graphdrawing, ...tikzLibrariesObj } = merged;
+    if (graphdrawing !== undefined && graphdrawing !== false) {
+        if (
+            ['lualatex', 'lualatexmk'].includes(
+                advancedTexConfig.compilation.engine,
+            )
+        ) {
+            tikzlibraries.push('graphdrawing');
+            if (isObject(graphdrawing)) {
+                gdlibraries.push(...extractTrueKeys(graphdrawing));
+            }
+        } else {
+            log(
+                'error',
+                `Graph drawing libraries require "compilation.engine" to be "lualatex" or "lualatexmk". ${insteadGot(advancedTexConfig.compilation.engine, 'string')} Ignoring graph drawing libraries.`,
+            );
+        }
+    }
+    tikzlibraries.push(...extractTrueKeys(flattenObject(tikzLibrariesObj)));
+    if (tikzlibraries.includes('fixedpointarithmetic')) packages.push('fp');
+    return { tikzlibraries, gdlibraries, packages };
+}
 
 // /**
 //  * Regular expression to check if the `xcolor` package was loaded in a preamble.

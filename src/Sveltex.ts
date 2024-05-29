@@ -10,7 +10,6 @@ import type {
     FullSveltexConfiguration,
     SveltexConfiguration,
 } from '$types/SveltexConfiguration.js';
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type {
@@ -59,19 +58,18 @@ export async function sveltex<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
 >(
-    backendChoices?: BackendChoices<M, C, T, A> | undefined,
-    configuration?: SveltexConfiguration<M, C, T, A> | undefined,
-): Promise<Sveltex<M, C, T, A>> {
+    backendChoices?: BackendChoices<M, C, T> | undefined,
+    configuration?: SveltexConfiguration<M, C, T> | undefined,
+): Promise<Sveltex<M, C, T>> {
     if (backendChoices && diagnoseBackendChoices(backendChoices).errors !== 0) {
         throw new Error('Invalid backend choices. See console for details.');
     }
-    const s = await Sveltex.create<M, C, T, A>(
+    const s = await Sveltex.create<M, C, T>(
         backendChoices?.markdownBackend ?? ('none' as M),
         backendChoices?.codeBackend ?? ('none' as C),
         backendChoices?.texBackend ?? ('none' as T),
-        backendChoices?.advancedTexBackend ?? ('none' as A),
+        configuration ?? ({} as SveltexConfiguration<M, C, T>),
     );
     if (configuration) await s.configure(configuration);
     return s;
@@ -87,7 +85,6 @@ export class Sveltex<
     M extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',
     T extends TexBackend = 'none',
-    A extends AdvancedTexBackend = 'none',
 > implements PreprocessorGroup
 {
     /**
@@ -98,7 +95,7 @@ export class Sveltex<
     readonly markdownBackend: M;
     readonly codeBackend: C;
     readonly texBackend: T;
-    readonly advancedTexBackend: A;
+    readonly advancedTexBackend: 'local';
 
     // We can safely add the definite assignment assertions here, since Sveltex
     // instances can only be created through the static `Sveltex.create` method
@@ -107,13 +104,13 @@ export class Sveltex<
     private _markdownHandler!: MarkdownHandler<M>;
     private _codeHandler!: CodeHandler<C>;
     private _texHandler!: TexHandler<T>;
-    private _advancedTexHandler!: AdvancedTexHandler<A>;
-    private _verbatimHandler!: VerbatimHandler<C, A>;
+    private _advancedTexHandler!: AdvancedTexHandler;
+    private _verbatimHandler!: VerbatimHandler<C>;
 
     // The verbatim handler and the configuration can be initialized in the
     // constructor, so we don't need any definite assignment assertions here.
 
-    private _configuration: FullSveltexConfiguration<M, C, T, A>;
+    private _configuration: FullSveltexConfiguration<M, C, T>;
 
     /**
      *
@@ -281,13 +278,17 @@ export class Sveltex<
                 async ([uuid, snippet]) => {
                     let processedSnippet: ProcessedSnippet;
                     let processed = '';
-                    const { unescapeOptions } = snippet;
+                    const unescapeOptions = snippet.unescapeOptions ?? {
+                        removeParagraphTag: true,
+                    };
                     if (snippet.type === 'code') {
                         typeAssert(is<Snippet<'code'>>(snippet));
                         if (!codePresent) codePresent = true;
                         processedSnippet = await codeHandler.process(
                             snippet.processable.innerContent,
-                            snippet.processable.optionsForProcessor,
+                            {
+                                ...snippet.processable.optionsForProcessor,
+                            },
                         );
                     } else if (snippet.type === 'verbatim') {
                         typeAssert(is<Snippet<'verbatim'>>(snippet));
@@ -415,7 +416,7 @@ export class Sveltex<
      * await sveltexPreprocessor.configure({ ... })
      * ```
      */
-    async configure(configuration: SveltexConfiguration<M, C, T, A>) {
+    async configure(configuration: SveltexConfiguration<M, C, T>) {
         const mergedConfig = mergeConfigs(this._configuration, configuration);
 
         await Promise.all([
@@ -479,25 +480,6 @@ export class Sveltex<
     }
 
     /**
-     * ##### SETTER
-     *
-     * ⚠ **Pre-condition**: `this.codeBackend === 'custom'`
-     *
-     * Setter for the {@link _codeHandler | `_codeHandler`} property.
-     *
-     * @throws Error if the code backend is not `'custom'`.
-     */
-    set codeHandler(handler: CodeHandler<C>) {
-        if (this.codeBackend === 'custom') {
-            this._codeHandler = handler;
-        } else {
-            throw new Error(
-                `codeHandler setter can only be invoked if code backend is "custom" (got "${this.codeBackend}" instead).`,
-            );
-        }
-    }
-
-    /**
      * ##### GETTER
      *
      * Getter for the {@link _texHandler | `_texHandler`} property, which points
@@ -537,47 +519,20 @@ export class Sveltex<
     }
 
     /**
-     * ##### SETTER
-     *
-     * ⚠ **Pre-condition**: `this.advancedTexBackend === 'custom'`
-     *
-     * Setter for the {@link _advancedTexHandler | `_advancedTexHandler`}
-     * property.
-     *
-     * @throws Error if the advanced TeX backend is not `'custom'`.
-     */
-    set advancedTexHandler(handler: AdvancedTexHandler<A>) {
-        if (this.advancedTexBackend === 'custom') {
-            this._advancedTexHandler = handler;
-        } else {
-            throw new Error(
-                `advancedTexHandler setter can only be invoked if advanced TeX backend is "custom" (got "${this.advancedTexBackend}" instead).`,
-            );
-        }
-    }
-
-    /**
      * Helper method primarily used for type narrowing.
      */
-    private nonCustomBackend<
-        H extends 'markdown' | 'code' | 'tex' | 'advancedTex',
-    >(
+    private nonCustomBackend<H extends 'markdown' | 'code' | 'tex'>(
         h: H,
     ): this is Sveltex<
         H extends 'markdown' ? Exclude<M, 'custom'> : M,
         H extends 'code' ? Exclude<C, 'custom'> : C,
-        H extends 'tex' ? Exclude<T, 'custom'> : T,
-        H extends 'advancedTex' ? Exclude<A, 'custom'> : A
+        H extends 'tex' ? Exclude<T, 'custom'> : T
     > {
         switch (h) {
             case 'markdown':
                 return this.markdownBackend !== 'custom';
-            case 'code':
-                return this.codeBackend !== 'custom';
             case 'tex':
                 return this.texBackend !== 'custom';
-            case 'advancedTex':
-                return this.advancedTexBackend !== 'custom';
             /* v8 ignore next 2 (unreachable code) */
             default:
                 return false;
@@ -600,19 +555,18 @@ export class Sveltex<
         M extends MarkdownBackend,
         C extends CodeBackend,
         T extends TexBackend,
-        A extends AdvancedTexBackend,
     >(
         markdownBackend: M,
         codeBackend: C,
         texBackend: T,
-        advancedTexBackend: A,
-    ): Promise<Sveltex<M, C, T, A>> {
-        const sveltex = new Sveltex<M, C, T, A>(
+        configuration: SveltexConfiguration<M, C, T>,
+    ): Promise<Sveltex<M, C, T>> {
+        const sveltex = new Sveltex<M, C, T>(
             markdownBackend,
             codeBackend,
             texBackend,
-            advancedTexBackend,
         );
+        const merged = mergeConfigs(sveltex.configuration, configuration);
 
         const errors = [];
 
@@ -630,13 +584,13 @@ export class Sveltex<
             }
         }
         // Code handler
-        if (sveltex.nonCustomBackend('code') && notCustom(codeBackend)) {
-            try {
-                (sveltex._codeHandler as CodeHandler<Exclude<C, 'custom'>>) =
-                    await CodeHandler.create(codeBackend);
-            } catch (err) {
-                errors.push(err);
-            }
+        try {
+            (sveltex._codeHandler as unknown) = await CodeHandler.create(
+                codeBackend,
+                merged.code as CodeConfiguration<C>,
+            );
+        } catch (err) {
+            errors.push(err);
         }
 
         // TeX handler
@@ -649,16 +603,7 @@ export class Sveltex<
             }
         }
 
-        if (
-            sveltex.nonCustomBackend('advancedTex') &&
-            notCustom(advancedTexBackend)
-        ) {
-            const advancedTexHandler =
-                await AdvancedTexHandler.create(advancedTexBackend);
-            (sveltex._advancedTexHandler as AdvancedTexHandler<
-                Exclude<A, 'custom'>
-            >) = advancedTexHandler;
-        }
+        sveltex._advancedTexHandler = await AdvancedTexHandler.create();
 
         if (errors.length > 0) {
             const install =
@@ -682,17 +627,12 @@ export class Sveltex<
         return sveltex;
     }
 
-    private constructor(
-        markdownBackend: M,
-        codeBackend: C,
-        texBackend: T,
-        advancedTexBackend: A,
-    ) {
+    private constructor(markdownBackend: M, codeBackend: C, texBackend: T) {
         // Take note of the backends chosen by the user.
         this.markdownBackend = markdownBackend;
         this.codeBackend = codeBackend;
         this.texBackend = texBackend;
-        this.advancedTexBackend = advancedTexBackend;
+        this.advancedTexBackend = 'local';
 
         // Initialize configuration with defaults corresponding to the chosen
         // backends.
@@ -700,7 +640,6 @@ export class Sveltex<
             this.markdownBackend,
             this.codeBackend,
             this.texBackend,
-            this.advancedTexBackend,
         );
     }
 }

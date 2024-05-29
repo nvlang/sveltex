@@ -7,9 +7,9 @@ import {
     isHighlightJsThemeName,
     isStarryNightThemeName,
     isSupportedCdn,
-    isThemableCodeBackend,
+    isCodeBackendWithCss,
     supportedCdns,
-    themableCodeBackends,
+    codeBackendsWithCss,
 } from '$type-guards/code.js';
 import {
     isArray,
@@ -22,10 +22,10 @@ import {
     isString,
 } from '$type-guards/utils.js';
 import { log } from '$utils/debug.js';
-import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
+import { Diagnoser, enquote, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 
 // External dependencies
-import { nodeAssert } from '$deps.js';
+import { isRegExp, nodeAssert } from '$deps.js';
 
 export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
     if (!isNonNullObject(x)) {
@@ -36,15 +36,31 @@ export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
         return { errors: 1, warnings: 0, problems: 1 };
     }
     const d = new Diagnoser(x);
-    d.ifPresent('wrapClassPrefix', 'a string', isString);
     d.ifPresent(
-        'wrap',
-        'a function (options) => [string, string]',
-        isFunction,
-        'function',
+        'addLanguageClass',
+        'a string or boolean',
+        (v) => isString(v) || isBoolean(v),
+        ['string', 'boolean'],
     );
+    d.ifPresent('transformers', 'a non-null object', isNonNullObject, 'object');
+    const is2Tuple = (v: unknown) =>
+        isArray(v) &&
+        v.length === 2 &&
+        (isString(v[0]) || isRegExp(v[0])) &&
+        isString(v[1]);
+    ['pre', 'post'].forEach((key) => {
+        d.ifPresent(
+            `transformers.${key}`,
+            'a function, a 2-tuple [string | RegExp, string], or an array of either',
+            (v) =>
+                isFunction(v) ||
+                is2Tuple(v) ||
+                isArray(v, (x) => isFunction(x) || is2Tuple(x)),
+            ['function', 'object'],
+        );
+    });
     if (isPresentAndDefined(x, 'theme')) {
-        if (isThemableCodeBackend(backend)) {
+        if (isCodeBackendWithCss(backend)) {
             nodeAssert('theme' in x);
             if (!isNonNullObject(x.theme)) {
                 d.addProblem(
@@ -88,9 +104,14 @@ export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
                     );
                 }
             }
+        } else if (backend === 'shiki') {
+            d.addProblem(
+                `The "theme" property is intended for the following backends: ${codeBackendsWithCss.map(enquote).join(', ')}. If you want to set the theme using the "shiki" backend, you can do so in the "shiki.theme" property of the code configuration instead.`,
+                'warn',
+            );
         } else {
             d.addProblem(
-                `The "theme" property is not supported for the "${backend}" backend. Supported backends: "${themableCodeBackends.join('", "')}".`,
+                `The "theme" property is not supported for the "${backend}" backend. Supported backends: ${codeBackendsWithCss.map(enquote).join(', ')}.`,
                 'warn',
             );
         }

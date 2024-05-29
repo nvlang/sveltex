@@ -1,96 +1,11 @@
 ---
-link:
-- rel: stylesheet
-  href: /mathjax@3.2.2.chtml.min.css
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Zero.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Main-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Main-Bold.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Math-Italic.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Main-Italic.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Math-BoldItalic.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Size1-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Size2-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Size3-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Size4-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_AMS-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Calligraphic-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Calligraphic-Bold.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Fraktur-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Fraktur-Bold.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_SansSerif-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_SansSerif-Bold.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_SansSerif-Italic.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Script-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Typewriter-Regular.woff
-  crossorigin: anonymous
-- rel: preload
-  as: font
-  href: /fonts/sveltex/MathJax_Vector-Regular.woff
-  crossorigin: anonymous
+title: something
+exampleProperty: 2
 ---
 
 <style>
 :root {
-    --some-color: #f6c;
+    --some-color: #f0f;
 }
 p, figure {
     font-family: sans-serif;
@@ -98,8 +13,11 @@ p, figure {
 /* { */
 </style>
 
+<script>
+import Example from '$lib/Example.svelte';
+</script>
 
-# Heading 1
+# Heading 1: {title} {exampleProperty}
 ###### Heading 6
 
 text **bold** text *italic (asterisks)* text _italic (underscores)_ text
@@ -108,19 +26,18 @@ text **bold** text *italic (asterisks)* text _italic (underscores)_ text
 Text: \[ 1/n < \color{#fc0}\int_0^{1} \color{var(--some-color)}x^{x}\ dx < n. \] Mustache tags: {1+1}, {`$1 + $${2 +
 3} = $6`}.
 
-Regexes in
-
-<span>mustache</span>
-
-tags: {('a$b$c\(d\)e\[f\]g$$h$$'.match(/\$/g))}.
+Regexes in mustache tags: {('a$b$c\(d\)e\[f\]g$$h$$'.match(/\$/g))}.
 
 ` foo ` text $a$;
 $
 b
 $.
 
+
+
+
 <div>
-> $x^{a}$ `monospaced $x$` <div>fds</div> fds fds
+> $x^{a}$ `monospaced $x$` fds <em> fds </em> and <Example title="something"> a <em> b </em> c </Example> fds
 </div>
 
 <Verb>
@@ -163,8 +80,9 @@ text
 An "advanced tex" block:
 
 <tex ref="something">
+something
 \begin{tikzpicture}
-    \draw (1,2) circle (2.4);
+    \draw (1,2) circle (2.44);
     \draw[dashed, var(--some-color), thick] (-.5,0) rectangle (3, 3);
     \draw[red, thick] (-1,1) rectangle (2.5, 4);
     \node at (1,2) {\(\int_{0}^{1} \sum x_{i}^{3} \mathrm{d}\text{$x$}\)};

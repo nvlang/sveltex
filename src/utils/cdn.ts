@@ -1,5 +1,5 @@
 // Types
-import { SupportedCdn } from '$types/handlers/misc.js';
+import { SupportedCdn } from '$types/handlers/Css.js';
 
 // Internal dependencies
 import { cdnPrefixes } from '$data/cdn.js';
@@ -11,12 +11,17 @@ import { fs } from '$utils/fs.js';
 import { AbortError, nodeFetch } from '$deps.js';
 
 export function cdnLink(
-    pkg: 'mathjax-full' | 'katex' | '@wooorm/starry-night' | 'highlight.js',
+    pkg: 'mathjax' | 'katex' | '@wooorm/starry-night' | 'highlight.js',
     resource: string,
     version: string = 'latest',
     cdn: SupportedCdn = 'jsdelivr',
 ) {
-    return `${cdnPrefixes[cdn]}${pkg}@${version}/${resource}`;
+    let separator = '@';
+    if (cdn === 'cdnjs') {
+        separator = '/';
+        if (pkg === '@wooorm/starry-night') cdn = 'jsdelivr';
+    }
+    return `${cdnPrefixes[cdn]}${pkg}${separator}${version}/${resource}`;
 }
 
 export async function fancyWrite(

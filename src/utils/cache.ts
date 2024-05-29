@@ -34,7 +34,7 @@ interface SveltexCacheJson {
 export class SveltexCache {
     readonly outputDirAbs: string;
     readonly cacheDirAbs: string;
-    readonly cacheDirGlob: Glob<{ follow: false; maxDepth: 5 }>;
+    readonly cacheDirGlob: Glob<{ follow: false; maxDepth: 100 }>;
     readonly pathToCacheJson: string;
     readonly data: SveltexCacheJson;
 
@@ -48,9 +48,9 @@ export class SveltexCache {
         this.pathToCacheJson = pathToCacheJson;
         this.outputDirAbs = resolve(normalize(outputDirectory));
         this.cacheDirAbs = resolve(normalize(cacheDirectory));
-        this.cacheDirGlob = new Glob(join(this.cacheDirAbs, '**/*/*/'), {
+        this.cacheDirGlob = new Glob(join(this.cacheDirAbs, '*/*/'), {
             follow: false,
-            maxDepth: 5,
+            maxDepth: 100,
         });
     }
 

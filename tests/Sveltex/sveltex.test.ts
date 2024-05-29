@@ -1,21 +1,17 @@
 /* eslint-disable vitest/no-commented-out-tests */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { TexBackend } from '$types/handlers/Tex.js';
 
 import { sveltex, type Sveltex } from '$Sveltex.js';
 
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
-import { CodeHandler } from '$handlers/CodeHandler.js';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { removeEmptyLines, spy } from '$tests/fixtures.js';
 import { range } from '$tests/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -31,7 +27,6 @@ describe.concurrent('Sveltex', () => {
                     markdownBackend: 'unknown' as 'none',
                     codeBackend: 'unknown' as 'none',
                     texBackend: 'unknown' as 'none',
-                    advancedTexBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
             await expect(() =>
@@ -49,11 +44,6 @@ describe.concurrent('Sveltex', () => {
                     texBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
-            await expect(() =>
-                sveltex({
-                    advancedTexBackend: 'unknown' as 'none',
-                }),
-            ).rejects.toThrowError();
         });
     });
 
@@ -61,9 +51,7 @@ describe.concurrent('Sveltex', () => {
         it('should work if corresponding backend is custom', async () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'custom',
-                codeBackend: 'custom',
                 texBackend: 'custom',
-                advancedTexBackend: 'custom',
             });
             preprocessor.markdownHandler = await MarkdownHandler.create(
                 'custom',
@@ -71,46 +59,21 @@ describe.concurrent('Sveltex', () => {
                     process: () => 'custom output markdown',
                 },
             );
-            preprocessor.codeHandler = await CodeHandler.create('custom', {
-                process: () => 'custom output code',
-            });
             preprocessor.texHandler = await TexHandler.create('custom', {
                 process: () => 'custom output tex',
             });
-            preprocessor.advancedTexHandler = await AdvancedTexHandler.create(
-                'custom',
-                {
-                    process: () => 'custom output advanced tex',
-                },
-            );
             expect(
                 (await preprocessor.markdownHandler.process('')).processed,
             ).toEqual('custom output markdown');
             expect(
-                (await preprocessor.codeHandler.process('')).processed,
-            ).toEqual('<pre><code>custom output code\n</code></pre>');
-            expect(
                 (await preprocessor.texHandler.process('')).processed,
             ).toEqual('custom output tex');
-            expect(
-                (
-                    await preprocessor.advancedTexHandler.process('', {
-                        attributes: { ref: 'ref' },
-                        selfClosing: false,
-                        tag: 'name',
-                        filename: 'test.sveltex',
-                        config: getDefaultVerbEnvConfig('advancedTex'),
-                        outerContent: '<name ref="ref"></name>',
-                    })
-                ).processed,
-            ).toEqual('custom output advanced tex');
         });
         it('should throw error if corresponding backend is not custom', async () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'none',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await expect(
                 async () =>
@@ -121,23 +84,9 @@ describe.concurrent('Sveltex', () => {
             );
             await expect(
                 async () =>
-                    (preprocessor.codeHandler =
-                        await CodeHandler.create('none')),
-            ).rejects.toThrowError(
-                'codeHandler setter can only be invoked if code backend is "custom" (got "none" instead).',
-            );
-            await expect(
-                async () =>
                     (preprocessor.texHandler = await TexHandler.create('none')),
             ).rejects.toThrowError(
                 'texHandler setter can only be invoked if TeX backend is "custom" (got "none" instead).',
-            );
-            await expect(
-                async () =>
-                    (preprocessor.advancedTexHandler =
-                        await AdvancedTexHandler.create('none')),
-            ).rejects.toThrowError(
-                'advancedTexHandler setter can only be invoked if advanced TeX backend is "custom" (got "none" instead).',
             );
         });
     });
@@ -186,15 +135,13 @@ const preprocessor = await sveltex({
     markdownBackend: 'marked',
     codeBackend: 'escapeOnly',
     texBackend: 'none',
-    advancedTexBackend: 'none',
 });
 
 function preprocessFn<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends TexBackend,
-    A extends AdvancedTexBackend,
->(preprocessor: Sveltex<M, C, T, A>) {
+>(preprocessor: Sveltex<M, C, T>) {
     return async (input: string, filename: string = 'test.sveltex') => {
         return (await preprocessor.markup({ content: input, filename }))?.code;
     };
@@ -551,7 +498,6 @@ describe('Sveltex.markup()', () => {
             markdownBackend: 'marked',
             codeBackend: 'escapeOnly',
             texBackend: 'none',
-            advancedTexBackend: 'none',
         });
         const preprocess = async (
             input: string,
@@ -656,7 +602,6 @@ describe('Sveltex.markup()', () => {
                 markdownBackend: 'marked',
                 codeBackend: 'starry-night',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await preprocessor.configure({ code: { languages: 'common' } });
             expect(
@@ -675,7 +620,7 @@ describe('Sveltex.markup()', () => {
                 label: 'code block (plain)',
                 input: '```\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n\n<pre><code class="language-text">() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n',
             },
             {
                 label: 'code block (ts)',
@@ -688,7 +633,6 @@ describe('Sveltex.markup()', () => {
                 markdownBackend: 'marked',
                 codeBackend: 'starry-night',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await preprocessor.configure({ code: { languages: 'common' } });
             const preprocess = async (
@@ -790,7 +734,6 @@ describe('Sveltex.markup()', () => {
                 markdownBackend: 'none',
                 codeBackend: 'none',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await preprocessor.configure({
                 verbatim: {
@@ -841,7 +784,6 @@ describe('Sveltex.markup()', () => {
                 markdownBackend: 'none',
                 codeBackend: 'escapeOnly',
                 texBackend: 'none',
-                advancedTexBackend: 'none',
             });
             await preprocessorMisc.configure({
                 general: {

@@ -20,8 +20,7 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import { interpretString, interpretAttributes } from '$utils/parseComponent.js';
-import { Transformation } from '$types/handlers/misc.js';
+import type { Transformer } from '$types/handlers/Handler.js';
 
 describe.concurrent('utils/misc', () => {
     let log: MockInstance;
@@ -36,100 +35,7 @@ describe.concurrent('utils/misc', () => {
         vi.clearAllMocks();
     });
 
-    describe('interpretString', () => {
-        it.each([
-            ['true', true],
-            ['false', false],
-            ['null', null],
-            ['undefined', undefined],
-            ['NaN', NaN],
-            ['Infinity', Infinity],
-            ['+Infinity', +Infinity],
-            ['-Infinity', -Infinity],
-            ['5', 5],
-            ['5.5', 5.5],
-            ['something', 'something'],
-        ])('interprets "$str" as $str', (str, val) => {
-            expect(interpretString(str)).toEqual(val);
-        });
-
-        it('interprets undefined as undefined', () => {
-            expect(interpretString(undefined)).toEqual(undefined);
-        });
-    });
-
-    describe('interpretAttributes', () => {
-        beforeEach(() => {
-            vi.clearAllMocks();
-        });
-        it('should work', () => {
-            expect(
-                interpretAttributes({
-                    a: 'true',
-                    b: 'false',
-                    c: 'null',
-                    d: 'undefined',
-                    e: 'NaN',
-                    f: 'Infinity',
-                    g: '+Infinity',
-                    h: '-Infinity',
-                    i: '5',
-                    j: '5.5',
-                    k: 'something',
-                    l: 'undefined',
-                }),
-            ).toEqual(
-                expect.objectContaining({
-                    a: true,
-                    b: false,
-                    c: null,
-                    d: undefined,
-                    e: NaN,
-                    f: Infinity,
-                    g: +Infinity,
-                    h: -Infinity,
-                    i: 5,
-                    j: 5.5,
-                    k: 'something',
-                    l: undefined,
-                }),
-            );
-            expect(log).not.toHaveBeenCalled();
-        });
-
-        it('should deal with non-strings gracefully (strict)', () => {
-            expect(interpretAttributes({ a: null })).toEqual({});
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining('Ignoring attribute.'),
-            );
-        });
-
-        it('should deal with non-strings gracefully (non-strict)', () => {
-            log.mockClear();
-            expect(interpretAttributes({ a: null }, false)).toEqual({
-                a: null,
-            });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'warn',
-                expect.stringContaining('Passing value as-is.'),
-            );
-        });
-
-        it('should pass `undefined`s as-is', () => {
-            log.mockClear();
-            expect(interpretAttributes({ a: undefined })).toEqual({
-                a: undefined,
-            });
-            expect(log).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('isValidTexComponentConfig', () => {
+    describe('isValidVerbEnvConfigAdvancedTex', () => {
         it('should return true for a valid configuration', () => {
             expect(isValidComponentName('something')).toBe(true);
         });
@@ -256,7 +162,7 @@ describe.concurrent('utils/misc', () => {
             expect(copyTransformation([r, s])).toEqual([r, s]);
         });
         it('should not return reference to original transformation', () => {
-            const t: Transformation = [r, s];
+            const t: Transformer = [r, s];
             expect(copyTransformation(t)).not.toBe(t);
         });
     });
@@ -277,7 +183,7 @@ describe.concurrent('utils/misc', () => {
         [[/a/, 'b']],
         [[/.*(\[)-+/gmsu, 'b']],
         [['abc', 'def']],
-    ] as Transformation[][])('copyTransformations([%o, %o])', (t) => {
+    ] as Transformer[][])('copyTransformations([%o, %o])', (t) => {
         it('should return equivalent transformation', () => {
             expect(copyTransformations(t)).toEqual(t);
         });

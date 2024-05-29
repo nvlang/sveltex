@@ -1,5 +1,5 @@
 import { spy } from '$tests/fixtures.js';
-import { isThemableCodeBackend } from '$type-guards/code.js';
+import { isCodeBackendWithCss } from '$type-guards/code.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
 import {
@@ -37,44 +37,56 @@ describe('utils/diagnosers/codeConfiguration', () => {
             [null, 1, 0],
             [123, 1, 0],
             ['test', 1, 0],
-            [{ wrap: 1 }, 1, 0],
-            [{ wrap: {} }, 1, 0],
-            [{ wrapClassPrefix: null }, 1, 0],
+            [{ transformers: '' }, 1, 0],
+            [{ transformers: { pre: '', post: ['a', 4] } }, 2, 0],
+            [
+                {
+                    transformers: {
+                        pre: [
+                            ['a', 'b'],
+                            [/a/, 'b'],
+                        ],
+                        post: '',
+                    },
+                },
+                1,
+                0,
+            ],
+            [{ addLanguageClass: null }, 1, 0],
             [
                 { theme: null },
-                isThemableCodeBackend(b) ? 1 : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? 1 : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
             [
                 { theme: 123 },
-                isThemableCodeBackend(b) ? 1 : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? 1 : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
             [
                 { theme: 'test' },
-                isThemableCodeBackend(b) ? 1 : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? 1 : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
-            [{ theme: {} }, 0, isThemableCodeBackend(b) ? 0 : 1],
+            [{ theme: {} }, 0, isCodeBackendWithCss(b) ? 0 : 1],
             [
                 { theme: { read: 1, write: {} } },
-                isThemableCodeBackend(b) ? 2 : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? 2 : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
             [
                 { theme: { min: null, cdn: 'unknown' } },
-                isThemableCodeBackend(b) ? (b === 'highlight.js' ? 2 : 1) : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? (b === 'highlight.js' ? 2 : 1) : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
             [
                 { theme: { name: 'default', mode: 'unknown' } },
-                isThemableCodeBackend(b) ? (b === 'starry-night' ? 1 : 0) : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? (b === 'starry-night' ? 1 : 0) : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
             [
                 {
-                    wrap: () => ['', ''],
-                    wrapClassPrefix: 'prefix',
+                    addLanguageClass: 'prefix',
                     theme: {
                         name: 'e24db2f5-72cd-47c5-92f2-b10fd5ffc09e',
                         mode: 'both',
@@ -84,11 +96,11 @@ describe('utils/diagnosers/codeConfiguration', () => {
                         write: true,
                     },
                 },
-                isThemableCodeBackend(b) ? 1 : 0,
-                isThemableCodeBackend(b) ? 0 : 1,
+                isCodeBackendWithCss(b) ? 1 : 0,
+                isCodeBackendWithCss(b) ? 0 : 1,
             ],
         ])(
-            `diagnoseCodeConfiguration('${b}', %o) === { errors: %i, warnings: %i }`,
+            `('${b}', %o) → { errors: %i, warnings: %i }`,
             (config, errors, warnings) => {
                 const res = diagnoseCodeConfiguration(b, config);
                 expect(res.errors).toEqual(errors);

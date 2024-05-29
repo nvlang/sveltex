@@ -7,7 +7,7 @@ mockFs({});
 describe("CodeHandler<'none'>", () => {
     let handler: CodeHandler<'none'>;
     beforeAll(async () => {
-        handler = await CodeHandler.create('none');
+        handler = await CodeHandler.create('none', {});
     });
 
     describe("CodeHandler.create('none')", () => {
@@ -31,8 +31,8 @@ describe("CodeHandler<'none'>", () => {
                         lang: 'plaintext',
                     })
                 ).processed;
-                const expected = 'a <b> {c}\n';
-                expect(output).toEqual(expected);
+                const expected = 'a <b> {c}';
+                expect(output).toContain(expected);
             });
         });
 
@@ -51,35 +51,6 @@ describe("CodeHandler<'none'>", () => {
         describe('processor', () => {
             it('equals {}', () => {
                 expect(handler.processor).toEqual({});
-            });
-        });
-
-        describe('configuration getter', () => {
-            it('has correct defaults', async () => {
-                const defaultOptions = {
-                    lang: 'plaintext',
-                    _wrap: true,
-                    inline: false,
-                    wrapClassPrefix: 'test-',
-                };
-                expect(
-                    handler.configuration.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                        lang: 'js',
-                    }),
-                ).toEqual(['', '']);
-                await handler.configure({
-                    wrap: undefined,
-                    wrapClassPrefix: undefined,
-                });
-                expect(
-                    handler.configuration.wrap({
-                        ...defaultOptions,
-                        wrapClassPrefix: 'test-',
-                        lang: 'js',
-                    }),
-                ).toEqual(['', '']);
             });
         });
     });

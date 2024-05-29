@@ -77,7 +77,7 @@ describe("TexHandler<'custom'>", () => {
             expect(handler.processor).toEqual({});
             expect(handler.configuration).toMatchObject({
                 test: 'a',
-                transformations: { pre: [], post: [] },
+                transformers: { pre: [], post: [] },
             });
         });
     });

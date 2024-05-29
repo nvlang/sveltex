@@ -14,17 +14,12 @@ import { spawn } from '$deps.js';
 export function spawnCliInstruction(
     instr: CliInstruction,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
-    const silent = instr.silent ?? false;
     let stdout = '';
     let stderr = '';
-    const instrOpts: Partial<CliInstruction> = { ...instr };
-    delete instrOpts.command;
-    delete instrOpts.args;
-    delete instrOpts.env;
-    delete instrOpts.silent;
-    const spawnedProcess = spawn(instr.command, instr.args, {
-        ...instrOpts,
-        env: { ...process.env, ...instr.env },
+    const { command, args, env, silent, ...opts } = instr;
+    const spawnedProcess = spawn(command, args, {
+        ...opts,
+        env: { ...process.env, ...env },
     });
     return new Promise((resolve) => {
         spawnedProcess.stdout.on('data', (x) => {

@@ -11,10 +11,8 @@ import {
     type MockInstance,
 } from 'vitest';
 
-import { getDefaultCodeConfig } from '$config/defaults.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { spy } from '$tests/fixtures.js';
-import { isFunction } from '$type-guards/utils.js';
 import { consoles } from '$utils/debug.js';
 import { v4 as uuid } from 'uuid';
 
@@ -41,7 +39,7 @@ describe("CodeHandler<'highlight.js'>", () => {
         writeFileEnsureDir = mocks.writeFileEnsureDir;
         existsSync = mocks.existsSync;
         log = mocks.log;
-        handler = await CodeHandler.create('highlight.js');
+        handler = await CodeHandler.create('highlight.js', {});
     });
     let handler: CodeHandler<'highlight.js'>;
     let writeFileEnsureDir: MockInstance;
@@ -51,7 +49,7 @@ describe("CodeHandler<'highlight.js'>", () => {
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    describe("CodeHandler.create('highlight.js')", () => {
+    describe("CodeHandler.create('highlight.js',{})", () => {
         fixture();
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
@@ -63,7 +61,7 @@ describe("CodeHandler<'highlight.js'>", () => {
     describe('css', () => {
         fixture();
         it('fetches and generates CSS if run for the first time', async () => {
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
             (await handler.process('', {})).processed;
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
@@ -84,7 +82,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             writeFileEnsureDir.mockImplementationOnce(() => {
                 throw new Error(id);
             });
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
             (await handler.process('', {})).processed;
             expect(consoleErrorMock).toHaveBeenCalledTimes(1);
@@ -95,7 +93,7 @@ describe("CodeHandler<'highlight.js'>", () => {
         });
 
         it("shouldn't write CSS if configuration.theme.type is none", async () => {
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'none' } });
             (await handler.process('', {})).processed;
             expect(consoleErrorMock).toHaveBeenCalledTimes(0);
@@ -104,7 +102,7 @@ describe("CodeHandler<'highlight.js'>", () => {
         });
 
         it("shouldn't write CSS if configuration is not valid", async () => {
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({
                 theme: 123 as unknown as { type: 'none' },
             });
@@ -118,7 +116,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             const getVersionMock = vi
                 .spyOn(await import('$utils/env.js'), 'getVersion')
                 .mockResolvedValueOnce(undefined);
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
             (await handler.process('', {})).processed;
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
@@ -136,7 +134,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             const fetchCssMock = vi
                 .spyOn(await import('$utils/cdn.js'), 'fancyFetch')
                 .mockResolvedValueOnce(undefined);
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
             (await handler.process('', {})).processed;
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
@@ -148,7 +146,7 @@ describe("CodeHandler<'highlight.js'>", () => {
                 .spyOn(await import('$utils/cdn.js'), 'fancyFetch')
                 .mockResolvedValueOnce(undefined);
             existsSync.mockReturnValueOnce(true);
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
             (await handler.process('', {})).processed;
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
@@ -166,8 +164,11 @@ describe("CodeHandler<'highlight.js'>", () => {
             });
 
             it('processes simple JS code correctly', async () => {
-                const output = (await handler.process('let a', { lang: 'js' }))
-                    .processed;
+                const output = (
+                    await handler.process('let a', {
+                        lang: 'js',
+                    })
+                ).processed;
                 const expected =
                     '<pre><code class="language-js"><span class="hljs-keyword">let</span> a\n</code></pre>';
                 expect(output).toEqual(expected);
@@ -205,15 +206,27 @@ describe("CodeHandler<'highlight.js'>", () => {
             });
 
             it('configures code correctly', async () => {
-                await handler.configure({ classPrefix: 'test_' });
+                await handler.configure({
+                    'highlight.js': { classPrefix: 'test_' },
+                });
                 expect(
-                    (await handler.process('let a', { lang: 'js' })).processed,
+                    (
+                        await handler.process('let a', {
+                            lang: 'js',
+                        })
+                    ).processed,
                 ).toEqual(
                     '<pre><code class="language-js"><span class="test_keyword">let</span> a\n</code></pre>',
                 );
-                await handler.configure({ classPrefix: 'hljs-' });
+                await handler.configure({
+                    'highlight.js': { classPrefix: 'hljs-' },
+                });
                 expect(
-                    (await handler.process('let a', { lang: 'js' })).processed,
+                    (
+                        await handler.process('let a', {
+                            lang: 'js',
+                        })
+                    ).processed,
                 ).toEqual(
                     '<pre><code class="language-js"><span class="hljs-keyword">let</span> a\n</code></pre>',
                 );
@@ -238,42 +251,6 @@ describe("CodeHandler<'highlight.js'>", () => {
                 expect(handler.processor).not.toBeNull();
             });
         });
-
-        describe('configuration', () => {
-            fixture();
-            it('is default', async () => {
-                const handler = await CodeHandler.create('highlight.js');
-                expect('configuration' in handler).toBe(true);
-                const defaultCC = getDefaultCodeConfig('highlight.js');
-                expect(
-                    Object.entries(handler.configuration).filter(
-                        ([, v]) => !isFunction(v),
-                    ),
-                ).toEqual(
-                    Object.entries(defaultCC).filter(([, v]) => !isFunction(v)),
-                );
-                const defaultOptions = {
-                    lang: 'plaintext',
-                    _wrap: true,
-                    inline: false,
-                    wrapClassPrefix: 'test-',
-                };
-                expect(handler.configuration.wrap(defaultOptions)).toEqual(
-                    defaultCC.wrap(defaultOptions),
-                );
-                expect(
-                    handler.configuration.wrap({
-                        ...defaultOptions,
-                        inline: true,
-                    }),
-                ).toEqual(
-                    defaultCC.wrap({
-                        ...defaultOptions,
-                        inline: true,
-                    }),
-                );
-            });
-        });
     });
 
     describe('backend', () => {
@@ -286,7 +263,7 @@ describe("CodeHandler<'highlight.js'>", () => {
     describe('misc', () => {
         fixture();
         it('is serializable', async () => {
-            const handler = await CodeHandler.create('highlight.js');
+            const handler = await CodeHandler.create('highlight.js', {});
             const serialized = JSON.stringify(handler);
             expect(serialized).toBeTypeOf('string');
             expect(serialized).not.toBeNull();

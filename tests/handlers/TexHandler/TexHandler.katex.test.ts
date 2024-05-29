@@ -11,7 +11,8 @@ import {
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { v4 as uuid } from 'uuid';
-import { SupportedCdn } from '$types/handlers/misc.js';
+import { SupportedCdn } from '$types/handlers/Css.js';
+import { TexConfiguration } from '$types/handlers/Tex.js';
 
 function fixture() {
     beforeEach(() => {
@@ -121,6 +122,37 @@ describe("TexHandler<'katex'>", () => {
         fixture();
         describe('process()', () => {
             fixture();
+            describe('should work with different configurations', () => {
+                it.each([
+                    [{}],
+                    [{ css: { cdn: 'jsdelivr' } }],
+                    [{ css: { cdn: ['jsdelivr'] } }],
+                    [{ css: { type: 'hybrid', cdn: 'jsdelivr' } }],
+                    [{ css: { type: 'hybrid', cdn: ['jsdelivr'] } }],
+
+                    [
+                        { katex: { output: 'html' } },
+                        '<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
+                    ],
+                    [
+                        { katex: { output: 'mathml' } },
+                        '<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span>',
+                    ],
+                    [{ katex: { output: 'htmlAndMathml' } }],
+                ] as [TexConfiguration<'katex'>?, (string | RegExp)?][])(
+                    '%o',
+                    async (config, expected) => {
+                        const handler = await TexHandler.create('katex');
+                        await handler.configure(config ?? {});
+                        expect((await handler.process('x')).processed).toMatch(
+                            expected ??
+                                '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
+                        );
+                        expect(log).not.toHaveBeenCalled();
+                    },
+                );
+            });
+
             it('should work for basic inline math', async () => {
                 expect((await handler.process('x')).processed).toEqual(
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
@@ -150,9 +182,9 @@ describe("TexHandler<'katex'>", () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
-            it('should support transformations', async () => {
+            it('should support transformers', async () => {
                 await handler.configure({
-                    transformations: {
+                    transformers: {
                         pre: [
                             [/\*/g, '\\cdot'],
                             ['a', 'b'],
@@ -168,7 +200,7 @@ describe("TexHandler<'katex'>", () => {
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
                 );
                 await handler.configure({
-                    transformations: { pre: [], post: [] },
+                    transformers: { pre: [], post: [] },
                 });
                 expect(log).not.toHaveBeenCalled();
             });
@@ -201,9 +233,9 @@ describe("TexHandler<'katex'>", () => {
 
             it('works with null overrides', async () => {
                 await handler.configure({
-                    transformations: null as unknown as { pre: []; post: [] },
+                    transformers: null as unknown as { pre: []; post: [] },
                 });
-                expect(handler.configuration.transformations).toEqual({
+                expect(handler.configuration.transformers).toEqual({
                     pre: [],
                     post: [],
                 });

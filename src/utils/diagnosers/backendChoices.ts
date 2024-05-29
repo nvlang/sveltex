@@ -22,15 +22,15 @@ export const markdownBackends = [
     'none',
     'custom',
 ] as const;
-export const codeBackends: CodeBackend[] = [
+export const codeBackends = [
     'escapeOnly',
     'highlight.js',
     'starry-night',
+    'shiki',
     'none',
-    'custom',
 ] as const;
 export const texBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
-export const advancedTexBackends = ['local', 'none', 'custom'] as const;
+export const advancedTexBackends = ['local'] as const;
 const backendChoices = [
     ['markdownBackend', markdownBackends],
     ['codeBackend', codeBackends],
@@ -64,12 +64,7 @@ typeAssert<
  * This function will log any problems found to the console.
  */
 export function diagnoseBackendChoices(
-    choices: BackendChoices<
-        MarkdownBackend,
-        CodeBackend,
-        TexBackend,
-        AdvancedTexBackend
-    >,
+    choices: BackendChoices<MarkdownBackend, CodeBackend, TexBackend>,
 ) {
     if (!isNonNullObject(choices)) {
         log(

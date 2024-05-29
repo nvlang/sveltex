@@ -28,7 +28,7 @@ import {
 // External dependencies
 import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
-import { applyTransformations } from '$utils/transformations.js';
+import { applyTransformations } from '$utils/transformers.js';
 
 export class TexHandler<B extends TexBackend> extends Handler<
     B,
@@ -41,10 +41,10 @@ export class TexHandler<B extends TexBackend> extends Handler<
 > {
     override get configuration(): FullTexConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
-        const { pre, post } = this._configuration.transformations;
+        const { pre, post } = this._configuration.transformers;
         return {
             ...deepClone(this._configuration),
-            transformations: {
+            transformers: {
                 pre: copyTransformations(pre),
                 post: copyTransformations(post),
             },
@@ -52,9 +52,10 @@ export class TexHandler<B extends TexBackend> extends Handler<
     }
 
     override configureNullOverrides: [string, unknown][] = [
-        ['transformations', { pre: [], post: [] }],
-        ['transformations.pre', []],
-        ['transformations.post', []],
+        ['transformers', { pre: [], post: [] }],
+        ['transformers.pre', []],
+        ['transformers.post', []],
+        ['mathjax.chtml', {}],
         [
             'css',
             isOneOf(this.backend, ['mathjax', 'katex'])
@@ -238,16 +239,16 @@ export class TexHandler<B extends TexBackend> extends Handler<
                     { inline, options }: TexProcessOptions<'katex'>,
                     texHandler: TexHandler<'katex'>,
                 ): string => {
-                    // Get pre- and post-transformations arrays, and KaTeX
+                    // Get pre- and post-transformers arrays, and KaTeX
                     // options.
-                    const { transformations, katex } = texHandler.configuration;
+                    const { transformers, katex } = texHandler.configuration;
 
-                    // Apply pre-transformations
+                    // Apply pre-transformers
                     let transformedTex = tex;
                     transformedTex = applyTransformations(
                         transformedTex,
                         { inline: inline !== false },
-                        transformations.pre,
+                        transformers.pre,
                     );
 
                     // Escape CSS color variables
@@ -273,11 +274,11 @@ export class TexHandler<B extends TexBackend> extends Handler<
 
                     output = unescapeCssColorVars(output, cssColorVars);
 
-                    // Apply post-transformations
+                    // Apply post-transformers
                     output = applyTransformations(
                         output,
                         { inline: inline !== false },
-                        transformations.post,
+                        transformers.post,
                     );
 
                     // Return result, escaping braces (which might otherwise
@@ -333,13 +334,11 @@ export class TexHandler<B extends TexBackend> extends Handler<
 
                     if (!css) return;
 
-                    const firstCdn = isArray(cdn) ? cdn[0] : cdn;
-
                     const linkPrefix = cdnLink(
                         'katex',
                         'dist/fonts/',
                         v,
-                        firstCdn,
+                        cdns[0],
                     );
 
                     css = css.replaceAll('fonts/', linkPrefix);
@@ -358,7 +357,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                                     'katex',
                                     handler._configuration.css.type,
                                 ).css,
-                                configuration.css ?? {},
+                                configuration.css,
                             );
                         }
                     },
@@ -500,7 +499,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                         const linkPrefix = postfixWithSlash(
                             config.mathjax.chtml?.fontURL ??
                                 cdnLink(
-                                    'mathjax-full',
+                                    'mathjax',
                                     'es5/output/chtml/fonts/woff-v2/',
                                     v,
                                     firstCdn,
@@ -548,7 +547,7 @@ export class TexHandler<B extends TexBackend> extends Handler<
                                     'mathjax',
                                     handler._configuration.css.type,
                                 ).css,
-                                configuration.css ?? {},
+                                configuration.css,
                             );
                         }
 
@@ -563,15 +562,15 @@ export class TexHandler<B extends TexBackend> extends Handler<
                         });
                     },
                     process: async (tex, { inline, options }, texHandler) => {
-                        // Get pre- and post-transformations arrays
-                        const { transformations } = texHandler.configuration;
+                        // Get pre- and post-transformers arrays
+                        const { transformers } = texHandler.configuration;
 
-                        // Apply pre-transformations
+                        // Apply pre-transformers
                         let transformedTex = tex;
                         transformedTex = applyTransformations(
                             transformedTex,
                             { inline: inline !== false },
-                            transformations.pre,
+                            transformers.pre,
                         );
 
                         // Run MathJax
@@ -597,11 +596,11 @@ export class TexHandler<B extends TexBackend> extends Handler<
                         // Transform the result into something we can use
                         let output = adaptor.outerHTML(result);
 
-                        // Apply post-transformations
+                        // Apply post-transformers
                         output = applyTransformations(
                             output,
                             { inline: inline !== false },
-                            transformations.post,
+                            transformers.post,
                         );
 
                         // Return result, escaping braces (which might otherwise

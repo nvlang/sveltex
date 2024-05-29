@@ -2,20 +2,21 @@
 import type {
     CodeBackend,
     CodeConfiguration,
-    CodeConfigureFn,
-    CodeProcessFn,
-    CodeProcessOptions,
+    CodeProcessOptionsBase,
     CodeProcessor,
     FullCodeConfiguration,
-    FullCodeProcessOptions,
-    ThemableCodeBackend,
+    CodeBackendWithCss,
+    FullCodeTheme,
+    CodeConfigureFn,
+    CodeProcessFn,
 } from '$types/handlers/Code.js';
+import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultCodeConfig } from '$config/defaults.js';
-import { Handler } from '$handlers/Handler.js';
-import { isThemableCodeBackend } from '$type-guards/code.js';
-import { isArray } from '$type-guards/utils.js';
+import { Handler, deepClone } from '$handlers/Handler.js';
+import { isCodeBackendWithCss } from '$type-guards/code.js';
+import { isArray, isObject, isString } from '$type-guards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
 import { log } from '$utils/debug.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
@@ -27,28 +28,41 @@ import {
 import { fs } from '$utils/fs.js';
 import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { prefixWithSlash } from '$utils/misc.js';
+import { copyTransformations, prefixWithSlash } from '$utils/misc.js';
+import { applyTransformations } from '$utils/transformers.js';
+import { type StarryNightLanguage, starryNightLanguages } from '$data/code.js';
 
 // External dependencies
-import { typeAssert, escapeHtml, is, join, pc } from '$deps.js';
-import { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
+import { typeAssert, escapeHtml, is, join, pc, nodeAssert } from '$deps.js';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
     B,
     CodeBackend,
     CodeProcessor<B>,
-    FullCodeProcessOptions,
+    CodeProcessOptionsBase,
     CodeConfiguration<B>,
     FullCodeConfiguration<B>,
     CodeHandler<B>
 > {
+    override get configuration(): FullCodeConfiguration<B> {
+        // rfdc doesn't handle RegExps well, so we have to copy them manually
+        const { pre, post } = this._configuration.transformers;
+        return {
+            ...deepClone(this._configuration),
+            transformers: {
+                post: copyTransformations(post ?? []),
+                pre: copyTransformations(pre ?? []),
+            },
+        };
+    }
+
     override get process(): (
         code: string,
-        options?: CodeProcessOptions | undefined,
+        options?: CodeProcessOptionsBase | undefined,
     ) => Promise<ProcessedSnippet> {
         return async (
             code: string,
-            options?: CodeProcessOptions | undefined,
+            options?: CodeProcessOptionsBase | undefined,
         ) => {
             if (this.configIsValid === undefined) {
                 this.configIsValid =
@@ -56,49 +70,64 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         .errors === 0;
             }
 
-            let opts: FullCodeProcessOptions = {
-                _wrap: true,
-                inline: false,
-            };
+            let mergedOpts: CodeProcessOptionsBase = { inline: false };
 
-            if (options) opts = mergeConfigs(opts, options);
+            if (options) mergedOpts = mergeConfigs(mergedOpts, options);
 
+            // Initialize the variable holding the processed code with the
+            // original code.
             let processed = code;
-            if (opts.inline) {
+
+            const transformers = this._configuration.transformers;
+
+            // Apply the pre-transformers
+            if (transformers.pre) {
+                processed = applyTransformations(
+                    processed,
+                    mergedOpts,
+                    transformers.pre,
+                );
+            }
+
+            // In inline code spans, newlines are replaced with spaces, as per
+            // CommonMark etc. specs.
+            if (mergedOpts.inline) {
                 processed = processed.replace(/\r\n?|\n/gu, ' ');
             }
-            const unescapeOptions: UnescapeOptions = {
-                removeParagraphTag: !opts.inline,
-            };
+
+            // If the snippet corresponded to a code block, we meed to take note
+            // that we'll eventually have to remove the paragraph tag with which
+            // the MarkdownHandler has wrapped the escaped snippet.
+            const unescapeOptions = { removeParagraphTag: !mergedOpts.inline };
 
             if (!this.configIsValid) return { processed, unescapeOptions };
 
+            // For `starry-night` and `highlight.js`, possibly download the CSS
+            // for the selected theme. For all other backends, this will just
+            // set `this._handledCss` to `true` without doing anything else.
             await this.handleCss();
 
-            processed = (await super.process(processed, opts)).processed;
+            // Actually process the code, using the `process` function provided
+            // by the backend (see the `create` method below).
+            processed = (await super.process(processed, mergedOpts)).processed;
 
-            // If the `_wrap` option is set to `false`, don't wrap the output.
-            // (This is sometimes used, for example, by the VerbatimHandler.)
-            if (!opts._wrap) return { processed, unescapeOptions };
-
-            const configuration = this.configuration;
-
-            const wrapArray = configuration.wrap({
-                ...opts,
-                wrapClassPrefix: configuration.wrapClassPrefix,
-            });
-
-            if (!opts.inline) {
-                processed = processed.replace(
-                    /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
-                    '$1',
+            if (this._configuration.appendNewline && !mergedOpts.inline) {
+                const m = processed.match(
+                    /^(<pre><code[^>]*?>)(.*[^\r\n])(<\/code><\/pre>)$/su,
                 );
-                if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
-                    processed += '\n';
+                if (m?.[1] && m[2] && m[3]) {
+                    processed = `${m[1]}${m[2]}\n${m[3]}`;
                 }
             }
 
-            processed = wrapArray[0] + processed + wrapArray[1];
+            // Apply the post-transformers
+            if (transformers.post) {
+                processed = applyTransformations(
+                    processed,
+                    mergedOpts,
+                    transformers.post,
+                );
+            }
 
             return { processed, unescapeOptions };
         };
@@ -140,41 +169,49 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     private _handledCss: boolean = false;
     private async _handleCss() {
         // If the backend isn't themable, don't try to fetch any CSS
-        if (!isThemableCodeBackend(this.backend)) return;
+        if (!isCodeBackendWithCss(this.backend)) return;
+
+        const config = this._configuration;
 
         // Unfortunately, TypeScript doesn't realize that, at this point, B
-        // extends ThemableCodeBackend
-        typeAssert(is<CodeHandler<ThemableCodeBackend>>(this));
+        // extends CodeBackendWithCss
+        typeAssert(is<FullCodeConfiguration<CodeBackendWithCss>>(config));
 
-        // Convenience alias + type assertion
-        const theme = this.configuration.theme;
-        const { name, mode, min, type } = theme;
+        const theme = config.theme as FullCodeTheme<
+            'highlight.js' | 'starry-night'
+        >;
 
-        if (type === 'none') return;
+        if (theme.type === 'none') return;
 
-        const { cdn } = theme;
+        let links: string[] = [];
+        let v: string;
+        let resourceName: string;
 
-        // The backend version, used to try to ensure that the fetched
-        // stylesheet is compatible with the current version of the backend.
-        const v: string =
-            this.backend === 'highlight.js'
-                ? (await getVersion(this.backend)) ?? 'latest'
-                : 'latest';
+        if (this.backend === 'starry-night') {
+            typeAssert(
+                is<FullCodeTheme<'starry-night', 'cdn' | 'self-hosted'>>(theme),
+            );
+            v = 'latest';
+            const { name, mode, cdn } = theme;
+            resourceName = `${name === 'default' ? '' : `${name}-`}${mode}.css`;
+            const resource = `style/${resourceName}`;
+            const pkg = '@wooorm/starry-night';
+            const cdns = isArray(cdn) ? cdn : [cdn];
+            links = cdns.map((c) => cdnLink(pkg, resource, v, c));
+        } else {
+            typeAssert(
+                is<FullCodeTheme<'highlight.js', 'cdn' | 'self-hosted'>>(theme),
+            );
+            v = (await getVersion(this.backend)) ?? 'latest';
+            const { name, min, cdn } = theme;
+            resourceName = `${name}${min ? '.min' : ''}.css`;
+            const resource = `styles/${resourceName}`;
+            const pkg = 'highlight.js';
+            const cdns = isArray(cdn) ? cdn : [cdn];
+            links = cdns.map((c) => cdnLink(pkg, resource, v, c));
+        }
 
-        const resourceName =
-            this.backend === 'highlight.js'
-                ? `${name}${min ? '.min' : ''}.css`
-                : `${name === 'default' ? '' : `${name}-`}${mode}.css`;
-        const resource = `${this.backend === 'highlight.js' ? 'styles' : 'style'}/${resourceName}`;
-        const pkg =
-            this.backend === 'starry-night'
-                ? '@wooorm/starry-night'
-                : this.backend;
-        const cdns = isArray(cdn) ? cdn : [cdn];
-        const links = cdns.map((c) => cdnLink(pkg, resource, v, c));
-
-        //
-        if (type === 'cdn') {
+        if (theme.type === 'cdn') {
             if (links[0]) {
                 this._headLines = [
                     `<link rel="stylesheet" href="${links[0]}">`,
@@ -183,10 +220,8 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             return;
         }
 
-        const { dir } = theme;
-
         // Build the path to which we should write the fetched stylesheet
-        const path = join(dir, `${this.backend}@${v}.${resourceName}`);
+        const path = join(theme.dir, `${this.backend}@${v}.${resourceName}`);
 
         // If the file already exists, don't fetch it again
         if (fs.existsSync(path)) return;
@@ -209,24 +244,25 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * @param backend - The type of the code processor to create.
      * @returns A promise that resolves to a code handler of the specified type.
      */
-    static async create<B extends Exclude<CodeBackend, 'custom'>>(
-        backend: B,
-    ): Promise<CodeHandler<B>>;
+    // static async create<B extends Exclude<CodeBackend, 'custom'>>(
+    //     backend: B,
+    //     cfg?: CodeConfiguration<B>,
+    // ): Promise<CodeHandler<B>>;
 
-    static async create<B extends 'custom'>(
-        backend: B,
-        {
-            processor,
-            process,
-            configure,
-            configuration,
-        }: {
-            processor?: CodeProcessor<'custom'>;
-            process: CodeProcessFn<'custom'>;
-            configure?: CodeConfigureFn<'custom'> | undefined;
-            configuration?: CodeConfiguration<'custom'> | undefined;
-        },
-    ): Promise<CodeHandler<B>>;
+    // static async create<B extends 'custom'>(
+    //     backend: B,
+    //     {
+    //         processor,
+    //         process,
+    //         configure,
+    //         configuration,
+    //     }: {
+    //         processor?: CodeProcessor<'custom'>;
+    //         process: CodeProcessFn<'custom'>;
+    //         configure?: CodeConfigureFn<'custom'> | undefined;
+    //         configuration?: CodeConfiguration<'custom'> | undefined;
+    //     },
+    // ): Promise<CodeHandler<B>>;
 
     /**
      * Creates a code handler of the specified type.
@@ -236,230 +272,479 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      */
     static async create<B extends CodeBackend>(
         backend: B,
-        custom?: B extends 'custom'
-            ? {
-                  processor?: CodeProcessor<'custom'>;
-                  process: CodeProcessFn<'custom'>;
-                  configure?: CodeConfigureFn<'custom'> | undefined;
-                  configuration?: CodeConfiguration<'custom'> | undefined;
-              }
-            : never,
-    ) {
-        switch (backend) {
-            case 'custom':
-                if (custom === undefined) {
-                    throw new Error(
-                        'Called CodeHandler.create("custom", custom) without a second parameter.',
+        cfg: CodeConfiguration<B>,
+    ): Promise<CodeHandler<B>> {
+        if (backend === 'highlight.js') {
+            type Backend = 'highlight.js';
+            const backend: Backend = 'highlight.js';
+            typeAssert(is<CodeConfiguration<Backend>>(cfg));
+            let processor;
+            try {
+                processor = (await import('highlight.js')).default;
+            } catch (error) {
+                missingDeps.push('highlight.js');
+                throw error;
+            }
+            const process: CodeProcessFn<'highlight.js'> = (
+                code,
+                { lang, inline },
+                handler,
+            ) => {
+                const config = handler._configuration;
+                if (inline) {
+                    const inlineParsed = handler._configuration.inlineMeta(
+                        code,
+                        (tag) =>
+                            !!handler.processor.getLanguage(
+                                (config.langAlias?.[tag] ?? tag)
+                                    .toLowerCase()
+                                    .replaceAll(' ', '-'),
+                            ),
                     );
+                    if (inlineParsed) {
+                        code = inlineParsed.code;
+                        lang = inlineParsed.lang ?? lang;
+                    }
                 }
-                return new CodeHandler<'custom'>({
-                    backend: 'custom',
-                    processor: custom.processor ?? {},
-                    process: custom.process,
-                    configure: custom.configure ?? (() => undefined),
-                    configuration: mergeConfigs(
-                        getDefaultCodeConfig('custom'),
-                        custom.configuration ?? {},
-                    ),
-                });
-            case 'highlight.js':
-                try {
-                    type Backend = 'highlight.js';
-                    const processor = (await import('highlight.js')).default;
-                    const handler = new CodeHandler<Backend>({
-                        backend: 'highlight.js',
-                        processor,
-                        configuration: getDefaultCodeConfig('highlight.js'),
-                        process: (code, { lang }, codeHandler) => {
-                            return escapeBraces(
-                                codeHandler.processor.highlight(code, {
-                                    language: lang ?? 'plaintext',
-                                }).value,
-                            );
-                        },
-                        configure: (config, codeHandler) => {
-                            codeHandler.processor.configure(config);
-                        },
-                    });
-                    // Apparently, the highlight.js processor isn't
-                    // serializable. This will upset Vite, so we need to.
-                    // remove it from the object returned by `toJSON`
-                    (handler as unknown as { toJSON: () => object }).toJSON =
-                        () => {
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                            const { processor, ...rest } = handler;
-                            return rest;
-                        };
-                    return handler;
-                } catch (error) {
-                    missingDeps.push('highlight.js');
-                    throw error;
-                }
-            case 'starry-night':
-                try {
-                    type Backend = 'starry-night';
-                    type Grammar = import('@wooorm/starry-night').Grammar;
-                    const processor = await (
-                        await import('@wooorm/starry-night')
-                    ).createStarryNight([]);
-                    const findAndReplace = (
-                        await import('hast-util-find-and-replace')
-                    ).findAndReplace;
-                    const toHtml = (await import('hast-util-to-html')).toHtml;
-                    return new CodeHandler<Backend>({
-                        backend: 'starry-night',
-                        processor,
-                        process: (code, { lang }, codeHandler) => {
-                            if (
-                                !lang ||
-                                [
-                                    'plaintext',
-                                    'plain',
-                                    'text',
-                                    'txt',
-                                    '.txt',
-                                ].includes(lang)
-                            ) {
-                                return escapeBraces(escapeHtml(code));
-                            }
-                            const scope =
-                                codeHandler.processor.flagToScope(lang);
-                            if (!scope) {
-                                log(
-                                    'warn',
-                                    [
-                                        `[sveltex / starry-night] Language "${lang}" not found. Possible reasons include:`,
-                                        `- The language wasn't loaded, or the \`configure\` method wasn't awaited;`,
-                                        `- The language isn't supported (cf. ${pc.underline('https://github.com/wooorm/starry-night')});`,
-                                        `- The language flag isn't recognized (cf. \`flagToScope\` method from starry-night).`,
-                                    ].join('\n'),
-                                );
-                                return escapeBraces(escapeHtml(code));
-                            }
-                            const hast = codeHandler.processor.highlight(
-                                code,
-                                scope,
-                            );
-                            findAndReplace(hast, [
-                                ['<', uniqueEscapeSequences['<']],
-                                ['>', uniqueEscapeSequences['>']],
-                                ['{', uniqueEscapeSequences['{']],
-                                ['}', uniqueEscapeSequences['}']],
-                            ]);
-                            return customEscapeSequencesToHtml(toHtml(hast));
-                        },
-                        configuration: getDefaultCodeConfig('starry-night'),
-                        configure: async (config, codeHandler) => {
-                            if (config.customLanguages) {
-                                await codeHandler.processor.register(
-                                    config.customLanguages,
-                                );
-                            }
-                            if (config.languages) {
-                                if (config.languages === 'all') {
-                                    const { all } = await import(
-                                        '@wooorm/starry-night'
-                                    );
-                                    await codeHandler.processor.register(all);
-                                } else if (config.languages === 'common') {
-                                    const { common } = await import(
-                                        '@wooorm/starry-night'
-                                    );
-                                    await codeHandler.processor.register(
-                                        common,
-                                    );
-                                } else {
-                                    let scopes = [...config.languages];
-                                    let deps: string[] = [];
-                                    let grammars: Grammar[] = [];
-                                    while (scopes.length > 0) {
-                                        grammars = grammars.concat(
-                                            await Promise.all(
-                                                scopes.map(async (scope) => {
-                                                    const grammar = (
-                                                        (await import(
-                                                            `@wooorm/starry-night/${scope}`
-                                                        )) as {
-                                                            default: Grammar;
-                                                        }
-                                                    ).default;
-                                                    if (
-                                                        grammar.dependencies !==
-                                                            undefined &&
-                                                        grammar.dependencies
-                                                            .length > 0
-                                                    ) {
-                                                        deps.push(
-                                                            ...grammar.dependencies,
-                                                        );
-                                                    }
-                                                    return grammar;
-                                                }),
-                                            ),
-                                        );
-                                        scopes = [...deps];
-                                        deps = [];
-                                    }
-                                    await codeHandler.processor.register(
-                                        grammars,
-                                    );
-                                }
-                            }
-                        },
-                    });
-                } catch (error) {
-                    missingDeps.push(
-                        '@wooorm/starry-night',
-                        'hast-util-find-and-replace',
-                        'hast-util-to-html',
+                let processed = escapeBraces(
+                    handler.processor.highlight(code, {
+                        language: lang ?? 'plaintext',
+                    }).value,
+                );
+                const { addLanguageClass } = handler._configuration;
+                const prefix =
+                    addLanguageClass === true ? 'language-' : addLanguageClass;
+                const attr =
+                    prefix !== false && lang
+                        ? ` class="${prefix}${String(lang)}"`
+                        : '';
+                if (!inline) {
+                    processed = processed.replace(
+                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
+                        '$1',
                     );
-                    throw error;
+                    if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
+                        processed += '\n';
+                    }
                 }
-            case 'escapeOnly':
-                // const defaultWrap: { inline: WrapDescription; block: WrapDescription } =
-                //     {
-                //         inline: ['<code>', '</code>'],
-                //         block: ['<pre><code>', '</code></pre>'],
-                //     } as const;
-                return new CodeHandler<'escapeOnly'>({
-                    backend: 'escapeOnly',
-                    processor: {},
-                    configuration: {
-                        ...getDefaultCodeConfig('escapeOnly'),
-                        escapeHtml: true,
-                        escapeBraces: true,
-                    },
-                    process: (code, _opts, handler) => {
-                        let escaped = code;
-                        const configuration = handler.configuration;
-                        if (configuration.escapeHtml) {
-                            escaped = escapeHtml(escaped);
-                        }
-                        // NB: It's important to escape braces _after_ escaping HTML,
-                        // since escaping braces will introduce ampersands which
-                        // escapeHtml would escape
-                        if (configuration.escapeBraces) {
-                            escaped = escapeBraces(escaped);
-                        }
+                processed = inline
+                    ? `<code${attr}>${processed}</code>`
+                    : `<pre><code${attr}>${processed}</code></pre>`;
+                return processed;
+            };
+            const configuration = mergeConfigs(
+                getDefaultCodeConfig(backend),
+                cfg,
+            );
+            const configure: CodeConfigureFn<Backend> = (
+                config,
+                codeHandler,
+            ) => {
+                if (config[backend]) {
+                    codeHandler.processor.configure(config[backend]);
+                }
+            };
+            const handler = new CodeHandler<Backend>({
+                backend,
+                processor,
+                configuration,
+                process,
+                configure,
+            });
+            // Since this backend requires a custom `configure` method,
+            // we need to call this method to properly initialize the
+            // handle the initial configuration object.
+            await handler.configure(cfg);
+            // Apparently, the highlight.js processor isn't
+            // serializable. This will upset Vite, so we need to
+            // remove it from the object returned by `toJSON`
+            (handler as unknown as { toJSON: () => object }).toJSON = () => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { processor, ...rest } = handler;
+                return rest;
+            };
+            return handler as unknown as CodeHandler<B>;
+        } else if (backend === 'starry-night') {
+            type Backend = 'starry-night';
+            const backend: Backend = 'starry-night';
+            let processor;
+            let findAndReplace;
+            let toHtml;
+            try {
+                typeAssert(is<CodeConfiguration<'starry-night'>>(cfg));
 
-                        return escaped;
-                    },
-                    configure: () => {
-                        return;
-                    },
-                });
-            case 'none':
-                return new CodeHandler<'none'>({
-                    backend: 'none',
-                    processor: {},
-                    configuration: {
-                        wrap: () => ['', ''],
-                        wrapClassPrefix: '',
-                    },
-                    process: (code) => code,
-                });
-            default:
-                throw new Error(`Unsupported code backend: "${backend}".`);
+                processor = await (
+                    await import('@wooorm/starry-night')
+                ).createStarryNight([]);
+                findAndReplace = (await import('hast-util-find-and-replace'))
+                    .findAndReplace;
+                toHtml = (await import('hast-util-to-html')).toHtml;
+            } catch (error) {
+                missingDeps.push(
+                    '@wooorm/starry-night',
+                    'hast-util-find-and-replace',
+                    'hast-util-to-html',
+                );
+                throw error;
+            }
+            type Grammar = import('@wooorm/starry-night').Grammar;
+            const process: CodeProcessFn<Backend> = (
+                code,
+                { lang, inline },
+                handler,
+            ) => {
+                const config = handler._configuration;
+                if (inline) {
+                    const inlineParsed = config.inlineMeta(
+                        code,
+                        (tag) =>
+                            !!handler.processor.flagToScope(
+                                (config.langAlias?.[tag] ?? tag)
+                                    .toLowerCase()
+                                    .replaceAll(' ', '-'),
+                            ),
+                    );
+                    if (inlineParsed) {
+                        code = inlineParsed.code;
+                        lang = inlineParsed.lang ?? lang;
+                    }
+                }
+                lang =
+                    (lang ? config.langAlias?.[lang] ?? lang : lang) ??
+                    config.lang ??
+                    'plaintext'.toLowerCase().replaceAll(' ', '-');
+
+                let processed;
+                const scope = handler.processor.flagToScope(lang);
+                const text = ['text', 'plain', 'plaintext', 'txt'].includes(
+                    lang,
+                );
+                if (!text && scope) {
+                    const hast = handler.processor.highlight(code, scope);
+                    findAndReplace(hast, [
+                        ['<', uniqueEscapeSequences['<']],
+                        ['>', uniqueEscapeSequences['>']],
+                        ['{', uniqueEscapeSequences['{']],
+                        ['}', uniqueEscapeSequences['}']],
+                    ]);
+                    processed = customEscapeSequencesToHtml(toHtml(hast));
+                } else {
+                    if (!text && !scope) {
+                        log(
+                            'warn',
+                            [
+                                `Language "${lang}" not found. Possible reasons include:`,
+                                `- The language wasn't loaded, or the \`configure\` method was used but not awaited;`,
+                                `- The language isn't supported (cf. ${pc.underline('https://github.com/wooorm/starry-night')});`,
+                                `- The language flag isn't recognized (cf. \`flagToScope\` method from starry-night).`,
+                            ].join('\n'),
+                        );
+                    }
+                    processed = escapeBraces(escapeHtml(code));
+                }
+                const { addLanguageClass } = handler._configuration;
+                const prefix =
+                    addLanguageClass === true ? 'language-' : addLanguageClass;
+                const attr =
+                    prefix !== false && lang
+                        ? ` class="${prefix}${String(lang)}"`
+                        : '';
+
+                if (!inline) {
+                    processed = processed.replace(
+                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
+                        '$1',
+                    );
+                    if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
+                        processed += '\n';
+                    }
+                }
+
+                processed = inline
+                    ? `<code${attr}>${processed}</code>`
+                    : `<pre><code${attr}>${processed}</code></pre>`;
+                return processed;
+            };
+            const configure: CodeConfigureFn<'starry-night'> = async (
+                config,
+                codeHandler,
+            ) => {
+                if (config.languages) {
+                    // Interpret prop value
+                    const languages: (string | Grammar)[] = isString(
+                        config.languages,
+                    )
+                        ? [config.languages]
+                        : config.languages;
+                    let preset: 'all' | 'common' | undefined = undefined;
+                    if (
+                        isString(languages[0]) &&
+                        (languages[0] === 'all' || languages[0] === 'common')
+                    ) {
+                        preset = languages[0];
+                        languages.shift();
+                    }
+                    const customLanguages = languages.filter(
+                        isObject,
+                    ) as Grammar[];
+                    const languageNames = languages.filter(
+                        isString,
+                    ) as StarryNightLanguage[];
+
+                    // Register preset languages
+                    if (preset === 'all') {
+                        const { all } = await import('@wooorm/starry-night');
+                        await codeHandler.processor.register(all);
+                    } else if (preset === 'common') {
+                        const { common } = await import('@wooorm/starry-night');
+                        await codeHandler.processor.register(common);
+                    }
+                    // Register individually specified languages
+                    if (languageNames.length > 0) {
+                        let scopes = languageNames.map(
+                            (name) => starryNightLanguages[name],
+                        );
+                        let deps: string[] = [];
+                        let grammars: Grammar[] = [];
+                        while (scopes.length > 0) {
+                            grammars = grammars.concat(
+                                await Promise.all(
+                                    scopes.map(async (scope) => {
+                                        const grammar = (
+                                            (await import(
+                                                `@wooorm/starry-night/${scope}`
+                                            )) as {
+                                                default: Grammar;
+                                            }
+                                        ).default;
+                                        if (
+                                            grammar.dependencies !==
+                                                undefined &&
+                                            grammar.dependencies.length > 0
+                                        ) {
+                                            deps.push(...grammar.dependencies);
+                                        }
+                                        return grammar;
+                                    }),
+                                ),
+                            );
+                            scopes = [...deps];
+                            deps = [];
+                        }
+                        await codeHandler.processor.register(grammars);
+                    }
+                    // Register custom grammars
+                    if (customLanguages.length > 0) {
+                        await codeHandler.processor.register(customLanguages);
+                    }
+                }
+            };
+            const configuration = mergeConfigs(
+                getDefaultCodeConfig('starry-night'),
+                cfg,
+            );
+            const handler = new CodeHandler<Backend>({
+                backend,
+                configuration,
+                configure,
+                process,
+                processor,
+            });
+            // Since this backend requires a custom `configure` method, we
+            // need to call this method to properly initialize the handle
+            // the initial configuration object.
+            await handler.configure(cfg);
+            return handler as unknown as CodeHandler<B>;
+        } else if (backend === 'shiki') {
+            let shikiValidLanguageTags: string[];
+            let codeToHtml;
+            try {
+                typeAssert(is<CodeConfiguration<'shiki'>>(cfg));
+                const bundledLanguagesAlias = (await import('shiki'))
+                    .bundledLanguagesAlias;
+                const bundledLanguages = (await import('shiki'))
+                    .bundledLanguages;
+                shikiValidLanguageTags = [
+                    ...Object.keys(bundledLanguages),
+                    ...Object.keys(bundledLanguagesAlias),
+                ];
+                codeToHtml = (await import('shiki')).codeToHtml;
+            } catch (error) {
+                missingDeps.push('shiki');
+                throw error;
+            }
+
+            const process: CodeProcessFn<'shiki'> = async (
+                code: string,
+                { lang, inline, metaString },
+                handler,
+            ) => {
+                const config = handler._configuration;
+                if (inline) {
+                    const inlineParsed = config.inlineMeta(code, (tag) =>
+                        shikiValidLanguageTags.includes(
+                            (config.langAlias?.[tag] ?? tag)
+                                .toLowerCase()
+                                .replaceAll(' ', '-'),
+                        ),
+                    );
+                    if (inlineParsed) {
+                        code = inlineParsed.code;
+                        lang = inlineParsed.lang ?? lang;
+                        metaString = inlineParsed.meta ?? metaString;
+                    }
+                }
+                lang =
+                    (lang ? config.langAlias?.[lang] ?? lang : lang) ??
+                    handler.configuration.shiki.lang ??
+                    'plaintext';
+                const meta = metaString
+                    ? {
+                          ...config.parseMetaString?.(metaString, code, lang),
+                          __raw: metaString,
+                      }
+                    : {};
+                const classes: string[] = ['shiki'];
+                let processed;
+                const { theme, themes } = config.shiki;
+                const structure = inline ? 'inline' : 'classic';
+                if (themes) {
+                    processed = escapeBraces(
+                        await codeToHtml(code, {
+                            ...config.shiki,
+                            themes: themes,
+                            structure,
+                            meta,
+                            lang,
+                        }),
+                    );
+                    classes.push('shiki-themes');
+                    Object.values(themes).forEach((t) => {
+                        if (!t) return;
+                        if (isString(t)) classes.push(t);
+                        else if (t.name) classes.push(t.name);
+                    });
+                } else if (theme) {
+                    processed = escapeBraces(
+                        await codeToHtml(code, {
+                            ...config.shiki,
+                            theme: theme,
+                            structure,
+                            meta,
+                            lang,
+                        }),
+                    );
+                    if (isString(theme)) classes.push(theme);
+                    else if (theme.name) classes.push(theme.name);
+                } else {
+                    processed = escapeBraces(
+                        await codeToHtml(code, {
+                            theme: 'none',
+                            ...handler.configuration.shiki,
+                            structure,
+                            meta,
+                            lang,
+                        }),
+                    );
+                }
+                const prefix =
+                    config.addLanguageClass === true
+                        ? 'language-'
+                        : config.addLanguageClass;
+                if (lang) {
+                    if (inline) {
+                        if (prefix !== false) classes.unshift(prefix + lang);
+                        processed =
+                            `<code class="${classes.join(' ')}">` +
+                            processed +
+                            '</code>';
+                    } else if (prefix !== false) {
+                        const m = processed.match(
+                            /^(<pre[^>]*?>\s*)?(<code[^>]*>)/u,
+                        );
+                        if (m?.[2]) {
+                            if (m[2].match(/\sclass="[^"]*?"/u)) {
+                                processed = processed.replace(
+                                    m[2],
+                                    m[2].replace(
+                                        /(?<=\sclass=")/u,
+                                        `${prefix}${lang} `,
+                                    ),
+                                );
+                            } else {
+                                processed = processed.replace(
+                                    '<code',
+                                    `<code class="${prefix}${lang}"`,
+                                );
+                            }
+                        }
+                    }
+                }
+                return processed;
+            };
+            const configuration = mergeConfigs(
+                getDefaultCodeConfig('shiki'),
+                cfg,
+            );
+            const handler = new CodeHandler<'shiki'>({
+                backend,
+                processor: {},
+                configuration,
+                process,
+            });
+            return handler as unknown as CodeHandler<B>;
+        } else if (backend === 'escapeOnly') {
+            typeAssert(is<CodeConfiguration<'escapeOnly'>>(cfg));
+            const process: CodeProcessFn<'escapeOnly'> = (
+                code,
+                { lang, inline },
+                handler,
+            ) => {
+                let escaped = code;
+                const configuration = handler.configuration;
+                if (configuration.escapeHtml) {
+                    escaped = escapeHtml(escaped);
+                }
+                // NB: It's important to escape braces _after_ escaping HTML,
+                // since escaping braces will introduce ampersands which
+                // escapeHtml would escape
+                if (configuration.escapeBraces) {
+                    escaped = escapeBraces(escaped);
+                }
+
+                const { addLanguageClass } = configuration;
+                const prefix =
+                    addLanguageClass === true ? 'language-' : addLanguageClass;
+                const attr =
+                    prefix !== false && lang
+                        ? ` class="${prefix}${String(lang)}"`
+                        : '';
+                escaped = inline
+                    ? `<code${attr}>${escaped}</code>`
+                    : `<pre><code${attr}>${escaped}</code></pre>`;
+
+                return escaped;
+            };
+            const configuration = mergeConfigs(
+                getDefaultCodeConfig('escapeOnly'),
+                cfg,
+            );
+            return new CodeHandler<'escapeOnly'>({
+                backend: 'escapeOnly',
+                processor: {},
+                configuration,
+                process,
+            }) as unknown as CodeHandler<B>;
+        } else if (backend === 'none') {
+            nodeAssert(backend === 'none');
+            return new CodeHandler<'none'>({
+                backend: 'none',
+                processor: {},
+                configuration: mergeConfigs(getDefaultCodeConfig('none'), cfg),
+                process: (code) => code,
+            }) as unknown as CodeHandler<B>;
+        } else {
+            throw new Error(`Unsupported code backend: "${backend}".`);
         }
     }
 }

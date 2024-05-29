@@ -13,7 +13,7 @@ import { MathDocument } from 'mathjax-full/js/core/MathDocument.js';
 import { spy } from '$tests/fixtures.js';
 import { v4 as uuid } from 'uuid';
 import { consoles } from '$utils/debug.js';
-import { SupportedCdn } from '$types/handlers/misc.js';
+import { SupportedCdn } from '$types/handlers/Css.js';
 import { PossibleTexCssApproach } from '$types/handlers/Tex.js';
 
 function fixture() {
@@ -127,6 +127,8 @@ describe("TexHandler<'mathjax'>", () => {
                     ['hybrid', 1],
                     ['none', 0],
                     ['hybrid', 0, [], {}, undefined, true],
+                    ['hybrid', 1, ['jsdelivr'], {}],
+                    ['hybrid', 1, 'jsdelivr', {}],
                     [
                         'hybrid',
                         0,
@@ -148,6 +150,7 @@ describe("TexHandler<'mathjax'>", () => {
                         undefined,
                         true,
                     ],
+                    ['hybrid', 1, undefined, { chtml: null }],
                 ] as [
                     PossibleTexCssApproach<'mathjax'>,
                     number,
@@ -229,10 +232,10 @@ describe("TexHandler<'mathjax'>", () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
-            it('should support transformations', async () => {
+            it('should support transformers', async () => {
                 const handler = await TexHandler.create('mathjax');
                 await handler.configure({
-                    transformations: {
+                    transformers: {
                         pre: [
                             [/\*/g, '\\cdot'],
                             ['a', 'b'],

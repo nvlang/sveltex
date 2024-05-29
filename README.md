@@ -42,3 +42,12 @@ In alphabetical order:
 Contributions are very welcome. In lieu of proper contribution guidelines,
 please discuss your ideas with the maintainers before starting work on a PR,
 especially if the changes are substantial.
+
+## Acknowledgements
+
+- The TSDoc comments for many of this project's interfaces, particularly those describing options to
+ be passed to external libraries, may be copies, paraphrasings, or adaptations
+  of the official documentations of the respective libraries. Some notable examples:
+  - MathJax
+  - TikZ
+

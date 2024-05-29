@@ -9,8 +9,8 @@ import {
     vi,
 } from 'vitest';
 import { spy } from '$tests/fixtures.js';
-import { applyTransformations } from '$utils/transformations.js';
-import { Transformation } from '$types/handlers/misc.js';
+import { applyTransformations } from '$utils/transformers.js';
+import type { Transformer } from '$types/handlers/Handler.js';
 
 function fixture() {
     beforeEach(() => {
@@ -46,7 +46,7 @@ describe('applyTransformations()', () => {
             [[/a.*e/g, 'a.e'], 'a.e'],
             [['b', '.'], 'a.cde'],
             [(s: string) => s.replace('d', '.'), 'abc.e'],
-        ] as [Transformation, string][])('%s', (transformation, expected) => {
+        ] as [Transformer, string][])('%s', (transformation, expected) => {
             expect(applyTransformations('abcde', {}, transformation)).toEqual(
                 expected,
             );
@@ -75,13 +75,10 @@ describe('applyTransformations()', () => {
             ],
             [[(s: string) => s.replace('d', 'x'), ['x', '.']], 'abc.e'],
             [[['d', 'x'], (s: string) => s.replace('x', '.')], 'abc.e'],
-        ] as [Transformation[], string][])(
-            '%s',
-            (transformations, expected) => {
-                expect(
-                    applyTransformations('abcde', {}, transformations),
-                ).toEqual(expected);
-            },
-        );
+        ] as [Transformer[], string][])('%s', (transformers, expected) => {
+            expect(applyTransformations('abcde', {}, transformers)).toEqual(
+                expected,
+            );
+        });
     });
 });

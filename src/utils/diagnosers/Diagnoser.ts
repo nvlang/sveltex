@@ -8,7 +8,7 @@ import {
 import { log } from '$utils/debug.js';
 
 // External dependencies
-import { inspect, getKey } from '$deps.js';
+import { inspect, getProperty } from '$deps.js';
 
 /**
  * A class to diagnose problems in an object.
@@ -160,14 +160,14 @@ export class Diagnoser {
         prop: PropertyKey,
         expect: string,
         typeGuard: (x: unknown) => boolean,
-        expectType?: PrimitiveTypesAndNull | PrimitiveTypesAndNull[],
+        expectType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
         severity: 'error' | 'warn' = 'error',
     ) {
         let passed = true;
         const subject = this.subject;
         if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-            const propValue = getKey<unknown>(subject, prop, undefined);
+            const propValue = getProperty<unknown>(subject, prop, undefined);
             passed = !isDefined(propValue) || typeGuard(propValue);
         } else {
             passed = ifPresentAndDefined(subject, prop, typeGuard);
@@ -181,7 +181,7 @@ export class Diagnoser {
     }
 }
 
-export type PrimitiveTypesAndNull =
+export type NameOfPrimitiveTypeOrNull =
     | 'object'
     | 'string'
     | 'number'
@@ -192,13 +192,13 @@ export type PrimitiveTypesAndNull =
     | 'function'
     | 'null';
 
-export function getType(x: unknown): PrimitiveTypesAndNull {
+export function getType(x: unknown): NameOfPrimitiveTypeOrNull {
     return x === null ? 'null' : typeof x;
 }
 
 export function insteadGot(
     x: unknown,
-    expectedType?: PrimitiveTypesAndNull | PrimitiveTypesAndNull[],
+    expectedType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
 ) {
     const typeStr = getType(x);
     const showDetails = isArray(expectedType)
@@ -213,4 +213,8 @@ export function insteadGot(
         default:
             return `Instead, got${showDetails ? `: ${inspect(x, { depth: 3 })}` : ` a ${typeStr}.`}`;
     }
+}
+
+export function enquote(str: unknown) {
+    return `"${String(str)}"`;
 }

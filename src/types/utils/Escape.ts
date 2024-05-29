@@ -1,9 +1,7 @@
-import { Extends, typeAssert } from '$deps.js';
-import { TexBackend } from '$mod.js';
-import { FullCodeProcessOptions } from '$types/handlers/Code.js';
-import { TexProcessOptions } from '$types/handlers/Tex.js';
-import { VerbatimProcessOptions } from '$types/handlers/Verbatim.js';
-import { Offsets } from '$types/utils/Ast.js';
+import type { CodeProcessOptionsBase } from '$types/handlers/Code.js';
+import type { TexBackend, TexProcessOptions } from '$types/handlers/Tex.js';
+import type { VerbatimProcessOptions } from '$types/handlers/Verbatim.js';
+import type { Offsets } from '$types/utils/Ast.js';
 
 /**
  * Vernacular:
@@ -40,11 +38,11 @@ export interface ProcessableSnippet<T extends SnippetType> {
      * Object that contains options that should be passed as the second argument
      * of the `process` function of the handler that should process the snippet.
      * For example, for a fenced code block, this could be the language tag and
-     * the meta/info string, alongside `inline: false` to indicate that the
+     * the meta string, alongside `inline: false` to indicate that the
      * `innerContent` should be processed as a code block, not a code span.
      */
     optionsForProcessor: T extends 'code'
-        ? FullCodeProcessOptions
+        ? CodeProcessOptionsBase
         : T extends 'tex'
           ? TexProcessOptions<TexBackend>
           : T extends 'verbatim'
@@ -53,6 +51,10 @@ export interface ProcessableSnippet<T extends SnippetType> {
               ? {
                     /**
                      * @internal
+                     * @defaultValue
+                     * ```ts
+                     * 'yaml'
+                     * ```
                      */
                     type: 'yaml' | 'toml' | 'json';
                 }
@@ -86,7 +88,7 @@ export interface UnescapeOptions {
      * in paragraph tags. Setting this option to `true` will remove such tags,
      * if present.
      */
-    removeParagraphTag?: boolean | undefined;
+    removeParagraphTag: boolean;
 }
 
 /**
@@ -118,11 +120,10 @@ export type SnippetType =
     | 'mustacheTag'
     | 'verbatim'
     | 'frontmatter';
-// | 'advancedTex';
 
 export interface ProcessedSnippet {
     processed: string;
-    unescapeOptions?: UnescapeOptions | undefined;
+    unescapeOptions: UnescapeOptions;
 }
 
 export interface EscapableSnippet<T extends SnippetType = SnippetType>
@@ -136,7 +137,11 @@ export interface EscapedSnippet<T extends SnippetType = SnippetType>
     unescapeOptions?: UnescapeOptions | undefined;
 }
 
-type ProcessableSnippetType = 'code' | 'tex' | 'verbatim' | 'frontmatter';
+export type ProcessableSnippetType =
+    | 'code'
+    | 'tex'
+    | 'verbatim'
+    | 'frontmatter';
 
 /**
  * A small segment (or fragment, part, excerpt... or, indeed, snippet) of a
@@ -185,8 +190,6 @@ export interface Snippet<T extends SnippetType = SnippetType> {
         ? ProcessableSnippet<T>
         : undefined;
 }
-
-typeAssert<Extends<ProcessableSnippetType, SnippetType>>();
 
 export interface TexEscapeSettings {
     /**

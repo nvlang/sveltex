@@ -5,7 +5,6 @@ export const sveltexPreprocessor = await sveltex({
     markdownBackend: 'marked',
     codeBackend: 'highlight.js',
     texBackend: 'mathjax',
-    advancedTexBackend: 'local',
 });
 
 await sveltexPreprocessor.configure({
@@ -13,25 +12,18 @@ await sveltexPreprocessor.configure({
         options: {
             // async: false,
             // breaks: true,
-            // gfm: true,
+            gfm: true,
             // pedantic: false,
             // silent: false,
         },
         extensions: [gfmHeadingId()],
     },
-    code: {
-        wrap: undefined,
-        wrapClassPrefix: 'language-',
-        languages: ['ts'],
-    },
+    code: { languages: ['ts'] },
     tex: { outputFormat: 'chtml', css: { type: 'cdn' } },
     verbatim: {
         Verb: {
             type: 'escapeOnly',
-            escapeInstructions: {
-                escapeBraces: true,
-                escapeHtml: true,
-            },
+            escapeInstructions: { escapeBraces: true, escapeHtml: true },
             component: 'p',
         },
         tex: {
@@ -44,15 +36,12 @@ await sveltexPreprocessor.configure({
                 '\\usepackage{tikz}',
             ].join('\n'),
             overrides: {
-                engine: 'lualatex',
-                intermediateFiletype: 'dvi',
-                conversionOptions: {
+                conversion: {
                     svg: { bbox: '3pt' },
                     processing: {},
                     svgTransformations: {},
                 },
             },
-            documentClass: '\\documentclass{standalone}',
         },
     },
 });

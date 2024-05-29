@@ -13,10 +13,11 @@ import {
 import {
     isSimpleEscapeInstruction,
     isVerbatimType,
+    verbatimTypes,
 } from '$type-guards/verbatim.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
-import { diagnoseTexLiveConfig } from '$utils/diagnosers/texLiveConfig.js';
+import { diagnoseAdvancedTexConfig } from '$utils/diagnosers/advancedTexConfiguration.js';
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 import { VerbatimType } from '$types/handlers/Verbatim.js';
 
@@ -53,7 +54,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         'type' in x &&
         x.type &&
         isString(x.type) &&
-        isOneOf(x.type, ['code', 'noop', 'advancedTex', 'escapeOnly', 'custom'])
+        isOneOf(x.type, verbatimTypes)
             ? (x.type as VerbatimType)
             : undefined;
 
@@ -129,7 +130,20 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
 
     if (type === 'advancedTex') {
         d.ifPresent('preamble', 'a string', isString, 'string');
-        d.ifPresent('documentClass', 'a string', isString, 'string');
+        d.ifPresent(
+            'documentClass',
+            'a string or an object of type { name?: string; options?: string[] }',
+            (v) =>
+                isString(v) ||
+                isRecord(
+                    v,
+                    ([k, v]) =>
+                        (k === 'name' && (v === undefined || isString(v))) ||
+                        (k === 'options' &&
+                            (v === undefined || isStringArray(v))),
+                ),
+            ['string', 'object'],
+        );
         d.ifPresent(
             'overrides',
             'a non-null object',
@@ -138,7 +152,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         );
         ifPresentAndDefined(x, 'overrides', (v) => {
             if (!isNonNullObject(v)) return true;
-            const tlcDiagnoser = diagnoseTexLiveConfig(v);
+            const tlcDiagnoser = diagnoseAdvancedTexConfig(v);
             if (!tlcDiagnoser.passed) {
                 tlcDiagnoser.problems.forEach((problem) => {
                     d.addProblem(

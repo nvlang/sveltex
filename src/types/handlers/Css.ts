@@ -1,57 +1,7 @@
-/* eslint-disable tsdoc/syntax */
-import type { RequiredNonNullable } from '$types/utils/utility-types.js';
+import type { SupportedCdn } from '$data/cdn.js';
+import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
 
-/**
- * A string transformation, where the first element is a regex or string to
- * match, and the second element is the replacement string. The replacement
- * string can contain `$1`, `$2`, etc. to refer to capture groups in the regex.
- * In particular, the transformation will be performed by calling
- * `.replaceAll()` on the string with the regex and replacement string as first
- * and second arguments, respectively, so any features that the `.replaceAll()`
- * method supports can be used here too.
- */
-export type Transformation<Options extends object = object> =
-    | [RegExp | string, string]
-    | ((str: string, opts: Options) => string);
-
-export interface PreAndPostTransformations<Options extends object> {
-    /**
-     * Transformations to apply to the tex content before passing it to the TeX
-     * backend for processing.
-     *
-     * @remarks Each transformation may be a function `(str: string, opts:
-     * Options) => string`, or a 2-tuple `[string | RegExp, string]`. The
-     * transformations are called in the order they are listed on the output of
-     * the previous transformation (or on the original content if it's the first
-     * transformation). Each transformation `transformation` is applied as
-     * follows, depending on its type:
-     * - 2-tuple: `transformed = content.replaceAll(...transformation)`
-     * - Function: `transformed = transformation(content, opts)`
-     */
-    pre?:
-        | Transformation<Options>
-        | Transformation<Options>[]
-        | undefined
-        | null;
-
-    /**
-     * Transformations to apply to the output produced by Sveltex.
-     *
-     * @remarks Each transformation may be a function `(str: string, opts:
-     * Options) => string`, or a 2-tuple `[string | RegExp, string]`. The
-     * transformations are called in the order they are listed on the output of
-     * the previous transformation (or on the original content if it's the first
-     * transformation). Each transformation `transformation` is applied as
-     * follows, depending on its type:
-     * - 2-tuple: `transformed = content.replaceAll(...transformation)`
-     * - Function: `transformed = transformation(content, opts)`
-     */
-    post?:
-        | Transformation<Options>
-        | Transformation<Options>[]
-        | undefined
-        | null;
-}
+export type { SupportedCdn } from '$data/cdn.js';
 
 export interface NoneConfiguration {
     type: 'none';
@@ -89,7 +39,10 @@ export interface HybridCssConfiguration extends HasTimeout, HasDir {
      * The stylesheet will be modified to ensure that all its URLs use the first
      * CDN in the array instead of a relative path.
      *
-     * @defaultValue `['jsdelivr', 'esm.sh', 'unpkg']`
+     * @defaultValue
+     * ```ts
+     * 'jsdelivr'
+     * ```
      */
     cdn?: SupportedCdn | [SupportedCdn, ...SupportedCdn[]] | undefined;
 }
@@ -102,7 +55,10 @@ export interface SelfHostedCssConfiguration extends HasTimeout, HasDir {
      * the first CDN is queried, and if it fails, the next one is queried, and
      * so on.
      *
-     * @defaultValue `['jsdelivr', 'esm.sh', 'unpkg']`
+     * @defaultValue
+     * ```ts
+     * 'jsdelivr'
+     * ```
      */
     cdn?: SupportedCdn | [SupportedCdn, ...SupportedCdn[]] | undefined;
 }
@@ -110,6 +66,8 @@ export interface SelfHostedCssConfiguration extends HasTimeout, HasDir {
 interface HasTimeout {
     /**
      * The timeout for fetching the stylesheet, in milliseconds.
+     *
+     * @defaultValue `2000`
      */
     timeout?: number | undefined;
 }
@@ -125,7 +83,7 @@ interface HasDir {
 }
 
 export type FullCssConfiguration<T extends CssApproach = CssApproach> =
-    RequiredNonNullable<CssConfiguration<T>>;
+    RequiredNotNullOrUndefined<CssConfiguration<T>>;
 
 export type CssConfiguration<T extends CssApproach = CssApproach> = {
     /**
@@ -150,15 +108,13 @@ export type CssConfiguration<T extends CssApproach = CssApproach> = {
 
 type CssApproach = 'cdn' | 'hybrid' | 'self-hosted' | 'none';
 
-export type SupportedCdn = 'jsdelivr' | 'esm.sh' | 'unpkg';
-
 export type MathjaxCssConfiguration<
     T extends 'hybrid' | 'none' = 'hybrid' | 'none',
 > = CssConfiguration<T>;
 
 export type FullMathjaxCssConfiguration<
     T extends 'hybrid' | 'none' = 'hybrid' | 'none',
-> = RequiredNonNullable<MathjaxCssConfiguration<T>>;
+> = RequiredNotNullOrUndefined<MathjaxCssConfiguration<T>>;
 
 export type KatexCssConfiguration<
     T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
@@ -166,4 +122,4 @@ export type KatexCssConfiguration<
 
 export type FullKatexCssConfiguration<
     T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
-> = RequiredNonNullable<KatexCssConfiguration<T>>;
+> = RequiredNotNullOrUndefined<KatexCssConfiguration<T>>;
