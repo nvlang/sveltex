@@ -18,7 +18,7 @@ test('unified', async ({ page }) => {
 
     // Expects page to have a heading with the name of Installation.
     await expect(
-        page.getByRole('heading', { name: 'Heading 1' }),
+        page.getByRole('heading', { name: 'Heading 1: something 2' }),
     ).toBeVisible();
 
     // expect
@@ -33,8 +33,8 @@ test('unified', async ({ page }) => {
 
     // Expect H1 to have ID "welcome-to-sveltekit"
     await expect(
-        page.getByRole('heading', { name: 'Heading 1' }),
-    ).toHaveAttribute('id', 'heading-1');
+        page.getByRole('heading', { name: 'Heading 1: something 2' }),
+    ).toHaveAttribute('id', 'heading-1-something-2');
 
     await expect(page).toHaveScreenshot({ fullPage: true });
 });

@@ -11,7 +11,7 @@ import type {
 } from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultAdvancedTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$config/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,
@@ -19,7 +19,7 @@ import {
     isTexDimUnitless,
 } from '$type-guards/dvisvgm.js';
 import { isString } from '$type-guards/utils.js';
-import { mergeWithoutUndefinedOverrides } from '$utils/merge.js';
+import { mergeConfigs } from '$utils/merge.js';
 import { ensureWithinRange } from '$utils/misc.js';
 
 /**
@@ -117,8 +117,8 @@ export function buildDvisvgmInstruction({
     texPath: FilepathWithExtension;
     inputType: 'dvi' | 'pdf';
 }): CliInstruction {
-    const fullDvisvgmOptions = mergeWithoutUndefinedOverrides(
-        getDefaultAdvancedTexConfig().conversion.dvisvgm,
+    const fullDvisvgmOptions = mergeConfigs(
+        getDefaultTexConfig().conversion.dvisvgm,
         dvisvgm ?? {},
     );
 

@@ -8,7 +8,7 @@ A brief overview of each file in this directory and its main function: e
 -   `ast.ts`: Walk Svelte ASTs (Abstract Syntax Trees, as returned by Svelte's
     parser).
 -   `cli.ts`: Spawn Node.js child processes.
--   `css.ts`: Escape CSS color variables in advanced TeX contnt for compilation,
+-   `css.ts`: Escape CSS color variables in TeX contnt for compilation,
     and unescape them in the rendered SVG afterwards.
 -   `debug.ts`: Log messages to console.
 -   `diagnosers.ts`: Verify validity of certain objects, and log helpful error
@@ -31,7 +31,7 @@ A brief overview of each file in this directory and its main function: e
 -   `parseComponent.ts`: Parse a generic HTML component into its tag name,
     attributes, and inner content.
 -   `TexComponent.ts`: Intermediary class with `compile` method used by
-    `AdvancedTexHandler` to render advanced TeX content. Because of the nature
+    `TexHandler` to render TeX content. Because of the nature
     of how and when preprocessors run, any instance of this class is compiled at
     most once (if we consider cache hits "compilations", or if caching is turned
     off, then exactly once) (when content changes, it is re-instantiated; if

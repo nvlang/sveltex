@@ -1,5 +1,5 @@
 import type { CodeProcessOptionsBase } from '$types/handlers/Code.js';
-import type { TexBackend, TexProcessOptions } from '$types/handlers/Tex.js';
+import type { MathBackend, MathProcessOptions } from '$types/handlers/Math.js';
 import type { VerbatimProcessOptions } from '$types/handlers/Verbatim.js';
 import type { Offsets } from '$types/utils/Ast.js';
 
@@ -43,8 +43,8 @@ export interface ProcessableSnippet<T extends SnippetType> {
      */
     optionsForProcessor: T extends 'code'
         ? CodeProcessOptionsBase
-        : T extends 'tex'
-          ? TexProcessOptions<TexBackend>
+        : T extends 'math'
+          ? MathProcessOptions<MathBackend>
           : T extends 'verbatim'
             ? Omit<VerbatimProcessOptions, 'filename'>
             : T extends 'frontmatter'
@@ -114,7 +114,7 @@ export interface OriginalSnippet<T extends SnippetType> {
 }
 
 export type SnippetType =
-    | 'tex'
+    | 'math'
     | 'code'
     | 'svelte'
     | 'mustacheTag'
@@ -139,7 +139,7 @@ export interface EscapedSnippet<T extends SnippetType = SnippetType>
 
 export type ProcessableSnippetType =
     | 'code'
-    | 'tex'
+    | 'math'
     | 'verbatim'
     | 'frontmatter';
 
@@ -152,13 +152,13 @@ export interface Snippet<T extends SnippetType = SnippetType> {
     /**
      * Snippet type. This is used to determine which handler, if any, should
      * process the snippet. Possible values are:
-     * - `'tex'`: A snippet of LaTeX code.
+     * - `'math'`: Some TeX code to be rendered by MathJax or KaTeX.
      * - `'code'`: A code span or a fenced code block. This is forwarded to the
      *   `CodeHandler`.
      * - `'verbatim'`: A verbatim environment. This is forwarded to the
      *   `VerbatimHandler`, which checks for some errors and then may forward
      *   the snippet to:
-     *   - `AdvancedTexHandler`, if the verbatim environment was set up as a TeX
+     *   - `TexHandler`, if the verbatim environment was set up as a TeX
      *     component.
      *   - `CodeHandler`, if the verbatim environment was set up with
      *     `type` set to `code`.

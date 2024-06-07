@@ -24,7 +24,7 @@ describe("MarkdownHandler<'micromark'>", () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = (await handler.process('**strong** *em*'))
+                const output = (await handler.process('**strong** *em*', {}))
                     .processed;
                 const expected = '<p><strong>strong</strong> <em>em</em></p>';
                 expect(output).toEqual(expected);
@@ -41,16 +41,24 @@ describe("MarkdownHandler<'micromark'>", () => {
                 await handler.configure({ allowDangerousProtocol: true });
                 expect(handler.configuration.allowDangerousProtocol).toBe(true);
                 expect(
-                    (await handler.process('[example](unsafe://example.com)'))
-                        .processed,
+                    (
+                        await handler.process(
+                            '[example](unsafe://example.com)',
+                            {},
+                        )
+                    ).processed,
                 ).toEqual('<p><a href="unsafe://example.com">example</a></p>');
                 await handler.configure({ allowDangerousProtocol: false });
                 expect(handler.configuration.allowDangerousProtocol).toBe(
                     false,
                 );
                 expect(
-                    (await handler.process('[example](unsafe://example.com)'))
-                        .processed,
+                    (
+                        await handler.process(
+                            '[example](unsafe://example.com)',
+                            {},
+                        )
+                    ).processed,
                 ).toEqual('<p><a href="">example</a></p>');
             });
         });

@@ -80,12 +80,12 @@ describe.each(range(1, 3))('mergeCustom (nested: %i)', (level) => {
         );
     });
 
-    it('should not allow null overrides', () => {
+    it('should allow null overrides', () => {
         const c1 = { a: 1, b: 1 };
         const c2 = { a: 2, b: null };
         const c3 = { a: null, b: 3 };
         expect(mergeConfigsNested(level, c1, c2, c3)).toEqual(
-            nested(level, { a: 2, b: 3 }),
+            nested(level, { a: null, b: 3 }),
         );
     });
 

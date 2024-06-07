@@ -11,9 +11,9 @@
  */
 
 import type {
-    AdvancedTexConfiguration,
-    FullAdvancedTexConfiguration,
-} from '$types/handlers/AdvancedTex.js';
+    TexConfiguration,
+    FullTexConfiguration,
+} from '$types/handlers/Tex.js';
 import type {
     CodeBackend,
     CodeConfiguration,
@@ -25,10 +25,10 @@ import type {
     MarkdownConfiguration,
 } from '$types/handlers/Markdown.js';
 import type {
-    FullTexConfiguration,
-    TexBackend,
-    TexConfiguration,
-} from '$types/handlers/Tex.js';
+    FullMathConfiguration,
+    MathBackend,
+    MathConfiguration,
+} from '$types/handlers/Math.js';
 import type {
     FullVerbatimConfiguration,
     VerbatimConfiguration,
@@ -50,7 +50,7 @@ export type SupportedTexEngine =
 export interface BackendChoices<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 > {
     /**
      * Backend to use to parse Markdown. Affects extensibility.
@@ -87,54 +87,46 @@ export interface BackendChoices<
      */
     markdownBackend?: M | undefined;
 
-    /* eslint-disable tsdoc/syntax */
     /**
      * Backend to use for processing code blocks and inline code snippets.
      *
-     * The following backends escape special HTML characters and curly brackets
-     * in code blocks:
-     * - [`'highlight.js'`](https://github.com/highlightjs/highlight.js): Syntax
-     *   highlighting with Highlight.js. Install:
+     * -   `'shiki'` _(recommended)_: Syntax highlighting with
+     *     [Shiki](https://shiki.style/). Install:
      *
      * ```sh
-     *       npm add -D highlight.js
+     *       <pnpm|bun|npm|yarn> add -D shiki "@shikijs/transformers"
      * ```
      *
-     * - [`'starry-night'`](https://github.com/wooorm/starry-night): Syntax
-     *   highlighting with Starry Night. Install:
+     * -   `'starry-night'`: Syntax highlighting with
+     *     [`starry-night`](https://github.com/wooorm/starry-night). Install:
      *
      * ```sh
-     *       npm add -D "@wooorm/starry-night"
+     *       <pnpm|bun|npm|yarn> add -D "@wooorm/starry-night" hast-util-find-and-replace hast-util-to-html
      * ```
      *
-     * - [`'prismjs'`](https://github.com/PrismJS/prism): Syntax highlighting
-     *   with Prism. Install:
+     * -   `'highlight.js'`: Syntax highlighting with
+     *     [highlight.js](https://github.com/highlightjs/highlight.js). Install:
      *
      * ```sh
-     *       npm add -D prismjs
+     *       <pnpm|bun|npm|yarn> add -D highlight.js
      * ```
      *
-     * > ⚠ **Warning**: Prism is currently not well supported by SvelTeX, due to
-     * > the fact that, at the time of writing, it doesn't yet use ES modules.
-     * > As a result of this (and probably my lack of familiarity with Prism),
-     * > Prism cannot load any languages or plugins within SvelTeX. Accordingly,
-     * > I wouldn't recommend it for use with SvelTeX at the time of writing.
-     *
-     * - `'escapeOnly'`: Escape special HTML characters and curly brackets in
-     *   code blocks, but don't apply syntax highlighting. By default, code
-     *   blocks will be surrounded by `<pre><code>` tags, and inline code
-     *   snippets will be surrounded by `<code>` tags.
+     * -   `'escapeOnly'`: Escape special HTML characters and curly brackets in
+     *     code blocks, but don't apply syntax highlighting. By default, code
+     *     blocks will be surrounded by `<pre><code>` tags, and inline code
+     *     snippets will be surrounded by `<code>` tags.
      *
      * The following backends do not escape special HTML characters nor curly
      * brackets in code blocks:
-     * - `'none'`: Leave code blocks as they are.
+     * -   `'none'`: Leave code blocks as they are. NB: Special HTML characters
+     *     and curly brackets will _not_ be escaped with this backend, and code
+     *     blocks or spans will _not_ be surrounded by any tags. Because SvelTeX
      *
-     * Lastly, the following backend allows for custom code handling:
-     * - `'custom'`: Use a custom `CodeHandler`.
-     *
-     * @defaultValue `'none'`
+     * @defaultValue
+     * ```ts
+     * 'none'
+     * ```
      */
-    /* eslint-enable tsdoc/syntax */
     codeBackend?: C | undefined;
 
     /* eslint-disable tsdoc/syntax */
@@ -161,24 +153,7 @@ export interface BackendChoices<
      *   - Make sure you include the MathJax CSS file in your HTML file.
      */
     /* eslint-enable tsdoc/syntax */
-    texBackend?: T | undefined;
-
-    /**
-     * Distribution to use to render "advanced" TeX blocks (e.g.,
-     * `<TeX>\tikz{...}</TeX>` or `<TikZ>...</TikZ>`).
-     *
-     * - `'none'`: No distribution will be used.
-     * - `'local'`: A local TeX distribution will be used.
-     * - `'custom'`: *(Experimental, not recommended.)* A custom
-     *   `AdvancedTexHandler` will be used.
-     *
-     * @remarks If `'local'` is selected, a local TeX distribution must be
-     * installed. You can download a distribution from the [LaTeX
-     * Project](https://www.latex-project.org/get/).
-     *
-     * @defaultValue `'none'`.
-     */
-    // advancedTexBackend?: A | undefined;
+    mathBackend?: T | undefined;
 }
 
 /**
@@ -187,7 +162,7 @@ export interface BackendChoices<
 export interface SveltexConfiguration<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 > {
     /**
      * Configuration options for the markdown parser (e.g., `marked`, `unified`,
@@ -226,9 +201,9 @@ export interface SveltexConfiguration<
     code?: CodeConfiguration<C>;
 
     /**
-     * Configuration options for the TeX processor (e.g., KaTeX or MathJax).
-     * This is the TeX processor that will be used to, for example, render math
-     * in SvelTeX files.
+     * Configuration options for the TeX processor (KaTeX or MathJax). This is
+     * the TeX processor that will be used to, for example, render math in
+     * SvelTeX files.
      *
      * ⚠ **Warning**: These options depend on the specific TeX backend in use.
      * For example, if you are using KaTeX, different options will be available
@@ -238,20 +213,41 @@ export interface SveltexConfiguration<
      * options beyond what IntelliSense may provide, please refer to the
      * documentation of the backend in question:
      *
-     * - `katex`: [Docs](https://katex.org/docs/options.html) /
-     *   [GitHub](https://github.com/KaTeX/KaTeX)
-     * - `mathjax`: [Docs](https://docs.mathjax.org/en/latest/) /
-     *   [GitHub](https://github.com/mathjax/MathJax-src)
+     * -   `katex`: [Docs](https://katex.org/docs/options.html) /
+     *     [GitHub](https://github.com/KaTeX/KaTeX)
+     * -   `mathjax`: [Docs](https://docs.mathjax.org/en/latest/) /
+     *     [GitHub](https://github.com/mathjax/MathJax-src)
      */
-    tex?: TexConfiguration<T>;
+    math?: MathConfiguration<T>;
 
     /**
-     * Configuration options for the advanced TeX processor.
+     * Configuration options for the TeX processor.
      */
-    advancedTex?: AdvancedTexConfiguration;
+    tex?: TexConfiguration;
 
     /**
+     * Define "verbatim" environments. These are environments in which the
+     * content is processed in a specified way by SvelTeX before being passed on
+     * to the Svelte compiler. The content will not be processed by the
+     * markdown, code, or math processor (with the exception that it may be
+     * passed on to the code processor if the verbatim environment's `type` is
+     * `'code'`).
      *
+     * Define verbatim environments by providing a key-value pair where the key
+     * is the name of the environment and the value is an object describing how
+     * to process the content of the environment. The key will be used as the
+     * HTML tag with which to identify the environment, though aliases can also
+     * be configured.
+     *
+     * @example
+     *
+     * ```ts
+     * {
+     *     Example: {
+     *
+     *     }
+     * }
+     * ```
      */
     verbatim?: VerbatimConfiguration;
 
@@ -294,7 +290,7 @@ export interface SveltexConfiguration<
         //  *         }
         //  *     },
         //  *     TeX: {
-        //  *         type: 'advancedTex',
+        //  *         type: 'tex',
         //  *         aliases: ['tex', 'LaTeX', 'latex'],
         //  *         defaultAttributes: {
         //  *             inline: false,
@@ -310,7 +306,7 @@ export interface SveltexConfiguration<
         /**
          * General options surrounding SvelTeX's LaTeX support.
          */
-        tex?: undefined | Omit<TexEscapeSettings, 'enabled'>;
+        math?: undefined | Omit<TexEscapeSettings, 'enabled'>;
     };
 }
 
@@ -320,14 +316,14 @@ export interface SveltexConfiguration<
 export interface FullSveltexConfiguration<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 > {
     general: NonNullable<
         RequiredNotNullOrUndefined<SveltexConfiguration<M, C, T>['general']>
-    > & { tex: { enabled: boolean } };
+    > & { math: { enabled: boolean } };
     markdown: FullMarkdownConfiguration<M>;
     code: FullCodeConfiguration<C>;
-    tex: FullTexConfiguration<T>;
-    advancedTex: FullAdvancedTexConfiguration;
+    math: FullMathConfiguration<T>;
+    tex: FullTexConfiguration;
     verbatim: FullVerbatimConfiguration;
 }

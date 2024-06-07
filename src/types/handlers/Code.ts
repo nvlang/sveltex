@@ -33,9 +33,9 @@ export type CodeBackend =
  * - `highlight.js`: The module's `HLJSApi` type.
  * - `starry-night`: Awaited return type of the module's `createStarryNight`
  *   function.
- * - `shiki`: Shiki's `HighlighterGeneric` type.
- * - `escapeOnly`: `object`.
- * - `none`: `object`.
+ * - `shiki`: `object` (no processor).
+ * - `escapeOnly`: `object` (no processor).
+ * - `none`: `object` (no processor).
  *
  * @remarks This is the type of the `processor` property of the code handler.
  */
@@ -106,6 +106,10 @@ export interface CommonCodeConfiguration {
      * - `meta?: string`: The meta string, if any.
      * - `code: string`: The code that should be highlighted.
      *
+     * @remarks
+     * Since this function only receives the inner content of the code span,
+     * syntaxes such as `` `code`{js} `` are not supported.
+     *
      * @defaultValue
      * ```ts
      * (inlineCode, validLanguageTag) => {
@@ -137,22 +141,21 @@ export interface CommonCodeConfiguration {
      *     return { code, lang, meta };
      * };
      * ```
-     *
-     * @remarks
-     * Since this function only receives the inner content of the code span,
-     * syntaxes such as `` `code`{js} `` are not supported.
      */
-    inlineMeta?: (
-        inlineCode: string,
-        validLanguageTag: (tag: string) => boolean,
-    ) =>
-        | {
-              lang?: string | undefined;
-              meta?: string | undefined;
-              code: string;
-          }
-        | null
-        | undefined;
+    inlineMeta?:
+        | ((
+              inlineCode: string,
+              validLanguageTag: (tag: string) => boolean,
+          ) =>
+              | {
+                    lang?: string | undefined;
+                    meta?: string | undefined;
+                    code: string;
+                }
+              | null
+              | undefined)
+        | undefined
+        | null;
 
     /**
      * Whether to append a newline to code blocks. Should have no visual impact
@@ -263,7 +266,7 @@ export interface StarryNightConfig {
      *
      * @defaultValue
      * ```ts
-     * 'plaintext'
+     * undefined
      * ```
      */
     lang?: StarryNightLanguage | undefined;
@@ -357,12 +360,13 @@ export interface ShikiConfig {
      * ```
      */
     parseMetaString?:
-        | undefined
         | ((
               metaString: string,
               code: string,
               lang: string,
-          ) => Record<string, unknown> | undefined | null);
+          ) => Record<string, unknown> | undefined | null)
+        | undefined
+        | null;
 
     /**
      * Record of language aliases.
@@ -391,8 +395,8 @@ export type CodeConfiguration<B extends CodeBackend> = CommonCodeConfiguration &
     SpecificCodeConfiguration<B>;
 
 /**
- * Return type of the {@link CodeHandler | `CodeHandler`}'s
- * {@link CodeHandler.configuration | `configuration`} getter.
+ * Return type of the {@link CodeHandler | `CodeHandler`}'s `configuration`
+ * getter.
  *
  * @typeParam B - Code backend.
  */
@@ -432,8 +436,7 @@ export type FullCodeConfiguration<B extends CodeBackend> =
                 }
               : SpecificCodeConfiguration<B>);
 /**
- * Type of the {@link CodeHandler | `CodeHandler`}'s
- * {@link CodeHandler.process | `process`} function.
+ * Type of the {@link CodeHandler | `CodeHandler`}'s `process` function.
  *
  * @typeParam  B - Code backend.
  */
@@ -453,8 +456,7 @@ export type CodeProcessFn<B extends CodeBackend> =
 
 /**
  * Type of the options object that may be passed to the
- * {@link CodeHandler | `CodeHandler`}'s {@link CodeHandler.process | `process`}
- * function.
+ * {@link CodeHandler | `CodeHandler`}'s `process` function.
  */
 export interface CodeProcessOptionsBase {
     /**

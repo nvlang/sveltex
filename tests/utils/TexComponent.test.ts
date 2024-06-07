@@ -1,7 +1,8 @@
 import {
-    getDefaultAdvancedTexConfig,
+    getDefaultTexConfig,
     getDefaultVerbEnvConfig,
 } from '$config/defaults.js';
+import { texBaseCommand } from '$data/tex.js';
 import {
     readFile as nodeReadFile,
     resolve,
@@ -9,20 +10,19 @@ import {
     spawn,
     uuid,
 } from '$deps.js';
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { cartesianProduct } from '$tests/utils.js';
 import { supportedTexEngines } from '$type-guards/verbatim.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
-import { VerbEnvConfigAdvancedTex } from '$types/handlers/Verbatim.js';
+import { VerbEnvConfigTex } from '$types/handlers/Verbatim.js';
 import { CliInstruction } from '$types/utils/CliInstruction.js';
 import {
     TexComponent,
     enactPresets,
     extendedPreamble,
-    texBaseCommand,
 } from '$utils/TexComponent.js';
-import { pathExists } from '$utils/fs.js';
+import { fs, pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
 import {
     afterAll,
@@ -69,38 +69,10 @@ function realSpawnCliInstruction(
     });
 }
 
-// let ath: AdvancedTexHandler;
+// let ath: TexHandler;
 // let tc: TexComponent;
 
-const defaultConfig = getDefaultVerbEnvConfig('advancedTex');
-
-// async function setup(hash: string) {
-//     if (pathExists(`tmp/tests/${hash}`)) {
-//         await rimraf(resolve(`tmp/tests/${hash}`));
-//     }
-//     ath = await AdvancedTexHandler.create();
-//     await ath.configure({
-//         caching: { cacheDirectory: `tmp/tests/${hash}/cache` },
-//         conversion: { outputDirectory: `tmp/tests/${hash}/output` },
-//     });
-//     tc = ath.createTexComponent('$x$', {
-//         attributes: { ref: 'ref' },
-//         filename: 'TexComponent_test_ts.sveltex',
-//         selfClosing: false,
-//         tag: 'tex',
-//         config: getDefaultVerbEnvConfig('advancedTex'),
-//     });
-//     vi.clearAllMocks();
-//     tmpTestsDir = `tmp/tests/${hash}`;
-// }
-
-// async function teardown(hash: string) {
-//     if (pathExists(`tmp/tests/${hash}`)) {
-//         await rimraf(resolve(`tmp/tests/${hash}`));
-//     }
-//     vi.clearAllMocks();
-//     tmpTestsDir = '';
-// }
+const defaultConfig = getDefaultVerbEnvConfig('tex');
 
 function fixture() {
     beforeEach(() => {
@@ -144,16 +116,16 @@ afterAll(async () => {
 describe('(setter) configuration', () => {
     fixture();
     it('should correctly set configuration', async () => {
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         const tc = TexComponent.create({
-            advancedTexHandler: ath,
+            texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
             config: defaultConfig,
             tag: 'tex',
         });
         tc.configuration = {
-            type: 'advancedTex',
+            type: 'tex',
             aliases: ['SomethingElse'],
         };
         expect(tc.configuration.aliases).toEqual(['SomethingElse']);
@@ -163,11 +135,11 @@ describe('(setter) configuration', () => {
 describe('(getter) documentClass', () => {
     fixture();
     it("'standalone' → '\\documentclass[dvisvgm]{standalone}'", async () => {
-        const ath = await AdvancedTexHandler.create();
-        const config = getDefaultVerbEnvConfig('advancedTex');
+        const ath = await TexHandler.create();
+        const config = getDefaultVerbEnvConfig('tex');
         config.documentClass = 'standalone';
         const tc = TexComponent.create({
-            advancedTexHandler: ath,
+            texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
             config,
@@ -178,12 +150,12 @@ describe('(getter) documentClass', () => {
         );
     });
     it("{} → '\\documentclass[dvisvgm]{standalone}'", async () => {
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         const tc = TexComponent.create({
-            advancedTexHandler: ath,
+            texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
-            config: { type: 'advancedTex', documentClass: 'standalone' },
+            config: { type: 'tex', documentClass: 'standalone' },
             tag: 'tex',
         });
         tc.configuration.documentClass = {};
@@ -205,7 +177,7 @@ describe('compile(): catches errors', () => {
             log.mockImplementation(() => undefined);
             const id = uuid();
             const ref = 'ref';
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             await ath.configure({
                 caching: {
                     cacheDirectory: `tmp/tests/${id}/cache`,
@@ -252,7 +224,7 @@ describe('compile(): catches errors', () => {
     it('TeX → DVI/PDF (unknown error)', async () => {
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: {
                 cacheDirectory: `tmp/tests/${id}/cache`,
@@ -291,7 +263,7 @@ describe('compile(): catches errors', () => {
         async (custom) => {
             const id = uuid();
             const ref = 'ref';
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             await ath.configure({
                 caching: {
                     cacheDirectory: `tmp/tests/${id}/cache`,
@@ -365,7 +337,7 @@ describe('compile(): catches errors', () => {
         const { log } = await spy(['log']);
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: {
                 cacheDirectory: `tmp/tests/${id}/cache`,
@@ -406,7 +378,7 @@ describe('compile(): catches errors', () => {
     it('no DVI/PDF found', async () => {
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: {
                 cacheDirectory: `tmp/tests/${id}/cache`,
@@ -452,7 +424,7 @@ describe('compile(): catches errors', () => {
     it('no SVG found', async () => {
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: {
                 cacheDirectory: `tmp/tests/${id}/cache`,
@@ -486,7 +458,7 @@ describe('compile(): catches errors', () => {
             2,
             'info',
             expect.stringMatching(
-                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\/ref\//,
+                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//,
             ),
         );
         expect(writeFile).toHaveBeenCalledTimes(2);
@@ -509,7 +481,7 @@ describe('compile(): catches errors', () => {
     it('empty SVG found', async () => {
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: { cacheDirectory: `tmp/tests/${id}/cache` },
             conversion: {
@@ -544,7 +516,7 @@ describe('compile(): catches errors', () => {
             2,
             'info',
             expect.stringMatching(
-                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\/ref\//,
+                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//,
             ),
         );
         expect(writeFile).toHaveBeenCalledTimes(2);
@@ -567,7 +539,7 @@ describe('compile(): catches errors', () => {
     it('SVG → Svelte (custom)', async () => {
         const id = uuid();
         const ref = 'ref';
-        const ath = await AdvancedTexHandler.create();
+        const ath = await TexHandler.create();
         await ath.configure({
             caching: {
                 cacheDirectory: `tmp/tests/${id}/cache`,
@@ -605,7 +577,7 @@ describe('compile(): catches errors', () => {
             2,
             'info',
             expect.stringMatching(
-                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\/ref\//,
+                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//,
             ),
         );
         expect(writeFile).toHaveBeenCalledTimes(2);
@@ -626,7 +598,7 @@ describe('compile(): catches errors', () => {
     });
 });
 
-describe('AdvancedTexHandler.createTexComponent()', () => {
+describe('TexHandler.createTexComponent()', () => {
     fixture();
     describe('error handling', () => {
         fixture();
@@ -635,7 +607,7 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
             'should throw an error if no ref attribte is provided',
             async (attributes) => {
                 const id = uuid();
-                const ath = await AdvancedTexHandler.create();
+                const ath = await TexHandler.create();
                 await ath.configure({
                     caching: {
                         cacheDirectory: `tmp/tests/${id}/cache`,
@@ -662,7 +634,7 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
         it('should work', async () => {
             const id = uuid();
 
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             await ath.configure({
                 caching: {
                     cacheDirectory: `tmp/tests/${id}/cache`,
@@ -699,7 +671,7 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
                 args: [
                     '-output-format=pdf',
                     '-no-shell-escape',
-                    '-interaction=nonstopmode',
+                    '-interaction=batchmode',
                     'root.tex',
                 ],
                 command: 'pdflatex',
@@ -736,7 +708,7 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
     describe('compileCmd', () => {
         fixture();
         it('should add the right output flags for lualatexmk (pdf)', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
@@ -790,7 +762,7 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
         ];
 
         it.each(cases)(`should add $flag flag`, async (data) => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
@@ -814,6 +786,41 @@ describe('AdvancedTexHandler.createTexComponent()', () => {
 });
 
 describe.concurrent('compile()', () => {
+    describe("ref with '/'s", () => {
+        fixture();
+        it('ref/a/b/c', async () => {
+            const id = uuid();
+            const ref = 'ref/a/b/c';
+            const ath = await TexHandler.create();
+            await ath.configure({
+                caching: {
+                    cacheDirectory: `tmp/tests/${id}/cache`,
+                },
+                conversion: {
+                    outputDirectory: `tmp/tests/${id}/output`,
+                },
+            });
+            const config = getDefaultVerbEnvConfig('tex');
+            const tc = ath.createTexComponent(
+                'f12b4544-19b9-4637-a708-7d6f257e976d',
+                {
+                    attributes: { ref },
+                    filename: `file-${ref}.sveltex`,
+                    selfClosing: false,
+                    tag: 'tex',
+                    config,
+                },
+            );
+            await tc.compile();
+            expect(
+                await nodeReadFile(
+                    `tmp/tests/${id}/output/tex/${ref}.svelte`,
+                    'utf8',
+                ),
+            ).toContain('f12b4544-19b9-4637-a708-7d6f257e976d');
+        });
+    });
+
     describe('tikz', () => {
         describe('gradients', () => {
             fixture();
@@ -833,7 +840,7 @@ describe.concurrent('compile()', () => {
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
-                    const ath = await AdvancedTexHandler.create();
+                    const ath = await TexHandler.create();
                     await ath.configure({
                         caching: {
                             cacheDirectory: `tmp/tests/${id}/cache`,
@@ -843,7 +850,7 @@ describe.concurrent('compile()', () => {
                         },
                     });
                     const config = mergeConfigs(
-                        getDefaultVerbEnvConfig('advancedTex'),
+                        getDefaultVerbEnvConfig('tex'),
                         {
                             overrides: {
                                 compilation: {
@@ -856,7 +863,7 @@ describe.concurrent('compile()', () => {
                                 name: 'tikz',
                                 libraries: { shadings: true },
                             },
-                        } as VerbEnvConfigAdvancedTex,
+                        } as VerbEnvConfigTex,
                     );
                     const tc = ath.createTexComponent(
                         [
@@ -881,18 +888,6 @@ describe.concurrent('compile()', () => {
                     ).toMatch(
                         /^<svg .*<linearGradient .*<stop .*stop-color="\s*(blue|#00F|#0000FF)\s*".*stop-color="\s*(red|#F00|#FF0000)\s*"/is,
                     );
-                    // expect(writeFile).toHaveBeenCalledTimes(3);
-                    // expect(writeFile).toHaveBeenNthCalledWith(
-                    //     2,
-                    //     `tmp/tests/${id}/output/tex/${ref}.svg`,
-                    //     expect.stringMatching(
-                    //         /^<svg .*<linearGradient .*<stop .*stop-color="\s*(blue|#00F|#0000FF)\s*".*stop-color="\s*(red|#F00|#FF0000)\s*"/is,
-                    //     ),
-                    //     'utf8',
-                    // );
-                    // expect(spawnCliInstruction).toHaveBeenCalledTimes(
-                    //     1 + +(library === 'dvisvgm'),
-                    // );
                 },
             );
         });
@@ -914,7 +909,7 @@ describe.concurrent('compile()', () => {
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
-                    const ath = await AdvancedTexHandler.create();
+                    const ath = await TexHandler.create();
                     await ath.configure({
                         caching: {
                             cacheDirectory: `tmp/tests/${id}/cache`,
@@ -924,7 +919,7 @@ describe.concurrent('compile()', () => {
                         },
                     });
                     const config = mergeConfigs(
-                        getDefaultVerbEnvConfig('advancedTex'),
+                        getDefaultVerbEnvConfig('tex'),
                         {
                             overrides: {
                                 compilation: {
@@ -937,7 +932,7 @@ describe.concurrent('compile()', () => {
                                 name: 'tikz',
                                 libraries: { shadings: true },
                             },
-                        } as VerbEnvConfigAdvancedTex,
+                        } as VerbEnvConfigTex,
                     );
                     const tc = ath.createTexComponent(
                         [
@@ -956,194 +951,231 @@ describe.concurrent('compile()', () => {
                         },
                     );
                     await tc.compile();
-                    // expect(writeFile).toHaveBeenCalledTimes(3);
-
                     expect(
                         await nodeReadFile(
                             `tmp/tests/${id}/output/tex/${ref}.svelte`,
                             'utf8',
                         ),
                     ).toMatch(/^<svg .*fill-opacity\s*=\s*"\s*0.5\s*"/is);
-
-                    // expect(writeFile).toHaveBeenNthCalledWith(
-                    //     2,
-                    //     `tmp/tests/${id}/output/tex/${ref}.svg`,
-                    //     expect.stringMatching(
-                    //         /^<svg .*fill-opacity\s*=\s*"\s*0.5\s*"/is,
-                    //     ),
-                    //     'utf8',
-                    // );
-                    // expect(spawnCliInstruction).toHaveBeenCalledTimes(
-                    //     1 + +(library === 'dvisvgm'),
-                    // );
                 },
             );
         });
     });
 
-    describe.sequential('caching', () => {
-        fixture();
-        it.each([
-            ...cartesianProduct(
-                ['pdflatex', 'lualatex', 'xelatex'],
-                ['pdf', 'dvi'],
-                ['dvisvgm'],
-            ),
-            ...cartesianProduct([...supportedTexEngines], ['pdf'], ['poppler']),
-        ])(
-            '%s (%s) + %s',
-            { retry: 2 },
-            async (engine, intermediateFiletype, converter) => {
-                const { writeFile, spawnCliInstruction } = await spy(
-                    ['writeFile', 'spawnCliInstruction'],
-                    false,
-                );
-                const id = uuid();
-                const ref = 'ref';
-                const ath = await AdvancedTexHandler.create();
-                await ath.configure({
-                    caching: {
-                        cacheDirectory: `tmp/tests/${id}/cache`,
-                    },
-                    conversion: {
-                        outputDirectory: `tmp/tests/${id}/output`,
-                    },
-                });
-                const config = mergeConfigs(
-                    getDefaultVerbEnvConfig('advancedTex'),
-                    {
-                        overrides: {
-                            compilation: {
-                                engine,
-                                intermediateFiletype,
-                            },
-                            conversion: { converter },
+    describe.sequential(
+        // eslint-disable-next-line vitest/valid-describe-callback
+        'caching',
+        { timeout: 20e3, sequential: true, retry: 2 },
+        () => {
+            fixture();
+            it.each([
+                ...cartesianProduct(
+                    ['pdflatex', 'lualatex', 'xelatex'],
+                    ['pdf', 'dvi'],
+                    ['dvisvgm'],
+                ),
+                ...cartesianProduct(
+                    [...supportedTexEngines],
+                    ['pdf'],
+                    ['poppler'],
+                ),
+            ])(
+                '%s (%s) + %s',
+                { retry: 2, timeout: 10e3 },
+                async (engine, intermediateFiletype, converter) => {
+                    const { writeFile, spawnCliInstruction, log } = await spy(
+                        ['writeFile', 'spawnCliInstruction', 'log'],
+                        false,
+                    );
+                    log.mockReset();
+                    const id = uuid();
+                    const ref = 'ref';
+                    const ath = await TexHandler.create();
+                    await ath.configure({
+                        caching: {
+                            cacheDirectory: `tmp/tests/${id}/cache`,
                         },
-                    },
-                );
+                        conversion: {
+                            outputDirectory: `tmp/tests/${id}/output`,
+                        },
+                    });
+                    const config = mergeConfigs(
+                        getDefaultVerbEnvConfig('tex'),
+                        {
+                            overrides: {
+                                compilation: {
+                                    engine,
+                                    intermediateFiletype,
+                                },
+                                conversion: { converter },
+                            },
+                        },
+                    );
 
-                const tc = ath.createTexComponent('$x$', {
-                    attributes: { ref },
-                    filename: `file-${ref}.sveltex`,
-                    selfClosing: false,
-                    tag: 'tex',
-                    config,
-                });
-
-                vi.clearAllMocks();
-
-                // Compile
-                await tc.compile();
-                // Regular run:
-                // 1. Svelte → TeX: 1st `writeFile`, for `.tex` file.
-                // 2. TeX → DVI/PDF: 1st `spawnCliInstruction`, for TeX
-                //    engine.
-                // 3. DVI/PDF → SVG: Now it splits into two branches:
-                //   - dvisvgm:
-                //     1. 2nd `spawnCliInstruction`, for conversion with
-                //        dvisvgm.
-                //     2. 1st `readFile`, for `.svg` file.
-                //     3. Optimization with SVGO.
-                //     4. 2nd `writeFile`, for `.svg` file.
-                //   - Poppler:
-                //     1. Conversion with Poppler via `node-poppler`.
-                //     2. Optimization with SVGO.
-                //     3. 2nd `writeFile`, for `.svg` file.
-                // 4. SVG → Svelte: Rename file via `node:fs`.
-                // 5. 3rd `writeFile`, to write cache to `cache.json`.
-                expect(writeFile).toHaveBeenCalledTimes(3);
-                expect(writeFile).toHaveBeenNthCalledWith(
-                    1,
-                    `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
-                    expect.stringContaining('\\documentclass'),
-                    'utf8',
-                );
-                expect(writeFile).toHaveBeenNthCalledWith(
-                    2,
-                    `tmp/tests/${id}/output/tex/${ref}.svg`,
-                    expect.stringContaining('<svg'),
-                    'utf8',
-                );
-                expect(writeFile).toHaveBeenNthCalledWith(
-                    3,
-                    `tmp/tests/${id}/cache/cache.json`,
-                    expect.stringMatching(
-                        new RegExp(
-                            `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
-                        ),
-                    ),
-                    'utf8',
-                );
-                expect(spawnCliInstruction).toHaveBeenCalledTimes(
-                    1 + +(converter === 'dvisvgm'),
-                );
-                expect(spawnCliInstruction).toHaveBeenNthCalledWith(
-                    1,
-                    expect.objectContaining({
-                        command: texBaseCommand[engine as SupportedTexEngine],
-                    }),
-                );
-
-                // const existsSync = await spy('existsSync');
-                // existsSync.mockImplementation(
-                //     (path: string) =>
-                //         !!path.match(/\.(tex|dvi|svelte)$/),
-                // );
-
-                vi.clearAllMocks();
-
-                await tc.compile();
-
-                expect(writeFile).toHaveBeenCalledTimes(0);
-                expect(spawnCliInstruction).toHaveBeenCalledTimes(0);
-
-                vi.clearAllMocks();
-
-                // Different .tex hash, same PDF content & hash => compilation, but
-                // no conversion.
-                await ath
-                    .createTexComponent('$x$%', {
+                    const tc = ath.createTexComponent('$x$', {
                         attributes: { ref },
                         filename: `file-${ref}.sveltex`,
                         selfClosing: false,
                         tag: 'tex',
                         config,
-                    })
-                    .compile();
-                expect(writeFile).toHaveBeenCalledTimes(2);
-                expect(writeFile).toHaveBeenNthCalledWith(
-                    1,
-                    `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
-                    expect.stringContaining('\\documentclass'),
-                    'utf8',
-                );
-                expect(writeFile).toHaveBeenNthCalledWith(
-                    2,
-                    `tmp/tests/${id}/cache/cache.json`,
-                    expect.stringMatching(
-                        new RegExp(
-                            `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
+                    });
+
+                    await fs.writeFileEnsureDir(
+                        `tmp/tests/${id}/cache/test/test1.tex`,
+                        'test1',
+                    );
+                    await fs.writeFileEnsureDir(
+                        `tmp/tests/${id}/cache/a/b/c/test2.tex`,
+                        'test2',
+                    );
+                    await fs.writeFileEnsureDir(
+                        `tmp/tests/${id}/cache/tex/${ref}/a/b/c/test3.tex`,
+                        'test3',
+                    );
+
+                    vi.clearAllMocks();
+
+                    // Compile
+                    await tc.compile();
+                    // Regular run:
+                    // 1. Svelte → TeX: 1st `writeFile`, for `.tex` file.
+                    // 2. TeX → DVI/PDF: 1st `spawnCliInstruction`, for TeX
+                    //    engine.
+                    // 3. DVI/PDF → SVG: Now it splits into two branches:
+                    //   - dvisvgm:
+                    //     1. 2nd `spawnCliInstruction`, for conversion with
+                    //        dvisvgm.
+                    //     2. 1st `readFile`, for `.svg` file.
+                    //   - Poppler:
+                    //     1. Conversion with Poppler via `node-poppler`.
+                    // 4. SVG → Svelte:
+                    //     1. Optimization with SVGO.
+                    //     2. 2nd `writeFile`, for `.svg` file.
+                    //     3. Rename file via `node:fs`.
+                    // 5. 3rd `writeFile`, to write cache to `cache.json`.
+                    expect(writeFile).toHaveBeenCalledTimes(3);
+                    expect(writeFile).toHaveBeenNthCalledWith(
+                        1,
+                        `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
+                        expect.stringContaining('\\documentclass'),
+                        'utf8',
+                    );
+                    expect(writeFile).toHaveBeenNthCalledWith(
+                        2,
+                        `tmp/tests/${id}/output/tex/${ref}.svg`,
+                        expect.stringContaining('<svg'),
+                        'utf8',
+                    );
+                    expect(writeFile).toHaveBeenNthCalledWith(
+                        3,
+                        `tmp/tests/${id}/cache/cache.json`,
+                        expect.stringMatching(
+                            new RegExp(
+                                `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
+                            ),
                         ),
-                    ),
-                    'utf8',
-                );
-                expect(spawnCliInstruction).toHaveBeenCalledTimes(1);
-                expect(spawnCliInstruction).toHaveBeenNthCalledWith(
-                    1,
-                    expect.objectContaining({
-                        command: texBaseCommand[engine as SupportedTexEngine],
-                    }),
-                );
-                vi.restoreAllMocks();
-            },
-        );
-    });
+                        'utf8',
+                    );
+
+                    expect(spawnCliInstruction).toHaveBeenCalledTimes(
+                        1 + +(converter === 'dvisvgm'),
+                    );
+                    expect(spawnCliInstruction).toHaveBeenNthCalledWith(
+                        1,
+                        expect.objectContaining({
+                            command:
+                                texBaseCommand[engine as SupportedTexEngine],
+                        }),
+                    );
+
+                    // const existsSync = await spy('existsSync');
+                    // existsSync.mockImplementation(
+                    //     (path: string) =>
+                    //         !!path.match(/\.(tex|dvi|svelte)$/),
+                    // );
+
+                    expect(log).toHaveBeenCalledTimes(3);
+                    expect(log).toHaveBeenNthCalledWith(
+                        1,
+                        'info',
+                        expect.stringMatching(
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/test\/?$/,
+                        ),
+                    );
+                    expect(log).toHaveBeenNthCalledWith(
+                        2,
+                        'info',
+                        expect.stringMatching(
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/a\/?$/,
+                        ),
+                    );
+                    expect(log).toHaveBeenNthCalledWith(
+                        3,
+                        'info',
+                        expect.stringMatching(
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/tex\/ref\/a(\/?)$/,
+                        ),
+                    );
+
+                    vi.clearAllMocks();
+
+                    await tc.compile();
+
+                    expect(writeFile).toHaveBeenCalledTimes(0);
+                    expect(spawnCliInstruction).toHaveBeenCalledTimes(0);
+                    expect(log).toHaveBeenCalledTimes(0);
+
+                    vi.clearAllMocks();
+
+                    // Different .tex hash, same PDF content & hash => compilation, but
+                    // no conversion.
+                    await ath
+                        .createTexComponent('$x$%', {
+                            attributes: { ref },
+                            filename: `file-${ref}.sveltex`,
+                            selfClosing: false,
+                            tag: 'tex',
+                            config,
+                        })
+                        .compile();
+
+                    expect(log).toHaveBeenCalledTimes(0);
+                    expect(writeFile).toHaveBeenCalledTimes(2);
+                    expect(writeFile).toHaveBeenNthCalledWith(
+                        1,
+                        `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
+                        expect.stringContaining('\\documentclass'),
+                        'utf8',
+                    );
+                    expect(writeFile).toHaveBeenNthCalledWith(
+                        2,
+                        `tmp/tests/${id}/cache/cache.json`,
+                        expect.stringMatching(
+                            new RegExp(
+                                `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
+                            ),
+                        ),
+                        'utf8',
+                    );
+                    expect(spawnCliInstruction).toHaveBeenCalledTimes(1);
+                    expect(spawnCliInstruction).toHaveBeenNthCalledWith(
+                        1,
+                        expect.objectContaining({
+                            command:
+                                texBaseCommand[engine as SupportedTexEngine],
+                        }),
+                    );
+                    vi.restoreAllMocks();
+                },
+            );
+        },
+    );
 
     describe.sequential('overriding commands', () => {
         fixture();
         it('overrideCompilation, overrideConversion, and overrideOptimization', async () => {
             const id = uuid();
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             await ath.configure({
                 caching: { cacheDirectory: `tmp/tests/${id}/cache` },
                 conversion: {
@@ -1164,7 +1196,7 @@ describe.concurrent('compile()', () => {
                 selfClosing: false,
                 tag: 'tex',
                 config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
-                    type: 'advancedTex',
+                    type: 'tex',
                     overrides: {
                         compilation: {
                             overrideCompilation: (opts) => ({
@@ -1182,7 +1214,7 @@ describe.concurrent('compile()', () => {
                             overrideOptimization: () => 'optimized svg',
                         },
                     },
-                } as VerbEnvConfigAdvancedTex),
+                } as VerbEnvConfigTex),
             });
             const code = await tc.compile();
             expect(code).toEqual(0);
@@ -1214,14 +1246,14 @@ describe('extendedPreamble()', () => {
     describe('tikz', () => {
         it('loads tikz graphdrawing libraries if necessary', async () => {
             const { log } = await spy(['log']);
-            const verbEnvConfig = getDefaultVerbEnvConfig('advancedTex');
-            const advancedTexConfig = getDefaultAdvancedTexConfig();
-            advancedTexConfig.compilation.engine = 'lualatex';
+            const verbEnvConfig = getDefaultVerbEnvConfig('tex');
+            const texConfig = getDefaultTexConfig();
+            texConfig.compilation.engine = 'lualatex';
             verbEnvConfig.preset = {
                 name: 'tikz',
                 libraries: { graphdrawing: { routing: true } },
             };
-            expect(extendedPreamble(verbEnvConfig, advancedTexConfig)).toMatch(
+            expect(extendedPreamble(verbEnvConfig, texConfig)).toMatch(
                 /\\usepackage{tikz}.*\\usetikzlibrary{.*graphdrawing.*}.*\\usegdlibrary{routing}/is,
             );
             expect(log).not.toHaveBeenCalled();
@@ -1234,16 +1266,14 @@ describe('enactPresets()', () => {
     describe('tikz: graphdrawing', () => {
         it("complains if engine isn't LuaTeX", async () => {
             const { log } = await spy(['log']);
-            const verbEnvConfig = getDefaultVerbEnvConfig('advancedTex');
-            const advancedTexConfig = getDefaultAdvancedTexConfig();
-            advancedTexConfig.compilation.engine = 'pdflatex';
+            const verbEnvConfig = getDefaultVerbEnvConfig('tex');
+            const texConfig = getDefaultTexConfig();
+            texConfig.compilation.engine = 'pdflatex';
             verbEnvConfig.preset = {
                 name: 'tikz',
                 libraries: { graphdrawing: { routing: true } },
             };
-            expect(
-                enactPresets(verbEnvConfig, advancedTexConfig),
-            ).toMatchObject({
+            expect(enactPresets(verbEnvConfig, texConfig)).toMatchObject({
                 packages: ['tikz'],
                 tikzlibraries: ['babel', 'arrows.meta', 'calc'],
                 gdlibraries: [],
@@ -1256,16 +1286,14 @@ describe('enactPresets()', () => {
 
         it('works if engine is LuaTeX', async () => {
             const log = await spy('log');
-            const verbEnvConfig = getDefaultVerbEnvConfig('advancedTex');
-            const advancedTexConfig = getDefaultAdvancedTexConfig();
-            advancedTexConfig.compilation.engine = 'lualatex';
+            const verbEnvConfig = getDefaultVerbEnvConfig('tex');
+            const texConfig = getDefaultTexConfig();
+            texConfig.compilation.engine = 'lualatex';
             verbEnvConfig.preset = {
                 name: 'tikz',
                 libraries: { graphdrawing: { routing: true } },
             };
-            expect(
-                enactPresets(verbEnvConfig, advancedTexConfig),
-            ).toMatchObject({
+            expect(enactPresets(verbEnvConfig, texConfig)).toMatchObject({
                 packages: ['tikz'],
                 tikzlibraries: ['graphdrawing', 'babel', 'arrows.meta', 'calc'],
                 gdlibraries: ['routing'],
@@ -1276,16 +1304,14 @@ describe('enactPresets()', () => {
 
     describe('tikz: fixedpointarithmetic', () => {
         it('adds fp to packages array', () => {
-            const verbEnvConfig = getDefaultVerbEnvConfig('advancedTex');
-            const advancedTexConfig = getDefaultAdvancedTexConfig();
-            advancedTexConfig.compilation.engine = 'pdflatex';
+            const verbEnvConfig = getDefaultVerbEnvConfig('tex');
+            const texConfig = getDefaultTexConfig();
+            texConfig.compilation.engine = 'pdflatex';
             verbEnvConfig.preset = {
                 name: 'tikz',
                 libraries: { fixedpointarithmetic: true },
             };
-            expect(
-                enactPresets(verbEnvConfig, advancedTexConfig),
-            ).toMatchObject({
+            expect(enactPresets(verbEnvConfig, texConfig)).toMatchObject({
                 packages: ['tikz', 'fp'],
                 tikzlibraries: [
                     'babel',

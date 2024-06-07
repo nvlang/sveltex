@@ -1,0 +1,22 @@
+@font-face {
+    font-family: 'Monaspace Argon VF';
+    src: url('/fonts/monaspace/MonaspaceArgon-Regular.woff2') format('woff2');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Monaspace Argon VF';
+    font-style: italic;
+    font-weight: 400;
+    src: url('/fonts/monaspace/MonaspaceRadon-Italic.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Monaspace Neon VF';
+    src: url('/fonts/monaspace/MonaspaceNeon-Regular.woff2') format('woff2');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Monaspace Neon VF';
+    font-style: italic;
+    font-weight: 400;
+    src: url('/fonts/monaspace/MonaspaceRadon-Italic.woff2') format('woff2');
+}

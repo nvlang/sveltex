@@ -77,7 +77,7 @@ text
 
 ```
 
-An "advanced tex" block:
+A "tex" block:
 
 <tex ref="something">
 something
@@ -89,7 +89,7 @@ something
 \end{tikzpicture}
 </tex>
 
-That same advanced tex block, referenced with a self-closing tag:
+That same tex block, referenced with a self-closing tag:
 
 <tex ref="something" />
 

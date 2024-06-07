@@ -185,7 +185,7 @@ describe.concurrent.shuffle('escape()', () => {
                 '□',
                 [
                     {
-                        type: 'tex',
+                        type: 'math',
                         processable: {
                             innerContent: '{...}',
                             optionsForProcessor: { inline: true },
@@ -200,7 +200,7 @@ describe.concurrent.shuffle('escape()', () => {
                 '□}',
                 [
                     {
-                        type: 'tex',
+                        type: 'math',
                         processable: {
                             innerContent: '{',
                             optionsForProcessor: { inline: true },
@@ -272,7 +272,7 @@ describe.concurrent.shuffle('escape()', () => {
                 'a \n\n□\n\n c',
                 [
                     {
-                        type: 'tex',
+                        type: 'math',
                         processable: {
                             innerContent: 'b',
                             optionsForProcessor: { inline: false },
@@ -819,7 +819,7 @@ describe.concurrent.shuffle('getMathInSpecialDelimsES()', () => {
             ['\\(...\\)', true],
             ['\\[...\\]', false],
         ])('%s', (label, inline) => {
-            const tests: [string, string, EscapableSnippet<'tex'>[]][] = [
+            const tests: [string, string, EscapableSnippet<'math'>[]][] = [
                 'x^2',
                 '[1,2]',
                 'a\\cdot b',
@@ -847,11 +847,11 @@ describe.concurrent.shuffle('getMathInSpecialDelimsES()', () => {
                                       innerContent: inner,
                                       optionsForProcessor: { inline },
                                   },
-                                  type: 'tex',
+                                  type: 'math',
                               },
                           ]
                         : [],
-                ] as [string, string, EscapableSnippet<'tex'>[]];
+                ] as [string, string, EscapableSnippet<'math'>[]];
             });
             it.each(tests)(
                 '%o → %o',
@@ -1125,7 +1125,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                 },
                             },
                             type: 'code',
-                            escapeOptions: { pad: [true, true] },
+                            // escapeOptions: { pad: ['\n', 1] },
                             unescapeOptions: { removeParagraphTag: true },
                         },
                     ],
@@ -1349,7 +1349,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
         });
     });
 
-    describe('tex', () => {
+    describe('math', () => {
         describe.each([
             ...(
                 [
@@ -1392,7 +1392,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                                           inline: n === 1,
                                                       },
                                                   },
-                                                  type: 'tex',
+                                                  type: 'math',
                                               },
                                           ],
                                 ] as [
@@ -1577,9 +1577,9 @@ function texTest(opts: {
                 ? right.inner - 1
                 : right.inner,
         );
-    const expectedSnippets: Partial<EscapedSnippet<'tex'>>[] = [
+    const expectedSnippets: Partial<EscapedSnippet<'math'>>[] = [
         {
-            type: 'tex',
+            type: 'math',
             processable: {
                 innerContent,
                 optionsForProcessor: { inline },

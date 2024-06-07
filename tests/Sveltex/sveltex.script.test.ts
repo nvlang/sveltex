@@ -29,10 +29,10 @@ describe('Sveltex', () => {
         sp = await sveltex({
             markdownBackend: 'micromark',
             codeBackend: 'highlight.js',
-            texBackend: 'mathjax',
+            mathBackend: 'mathjax',
         });
         await sp.configure({
-            tex: {
+            math: {
                 css: {
                     type: 'hybrid',
                 },
@@ -43,7 +43,7 @@ describe('Sveltex', () => {
                 },
             },
             verbatim: {
-                tex: { aliases: ['TeX'], type: 'advancedTex' },
+                tex: { aliases: ['TeX'], type: 'tex' },
             },
         });
         mockFs({});
@@ -85,11 +85,9 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toContain(
                 '<svelte:head>\n<link rel="stylesheet" href="/src/sveltex/mathjax@3.2.2.svg.min.css">\n</svelte:head>\n<script>\n</script>\n<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax"',
             );
+            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
             expect(
-                Object.keys(sp.advancedTexHandler.texComponents).length,
-            ).toEqual(1);
-            expect(
-                sp.advancedTexHandler.texComponents[
+                sp.texHandler.texComponents[
                     '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex'
                 ]?.length,
             ).toEqual(1);
@@ -105,7 +103,7 @@ describe('Sveltex', () => {
             );
             expect(log).toHaveBeenCalledTimes(1);
 
-            sp.advancedTexHandler.texComponents = {};
+            sp.texHandler.texComponents = {};
         });
 
         it('works (no tex components)', async () => {
@@ -116,11 +114,9 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toEqual(
                 '<script>\n</script>\n<p>something</p>',
             );
+            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(0);
             expect(
-                Object.keys(sp.advancedTexHandler.texComponents).length,
-            ).toEqual(0);
-            expect(
-                sp.advancedTexHandler.texComponents[
+                sp.texHandler.texComponents[
                     '7a541239-3058-460b-b3c6-5076a2f3f73b.sveltex'
                 ],
             ).toBeUndefined();
@@ -136,7 +132,7 @@ describe('Sveltex', () => {
                     })
                 )?.code,
             ).toBeUndefined();
-            sp.advancedTexHandler.texComponents = {};
+            sp.texHandler.texComponents = {};
         });
         it('works', async () => {
             const markupOut = await sp.markup({
@@ -148,11 +144,9 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toContain(
                 '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href="/src/sveltex/mathjax@3.2.2.svg.min.css">\n</svelte:head>\n<script>\n</script>\n\n<p><em>text</em></p>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>\n<p><code>code</code>\n<mjx-container class="MathJax" jax="SVG">',
             );
+            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
             expect(
-                Object.keys(sp.advancedTexHandler.texComponents).length,
-            ).toEqual(1);
-            expect(
-                sp.advancedTexHandler.texComponents[
+                sp.texHandler.texComponents[
                     '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex'
                 ]?.length,
             ).toEqual(1);
@@ -167,7 +161,7 @@ describe('Sveltex', () => {
                 '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nimport \'/src/sveltex/highlight.js@11.9.0.default.min.css\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
             );
 
-            sp.advancedTexHandler.texComponents = {};
+            sp.texHandler.texComponents = {};
         });
 
         it('works (coffeescript)', async () => {
@@ -179,11 +173,9 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toContain(
                 '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
             );
+            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
             expect(
-                Object.keys(sp.advancedTexHandler.texComponents).length,
-            ).toEqual(1);
-            expect(
-                sp.advancedTexHandler.texComponents[
+                sp.texHandler.texComponents[
                     '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex'
                 ]?.length,
             ).toEqual(1);
@@ -198,7 +190,7 @@ describe('Sveltex', () => {
                 "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
             );
 
-            sp.advancedTexHandler.texComponents = {};
+            sp.texHandler.texComponents = {};
         });
     });
 });

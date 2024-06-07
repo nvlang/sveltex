@@ -31,17 +31,15 @@ export const deepClone = rfdc();
  * The following type parameters should usually be generic, with
  * {@link ActualBackend | `ActualBackend`} as the type parameter:
  *
- * @typeParam Processor - The type of
- * {@link Handler.processor | `Handler.processor`}.
+ * @typeParam Processor - The type of `Handler.processor`.
  *
  * @typeParam ProcessOptions - The type of the second parameter of the
- * {@link Handler.process | `Handler.process`} function.
+ * `Handler.process` function.
  *
- * @typeParam Configuration - The type of input accepted by
- * {@link Handler.configure |` Handler.configure`}.
+ * @typeParam Configuration - The type of input accepted by `Handler.configure`.
  *
- * @typeParam FullConfiguration - The return type of the
- * {@link Handler.configuration | `Handler.configuration`} getter.
+ * @typeParam FullConfiguration - The return type of the `Handler.configuration`
+ * getter.
  *
  * @typeParam ActualHandler - The type of the specific handler extending this
  * more generic {@link Handler | `Handler`} class.

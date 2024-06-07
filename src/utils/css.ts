@@ -1,19 +1,22 @@
 /**
  * - File: src/utils/css.ts
  * - Description: Contains utility functions for handling CSS color variables in
- *   advanced TeX content.
+ *   TeX content.
  * - Used by: src/utils/TexComponent.ts
  */
 
 // Internal dependencies
-import { namedColors } from '$data/css.js';
+import {
+    hexOfNamedColor,
+    isNamedColor,
+    isReservedHexColor,
+    nameOfHexColor,
+} from '$data/css.js';
 import { is, typeAssert } from '$deps.js';
 import { sha256 } from '$utils/misc.js';
 
 /**
  * Regular expression for matching CSS variables.
- *
- * @internal
  */
 const cssVarRegex =
     /var\((--[-]*[_a-zA-Z\u00A1-\uFFFF][-\w\u00A1-\uFFFF]*)\)/gu;
@@ -21,15 +24,11 @@ const cssVarRegex =
 /**
  * Overgeneralized type for a CSS variable, according to which any string that
  * starts with `--` would be considered a valid CSS variable.
- *
- * @internal
  */
 type CssVar = `--${string}`;
 
 /**
  * Type guard for {@link CssVar | `CssVar`}.
- *
- * @internal
  */
 function isCssVar(str: string): str is CssVar {
     return str.startsWith('--');
@@ -52,7 +51,6 @@ function isCssVar(str: string): str is CssVar {
  * \definecolor{sveltexe4a6ed}{HTML}{e4a6ed}
  * ```
  *
- * @internal
  */
 export function texDefineHexColors(cssColorVars: Map<CssVar, string>): string {
     return cssColorVars.size === 0
@@ -82,17 +80,30 @@ export function texDefineHexColors(cssColorVars: Map<CssVar, string>): string {
  * ```
  *
  * ...would return a map with the entry `'--red' => 'e4a6ed'`.
- * @internal
  */
 export function parseCssColorVarsFromTex(tex: string) {
     const cssColorVarMatches = tex.matchAll(cssVarRegex);
     const cssColorVars = new Map<CssVar, string>();
+    const hashes: string[] = [];
     for (const match of cssColorVarMatches) {
         // Generate a unique color for each CSS color variable by grabbing
         // the first 6 characters of the SHA-256 hash of the variable name.
         const cssColorVar = match[1];
-        if (cssColorVar && isCssVar(cssColorVar)) {
-            const color = sha256(cssColorVar, 'hex').slice(0, 6);
+        if (
+            cssColorVar &&
+            isCssVar(cssColorVar) &&
+            !cssColorVars.has(cssColorVar)
+        ) {
+            let color = sha256(cssColorVar, 'hex').slice(0, 6);
+            // Collision detection. Kinda over-the-top; the probability of two
+            // random 6-character hex strings being the same is 1 in 16^6, i.e.,
+            // 1 / 16,777,216, or about 0.00000596%. But alas, it's also not
+            // that difficult to implement, nor is it particularly expensive in
+            // terms of performance.
+            while (isReservedHexColor(color) || hashes.includes(color)) {
+                color = sha256(color, 'hex').slice(0, 6);
+            }
+            hashes.push(color);
             cssColorVars.set(cssColorVar, color);
         }
     }
@@ -126,7 +137,6 @@ export function parseCssColorVarsFromTex(tex: string) {
  * </svg>
  * ```
  *
- * @internal
  */
 export function unescapeCssColorVars(
     svg: string,
@@ -145,14 +155,8 @@ export function getHexRegExp(hex: string) {
     if (hex.startsWith('#')) hex = hex.slice(1);
     if (!/^[0-9A-Fa-f]+$/i.test(hex)) {
         const name = hex.toLowerCase();
-        const entry = Object.entries(namedColors).find(([, v]) =>
-            v.includes(name),
-        );
-        if (entry) {
-            hex = entry[0];
-        } else {
-            return undefined;
-        }
+        if (!isNamedColor(name)) return undefined;
+        hex = hexOfNamedColor[name];
     }
     if (![3, 4, 6, 8].includes(hex.length)) return undefined;
     hex = hex.toLowerCase();
@@ -184,7 +188,8 @@ export function getHexRegExp(hex: string) {
             );
         }
     }
-    if (longHex.length === 6) names.push(...(namedColors[longHex] ?? []));
+    if (longHex.length === 6 && isReservedHexColor(longHex))
+        names.push(...nameOfHexColor[longHex]);
     return new RegExp(
         `(?<=(?:[="'&;:<>(){}\\[\\]\\s]|^))` + // Positive lookbehind
             `[ ]?` + // Optional space
@@ -203,7 +208,7 @@ export function getHexRegExp(hex: string) {
  * preamble is provided, we assume that we're escaping CSS variables for KaTeX,
  * meaning that we'll escape them directly to hex colors (which KaTeX supports
  * natively). If a preamble is provided, we assume that we're escaping CSS
- * variables for advanced TeX, meaning that we'll escape them to named colors
+ * variables for TeX, meaning that we'll escape them to named colors
  * and define these colors using the `\definecolor` command from the `xcolor`
  * package.
  * @returns The escaped TeX content and a map of the CSS color variables to
@@ -241,7 +246,6 @@ export function getHexRegExp(hex: string) {
  *
  * ...and a map `cssColorVars` with the entry `'--red' => 'e4a6ed'`.
  *
- * @internal
  */
 export function escapeCssColorVars(tex: string, preamble?: string) {
     const cssColorVars = parseCssColorVarsFromTex(tex);

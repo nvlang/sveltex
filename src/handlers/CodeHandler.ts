@@ -28,12 +28,24 @@ import {
 import { fs } from '$utils/fs.js';
 import { getVersion, missingDeps } from '$utils/env.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { copyTransformations, prefixWithSlash } from '$utils/misc.js';
+import { copyTransformations, ensureStartsWith } from '$utils/misc.js';
 import { applyTransformations } from '$utils/transformers.js';
-import { type StarryNightLanguage, starryNightLanguages } from '$data/code.js';
+import {
+    type StarryNightLanguage,
+    starryNightLanguages,
+    StarryNightScope,
+} from '$data/code.js';
 
 // External dependencies
-import { typeAssert, escapeHtml, is, join, pc, nodeAssert } from '$deps.js';
+import {
+    typeAssert,
+    escapeHtml,
+    is,
+    join,
+    pc,
+    nodeAssert,
+    inspect,
+} from '$deps.js';
 
 export class CodeHandler<B extends CodeBackend> extends Handler<
     B,
@@ -111,14 +123,21 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             // by the backend (see the `create` method below).
             processed = (await super.process(processed, mergedOpts)).processed;
 
-            if (this._configuration.appendNewline && !mergedOpts.inline) {
-                const m = processed.match(
-                    /^(<pre><code[^>]*?>)(.*[^\r\n])(<\/code><\/pre>)$/su,
-                );
-                if (m?.[1] && m[2] && m[3]) {
-                    processed = `${m[1]}${m[2]}\n${m[3]}`;
-                }
-            }
+            // Shiki and escapeOnly don't add a \n at the end of the code block
+            // by default.
+            // if (!mergedOpts.inline) {
+            //     if (
+            //         this._configuration.appendNewline &&
+            //         (this.backend === 'shiki' || this.backend === 'escapeOnly')
+            //     ) {
+            //         const m = processed.match(
+            //             /^(<pre[^>]*?><code[^>]*?>)(.*[^\r\n])(<\/code><\/pre>)$/su,
+            //         );
+            //         if (m?.[1] && m[2] && m[3]) {
+            //             processed = `${m[1]}${m[2]}\n${m[3]}`;
+            //         }
+            //     }
+            // }
 
             // Apply the post-transformers
             if (transformers.post) {
@@ -235,8 +254,21 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         // Write the fetched CSS to the specified path
         await fancyWrite(path, css);
 
-        this._scriptLines = [`import '${prefixWithSlash(path)}';`];
+        this._scriptLines = [`import '${ensureStartsWith(path, '/')}';`];
     }
+
+    // Setting a config value to `null` should be akin to "disabling" the
+    // functionality it controls.
+    override configureNullOverrides: [string, unknown][] = [
+        ['transformers', { pre: null, post: null }],
+        ['langAlias', {}],
+        ['addLanguageClass', false],
+        ['appendNewline', false],
+        ['escapeBraces', false],
+        ['escapeHtml', false],
+        ['inlineMeta', () => undefined],
+        ['shiki', {}],
+    ];
 
     /**
      * Creates a code handler of the specified type.
@@ -292,7 +324,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             ) => {
                 const config = handler._configuration;
                 if (inline) {
-                    const inlineParsed = handler._configuration.inlineMeta(
+                    const inlineParsed = config.inlineMeta(
                         code,
                         (tag) =>
                             !!handler.processor.getLanguage(
@@ -306,11 +338,30 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         lang = inlineParsed.lang ?? lang;
                     }
                 }
-                let processed = escapeBraces(
-                    handler.processor.highlight(code, {
-                        language: lang ?? 'plaintext',
-                    }).value,
-                );
+                lang = (lang ? config.langAlias?.[lang] ?? lang : lang)
+                    ?.toLowerCase()
+                    .replaceAll(' ', '-');
+                let processed;
+                if (lang && handler.processor.getLanguage(lang)) {
+                    processed = escapeBraces(
+                        handler.processor.highlight(code, {
+                            language: lang,
+                        }).value,
+                    );
+                } else {
+                    if (lang) {
+                        log(
+                            'warn',
+                            [
+                                `Language ${inspect(lang)} not found. Possible reasons include:`,
+                                `- The language wasn't loaded;`,
+                                `- The language isn't supported (cf. ${pc.underline('https://highlightjs.readthedocs.io/en/latest/supported-languages.html')});`,
+                                `- The language flag isn't recognized (cf. \`getLanguage\` method from highlight.js).`,
+                            ].join('\n'),
+                        );
+                    }
+                    processed = escapeBraces(escapeHtml(code));
+                }
                 const { addLanguageClass } = handler._configuration;
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
@@ -323,9 +374,15 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
                         '$1',
                     );
-                    if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
+                    if (
+                        config.appendNewline &&
+                        processed !== '' &&
+                        !/(?:\r\n?|\n)$/.test(processed)
+                    ) {
                         processed += '\n';
                     }
+                } else {
+                    processed = processed.replace(/\r\n?|\n/gu, ' ');
                 }
                 processed = inline
                     ? `<code${attr}>${processed}</code>`
@@ -409,16 +466,19 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         lang = inlineParsed.lang ?? lang;
                     }
                 }
-                lang =
+                lang = (
                     (lang ? config.langAlias?.[lang] ?? lang : lang) ??
-                    config.lang ??
-                    'plaintext'.toLowerCase().replaceAll(' ', '-');
-
+                    config.lang
+                )
+                    ?.toLowerCase()
+                    .replaceAll(' ', '-');
                 let processed;
-                const scope = handler.processor.flagToScope(lang);
-                const text = ['text', 'plain', 'plaintext', 'txt'].includes(
-                    lang,
-                );
+                const scope = lang
+                    ? handler.processor.flagToScope(lang)
+                    : undefined;
+                const text =
+                    lang &&
+                    ['text', 'plain', 'plaintext', 'txt'].includes(lang);
                 if (!text && scope) {
                     const hast = handler.processor.highlight(code, scope);
                     findAndReplace(hast, [
@@ -429,12 +489,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     ]);
                     processed = customEscapeSequencesToHtml(toHtml(hast));
                 } else {
-                    if (!text && !scope) {
+                    if (lang && !text && !scope) {
                         log(
                             'warn',
                             [
                                 `Language "${lang}" not found. Possible reasons include:`,
-                                `- The language wasn't loaded, or the \`configure\` method was used but not awaited;`,
+                                `- The language wasn't loaded;`,
                                 `- The language isn't supported (cf. ${pc.underline('https://github.com/wooorm/starry-night')});`,
                                 `- The language flag isn't recognized (cf. \`flagToScope\` method from starry-night).`,
                             ].join('\n'),
@@ -455,9 +515,15 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
                         '$1',
                     );
-                    if (processed !== '' && !processed.match(/(?:\r\n?|\n)$/)) {
+                    if (
+                        config.appendNewline &&
+                        processed !== '' &&
+                        !/(?:\r\n?|\n)$/.test(processed)
+                    ) {
                         processed += '\n';
                     }
+                } else {
+                    processed = processed.replace(/\r\n?|\n/gu, ' ');
                 }
 
                 processed = inline
@@ -504,7 +570,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         let scopes = languageNames.map(
                             (name) => starryNightLanguages[name],
                         );
-                        let deps: string[] = [];
+                        let deps: StarryNightScope[] = [];
                         let grammars: Grammar[] = [];
                         while (scopes.length > 0) {
                             grammars = grammars.concat(
@@ -522,7 +588,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                                                 undefined &&
                                             grammar.dependencies.length > 0
                                         ) {
-                                            deps.push(...grammar.dependencies);
+                                            deps.push(
+                                                ...(grammar.dependencies as StarryNightScope[]),
+                                            );
                                         }
                                         return grammar;
                                     }),
@@ -580,6 +648,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 handler,
             ) => {
                 const config = handler._configuration;
+                let shouldAddNewline = !inline && config.appendNewline;
                 if (inline) {
                     const inlineParsed = config.inlineMeta(code, (tag) =>
                         shikiValidLanguageTags.includes(
@@ -593,11 +662,34 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         lang = inlineParsed.lang ?? lang;
                         metaString = inlineParsed.meta ?? metaString;
                     }
+                } else if (shouldAddNewline) {
+                    shouldAddNewline =
+                        code !== '' && !/(?:\r\n?|\n)$/.test(code);
                 }
-                lang =
+                lang = (
                     (lang ? config.langAlias?.[lang] ?? lang : lang) ??
-                    handler.configuration.shiki.lang ??
-                    'plaintext';
+                    handler.configuration.shiki.lang
+                )
+                    ?.toLowerCase()
+                    .replaceAll(' ', '-');
+                let langUndefined: boolean = false;
+                let langUnknown: string | undefined = undefined;
+                if (!lang) {
+                    lang = 'text';
+                    langUndefined = true;
+                } else if (!shikiValidLanguageTags.includes(lang)) {
+                    log(
+                        'warn',
+                        [
+                            `Language "${lang}" not found. Possible reasons include:`,
+                            `- The language wasn't loaded;`,
+                            `- The language isn't supported (cf. ${pc.underline('https://shiki.style/languages')});`,
+                            `- The language flag isn't recognized.`,
+                        ].join('\n'),
+                    );
+                    langUnknown = lang;
+                    lang = 'text';
+                }
                 const meta = metaString
                     ? {
                           ...config.parseMetaString?.(metaString, code, lang),
@@ -615,12 +707,16 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             themes: themes,
                             structure,
                             meta,
-                            lang,
+                            lang: lang,
                         }),
                     );
                     classes.push('shiki-themes');
-                    Object.values(themes).forEach((t) => {
-                        if (!t) return;
+                    const { light, ...rest } = themes;
+                    [light, ...Object.values(rest)].forEach((t) => {
+                        nodeAssert(
+                            t,
+                            'Expected theme object not to be null or undefined.',
+                        );
                         if (isString(t)) classes.push(t);
                         else if (t.name) classes.push(t.name);
                     });
@@ -651,30 +747,35 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     config.addLanguageClass === true
                         ? 'language-'
                         : config.addLanguageClass;
-                if (lang) {
-                    if (inline) {
-                        if (prefix !== false) classes.unshift(prefix + lang);
-                        processed =
-                            `<code class="${classes.join(' ')}">` +
-                            processed +
-                            '</code>';
-                    } else if (prefix !== false) {
-                        const m = processed.match(
-                            /^(<pre[^>]*?>\s*)?(<code[^>]*>)/u,
+
+                if (inline) {
+                    if (prefix !== false && !langUndefined)
+                        classes.unshift(prefix + lang);
+                    processed =
+                        `<code class="${classes.join(' ')}">` +
+                        processed +
+                        '</code>';
+                } else {
+                    if (shouldAddNewline) {
+                        processed = processed.replace(/(<\/code>.+?)/, '\n$1');
+                    }
+                    if (prefix !== false && !langUndefined) {
+                        const m = /^(<pre[^>]*?>\s*)?(<code[^>]*>)/u.exec(
+                            processed,
                         );
                         if (m?.[2]) {
-                            if (m[2].match(/\sclass="[^"]*?"/u)) {
+                            if (/\sclass="[^"]*?"/u.test(m[2])) {
                                 processed = processed.replace(
                                     m[2],
                                     m[2].replace(
                                         /(?<=\sclass=")/u,
-                                        `${prefix}${lang} `,
+                                        `${prefix}${langUnknown ?? lang} `,
                                     ),
                                 );
                             } else {
                                 processed = processed.replace(
                                     '<code',
-                                    `<code class="${prefix}${lang}"`,
+                                    `<code class="${prefix}${langUnknown ?? lang}"`,
                                 );
                             }
                         }
@@ -701,18 +802,26 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 handler,
             ) => {
                 let escaped = code;
-                const configuration = handler.configuration;
-                if (configuration.escapeHtml) {
+                const config = handler.configuration;
+                const shouldAddNewline =
+                    !inline &&
+                    config.appendNewline &&
+                    code !== '' &&
+                    !/(?:\r\n?|\n)$/.test(code);
+                if (config.escapeHtml) {
                     escaped = escapeHtml(escaped);
                 }
                 // NB: It's important to escape braces _after_ escaping HTML,
                 // since escaping braces will introduce ampersands which
                 // escapeHtml would escape
-                if (configuration.escapeBraces) {
+                if (config.escapeBraces) {
                     escaped = escapeBraces(escaped);
                 }
+                if (shouldAddNewline) {
+                    escaped += '\n';
+                }
 
-                const { addLanguageClass } = configuration;
+                const { addLanguageClass } = config;
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
                 const attr =

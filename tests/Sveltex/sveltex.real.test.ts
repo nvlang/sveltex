@@ -3,7 +3,7 @@
  */
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend } from '$types/handlers/Tex.js';
+import type { MathBackend } from '$types/handlers/Math.js';
 
 import { Sveltex, sveltex } from '$Sveltex.js';
 import { spy } from '$tests/fixtures.js';
@@ -39,34 +39,34 @@ const preprocessors = [
     await sveltex({
         markdownBackend: 'markdown-it',
         codeBackend: 'highlight.js',
-        texBackend: 'katex',
+        mathBackend: 'katex',
     }),
     await sveltex(
         {
             markdownBackend: 'micromark',
             codeBackend: 'escapeOnly',
-            texBackend: 'mathjax',
+            mathBackend: 'mathjax',
         },
         {
-            tex: { css: { type: 'none' } },
-            verbatim: { tex: { type: 'advancedTex', aliases: ['TeX'] } },
+            math: { css: { type: 'none' } },
+            verbatim: { tex: { type: 'tex', aliases: ['TeX'] } },
         },
     ),
     await sveltex(
         {
             markdownBackend: 'micromark',
             codeBackend: 'starry-night',
-            texBackend: 'mathjax',
+            mathBackend: 'mathjax',
         },
         {
-            tex: { outputFormat: 'chtml', css: { type: 'none' } },
+            math: { outputFormat: 'chtml', css: { type: 'none' } },
             code: { theme: { type: 'cdn', mode: 'dark', name: 'dimmed' } },
         },
     ),
     await sveltex(
         {
             codeBackend: 'highlight.js',
-            texBackend: 'katex',
+            mathBackend: 'katex',
         },
         {
             code: {
@@ -77,17 +77,17 @@ const preprocessors = [
                     name: 'tokyo-night-dark',
                 },
             },
-            tex: { css: { type: 'cdn', cdn: 'jsdelivr' } },
+            math: { css: { type: 'cdn', cdn: 'jsdelivr' } },
         },
     ),
     await sveltex(
         {
             codeBackend: 'highlight.js',
-            texBackend: 'katex',
+            mathBackend: 'katex',
         },
         {
             code: { theme: { type: 'cdn' } },
-            tex: { css: { type: 'cdn' } },
+            math: { css: { type: 'cdn' } },
         },
     ),
     await sveltex(
@@ -98,7 +98,31 @@ const preprocessors = [
             code: { theme: { type: 'none' } },
         },
     ),
-] as Sveltex<MarkdownBackend, CodeBackend, TexBackend>[];
+    await sveltex(
+        {
+            markdownBackend: 'unified',
+            mathBackend: 'katex',
+            codeBackend: 'shiki',
+        },
+        {},
+    ),
+    await sveltex(
+        {
+            markdownBackend: 'markdown-it',
+            mathBackend: 'mathjax',
+            codeBackend: 'shiki',
+        },
+        { code: { shiki: { theme: 'nord' } } },
+    ),
+    await sveltex(
+        {
+            markdownBackend: 'micromark',
+            mathBackend: 'katex',
+            codeBackend: 'shiki',
+        },
+        { code: { shiki: { theme: 'nord' } } },
+    ),
+] as Sveltex<MarkdownBackend, CodeBackend, MathBackend>[];
 
 function splitContent(content: string): string[] {
     return content.match(splitContentRegExp) ?? [];
@@ -115,7 +139,7 @@ const splitContentRegExp = re`
 async function preprocess<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 >(
     preprocessor: Sveltex<M, C, T>,
     content: string,
@@ -169,7 +193,7 @@ describe('Sveltex', () => {
     });
 
     describe.each(preprocessors.filter((p) => p.markdownBackend !== 'none'))(
-        'Markdown: $markdownBackend + $codeBackend + $texBackend + $advancedTexBackend',
+        'Markdown: $markdownBackend + $codeBackend + $mathBackend',
         (p) => {
             it.each([
                 ['*italic*', '<em>italic</em>'],
@@ -201,8 +225,8 @@ describe('Sveltex', () => {
         },
     );
 
-    describe.each(preprocessors.filter((p) => p.texBackend !== 'none'))(
-        'TeX: $markdownBackend + $codeBackend + $texBackend + $advancedTexBackend',
+    describe.each(preprocessors.filter((p) => p.mathBackend !== 'none'))(
+        'TeX: $markdownBackend + $codeBackend + $mathBackend',
         (p) => {
             fixture();
             it.each([
@@ -241,7 +265,7 @@ describe('Sveltex', () => {
     );
 
     describe.each(preprocessors.filter((p) => p.codeBackend !== 'none'))(
-        'Code: $markdownBackend + $codeBackend + $texBackend + $advancedTexBackend',
+        'Code: $markdownBackend + $codeBackend + $mathBackend',
         (p) => {
             fixture();
             it.each([
@@ -283,7 +307,7 @@ describe('Sveltex', () => {
 function expectedCode<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 >(p: Sveltex<M, C, T>, _content?: string): (string | RegExp)[] {
     const expected: (string | RegExp)[] = [];
@@ -302,8 +326,6 @@ function expectedCode<
         if (theme.type === 'self-hosted') {
             expected.push(/import '.*starry-night.*css.*'/);
         }
-        // content
-        expected.push('<code');
     } else if (p.codeBackend === 'highlight.js') {
         typeAssert(is<Sveltex<M, 'highlight.js', T>>(p));
         const theme = p.configuration.code.theme;
@@ -317,6 +339,8 @@ function expectedCode<
         if (theme.type === 'self-hosted') {
             expected.push(/import '.*highlight.js.*css.*'/);
         }
+    }
+    if (p.codeBackend !== 'none') {
         // content
         expected.push('<code');
     }
@@ -326,33 +350,33 @@ function expectedCode<
 function expectedTex<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 >(p: Sveltex<M, C, T>, _content?: string): (string | RegExp)[] {
     const expected: (string | RegExp)[] = [];
-    if (p.texBackend === 'mathjax') {
+    if (p.mathBackend === 'mathjax') {
         typeAssert(is<Sveltex<M, C, 'mathjax'>>(p));
         // script
-        if (p.configuration.tex.css.type === 'hybrid') {
+        if (p.configuration.math.css.type === 'hybrid') {
             // expected.push(/import '.*mathjax.*css.*'/);
         }
         // content
-        if (p.configuration.tex.outputFormat === 'svg') {
+        if (p.configuration.math.outputFormat === 'svg') {
             expected.push('<svg');
         } else {
             expected.push('<mjx-container class="MathJax"');
         }
-    } else if (p.texBackend === 'katex') {
+    } else if (p.mathBackend === 'katex') {
         typeAssert(is<Sveltex<M, C, 'katex'>>(p));
         // head
         if (
-            p.configuration.tex.css.type === 'cdn' &&
-            isString(p.configuration.tex.css.cdn)
+            p.configuration.math.css.type === 'cdn' &&
+            isString(p.configuration.math.css.cdn)
         ) {
             expected.push(/<link rel="stylesheet" href="https:.*katex.*css.*"/);
         }
         // script
-        if (p.configuration.tex.css.type === 'hybrid') {
+        if (p.configuration.math.css.type === 'hybrid') {
             expected.push(/<link rel="stylesheet" href=".*katex.*css.*"/);
         }
         // content

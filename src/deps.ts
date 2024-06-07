@@ -3,10 +3,19 @@ export { default as nodeAssert } from 'node:assert';
 export { spawn, type SpawnOptionsWithoutStdio } from 'node:child_process';
 export { createHash, type BinaryToTextEncoding } from 'node:crypto';
 export { existsSync, readFileSync } from 'node:fs';
-export { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+export { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 export { homedir } from 'node:os';
-export { dirname, join, normalize, relative, resolve } from 'node:path';
+export {
+    dirname,
+    basename,
+    join,
+    normalize,
+    relative,
+    resolve,
+    sep as pathSep,
+} from 'node:path';
 export { inspect } from 'node:util';
+export { isRegExp } from 'node:util/types';
 
 export { default as CleanCSS, Output } from 'clean-css';
 export { deepmergeCustom } from 'deepmerge-ts';
@@ -16,17 +25,15 @@ export { escape as escapeHtml } from 'html-escaper';
 export { htmlTagNames } from 'html-tag-names';
 export { default as MagicString, type SourceMap } from 'magic-string';
 
-export { isRegExp } from 'node:util/types';
-
 /**
  * MDAST types for better type-safety.
  */
 export type {
     Code as MdastCodeNode,
     InlineCode as MdastInlineCodeNode,
+    Literal as MdastLiteral,
     Root as MdastRoot,
     Yaml as MdastYaml,
-    Literal as MdastLiteral,
 } from 'mdast';
 
 /**
@@ -67,11 +74,16 @@ export {
  *
  */
 export {
+    frontmatterFromMarkdown as mdastFrontmatterFromMarkdown,
+    frontmatterToMarkdown as mdastFrontmatterToMarkdown,
+} from 'mdast-util-frontmatter';
+export {
     mdxExpressionFromMarkdown as mdastMdxExpressionFromMarkdown,
     type MdxFlowExpression as MdastMdxFlowExpressionNode,
     type MdxTextExpression as MdastMdxTextExpressionNode,
 } from 'mdast-util-mdx-expression';
 export { mdxJsxFromMarkdown as mdastMdxJsxFromMarkdown } from 'mdast-util-mdx-jsx';
+export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
 export {
     math as micromarkMath,
     type Options as MicromarkMathOptions,
@@ -99,9 +111,9 @@ export { default as pc } from 'picocolors';
 export type { Colors } from 'picocolors/types.js';
 export { default as prettyBytes } from 'pretty-bytes';
 export {
+    crush as flattenObject,
     get as getProperty,
     set as setProperty,
-    crush as flattenObject,
 } from 'radash';
 export { default as rfdc } from 'rfdc'; // "Really Fast Deep Clone"
 export { rimraf } from 'rimraf';
@@ -113,14 +125,13 @@ export type {
 export type { HTMLAttributes } from 'svelte/elements';
 export { optimize as svgoOptimize, type Config as SvgoOptions } from 'svgo';
 export { is, assert as typeAssert, type Equals, type Extends } from 'tsafe';
-export type { Node as UnistNode } from 'unist';
+export type {
+    Node as UnistNode,
+    Position as UnistPosition,
+    Point as UnistPoint,
+} from 'unist';
 export { v4 as uuid } from 'uuid';
 export { default as XRegExp } from 'xregexp';
-export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
-export {
-    frontmatterFromMarkdown as mdastFrontmatterFromMarkdown,
-    frontmatterToMarkdown as mdastFrontmatterToMarkdown,
-} from 'mdast-util-frontmatter';
 
 export { Poppler } from 'node-poppler';
 

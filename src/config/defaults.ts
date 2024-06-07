@@ -1,6 +1,6 @@
 // Types
 import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
-import type { FullAdvancedTexConfiguration } from '$types/handlers/AdvancedTex.js';
+import type { FullTexConfiguration } from '$types/handlers/Tex.js';
 import type {
     CodeBackend,
     FullCodeConfiguration,
@@ -9,12 +9,14 @@ import type {
     FullMarkdownConfiguration,
     MarkdownBackend,
 } from '$types/handlers/Markdown.js';
-import type { FullTexConfiguration, TexBackend } from '$types/handlers/Tex.js';
 import type {
-    FullVerbEnvConfigAdvancedTex,
+    FullMathConfiguration,
+    MathBackend,
+} from '$types/handlers/Math.js';
+import type {
+    FullVerbEnvConfigTex,
     FullVerbEnvConfigBase,
     FullVerbEnvConfigCode,
-    FullVerbEnvConfigCustom,
     FullVerbEnvConfigEscapeOnly,
     Preset,
     PresetName,
@@ -49,24 +51,24 @@ import { sveltexHtmlAttributes } from '$data/keys.js';
 /**
  * Get the default configuration for a TeX backend.
  */
-export function getDefaultTexConfiguration<
-    T extends TexBackend,
+export function getDefaultMathConfiguration<
+    T extends MathBackend,
     CA extends 'cdn' | 'hybrid' | 'none' = T extends 'mathjax'
         ? 'hybrid'
         : T extends 'katex'
           ? 'cdn'
           : 'none',
 >(
-    texBackend: T,
-    ca: CA = texBackend === 'mathjax'
+    mathBackend: T,
+    ca: CA = mathBackend === 'mathjax'
         ? ('hybrid' as CA)
-        : texBackend === 'katex'
+        : mathBackend === 'katex'
           ? ('cdn' as CA)
           : ('none' as CA),
-): FullTexConfiguration<T> {
-    switch (texBackend) {
+): FullMathConfiguration<T> {
+    switch (mathBackend) {
         case 'katex': {
-            const rv: FullTexConfiguration<'katex'> = {
+            const rv: FullMathConfiguration<'katex'> = {
                 css:
                     ca === 'cdn'
                         ? {
@@ -84,10 +86,10 @@ export function getDefaultTexConfiguration<
                 katex: {},
                 transformers: { post: [], pre: [] },
             };
-            return rv as FullTexConfiguration<T>;
+            return rv as FullMathConfiguration<T>;
         }
         case 'mathjax': {
-            const rv: FullTexConfiguration<'mathjax'> = {
+            const rv: FullMathConfiguration<'mathjax'> = {
                 css:
                     ca === 'hybrid'
                         ? {
@@ -111,120 +113,16 @@ export function getDefaultTexConfiguration<
                 //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                 // }}
             };
-            return rv as FullTexConfiguration<T>;
+            return rv as FullMathConfiguration<T>;
         }
         default:
             return {
                 transformers: { post: [], pre: [] },
-            } as FullTexConfiguration<
+            } as FullMathConfiguration<
                 'custom' | 'none'
-            > as FullTexConfiguration<T>;
+            > as FullMathConfiguration<T>;
     }
 }
-
-/**
- * Get the default configuration for a TeX component.
- *
- * @param advancedTexBackend - The backend of the `AdvancedTexHandler` that
- * created the `TexComponent`.
- * @returns The default configuration for the TeX component.
- */
-// export function getDefaultVerbEnvConfigAdvancedTexuration<
-//     A extends AdvancedTexBackend,
-// >(
-//     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//     _advancedTexBackend: A,
-// ): FullVerbEnvConfigAdvancedTexuration<A> {
-//     return {
-//         documentClass: '\\documentclass{standalone}',
-//         preamble: '\\usepackage{microtype}',
-//         overrides: {
-//             shellEscape: false,
-//             saferLua: false,
-//             intermediateFiletype: 'pdf',
-//             overrideCompilation: undefined,
-//             overrideConversion: undefined,
-//             overrideSvgPostprocess: undefined,
-//         },
-//         aliases: [],
-//         handleAttributes(attributes, tc) {
-//             const entries = Object.entries(interpretAttributes(attributes));
-//             // Attributes for the <figure> element
-//             const figureAttributes: Record<
-//                 string,
-//                 string | number | boolean | null | undefined
-//             > = {};
-//             // Attributes for the optional <figcaption> element
-//             const captionAttributes: Record<
-//                 string,
-//                 string | number | boolean | null | undefined
-//             > = {};
-//             let caption: string | undefined = undefined;
-//             for (const [key, value] of entries) {
-//                 const lowercaseKey = key.toLowerCase();
-//                 if (lowercaseKey === 'caption') {
-//                     caption = String(value);
-//                 } else if (
-//                     lowercaseKey.match(
-//                         /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/,
-//                     ) !== null
-//                 ) {
-//                     captionAttributes[key.replace(/^.*?caption./i, '')] = value;
-//                 } else if (key !== 'ref') {
-//                     if (lowercaseKey === 'preamble') {
-//                         tc.configuration.preamble = String(value);
-//                     } else if (lowercaseKey === 'documentclass') {
-//                         tc.configuration.documentClass = String(value);
-//                     } else {
-//                         figureAttributes[key] = value;
-//                     }
-//                 }
-//             }
-//             return { caption, figureAttributes, captionAttributes };
-//         },
-//         postprocess(svgComponent, tc) {
-//             let figureAttributesString = '';
-//             let caption = '';
-//             const attributes = tc.handledAttributes;
-//             if (
-//                 isPresentAndDefined(attributes, 'figureAttributes') &&
-//                 isNonNullObject(attributes.figureAttributes)
-//             ) {
-//                 const figureAttributes = Object.entries(
-//                     attributes.figureAttributes,
-//                 );
-//                 figureAttributesString = figureAttributes
-//                     .map((attr) => `${attr[0]}="${String(attr[1])}"`)
-//                     .join(' ');
-//                 if (figureAttributesString !== '') {
-//                     figureAttributesString = ` ${figureAttributesString}`;
-//                 }
-//             }
-//             if (
-//                 isPresentAndDefined(attributes, 'caption') &&
-//                 isString(attributes.caption)
-//             ) {
-//                 let captionAttributesString = '';
-//                 if (
-//                     isPresentAndDefined(attributes, 'captionAttributes') &&
-//                     isNonNullObject(attributes.captionAttributes)
-//                 ) {
-//                     const captionAttributes = Object.entries(
-//                         attributes.captionAttributes,
-//                     );
-//                     captionAttributesString = captionAttributes
-//                         .map((attr) => `${attr[0]}="${String(attr[1])}"`)
-//                         .join(' ');
-//                     if (captionAttributesString !== '') {
-//                         captionAttributesString = ` ${captionAttributesString}`;
-//                     }
-//                     caption = `<figcaption${captionAttributesString}>${attributes.caption}</figcaption>\n`;
-//                 }
-//             }
-//             return `<figure${figureAttributesString}>\n${svgComponent}\n${caption}</figure>`;
-//         },
-//     };
-// }
 
 const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
 export const defaultCacheDirectory = cacheDir
@@ -234,7 +132,7 @@ export const defaultCacheDirectory = cacheDir
           'sveltex',
       );
 
-export function getDefaultAdvancedTexConfig(): FullAdvancedTexConfiguration {
+export function getDefaultTexConfig(): FullTexConfiguration {
     return {
         caching: {
             cacheDirectory: defaultCacheDirectory,
@@ -337,24 +235,15 @@ export function getDefaultAdvancedTexConfig(): FullAdvancedTexConfiguration {
                     'removeComments',
                     {
                         name: 'convertColors',
-                        params: {
-                            shorthex: true,
-                        },
+                        params: { shorthex: true },
                     },
                     {
                         name: 'cleanupAttrs',
-                        params: {
-                            newlines: true,
-                            spaces: true,
-                            trim: false,
-                        },
+                        params: { newlines: true, spaces: true, trim: false },
                     },
                     {
                         name: 'cleanupNumericValues',
-                        params: {
-                            leadingZero: false,
-                            floatPrecision: 15,
-                        },
+                        params: { leadingZero: false, floatPrecision: 15 },
                     },
                     {
                         name: 'removeUnknownsAndDefaults',
@@ -367,7 +256,7 @@ export function getDefaultAdvancedTexConfig(): FullAdvancedTexConfiguration {
                 ],
             },
         },
-    } as FullAdvancedTexConfiguration;
+    } as FullTexConfiguration;
 }
 
 /**
@@ -388,11 +277,11 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         let lang: string | undefined;
         let meta: string | undefined;
         if (code.startsWith('{')) {
-            const m = code.match(/^\{(.+?)\}\s(\s*\S[\w\W]*)$/);
+            const m = /^\{(.+?)\}\s(\s*\S[\w\W]*)$/.exec(code);
             const specialCandidate = m?.[1];
             const codeCandidate = m?.[2];
             if (specialCandidate && codeCandidate) {
-                const space = specialCandidate.match(/\s/)?.index;
+                const space = /\s/.exec(specialCandidate)?.index;
                 const tag = specialCandidate.slice(0, space);
                 if (validLanguageTag(tag)) {
                     code = codeCandidate;
@@ -401,7 +290,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                 }
             }
         } else {
-            const m = code.match(/^([\w-]['\w-]*)\s(\s*\S[\w\W]*)$/);
+            const m = /^([\w-]['\w-]*)\s(\s*\S[\w\W]*)$/.exec(code);
             const tag = m?.[1];
             const codeCandidate = m?.[2];
             if (tag && codeCandidate && validLanguageTag(tag)) {
@@ -475,7 +364,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
             addLanguageClass: 'language-',
             appendNewline: true,
             inlineMeta,
-            lang: 'Text',
+            lang: undefined,
             languages: 'common',
             theme: {
                 cdn: 'jsdelivr',
@@ -508,8 +397,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
  *
  * @param m - The Markdown backend.
  * @param c - The Code backend.
- * @param t - The TeX backend.
- * @param a - The Advanced TeX backend.
+ * @param t - The Math backend.
  * @returns The default SvelTeX configuration options.
  *
  * @remarks Mutating the returned object will not affect return values of
@@ -518,7 +406,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
 export function getDefaultSveltexConfig<
     M extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',
-    T extends TexBackend = 'none',
+    T extends MathBackend = 'none',
 >(
     m: M = 'none' as M,
     c: C = 'none' as C,
@@ -527,7 +415,7 @@ export function getDefaultSveltexConfig<
     return {
         general: {
             extensions: ['.sveltex'] as `.${string}`[],
-            tex: {
+            math: {
                 enabled: t !== 'none',
                 delims: {
                     inline: { escapedParentheses: true, singleDollar: true },
@@ -536,10 +424,10 @@ export function getDefaultSveltexConfig<
                 $$: { isDisplayMath: 'always' },
             },
         },
-        tex: getDefaultTexConfiguration(t),
+        math: getDefaultMathConfiguration(t),
         code: getDefaultCodeConfig(c),
         markdown: getDefaultMarkdownConfig(m),
-        advancedTex: getDefaultAdvancedTexConfig(),
+        tex: getDefaultTexConfig(),
         verbatim: {},
     };
 }
@@ -563,15 +451,13 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
     }
 }
 
-type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'advancedTex'
-    ? FullVerbEnvConfigAdvancedTex
+type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'tex'
+    ? FullVerbEnvConfigTex
     : T extends 'code'
       ? FullVerbEnvConfigCode
-      : T extends 'custom'
-        ? FullVerbEnvConfigCustom
-        : T extends 'escapeOnly'
-          ? FullVerbEnvConfigEscapeOnly
-          : FullVerbEnvConfigBase;
+      : T extends 'escapeOnly'
+        ? FullVerbEnvConfigEscapeOnly
+        : FullVerbEnvConfigBase;
 
 export function getDefaultVerbEnvConfig<T extends VerbatimType>(
     type: T,
@@ -595,18 +481,13 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                 ...common,
                 escapeInstructions: { escapeBraces: true, escapeHtml: true },
             } as DefaultVerbEnvConfig<'escapeOnly'> as DefaultVerbEnvConfig<T>;
-        case 'custom':
-            return {
-                ...common,
-                customProcess: () => '',
-            } as DefaultVerbEnvConfig<'custom'> as DefaultVerbEnvConfig<T>;
         case 'code':
             return {
                 ...common,
                 attributeForwardingBlocklist: ['lang', 'inline', 'metaString'],
                 wrap: true,
             } as DefaultVerbEnvConfig<'code'> as DefaultVerbEnvConfig<T>;
-        case 'advancedTex':
+        case 'tex':
             return {
                 ...common,
                 respectSelfClosing: false,
@@ -636,8 +517,8 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                         if (lowercaseKey === 'caption') {
                             caption = String(value);
                         } else if (
-                            lowercaseKey.match(
-                                /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/,
+                            /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/.exec(
+                                lowercaseKey,
                             ) !== null
                         ) {
                             captionAttributes[
@@ -647,7 +528,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                             const dottedKey = key.replace(/[-_:.@#+]/g, '.');
                             // If the key is a property of the configuration
                             // object that can be configured ad hoc, set it.
-                            // tc.advancedTexConfig;
+                            // tc.texConfig;
                             const prop = sveltexHtmlAttributes[dottedKey];
                             if (prop) {
                                 // If value is undefined, we'll assume that the
@@ -662,7 +543,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                                         // `overrides`, we need to fetch the
                                         // prop's default value from the config
                                         // returned by
-                                        // getDefaultAdvancedTexConfig(). To get
+                                        // getDefaultTexConfig(). To get
                                         // the right value, however, we need to
                                         // remove the `overrides.` prefix from
                                         // the key.
@@ -672,7 +553,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                                         );
 
                                         const defaultValue = getProperty(
-                                            getDefaultAdvancedTexConfig(),
+                                            getDefaultTexConfig(),
                                             relKey,
                                         );
                                         tc.configuration = setProperty(
@@ -682,9 +563,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                                         );
                                     } else {
                                         const defaultValue = getProperty(
-                                            getDefaultVerbEnvConfig(
-                                                'advancedTex',
-                                            ),
+                                            getDefaultVerbEnvConfig('tex'),
                                             prop,
                                         );
                                         tc.configuration = setProperty(
@@ -764,7 +643,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                     }
                     return `<figure${figureAttributesString}>\n${svgComponent}\n${caption}</figure>`;
                 },
-            } as DefaultVerbEnvConfig<'advancedTex'> as DefaultVerbEnvConfig<T>;
+            } as DefaultVerbEnvConfig<'tex'> as DefaultVerbEnvConfig<T>;
         default:
             throw new Error(`Unknown verbatim type: ${type}`);
     }
@@ -783,7 +662,7 @@ export function sanitizePopplerSvgOptions(
     };
 }
 
-export function getAdvancedTexPresetDefaults(presetName: PresetName): Preset {
+export function getTexPresetDefaults(presetName: PresetName): Preset {
     switch (presetName) {
         case 'tikz':
             return {

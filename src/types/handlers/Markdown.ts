@@ -185,9 +185,7 @@ export type MarkdownProcessFn<B extends MarkdownBackend> = ProcessFn<
     MarkdownHandler<B>
 >;
 
-export interface MarkdownProcessOptions {
-    inline?: boolean | undefined;
-}
+export type MarkdownProcessOptions = object;
 
 /**
  * Type of the function that configures a markdown processor of the specified

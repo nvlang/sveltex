@@ -17,7 +17,7 @@ import {
 } from '$type-guards/verbatim.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
-import { diagnoseAdvancedTexConfig } from '$utils/diagnosers/advancedTexConfiguration.js';
+import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 import { VerbatimType } from '$types/handlers/Verbatim.js';
 
@@ -45,7 +45,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
     const d = new Diagnoser(x);
     d.ifPresent(
         'type',
-        `one of: "advancedTex", "code", "escapeOnly", "custom", "noop"`,
+        `one of: "tex", "code", "escapeOnly", "custom", "noop"`,
         isVerbatimType,
         'string',
     );
@@ -106,8 +106,8 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
     );
     d.ifPresent(
         'respectSelfClosing',
-        type === 'advancedTex' ? 'false' : 'a boolean',
-        (v) => (type === 'advancedTex' ? v === false : isBoolean(v)),
+        type === 'tex' ? 'false' : 'a boolean',
+        (v) => (type === 'tex' ? v === false : isBoolean(v)),
         'boolean',
     );
     if (type === 'code') d.ifPresent('wrap', 'a boolean', isBoolean, 'boolean');
@@ -119,16 +119,8 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
             'object',
         );
     }
-    if (type === 'custom') {
-        d.ifPresent(
-            'customProcess',
-            'a function (inner: string, attributes: Record<string, string | boolean | number | null | undefined>) => string',
-            isFunction,
-            'function',
-        );
-    }
 
-    if (type === 'advancedTex') {
+    if (type === 'tex') {
         d.ifPresent('preamble', 'a string', isString, 'string');
         d.ifPresent(
             'documentClass',
@@ -152,7 +144,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         );
         ifPresentAndDefined(x, 'overrides', (v) => {
             if (!isNonNullObject(v)) return true;
-            const tlcDiagnoser = diagnoseAdvancedTexConfig(v);
+            const tlcDiagnoser = diagnoseTexConfig(v);
             if (!tlcDiagnoser.passed) {
                 tlcDiagnoser.problems.forEach((problem) => {
                     d.addProblem(
@@ -186,7 +178,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         ].forEach((prop) => {
             d.ifPresent(
                 prop,
-                'undefined, since "type" is not "advancedTex"',
+                'undefined, since "type" is not "tex"',
                 (v) => v === undefined,
                 'undefined',
                 'warn',

@@ -28,14 +28,14 @@ import { sveltex } from '@nvl/sveltex';
 
 In alphabetical order:
 
--   Add contribution guidelines.
--   Improve CI pipeline.
--   Improve documentation.
--   Improve integration tests.
--   Improve source map support.
--   Support preprocessing LaTeX content before passing it to MathJax/KaTeX.
--   VSCode extension for proper syntax highlighting of `.sveltex` files.
--   Yeoman generator for scaffolding new Sveltex projects.
+- [ ] Add contribution guidelines.
+- [ ] Improve CI pipeline.
+- [ ] Improve documentation.
+- [ ] Improve integration tests.
+- [ ] Improve source map support.
+- [x] Support preprocessing LaTeX content before passing it to MathJax/KaTeX.
+- [ ] VSCode extension for proper syntax highlighting of `.sveltex` files.
+- [ ] Yeoman generator for scaffolding new Sveltex projects.
 
 ## Contributing
 
@@ -51,3 +51,22 @@ especially if the changes are substantial.
   - MathJax
   - TikZ
 
+
+## Lessons learned
+
+### Tips
+
+- Always run your linter before you run your tests. In particular, note that
+  VSCode's ESLint extension only runs on files that are currently open, so even
+  if the problems pane is clear, you might still have linting errors in files
+  that are not currently open.
+- Generally speaking, don't combine `.ts` and `.d.ts` files. In short, it's
+  either `.ts` or it's `.js` + (optionally) `.d.ts`. This is almost certainly an
+  egregious oversimplification, but it's the feeling I got after spending a
+  bunch of time trying to debug issues caused by me mixing `.ts` and `.d.ts` files.
+
+### Cool software I didn't know before
+
+- `fast-check`, for fuzzy testing.
+- `shiki`, for code highlighting.
+- VitePress.

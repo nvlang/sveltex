@@ -26,28 +26,10 @@ describe("MarkdownHandler<'markdown-it'>", () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = (await handler.process('**strong** *em*'))
+                const output = (await handler.process('**strong** *em*', {}))
                     .processed;
-                const expected = '<strong>strong</strong> <em>em</em>';
+                const expected = '<p><strong>strong</strong> <em>em</em></p>\n';
                 expect(output).toEqual(expected);
-            });
-
-            it("automatically distinguishes between inline and 'block' markdown", async () => {
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a\nb',
-                );
-                expect((await handler.process('a\n\nb')).processed).toEqual(
-                    '<p>a</p>\n<p>b</p>\n',
-                );
-            });
-
-            it('has working `inline` parameter', async () => {
-                expect(
-                    (await handler.process('a', { inline: true })).processed,
-                ).toEqual('a');
-                expect(
-                    (await handler.process('a', { inline: false })).processed,
-                ).toEqual('<p>a</p>\n');
             });
         });
 
@@ -63,16 +45,16 @@ describe("MarkdownHandler<'markdown-it'>", () => {
                 });
                 expect(handler.processor.options.breaks).toBeTruthy();
                 expect(handler.processor.options.xhtmlOut).toBeTruthy();
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a<br />\nb',
+                expect((await handler.process('a\nb', {})).processed).toEqual(
+                    '<p>a<br />\nb</p>\n',
                 );
                 await handler.configure({
                     options: { breaks: true, xhtmlOut: false },
                 });
                 expect(handler.processor.options.breaks).toBeTruthy();
                 expect(handler.processor.options.xhtmlOut).toBeFalsy();
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a<br>\nb',
+                expect((await handler.process('a\nb', {})).processed).toEqual(
+                    '<p>a<br>\nb</p>\n',
                 );
                 expect(handler.configuration).toEqual({
                     options: {
@@ -147,9 +129,9 @@ describe("MarkdownHandler<'markdown-it'>", () => {
                     '</tr>\n' +
                     '</tbody>\n' +
                     '</table>\n';
-                expect((await handler.process(exampleTable)).processed).toEqual(
-                    expected,
-                );
+                expect(
+                    (await handler.process(exampleTable, {})).processed,
+                ).toEqual(expected);
             });
         });
 

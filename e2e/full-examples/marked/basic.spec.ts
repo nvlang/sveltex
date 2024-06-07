@@ -18,7 +18,7 @@ test('marked', async ({ page }) => {
 
     // Expects page to have a heading with the name of Installation.
     await expect(
-        page.getByRole('heading', { name: 'Heading 1' }),
+        page.getByRole('heading', { name: 'Heading 1: something 2' }),
     ).toBeVisible();
 
     // expect

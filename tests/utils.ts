@@ -1,7 +1,7 @@
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend } from '$types/handlers/Tex.js';
+import type { MathBackend } from '$types/handlers/Math.js';
 
 import { sveltex } from '$Sveltex.js';
 import { isArray } from '$type-guards/utils.js';
@@ -58,8 +58,8 @@ export const uuidV4Regexp =
 interface Variables {
     markdown?: boolean | MarkdownBackend[];
     code?: boolean | CodeBackend[];
+    math?: boolean | MathBackend[];
     tex?: boolean | TexBackend[];
-    advancedTex?: boolean | AdvancedTexBackend[];
 }
 
 export function cartesianProduct<X1>(x1: X1[]): [X1][];
@@ -95,7 +95,7 @@ export function cartesianProduct(...a: unknown[][]) {
 }
 
 type BackendCombination =
-    `${MarkdownBackend}-${CodeBackend}-${TexBackend}-${AdvancedTexBackend}`;
+    `${MarkdownBackend}-${CodeBackend}-${MathBackend}-${TexBackend}`;
 
 export async function generateTests(
     vary: Variables,
@@ -125,13 +125,13 @@ export async function generateTests(
             : isArray(vary.code)
               ? vary.code
               : ['none'];
-    const texBackends =
+    const mathBackends =
         vary.tex === true
             ? ['katex', 'mathjax']
             : isArray(vary.tex)
               ? vary.tex
               : ['none'];
-    const advancedTexBackends = ['local'];
+    const texBackends = ['local'];
 
     const testsNew: {
         label: string;
@@ -145,17 +145,17 @@ export async function generateTests(
         return { label, input, expected: {} };
     });
 
-    for (const [markdown, code, tex, advancedTex] of cartesianProduct(
+    for (const [markdown, code, math, tex] of cartesianProduct(
         markdownBackends,
         codeBackends,
+        mathBackends,
         texBackends,
-        advancedTexBackends,
-    ) as [MarkdownBackend, CodeBackend, TexBackend, AdvancedTexBackend][]) {
-        const backendCombination: BackendCombination = `${markdown}-${code}-${tex}-${advancedTex}`;
+    ) as [MarkdownBackend, CodeBackend, MathBackend, TexBackend][]) {
+        const backendCombination: BackendCombination = `${markdown}-${code}-${math}-${tex}`;
         const preprocessor = await sveltex({
             markdownBackend: markdown,
             codeBackend: code,
-            texBackend: tex,
+            mathBackend: math,
         });
         const preprocess = async (
             input: string,

@@ -13,18 +13,18 @@ import type {
 import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type {
-    TexBackend,
-    TexConfiguration,
-    TexProcessOptions,
-} from '$types/handlers/Tex.js';
+    MathBackend,
+    MathConfiguration,
+    MathProcessOptions,
+} from '$types/handlers/Math.js';
 import type { ProcessedSnippet, Snippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultSveltexConfig } from '$config/defaults.js';
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import { TexHandler } from '$handlers/TexHandler.js';
+import { MathHandler } from '$handlers/MathHandler.js';
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { log, prettifyError } from '$utils/debug.js';
@@ -57,7 +57,7 @@ import { handleFrontmatter } from '$utils/frontmatter.js';
 export async function sveltex<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 >(
     backendChoices?: BackendChoices<M, C, T> | undefined,
     configuration?: SveltexConfiguration<M, C, T> | undefined,
@@ -68,7 +68,7 @@ export async function sveltex<
     const s = await Sveltex.create<M, C, T>(
         backendChoices?.markdownBackend ?? ('none' as M),
         backendChoices?.codeBackend ?? ('none' as C),
-        backendChoices?.texBackend ?? ('none' as T),
+        backendChoices?.mathBackend ?? ('none' as T),
         configuration ?? ({} as SveltexConfiguration<M, C, T>),
     );
     if (configuration) await s.configure(configuration);
@@ -84,7 +84,7 @@ export function notCustom<B extends string>(
 export class Sveltex<
     M extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',
-    T extends TexBackend = 'none',
+    T extends MathBackend = 'none',
 > implements PreprocessorGroup
 {
     /**
@@ -94,8 +94,8 @@ export class Sveltex<
 
     readonly markdownBackend: M;
     readonly codeBackend: C;
-    readonly texBackend: T;
-    readonly advancedTexBackend: 'local';
+    readonly mathBackend: T;
+    readonly texBackend: 'local';
 
     // We can safely add the definite assignment assertions here, since Sveltex
     // instances can only be created through the static `Sveltex.create` method
@@ -103,8 +103,8 @@ export class Sveltex<
     // handlers are set.
     private _markdownHandler!: MarkdownHandler<M>;
     private _codeHandler!: CodeHandler<C>;
-    private _texHandler!: TexHandler<T>;
-    private _advancedTexHandler!: AdvancedTexHandler;
+    private _mathHandler!: MathHandler<T>;
+    private _texHandler!: TexHandler;
     private _verbatimHandler!: VerbatimHandler<C>;
 
     // The verbatim handler and the configuration can be initialized in the
@@ -136,7 +136,7 @@ export class Sveltex<
             return;
         }
 
-        const tcInfos = this._advancedTexHandler.texComponents[filename] ?? [];
+        const tcInfos = this._texHandler.texComponents[filename] ?? [];
 
         const s = new MagicString(content);
 
@@ -161,7 +161,7 @@ export class Sveltex<
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
         if (this.texPresent[filename]) {
-            script.push(...this.texHandler.scriptLines);
+            script.push(...this.mathHandler.scriptLines);
         }
         if (this.codePresent[filename]) {
             script.push(...this.codeHandler.scriptLines);
@@ -245,7 +245,7 @@ export class Sveltex<
 
         const markdownHandler = this.markdownHandler;
         const codeHandler = this.codeHandler;
-        const texHandler = this.texHandler;
+        const mathHandler = this.mathHandler;
         const verbatimHandler = this.verbatimHandler;
 
         try {
@@ -255,10 +255,10 @@ export class Sveltex<
                 content,
                 [
                     ...this.verbatimHandler.verbEnvs.keys(),
-                    // ...this.advancedTexHandler.tccNames,
-                    // ...this.advancedTexHandler.tccAliases,
+                    // ...this.texHandler.tccNames,
+                    // ...this.texHandler.tccAliases,
                 ],
-                this.configuration.general.tex,
+                this.configuration.general.math,
                 this._verbatimHandler.verbEnvs,
             );
 
@@ -268,7 +268,7 @@ export class Sveltex<
             const prependToProcessed: string[] = [];
 
             let codePresent = false;
-            let texPresent = false;
+            let mathPresent = false;
 
             const headLines: string[] = [];
 
@@ -299,13 +299,13 @@ export class Sveltex<
                                 ...snippet.processable.optionsForProcessor,
                             },
                         );
-                    } else if (snippet.type === 'tex') {
-                        typeAssert(is<Snippet<'tex'>>(snippet));
-                        if (!texPresent) texPresent = true;
-                        processedSnippet = await texHandler.process(
+                    } else if (snippet.type === 'math') {
+                        typeAssert(is<Snippet<'math'>>(snippet));
+                        if (!mathPresent) mathPresent = true;
+                        processedSnippet = await mathHandler.process(
                             snippet.processable.innerContent,
                             snippet.processable
-                                .optionsForProcessor as TexProcessOptions<T>,
+                                .optionsForProcessor as MathProcessOptions<T>,
                         );
                     } else if (snippet.type === 'frontmatter') {
                         typeAssert(is<Snippet<'frontmatter'>>(snippet));
@@ -354,9 +354,9 @@ export class Sveltex<
             // temporarily disable the `no-unnecessary-condition` rule to avoid
             // the warning.
             /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-            if (texPresent) {
+            if (mathPresent) {
                 this.texPresent[filename] = true;
-                headLines.push(...this.texHandler.headLines);
+                headLines.push(...this.mathHandler.headLines);
             }
             if (codePresent) {
                 this.codePresent[filename] = true;
@@ -388,7 +388,7 @@ export class Sveltex<
             }
             /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 
-            const html = (await markdownHandler.process(escapedDocument))
+            const html = (await markdownHandler.process(escapedDocument, {}))
                 .processed;
 
             let code = unescapeSnippets(html, processedSnippets);
@@ -412,7 +412,7 @@ export class Sveltex<
      * @example
      * Example usage:
      * ```ts
-     * const sveltexPreprocessor = await sveltex({ markdownBackend: 'none', codeBackend: 'none', texBackend: 'none', advancedTexBackend: 'none' });
+     * const sveltexPreprocessor = await sveltex({ markdownBackend: 'none', codeBackend: 'none', mathBackend: 'none', texBackend: 'none' });
      * await sveltexPreprocessor.configure({ ... })
      * ```
      */
@@ -424,11 +424,13 @@ export class Sveltex<
             this.codeHandler.configure(
                 mergedConfig.code as CodeConfiguration<C>,
             ),
-            this.texHandler.configure(mergedConfig.tex as TexConfiguration<T>),
-            this.advancedTexHandler.configure(mergedConfig.advancedTex),
+            this.mathHandler.configure(
+                mergedConfig.math as MathConfiguration<T>,
+            ),
+            this.texHandler.configure(mergedConfig.tex),
         ]);
 
-        // Since VerbatimHandler uses CodeHandler and AdvancedTexHandler, we
+        // Since VerbatimHandler uses CodeHandler and TexHandler, we
         // want to make sure that those dependencies are fully configured before
         // configuring the VerbatimHandler.
         await this.verbatimHandler.configure(mergedConfig.verbatim);
@@ -482,28 +484,28 @@ export class Sveltex<
     /**
      * ##### GETTER
      *
-     * Getter for the {@link _texHandler | `_texHandler`} property, which points
+     * Getter for the {@link _mathHandler | `_mathHandler`} property, which points
      * to the TeX handler used by the Sveltex instance.
      */
-    get texHandler() {
-        return this._texHandler;
+    get mathHandler() {
+        return this._mathHandler;
     }
 
     /**
      * ##### SETTER
      *
-     * ⚠ **Pre-condition**: `this.texBackend === 'custom'`
+     * ⚠ **Pre-condition**: `this.mathBackend === 'custom'`
      *
-     * Setter for the {@link _texHandler | `_texHandler`} property.
+     * Setter for the {@link _mathHandler | `_mathHandler`} property.
      *
      * @throws Error if the TeX backend is not `'custom'`.
      */
-    set texHandler(handler: TexHandler<T>) {
-        if (this.texBackend === 'custom') {
-            this._texHandler = handler;
+    set mathHandler(handler: MathHandler<T>) {
+        if (this.mathBackend === 'custom') {
+            this._mathHandler = handler;
         } else {
             throw new Error(
-                `texHandler setter can only be invoked if TeX backend is "custom" (got "${this.texBackend}" instead).`,
+                `mathHandler setter can only be invoked if TeX backend is "custom" (got "${this.mathBackend}" instead).`,
             );
         }
     }
@@ -511,28 +513,28 @@ export class Sveltex<
     /**
      * ##### GETTER
      *
-     * Getter for the {@link _advancedTexHandler | `_advancedTexHandler`} property,
-     * which points to the advanced TeX handler used by the Sveltex instance.
+     * Getter for the {@link _texHandler | `_texHandler`} property,
+     * which points to the TeX handler used by the Sveltex instance.
      */
-    get advancedTexHandler() {
-        return this._advancedTexHandler;
+    get texHandler() {
+        return this._texHandler;
     }
 
     /**
      * Helper method primarily used for type narrowing.
      */
-    private nonCustomBackend<H extends 'markdown' | 'code' | 'tex'>(
+    private nonCustomBackend<H extends 'markdown' | 'code' | 'math'>(
         h: H,
     ): this is Sveltex<
         H extends 'markdown' ? Exclude<M, 'custom'> : M,
         H extends 'code' ? Exclude<C, 'custom'> : C,
-        H extends 'tex' ? Exclude<T, 'custom'> : T
+        H extends 'math' ? Exclude<T, 'custom'> : T
     > {
         switch (h) {
             case 'markdown':
                 return this.markdownBackend !== 'custom';
-            case 'tex':
-                return this.texBackend !== 'custom';
+            case 'math':
+                return this.mathBackend !== 'custom';
             /* v8 ignore next 2 (unreachable code) */
             default:
                 return false;
@@ -554,17 +556,17 @@ export class Sveltex<
     public static async create<
         M extends MarkdownBackend,
         C extends CodeBackend,
-        T extends TexBackend,
+        T extends MathBackend,
     >(
         markdownBackend: M,
         codeBackend: C,
-        texBackend: T,
+        mathBackend: T,
         configuration: SveltexConfiguration<M, C, T>,
     ): Promise<Sveltex<M, C, T>> {
         const sveltex = new Sveltex<M, C, T>(
             markdownBackend,
             codeBackend,
-            texBackend,
+            mathBackend,
         );
         const merged = mergeConfigs(sveltex.configuration, configuration);
 
@@ -594,16 +596,16 @@ export class Sveltex<
         }
 
         // TeX handler
-        if (sveltex.nonCustomBackend('tex') && notCustom(texBackend)) {
+        if (sveltex.nonCustomBackend('math') && notCustom(mathBackend)) {
             try {
-                (sveltex._texHandler as TexHandler<Exclude<T, 'custom'>>) =
-                    await TexHandler.create(texBackend);
+                (sveltex._mathHandler as MathHandler<Exclude<T, 'custom'>>) =
+                    await MathHandler.create(mathBackend);
             } catch (err) {
                 errors.push(err);
             }
         }
 
-        sveltex._advancedTexHandler = await AdvancedTexHandler.create();
+        sveltex._texHandler = await TexHandler.create();
 
         if (errors.length > 0) {
             const install =
@@ -621,25 +623,25 @@ export class Sveltex<
 
         sveltex._verbatimHandler = VerbatimHandler.create(
             sveltex.codeHandler,
-            sveltex.advancedTexHandler,
+            sveltex.texHandler,
         );
 
         return sveltex;
     }
 
-    private constructor(markdownBackend: M, codeBackend: C, texBackend: T) {
+    private constructor(markdownBackend: M, codeBackend: C, mathBackend: T) {
         // Take note of the backends chosen by the user.
         this.markdownBackend = markdownBackend;
         this.codeBackend = codeBackend;
-        this.texBackend = texBackend;
-        this.advancedTexBackend = 'local';
+        this.mathBackend = mathBackend;
+        this.texBackend = 'local';
 
         // Initialize configuration with defaults corresponding to the chosen
         // backends.
         this._configuration = getDefaultSveltexConfig(
             this.markdownBackend,
             this.codeBackend,
-            this.texBackend,
+            this.mathBackend,
         );
     }
 }

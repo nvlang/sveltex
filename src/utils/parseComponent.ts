@@ -278,14 +278,14 @@ export function interpretString(
             return Infinity;
     }
     if (trimmedStr.endsWith('Infinity')) {
-        if (trimmedStr.match(/^[+]\s*Infinity$/)) {
+        if (/^[+]\s*Infinity$/.test(trimmedStr)) {
             return +Infinity;
         }
-        if (trimmedStr.match(/^[-]\s*Infinity$/)) {
+        if (/^[-]\s*Infinity$/.test(trimmedStr)) {
             return -Infinity;
         }
     }
-    if (trimmedStr.replace(/\s*/g, '').match(/^[+-]?(\d+|\d*.\d+)$/)) {
+    if (/^[+-]?(\d+|\d*.\d+)$/.test(trimmedStr.replace(/\s*/g, ''))) {
         const num = Number(trimmedStr);
         if (!isNaN(num)) {
             return num;

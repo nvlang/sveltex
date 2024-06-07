@@ -1,9 +1,9 @@
 // Types
 import type { BackendChoices } from '$types/SveltexConfiguration.js';
-import type { AdvancedTexBackend } from '$types/handlers/AdvancedTex.js';
+import type { TexBackend } from '$types/handlers/Tex.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend } from '$types/handlers/Tex.js';
+import type { MathBackend } from '$types/handlers/Math.js';
 
 // Internal dependencies
 import { isNonNullObject, isOneOf } from '$type-guards/utils.js';
@@ -29,26 +29,26 @@ export const codeBackends = [
     'shiki',
     'none',
 ] as const;
-export const texBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
-export const advancedTexBackends = ['local'] as const;
+export const mathBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
+export const texBackends = ['local'] as const;
 const backendChoices = [
     ['markdownBackend', markdownBackends],
     ['codeBackend', codeBackends],
+    ['mathBackend', mathBackends],
     ['texBackend', texBackends],
-    ['advancedTexBackend', advancedTexBackends],
 ] as const;
 const backendKeys = [
     'markdownBackend',
     'codeBackend',
+    'mathBackend',
     'texBackend',
-    'advancedTexBackend',
 ] as const;
 
 // Ensure we didn't miss any backend
 typeAssert<Equals<(typeof markdownBackends)[number], MarkdownBackend>>();
 typeAssert<Equals<(typeof codeBackends)[number], CodeBackend>>();
+typeAssert<Equals<(typeof mathBackends)[number], MathBackend>>();
 typeAssert<Equals<(typeof texBackends)[number], TexBackend>>();
-typeAssert<Equals<(typeof advancedTexBackends)[number], AdvancedTexBackend>>();
 typeAssert<
     Equals<(typeof backendChoices)[number][0], (typeof backendKeys)[number]>
 >();
@@ -64,7 +64,7 @@ typeAssert<
  * This function will log any problems found to the console.
  */
 export function diagnoseBackendChoices(
-    choices: BackendChoices<MarkdownBackend, CodeBackend, TexBackend>,
+    choices: BackendChoices<MarkdownBackend, CodeBackend, MathBackend>,
 ) {
     if (!isNonNullObject(choices)) {
         log(

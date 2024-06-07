@@ -1,19 +1,25 @@
 // Types
-import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
-    FullAdvancedTexConfiguration,
+    FullTexConfiguration,
     TexComponentImportInfo,
-} from '$types/handlers/AdvancedTex.js';
+} from '$types/handlers/Tex.js';
+import type {
+    FullVerbEnvConfigTex,
+    VerbEnvConfigTex,
+} from '$types/handlers/Verbatim.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type { KeyPath } from '$utils/cache.js';
 
 // Internal dependencies
 import {
-    getAdvancedTexPresetDefaults,
+    getTexPresetDefaults,
     getDefaultVerbEnvConfig,
     sanitizePopplerSvgOptions,
 } from '$config/defaults.js';
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { enginePrettyName, texBaseCommand } from '$data/tex.js';
+import { isArray, isObject, isString } from '$type-guards/utils.js';
+import { InterpretedAttributes } from '$types/utils/Escape.js';
 import { spawnCliInstruction } from '$utils/cli.js';
 import {
     escapeCssColorVars,
@@ -27,6 +33,7 @@ import {
     timeSince,
     timeToString,
 } from '$utils/debug.js';
+import { insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { buildDvisvgmInstruction } from '$utils/dvisvgm.js';
 import { fs, pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
@@ -34,22 +41,17 @@ import { sha256 } from '$utils/misc.js';
 
 // External dependencies
 import {
+    basename,
+    dirname,
+    flattenObject,
     join,
-    relative,
     ora,
     pc,
-    svgoOptimize,
-    flattenObject,
     prettyBytes,
+    relative,
+    stat,
+    svgoOptimize,
 } from '$deps.js';
-import { isArray, isObject, isString } from '$type-guards/utils.js';
-import { InterpretedAttributes } from '$types/utils/Escape.js';
-import {
-    FullVerbEnvConfigAdvancedTex,
-    VerbEnvConfigAdvancedTex,
-} from '$types/handlers/Verbatim.js';
-import { insteadGot } from '$utils/diagnosers/Diagnoser.js';
-import { stat } from 'fs/promises';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -146,8 +148,8 @@ export class TexComponent {
     /**
      * TeX component config to use to render this component.
      */
-    private _configuration: FullVerbEnvConfigAdvancedTex =
-        getDefaultVerbEnvConfig('advancedTex');
+    private _configuration: FullVerbEnvConfigTex =
+        getDefaultVerbEnvConfig('tex');
 
     /**
      * ##### SETTER
@@ -162,11 +164,11 @@ export class TexComponent {
      *
      * @internal
      */
-    set configuration(config: VerbEnvConfigAdvancedTex) {
+    set configuration(config: VerbEnvConfigTex) {
         this._configuration = mergeConfigs(this._configuration, config);
         let needsCorrection = false;
         const { compilation: compilation, conversion: conversion } =
-            this.advancedTexConfig;
+            this.texConfig;
 
         if (
             conversion.converter === 'poppler' &&
@@ -196,23 +198,23 @@ export class TexComponent {
      *
      * @internal
      */
-    get configuration(): FullVerbEnvConfigAdvancedTex {
+    get configuration(): FullVerbEnvConfigTex {
         return this._configuration;
     }
 
     /**
-     * Getter to access the cache object of the advanced TeX handler which
+     * Getter to access the cache object of the TeX handler which
      * created this component.
      *
      * @internal
      */
     get cache() {
-        return this.advancedTexHandler.cache;
+        return this.texHandler.cache;
     }
 
-    get advancedTexConfig() {
+    get texConfig() {
         return mergeConfigs(
-            this.advancedTexHandler.configuration,
+            this.texHandler.configuration,
             this._configuration.overrides,
         );
     }
@@ -310,12 +312,9 @@ export class TexComponent {
         intName: `${string}.${'pdf' | 'dvi' | 'xdv'}`;
         intBaseName: string;
     } {
-        const advancedTexConfig = this.advancedTexConfig;
-        const sourceDir = join(
-            advancedTexConfig.caching.cacheDirectory,
-            this.keyPath,
-        );
-        const { intermediateFiletype, engine } = advancedTexConfig.compilation;
+        const texConfig = this.texConfig;
+        const sourceDir = join(texConfig.caching.cacheDirectory, this.keyPath);
+        const { intermediateFiletype, engine } = texConfig.compilation;
         const extenstion: 'pdf' | 'dvi' | 'xdv' =
             intermediateFiletype === 'dvi'
                 ? engine === 'xelatex' // ['xelatex', 'xelatexmk'].includes(engine)
@@ -383,15 +382,18 @@ export class TexComponent {
         svelteBaseName: string;
         svelteExt: 'svelte';
     } {
+        const dir = dirname(this.ref);
+        const refBase = basename(this.ref);
         const outDir = join(
-            this.advancedTexConfig.conversion.outputDirectory,
+            this.texConfig.conversion.outputDirectory,
             this.tag,
+            dir,
         );
-        const svgBaseName = this.ref;
-        const svgName: `${string}.svg` = `${this.ref}.svg`;
+        const svgBaseName = refBase;
+        const svgName: `${string}.svg` = `${refBase}.svg`;
         const svgPath = join(outDir, svgName) as `${string}.svg`;
-        const svelteBaseName = this.ref;
-        const svelteName: `${string}.svelte` = `${this.ref}.svelte`;
+        const svelteBaseName = refBase;
+        const svelteName: `${string}.svelte` = `${refBase}.svelte`;
         const sveltePath = join(outDir, svelteName) as `${string}.svelte`;
 
         return {
@@ -415,7 +417,7 @@ export class TexComponent {
      * @param attributes - The attributes of the component as matched in the
      * source file before preprocessing.
      * @param tex - The TeX content of the component.
-     * @param advancedTexHandler - The advanced TeX handler used by the Sveltex
+     * @param texHandler - The TeX handler used by the Sveltex
      * instance parsing the source file containing the TeX component we're
      * trying to create.
      * @returns A new TeX component.
@@ -426,7 +428,7 @@ export class TexComponent {
     static create({
         attributes,
         tex,
-        advancedTexHandler,
+        texHandler,
         config,
         tag,
     }: {
@@ -435,12 +437,12 @@ export class TexComponent {
             string | number | boolean | null | undefined
         >;
         tex: string;
-        advancedTexHandler: AdvancedTexHandler;
-        config: VerbEnvConfigAdvancedTex;
+        texHandler: TexHandler;
+        config: VerbEnvConfigTex;
         tag: string;
     }): TexComponent {
         const tc = new TexComponent({
-            advancedTexHandler,
+            texHandler,
             config,
             texDocumentBodyWithCssVars: tex,
             tag,
@@ -456,7 +458,7 @@ export class TexComponent {
      * 1. Extract the `ref` attribute from the attributes object and return the
      *    remaining attributes, excluding valueless attributes.
      * 2. Call the
-     *    {@link VerbEnvConfigAdvancedTex.handleAttributes | `handleAttributes`}
+     *    {@link VerbEnvConfigTex.handleAttributes | `handleAttributes`}
      *    method (as determined by the TeX component's
      *    {@link configuration | `configuration`}) on the attributes object
      *    returned by the previous step.
@@ -478,9 +480,9 @@ export class TexComponent {
 
     /**
      * Object containing the output of the
-     * {@link VerbEnvConfigAdvancedTex.handleAttributes | `handleAttributes`}
+     * {@link VerbEnvConfigTex.handleAttributes | `handleAttributes`}
      * method. This object is intended to be used by the
-     * {@link VerbEnvConfigAdvancedTex.postprocess | `postprocess`} method.
+     * {@link VerbEnvConfigTex.postprocess | `postprocess`} method.
      *
      * @internal
      */
@@ -501,24 +503,20 @@ export class TexComponent {
     private constructor({
         config,
         texDocumentBodyWithCssVars,
-        advancedTexHandler,
+        texHandler,
         tag,
     }: {
-        config: VerbEnvConfigAdvancedTex;
+        config: VerbEnvConfigTex;
         texDocumentBodyWithCssVars: string;
         tag: string;
         // From parent Sveltex instance
-        advancedTexHandler: AdvancedTexHandler;
+        texHandler: TexHandler;
     }) {
-        this.advancedTexHandler = advancedTexHandler;
+        this.texHandler = texHandler;
         this.configuration = config;
         this.texDocumentBodyWithCssVars = texDocumentBodyWithCssVars;
         this.tag = tag;
-
-        // preambleMainstays = this.advancedTexConfig.compilation.engine;
     }
-
-    // private get preambleMainstays();
 
     /**
      * "Key path" of the component, which is the path to the component's source
@@ -533,7 +531,7 @@ export class TexComponent {
     /**
      * Advanced TeX handler that created this component.
      */
-    private readonly advancedTexHandler: AdvancedTexHandler;
+    private readonly texHandler: TexHandler;
 
     /**
      * The full content of the `.tex` file corresponding to the component, with
@@ -561,7 +559,7 @@ export class TexComponent {
     }
 
     get documentClass(): string {
-        const advancedTexConfig = this.advancedTexConfig;
+        const texConfig = this.texConfig;
         const documentClass = this.configuration.documentClass;
         const propIsString = isString(documentClass);
         const name: string = propIsString
@@ -571,7 +569,7 @@ export class TexComponent {
             ? []
             : documentClass.options ?? [];
         if (
-            advancedTexConfig.compilation.intermediateFiletype === 'dvi' &&
+            texConfig.compilation.intermediateFiletype === 'dvi' &&
             !options.includes('dvisvgm')
         ) {
             options.unshift('dvisvgm');
@@ -581,7 +579,7 @@ export class TexComponent {
     }
 
     get preamble(): string {
-        return extendedPreamble(this.configuration, this.advancedTexConfig);
+        return extendedPreamble(this.configuration, this.texConfig);
     }
 
     /**
@@ -599,24 +597,24 @@ export class TexComponent {
         const { escaped: compilableTexContent, cssColorVars } =
             escapeCssColorVars(this.contentWithCssVars, this.preamble);
 
-        const advancedTexConfig = this.advancedTexConfig;
+        const texConfig = this.texConfig;
 
         // Compilation options
-        const { engine, intermediateFiletype } = advancedTexConfig.compilation;
+        const { engine, intermediateFiletype } = texConfig.compilation;
 
         // Conversion options
         const {
             overrideConversion: overrideConversion,
             converter: conversionLibrary,
             poppler: poppler,
-        } = advancedTexConfig.conversion;
+        } = texConfig.conversion;
 
         // Optimization options
         const {
             svgo: svgo,
             currentColor,
             overrideOptimization,
-        } = advancedTexConfig.optimization;
+        } = texConfig.optimization;
 
         // Derived variables
         const format =
@@ -633,7 +631,7 @@ export class TexComponent {
         const keyPath = this.keyPath;
 
         // Determine if caching is enabled in the configuration
-        const caching = advancedTexConfig.caching.enabled;
+        const caching = texConfig.caching.enabled;
 
         // Declare `cache` "alias" to `this.cache` for convenience
         const cache = this.cache;
@@ -822,11 +820,11 @@ export class TexComponent {
                 let stdout = '';
                 let code = 0;
                 try {
-                    if (this.advancedTexHandler.poppler === undefined) {
+                    if (this.texHandler.poppler === undefined) {
                         const Poppler = (await import('node-poppler')).Poppler;
-                        this.advancedTexHandler.poppler = new Poppler();
+                        this.texHandler.poppler = new Poppler();
                     }
-                    stdout = await this.advancedTexHandler.poppler.pdfToCairo(
+                    stdout = await this.texHandler.poppler.pdfToCairo(
                         intPath,
                         svgPath,
                         sanitizePopplerSvgOptions(poppler),
@@ -991,9 +989,8 @@ export class TexComponent {
      * @internal
      */
     get convertCmd(): CliInstruction {
-        const advancedTexConfig = this.advancedTexConfig;
-        const { overrideConversion: overrideConversion } =
-            advancedTexConfig.conversion;
+        const texConfig = this.texConfig;
+        const { overrideConversion: overrideConversion } = texConfig.conversion;
         const { svgExt, svgBaseName, svgName, svgPath, dir: svgDir } = this.out;
         const {
             intExt,
@@ -1021,8 +1018,8 @@ export class TexComponent {
               })
             : // If no conversion command is specified, use dvisvgm
               buildDvisvgmInstruction({
-                  dvisvgm: advancedTexConfig.conversion.dvisvgm,
-                  inputType: advancedTexConfig.compilation.intermediateFiletype,
+                  dvisvgm: texConfig.conversion.dvisvgm,
+                  inputType: texConfig.compilation.intermediateFiletype,
                   outputPath: svgPath,
                   texPath: intPath,
               });
@@ -1034,14 +1031,14 @@ export class TexComponent {
      * CLI instruction with which to compile the `.tex` file.
      */
     get compileCmd(): CliInstruction {
-        const advancedTexConfig = this.advancedTexConfig;
+        const texConfig = this.texConfig;
         const {
             engine,
             intermediateFiletype,
             saferLua,
             shellEscape,
             overrideCompilation: overrideCompilation,
-        } = advancedTexConfig.compilation;
+        } = texConfig.compilation;
 
         const env = {
             // SOURCE_DATE_EPOCH is used to ensure reproducibility of the
@@ -1111,12 +1108,16 @@ export class TexComponent {
                     intermediateFiletype === 'pdf' ? '-pdflua' : '-dvilua',
                 );
                 break;
+            // Interestingly enough, I suspect there may be a bug in LaTeXmk,
+            // because the below code would not work as expected.
             // case 'xelatexmk':
             //     args.push(intermediateFiletype === 'dvi' ? '-xdv' : '-pdfxe');
         }
 
         if (intermediateFiletype === 'dvi') {
-            // Make compilation to DVI somewhat more deterministic
+            // Make compilation to DVI somewhat more deterministic (by default,
+            // the output-comment would be the current date (and time? I don't
+            // know)).
             args.push(pre + 'output-comment=""');
         }
 
@@ -1130,20 +1131,46 @@ export class TexComponent {
         if (shellEscape === 'restricted') {
             args.push(pre + 'shell-restricted');
         } else {
-            // if (Array.isArray(shellEscape)) {
-            //     args.push(
-            //         `${pre}cnf-line="shell_escape_commands=${shellEscape.join(',')}"`,
+            args.push(pre + (!shellEscape ? 'no-' : '') + 'shell-escape');
+
+            // The commented-out code below was my attempt at implementing the
+            // option to pass an allowlist of commands to `shellEscape`, but I
+            // couldn't get it to work. I'm leaving it here for now, in case I
+            // want to revisit it later.
+
+            // (Array.isArray(shellEscape)) { args.push(
+            // `${pre}cnf-line="shell_escape_commands=${shellEscape.join(',')}"`,
             //     );
             // }
-            args.push(pre + (!shellEscape ? 'no-' : '') + 'shell-escape');
         }
 
-        // Add interaction flag
-        args.push(`${pre}interaction=nonstopmode`);
+        // Add interaction flag. The modes make TeX behave in the following way:
+        //
+        // - `errorstopmode` stops on all errors, whether they are about errors
+        //   in the source code or non-existent files.
+        // - `scrollmode` doesn't stop on errors in the source but requests
+        //   input when a more serious error like like a missing file occurs.
+        // - In the somewhat misnamed `nonstopmode`, TeX does not request input
+        //   after serious errors but stops altogether.
+        // - `batchmode` prevents all output in addition to that (intended for
+        //   use in automated scripts). In all cases, all errors are written to
+        //   the log file (`yourtexfile.log`).
+        //
+        // Source: https://www.volkerschatz.com/tex/ttips.html, via
+        // https://tex.stackexchange.com/a/13330/170958
+        //
+        // It wouldn't make sense for Sveltex to offer the option to change the
+        // interaction mode, because it would be impossible for the user to
+        // interact with the compiler anyway, given that it's running in a
+        // separate child process. Accordingly, it is "hard-coded" to
+        // `batchmode`.
+        args.push(`${pre}interaction=batchmode`);
 
         // args.push(`${pre}silent`);
 
-        // Add the filename
+        // Add the filename. It's important that this be the last argument,
+        // simply because of the format in which the LaTeX commands expect their
+        // CLI input to be provided.
         args.push(this.source.texName);
 
         return { command, args, env, cwd, silent };
@@ -1151,13 +1178,11 @@ export class TexComponent {
 
     /**
      * Extract the `ref` attribute from the given attributes object and return
-     * the remaining attributes, excluding valueless attributes.
+     * the remaining attributes.
      *
      * @param attributes - Attributes object to extract the `ref` attribute from.
-     * @returns The remaining attributes, excluding the `ref` attribute and any
-     * valueless attributes.
+     * @returns The remaining attributes, excluding the `ref` attribute.
      * @throws If no `ref` attribute is found in the attributes object.
-     * @internal
      */
     private extractRefAttribute(
         attributes: InterpretedAttributes,
@@ -1173,41 +1198,14 @@ export class TexComponent {
     }
 }
 
-export const texBaseCommand: Record<SupportedTexEngine, string> = {
-    lualatex: 'lualatex',
-    pdflatex: 'pdflatex',
-    xelatex: 'xelatex',
-    pdflatexmk: 'latexmk',
-    // A CLI flag will take care of making this actually use LuaLaTeX
-    lualatexmk: 'latexmk',
-    // A CLI flag will take care of making this actually use XeLaTeX
-    // xelatexmk: 'latexmk',
-} as const;
-
-export const enginePrettyName: Record<SupportedTexEngine, string> = {
-    lualatex: 'LuaLaTeX',
-    pdflatex: 'pdfLaTeX',
-    xelatex: 'XeLaTeX',
-    pdflatexmk: 'LaTeXmk (pdfLaTeX)',
-    lualatexmk: 'LaTeXmk (LuaLaTeX)',
-} as const;
-
 export function extendedPreamble(
-    verbEnvConfig: FullVerbEnvConfigAdvancedTex,
-    advancedTexConfig: FullAdvancedTexConfiguration,
+    verbEnvConfig: FullVerbEnvConfigTex,
+    texConfig: FullTexConfiguration,
 ) {
-    // let backendConfig = '';
-    // if (advancedTexConfig.compilation.intermediateFiletype === 'dvi') {
-    //     backendConfig =
-    //         '\\ExplSyntaxOn\n' +
-    //         '\\str_if_exist:NF \\c_sys_backend_str\n' +
-    //         '  { \\sys_load_backend:n { dvisvgm } }\n' +
-    //         '\\ExplSyntaxOff\n';
-    // }
     const preamble = verbEnvConfig.preamble;
     const { packages, gdlibraries, tikzlibraries } = enactPresets(
         verbEnvConfig,
-        advancedTexConfig,
+        texConfig,
     );
     packages.unshift('xcolor');
     const usepackage = [
@@ -1241,8 +1239,8 @@ function extractTrueKeys(obj: object) {
 }
 
 export function enactPresets(
-    verbEnvConfig: FullVerbEnvConfigAdvancedTex,
-    advancedTexConfig: FullAdvancedTexConfiguration,
+    verbEnvConfig: FullVerbEnvConfigTex,
+    texConfig: FullTexConfiguration,
 ) {
     const presets = isArray(verbEnvConfig.preset)
         ? verbEnvConfig.preset
@@ -1255,16 +1253,12 @@ export function enactPresets(
     const gdlibraries = [];
     const packages = ['tikz'];
     const merged = mergeConfigs(
-        getAdvancedTexPresetDefaults('tikz').libraries,
+        getTexPresetDefaults('tikz').libraries,
         preset.libraries,
     );
     const { graphdrawing, ...tikzLibrariesObj } = merged;
     if (graphdrawing !== undefined && graphdrawing !== false) {
-        if (
-            ['lualatex', 'lualatexmk'].includes(
-                advancedTexConfig.compilation.engine,
-            )
-        ) {
+        if (['lualatex', 'lualatexmk'].includes(texConfig.compilation.engine)) {
             tikzlibraries.push('graphdrawing');
             if (isObject(graphdrawing)) {
                 gdlibraries.push(...extractTrueKeys(graphdrawing));
@@ -1272,7 +1266,7 @@ export function enactPresets(
         } else {
             log(
                 'error',
-                `Graph drawing libraries require "compilation.engine" to be "lualatex" or "lualatexmk". ${insteadGot(advancedTexConfig.compilation.engine, 'string')} Ignoring graph drawing libraries.`,
+                `Graph drawing libraries require "compilation.engine" to be "lualatex" or "lualatexmk". ${insteadGot(texConfig.compilation.engine, 'string')} Ignoring graph drawing libraries.`,
             );
         }
     }
@@ -1280,34 +1274,3 @@ export function enactPresets(
     if (tikzlibraries.includes('fixedpointarithmetic')) packages.push('fp');
     return { tikzlibraries, gdlibraries, packages };
 }
-
-// /**
-//  * Regular expression to check if the `xcolor` package was loaded in a preamble.
-//  */
-// const xcolorLoadedRegex = re`
-//     ^                       # (start of line)
-//     \s*                     # (optional whitespace)
-//     (?<! ^ .* % .* )        # (negative lookbehind for %)
-//     (?:
-//         \\usepackage        # (usepackage command)
-//         | \\RequirePackage  # (RequirePackage command)
-//     )
-//     \s*
-//     (?:                     # -: optional package options
-//         (?<! ^ .* % .* ) \[ # (opening bracket, not preceded by %)
-//             \s*             # (optional whitespace)
-//             [ \w\W ]*       # (any character, incl. newlines, ≥0 times)
-//             \s*             # (optional whitespace)
-//         (?<! ^ .* % .* ) \] # (closing bracket, not preceded by %)
-//     )?
-//     \s*                     # (optional whitespace)
-//     \{                      # (opening brace)
-//         \s*                 # (optional whitespace)
-//         xcolor              # (package name)
-//         \s*                 # (optional whitespace)
-//     \}                      # (closing brace)
-
-//                             # FLAGS
-//     ${'mu'}                 # m = Multiline (^ and $ match start/end of each line)
-//                             # u = Unicode support
-// `;

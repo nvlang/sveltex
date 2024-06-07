@@ -11,19 +11,19 @@ import {
 } from 'vitest';
 import {
     getDefaultCodeConfig,
-    getDefaultAdvancedTexConfig,
+    getDefaultTexConfig,
     getDefaultVerbEnvConfig,
     sanitizePopplerSvgOptions,
-    getAdvancedTexPresetDefaults,
+    getTexPresetDefaults,
 } from '$config/defaults.js';
 import path from 'node:path';
 import os from 'node:os';
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { verbatimTypes } from '$type-guards/verbatim.js';
 import { spy } from '$tests/fixtures.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import {
-    FullVerbEnvConfigAdvancedTex,
+    FullVerbEnvConfigTex,
     VerbatimType,
 } from '$types/handlers/Verbatim.js';
 import { isCodeBackendWithCss } from '$type-guards/code.js';
@@ -70,32 +70,15 @@ describe.concurrent('config/defaults', () => {
                         ).toEqual(0);
                     });
 
-                    if (type === 'custom') {
-                        it('provides default for customProcess', () => {
-                            expect(
-                                defaultVerbEnvConfig.customProcess,
-                            ).toBeDefined();
-                            expect(
-                                (
-                                    defaultVerbEnvConfig.customProcess as (
-                                        str: string,
-                                    ) => string
-                                )('something'),
-                            ).toEqual('');
-                        });
-                    }
-
-                    if (type === 'advancedTex') {
+                    if (type === 'tex') {
                         it('provides default for handleAttributes', async () => {
                             typeAssert(
-                                is<FullVerbEnvConfigAdvancedTex>(
-                                    defaultVerbEnvConfig,
-                                ),
+                                is<FullVerbEnvConfigTex>(defaultVerbEnvConfig),
                             );
                             expect(
                                 defaultVerbEnvConfig.handleAttributes,
                             ).toBeDefined();
-                            const ath = await AdvancedTexHandler.create();
+                            const ath = await TexHandler.create();
                             const tc = ath.createTexComponent(
                                 'TexComponent.test.ts content',
                                 {
@@ -105,9 +88,7 @@ describe.concurrent('config/defaults', () => {
                                     filename: 'TexComponent_test_ts.sveltex',
                                     selfClosing: false,
                                     tag: 'tex',
-                                    config: getDefaultVerbEnvConfig(
-                                        'advancedTex',
-                                    ),
+                                    config: getDefaultVerbEnvConfig('tex'),
                                 },
                             );
 
@@ -158,7 +139,7 @@ describe.concurrent('config/defaults', () => {
             );
         });
         describe('throws error for unknown args', () => {
-            it.each(['AdvancedTex', 'tex', 'something'])(
+            it.each(['Tex', 'something'])(
                 'getDefaultVerbEnvConfig(%o)',
                 (type) => {
                     expect(() =>
@@ -169,11 +150,11 @@ describe.concurrent('config/defaults', () => {
         });
     });
 
-    // defaultAdvancedTexConfiguration
-    describe('getDefaultAdvancedTexConfiguration()', () => {
+    // defaultTexConfiguration
+    describe('getDefaultTexConfiguration()', () => {
         fixture();
         it('should return an object', () => {
-            expect(typeof getDefaultAdvancedTexConfig()).toBe('object');
+            expect(typeof getDefaultTexConfig()).toBe('object');
         });
 
         it('should have cacheDirectory set even if findCacheDirectory returns undefined', () => {
@@ -187,7 +168,7 @@ describe.concurrent('config/defaults', () => {
                     };
                 },
             );
-            const config = getDefaultAdvancedTexConfig();
+            const config = getDefaultTexConfig();
             expect(config.caching.cacheDirectory).toBeDefined();
             expect(config.caching.cacheDirectory).toEqual(
                 path.resolve(
@@ -211,7 +192,7 @@ describe.concurrent('config/defaults', () => {
             );
             const originalXDGCacheHome = process.env['XDG_CACHE_HOME'];
             process.env['XDG_CACHE_HOME'] = undefined;
-            const config = getDefaultAdvancedTexConfig();
+            const config = getDefaultTexConfig();
             expect(config.caching.cacheDirectory).toBeDefined();
             expect(config.caching.cacheDirectory).toEqual(
                 path.resolve(path.join(os.homedir(), '.cache'), 'sveltex'),
@@ -233,7 +214,7 @@ describe.concurrent('config/defaults', () => {
                 ).toBeDefined();
                 expect(
                     typeof getDefaultCodeConfig(backend).addLanguageClass,
-                ).toBe('string');
+                ).toMatch(/string|boolean/);
             });
 
             if (isCodeBackendWithCss(backend)) {
@@ -265,14 +246,14 @@ describe.concurrent('config/defaults', () => {
     describe('postprocess()', () => {
         fixture();
         it('should work', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
                 outerContent: '<tex ref="ref">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
                 tc.configuration.postprocess(
@@ -283,7 +264,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -295,7 +276,7 @@ describe.concurrent('config/defaults', () => {
                 tag: 'tex',
                 outerContent:
                     '<tex ref="ref" attr="something" class="class-example">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
                 tc.configuration.postprocess(
@@ -308,7 +289,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -319,7 +300,7 @@ describe.concurrent('config/defaults', () => {
                 tag: 'tex',
                 outerContent:
                     '<tex ref="ref" caption="example caption">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
                 tc.configuration.postprocess(
@@ -332,7 +313,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption attributes', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -345,7 +326,7 @@ describe.concurrent('config/defaults', () => {
                 tag: 'tex',
                 outerContent:
                     '<tex ref="ref" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
                 tc.configuration.postprocess(
@@ -358,7 +339,7 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes + caption attributes', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: {
                     ref: 'ref',
@@ -372,7 +353,7 @@ describe.concurrent('config/defaults', () => {
                 tag: 'tex',
                 outerContent:
                     '<tex ref="ref" class="class-example-figure" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
                 tc.configuration.postprocess(
@@ -388,14 +369,14 @@ describe.concurrent('config/defaults', () => {
     describe('handleAttributes', () => {
         fixture();
         it.skip('should complain if non-string attributes are passed', async () => {
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref', something: 123 },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
                 outerContent: '<tex ref="ref">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
             expect(tc.handledAttributes).toEqual({
                 caption: undefined,
@@ -419,14 +400,14 @@ describe.concurrent('config/defaults', () => {
                 preamble: '\\usepackage{amsmath}',
                 documentClass: 'article',
             };
-            const ath = await AdvancedTexHandler.create();
+            const ath = await TexHandler.create();
             const tc = ath.createTexComponent('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
                 outerContent: '<tex ref="ref">test</tex>',
-                config: getDefaultVerbEnvConfig('advancedTex'),
+                config: getDefaultVerbEnvConfig('tex'),
             });
 
             const { caption, figureAttributes, captionAttributes } =
@@ -461,9 +442,9 @@ describe.concurrent('config/defaults', () => {
         });
     });
 
-    describe('getAdvancedTexPresetDefaults()', () => {
+    describe('getTexPresetDefaults()', () => {
         it('tikz', () => {
-            expect(getAdvancedTexPresetDefaults('tikz')).toMatchObject({
+            expect(getTexPresetDefaults('tikz')).toMatchObject({
                 name: 'tikz',
                 libraries: {
                     babel: true,

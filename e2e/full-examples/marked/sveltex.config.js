@@ -4,7 +4,7 @@ import { gfmHeadingId } from 'marked-gfm-heading-id';
 export const sveltexPreprocessor = await sveltex({
     markdownBackend: 'marked',
     codeBackend: 'highlight.js',
-    texBackend: 'mathjax',
+    mathBackend: 'mathjax',
 });
 
 await sveltexPreprocessor.configure({
@@ -18,16 +18,12 @@ await sveltexPreprocessor.configure({
         },
         extensions: [gfmHeadingId()],
     },
-    code: { languages: ['ts'] },
-    tex: { outputFormat: 'chtml', css: { type: 'cdn' } },
+    code: {},
+    math: { outputFormat: 'chtml', css: { type: 'cdn' } },
     verbatim: {
-        Verb: {
-            type: 'escapeOnly',
-            escapeInstructions: { escapeBraces: true, escapeHtml: true },
-            component: 'p',
-        },
+        Verb: { type: 'escapeOnly', component: 'p' },
         tex: {
-            type: 'advancedTex',
+            type: 'tex',
             aliases: ['TikZ'],
             preamble: [
                 '\\usepackage{mathtools}',

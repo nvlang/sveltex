@@ -27,11 +27,11 @@ apply:
 import { sveltex } from '@nvl/sveltex';
 
 export const sveltexPreprocessor = await sveltex({
-    advancedTexBackend: 'local',
+    texBackend: 'local',
 });
 
 await sveltexPreprocessor.configure({
-    advancedTex: {
+    tex: {
         components: {
             TeX: {},
             TikZ: {

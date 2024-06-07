@@ -13,13 +13,11 @@ describe('sveltex error handling', () => {
     });
     it('catches errors', async () => {
         vi.mock(
-            'mdast-util-from-markdown',
-            async (
-                orig: () => Promise<typeof import('mdast-util-from-markdown')>,
-            ) => {
+            'micromark',
+            async (orig: () => Promise<typeof import('micromark')>) => {
                 return {
                     ...(await orig()),
-                    fromMarkdown: () => {
+                    micromark: () => {
                         throw new Error('test error');
                     },
                 };
@@ -29,11 +27,7 @@ describe('sveltex error handling', () => {
             .spyOn(consoles, 'error')
             .mockImplementation(() => undefined);
 
-        const preprocessor = await sveltex({
-            markdownBackend: 'none',
-            codeBackend: 'none',
-            texBackend: 'none',
-        });
+        const preprocessor = await sveltex({ markdownBackend: 'micromark' });
         const preprocess = async (
             input: string,
             filename: string = 'test.sveltex',
@@ -50,7 +44,7 @@ describe('sveltex error handling', () => {
         // expect(
         //     ((consoleErrorMock.mock.calls[0] ?? [])[0] as Error).message,
         // ).toBe('test error');
-
+        // https://prismjs.com/
         consoleErrorMock.mockRestore();
         // vi.unmock('svelte/compiler');
     });
@@ -72,7 +66,7 @@ describe('Sveltex.create()', () => {
                 await sveltex({
                     markdownBackend: 'unified',
                     codeBackend: 'starry-night',
-                    texBackend: 'mathjax',
+                    mathBackend: 'mathjax',
                 }),
         ).rejects.toThrowError(
             'Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:\n\npnpm add -D unified remark-parse remark-rehype rehype-stringify @types/mdast @wooorm/starry-night hast-util-find-and-replace hast-util-to-html mathjax',

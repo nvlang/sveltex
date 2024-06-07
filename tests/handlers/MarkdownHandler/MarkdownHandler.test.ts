@@ -3,35 +3,6 @@ import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import { missingDeps } from '$utils/env.js';
 
 describe('MarkdownHandler', () => {
-    describe('MarkdownHandler.shouldParseAsInline()', () => {
-        it('should return true for inline markdown', () => {
-            expect(MarkdownHandler.shouldParseAsInline('**strong** *em*')).toBe(
-                true,
-            );
-        });
-
-        it('should return false for block markdown', () => {
-            expect(MarkdownHandler.shouldParseAsInline('a\n\nb')).toBe(false);
-        });
-    });
-
-    describe('MarkdownHandler.markdownBlockRegex', () => {
-        it('should match multiple newlines', () => {
-            const input = '\n\n';
-            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
-        });
-
-        it('should match headings', () => {
-            const input = '# Heading';
-            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
-        });
-
-        it('should match setext heading', () => {
-            const input = 'Heading\n---';
-            expect(MarkdownHandler.markdownBlockRegex.test(input)).toBe(true);
-        });
-    });
-
     describe('constructor', () => {
         it('should have optional configuration property in parameter', () => {
             const handler1 = new MarkdownHandler({

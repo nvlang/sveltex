@@ -13,7 +13,7 @@ import {
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
 } from '$utils/dvisvgm.js';
-import { getDefaultAdvancedTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$config/defaults.js';
 
 describe.concurrent('bboxToFlagValue', () => {
     it('should return the string representation of a TexDim', () => {
@@ -23,8 +23,7 @@ describe.concurrent('bboxToFlagValue', () => {
     });
 
     it('should return the string representation of a TexDim 2', () => {
-        const bbox =
-            getDefaultAdvancedTexConfig().conversion.dvisvgm.svg.bbox ?? 'A1';
+        const bbox = getDefaultTexConfig().conversion.dvisvgm.svg.bbox ?? 'A1';
         const result = bboxToFlagValue(bbox);
         expect(result).toEqual('2pt');
     });

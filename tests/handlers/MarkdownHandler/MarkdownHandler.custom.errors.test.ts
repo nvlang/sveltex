@@ -27,9 +27,7 @@ describe("MarkdownHandler<'custom'>", () => {
     };
     const customProcess = async (
         markdown: string,
-        { inline }: { inline?: boolean | undefined } | undefined = {
-            inline: !MarkdownHandler.shouldParseAsInline(markdown),
-        },
+        { inline }: { inline?: boolean | undefined } | undefined = {},
         markdownHandler: MarkdownHandler<'custom'>,
     ) => {
         return inline
@@ -48,7 +46,7 @@ describe("MarkdownHandler<'custom'>", () => {
             expect(handler).toBeInstanceOf(MarkdownHandler);
         });
 
-        describe("TexHandler.create('custom')", () => {
+        describe("MathHandler.create('custom')", () => {
             it('throws error if second parameter is missing', async () => {
                 await expect(() =>
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

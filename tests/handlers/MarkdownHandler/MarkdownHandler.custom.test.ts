@@ -29,9 +29,7 @@ describe("MarkdownHandler<'custom'>", () => {
         };
         const customProcess = async (
             markdown: string,
-            { inline }: { inline?: boolean | undefined } | undefined = {
-                inline: !MarkdownHandler.shouldParseAsInline(markdown),
-            },
+            { inline }: { inline?: boolean | undefined },
             markdownHandler: MarkdownHandler<'custom'>,
         ) => {
             return inline
@@ -63,28 +61,10 @@ describe("MarkdownHandler<'custom'>", () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = (await handler.process('**strong** *em*'))
+                const output = (await handler.process('**strong** *em*', {}))
                     .processed;
-                const expected = '<strong>strong</strong> <em>em</em>';
+                const expected = '<p><strong>strong</strong> <em>em</em></p>\n';
                 expect(output).toEqual(expected);
-            });
-
-            it("automatically distinguishes between inline and 'block' markdown", async () => {
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a\nb',
-                );
-                expect((await handler.process('a\n\nb')).processed).toEqual(
-                    '<p>a</p>\n<p>b</p>\n',
-                );
-            });
-
-            it('has working `inline` parameter', async () => {
-                expect(
-                    (await handler.process('a', { inline: true })).processed,
-                ).toEqual('a');
-                expect(
-                    (await handler.process('a', { inline: false })).processed,
-                ).toEqual('<p>a</p>\n');
             });
         });
 
@@ -98,14 +78,14 @@ describe("MarkdownHandler<'custom'>", () => {
                 await handler.configure({
                     options: { gfm: true, breaks: true },
                 });
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a<br>b',
+                expect((await handler.process('a\nb', {})).processed).toEqual(
+                    '<p>a<br>b</p>\n',
                 );
                 await handler.configure({
                     options: { gfm: false, breaks: false },
                 });
-                expect((await handler.process('a\nb')).processed).toEqual(
-                    'a\nb',
+                expect((await handler.process('a\nb', {})).processed).toEqual(
+                    '<p>a\nb</p>\n',
                 );
                 expect(handler.configuration).toEqual({
                     options: { gfm: false, breaks: false },

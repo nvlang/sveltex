@@ -34,10 +34,9 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
         getDefaultVerbEnvConfig('code'),
         getDefaultVerbEnvConfig('escapeOnly'),
         getDefaultVerbEnvConfig('noop'),
-        getDefaultVerbEnvConfig('custom'),
-        getDefaultVerbEnvConfig('advancedTex'),
+        getDefaultVerbEnvConfig('tex'),
         {
-            type: 'advancedTex',
+            type: 'tex',
             overrides: {
                 compilation: {
                     engine: 'pdflatexmk',
@@ -59,10 +58,10 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
         [{ attributeForwardingAllowlist: 123 }, 1],
         [{ attributeForwardingBlocklist: 'something' }, 1],
         [{ aliases: 'something' }, 1],
-        [{ type: 'advancedTex', overrides: 'something' }, 1],
+        [{ type: 'tex', overrides: 'something' }, 1],
         [
             {
-                type: 'advancedTex',
+                type: 'tex',
                 overrides: {
                     compilation: { engine: 'something' },
                     a: 1,

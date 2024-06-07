@@ -1,205 +1,303 @@
 // Types
+import type { Poppler } from '$deps.js';
 import type {
-    FullTexConfiguration,
-    TexBackend,
-    TexConfiguration,
+    TexBackend as TexBackend,
+    TexConfiguration as TexConfiguration,
     TexConfigureFn,
     TexProcessFn,
-    TexProcessOptions,
-    TexProcessor,
+    TexProcessOptions as TexProcessOptions,
+    TexProcessor as TexProcessor,
+    FullTexConfiguration as FullTexConfiguration,
+    TexComponentImportInfo,
 } from '$types/handlers/Tex.js';
 
 // Internal dependencies
-import { getDefaultTexConfiguration } from '$config/defaults.js';
-import { Handler, deepClone } from '$handlers/Handler.js';
-import { isArray, isOneOf } from '$type-guards/utils.js';
-import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
-import { runWithSpinner } from '$utils/debug.js';
-import { escapeBraces } from '$utils/escape.js';
-import { fs } from '$utils/fs.js';
-import { getVersion, missingDeps } from '$utils/env.js';
+import { getDefaultTexConfig } from '$config/defaults.js';
+import { TexComponent } from '$utils/TexComponent.js';
+import { SveltexCache } from '$utils/cache.js';
+import { Handler } from '$handlers/Handler.js';
 import { mergeConfigs } from '$utils/merge.js';
-import {
-    copyTransformations,
-    postfixWithSlash,
-    prefixWithSlash,
-} from '$utils/misc.js';
 
-// External dependencies
-import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
-import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
-import { applyTransformations } from '$utils/transformers.js';
-
-export class TexHandler<B extends TexBackend> extends Handler<
-    B,
+export class TexHandler extends Handler<
     TexBackend,
-    TexProcessor<B>,
-    TexProcessOptions<B>,
-    TexConfiguration<B>,
-    FullTexConfiguration<B>,
-    TexHandler<B>
+    TexBackend,
+    TexProcessor,
+    TexProcessOptions,
+    TexConfiguration,
+    FullTexConfiguration,
+    TexHandler
 > {
-    override get configuration(): FullTexConfiguration<B> {
-        // rfdc doesn't handle RegExps well, so we have to copy them manually
-        const { pre, post } = this._configuration.transformers;
-        return {
-            ...deepClone(this._configuration),
-            transformers: {
-                pre: copyTransformations(pre),
-                post: copyTransformations(post),
-            },
-        };
+    /**
+     * The cache object used by the handler. Definite assignment in
+     * {@link TexHandler.create | `TexHandler.create`}, hence
+     * the definite assignment assertion (given that the constructor of
+     * `TexHandler` is private).
+     */
+    private _cache!: SveltexCache;
+
+    public get cache(): SveltexCache {
+        return this._cache;
     }
 
-    override configureNullOverrides: [string, unknown][] = [
-        ['transformers', { pre: [], post: [] }],
-        ['transformers.pre', []],
-        ['transformers.post', []],
-        ['mathjax.chtml', {}],
-        [
-            'css',
-            isOneOf(this.backend, ['mathjax', 'katex'])
-                ? {
-                      type: 'none',
-                      dir: 'src/sveltex',
-                      timeout: 1000,
-                      cdn: 'jsdelivr',
-                  }
-                : undefined,
-        ],
-    ];
-
+    /**
+     * Process content.
+     *
+     * @param content - The content to process.
+     * @param options - Options to pass to the processor.
+     * @returns The processed content, or promise resolving to it.
+     */
     override get process() {
-        return async (tex: string, options?: TexProcessOptions<B>) => {
-            await this.handleCss();
-
-            // const displayMath = tex.match(
-            //     re`^ (?: \$\$ (.*) \$\$ | \\\[ (.*) \\\] ) $ ${'su'}`,
-            // );
-            // const inlineMath = tex.match(
-            //     re`^ (?: \$ (.*) \$ | \\\( (.*) \\\) ) $ ${'su'}`,
-            // );
-            // if (displayMath) {
-            //     return super.process(
-            //         // We ignore the line below because the regex guarantees
-            //         // that one of the groups is not null, but TypeScript
-            //         // doesn't realize this, and I don't want to use a non-null
-            //         // assertion.
-            //         /* v8 ignore next */
-            //         displayMath[1] ?? displayMath[2] ?? '',
-            //         {
-            //             options,
-            //             inline: false,
-            //         } as TexProcessOptions<B>,
-            //     );
-            // }
-            // if (inlineMath) {
-            //     return super.process(
-            //         // We ignore the line below because the regex guarantees
-            //         // that one of the groups is not null, but TypeScript
-            //         // doesn't realize this, and I don't want to use a non-null
-            //         // assertion.
-            //         /* v8 ignore next */
-            //         inlineMath[1] ?? inlineMath[2] ?? '',
-            //         {
-            //             options,
-            //             inline: true,
-            //         } as TexProcessOptions<B>,
-            //     );
-            // }
-            return super.process(tex, options ?? ({} as TexProcessOptions<B>));
+        return (content: string, options: TexProcessOptions) => {
+            return super.process(content, options);
         };
     }
 
-    private _handleCss: (texHandler: this) => Promise<void> = () =>
-        Promise.resolve();
-    get handleCss() {
-        return async () => {
-            if (this._handledCss) return;
-            this._handledCss = true;
-            await this._handleCss(this);
+    // /**
+    //  * TeX component configurations map.
+    //  *
+    //  * - key: component configuration name
+    //  * - val: component configuration
+    //  */
+    // private _tccMap: Map<string, VerbEnvConfigTexuration<B>> = new Map<
+    //     string,
+    //     VerbEnvConfigTexuration<B>
+    // >();
+
+    // private _tccNames: string[] = [];
+
+    // /**
+    //  * Copy of the {@link _tccNames | `_tccNames`} property.
+    //  *
+    //  * @remarks Mutating this array will not affect the `_tccNames` property.
+    //  */
+    // public get tccNames(): string[] {
+    //     return [...this._tccNames];
+    // }
+
+    // private _tccAliases: string[] = [];
+
+    // /**
+    //  * Copy of the {@link _tccAliases | `_tccAliases`} property.
+    //  *
+    //  * @remarks Mutating this array will not affect the `_tccAliases` property.
+    //  */
+    // public get tccAliases(): string[] {
+    //     return [...this._tccAliases];
+    // }
+
+    // private readonly tccAliasToNameMap: Map<string, string> = new Map<
+    //     string,
+    //     string
+    // >();
+
+    // set tccMap(tccs: Record<string, VerbEnvConfigTexuration<B>> | null) {
+    //     if (tccs === null) {
+    //         // Reset tccMap, tccNames, tccAliases, and tccAliasToNameMap
+    //         this._tccMap = new Map<string, VerbEnvConfigTexuration<B>>();
+    //         this._tccNames = [];
+    //         this._tccAliases = [];
+    //         this.tccAliasToNameMap.clear();
+    //         return;
+    //     }
+
+    //     const components = new Map<string, VerbEnvConfigTexuration<B>>();
+
+    //     // Add "main" names of tex components
+    //     for (const [name, config] of Object.entries(tccs)) {
+    //         components.set(name, config);
+    //         if (!this._tccNames.includes(name)) {
+    //             this._tccNames.push(name);
+    //         }
+    //     }
+
+    //     // Array to store duplicate aliases, for logging
+    //     const duplicates: string[] = [];
+
+    //     // Add aliases, and check for duplicates
+    //     for (const [name, config] of Object.entries(tccs)) {
+    //         if (typeof config === 'object' && 'aliases' in config) {
+    //             for (const alias of config.aliases) {
+    //                 if (alias !== name) {
+    //                     if (components.has(alias)) {
+    //                         duplicates.push(alias);
+    //                     }
+    //                     this.tccAliasToNameMap.set(alias, name);
+    //                     if (!this._tccAliases.includes(alias)) {
+    //                         this._tccAliases.push(alias);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // Log error about duplicates, if present
+    //     [...new Set(duplicates)].forEach((alias) => {
+    //         log(
+    //             'error',
+    //             `Duplicate TeX component name/alias "${alias}".`,
+    //         );
+    //     });
+
+    //     this._tccMap = components;
+    // }
+
+    // get tccMap(): Map<string, VerbEnvConfigTexuration<B>> {
+    //     return this._tccMap;
+    // }
+
+    /**
+     * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the
+     * parent `Sveltex` instance.
+     *
+     * @remarks Important: This property should always set by the parent
+     * `Sveltex` instance. Without it, the `TexHandler` will not be able
+     * to work properly.
+     *
+     * While preprocessing a file with name `filename`, the Sveltex instance
+     * will call the `process` method of its instance of `TexHandler` on
+     * whatever TeX blocks it finds in the file. Now,
+     * `TexHandler.process` will instantiate a `TexComponent` object for
+     * each TeX block, and call its `compile` method, which will in
+     * turn generate the SVG file for the TeX block.
+     *
+     * However, the question now is how we include the SVG file in the
+     * preprocessed code. The answer is: we add some code to the file's
+     * `<script>` tag that will add the SVG file's contents to the `<figure>`
+     * tag that `TexHandler.process` returned for the TeX block.
+     * However, this code can't be added by the `Sveltex.markup` method, since
+     * Svelte requires (prefers?) that the `<script>` tag be preprocessed with a
+     * separate preprocessor, which in our case corresponds to `Sveltex.script`.
+     * But, for this preprocessor to be able to add the code, it needs to know,
+     * given a filename, for what SVG files it should add code to the `<script>`
+     * tag to add their content to the corresponding `<figure>` tags. This
+     * precise need is fulfilled by this `texComponents` property, which
+     * `Sveltex.markup` writes to via `Sveltex.markup` →
+     * `VerbatimHandler.process` → `TexHandler.process`, and
+     * `Sveltex.script` reads from directly.
+     *
+     * This is also why `TexProcessOptions` requires a `filename`
+     * property, and why the `TexHandler.process` method requires the
+     * `options` parameter to be provided.
+     *
+     * **NB**: The `Sveltex.markup` always runs before `Sveltex.script`; this
+     * behavior is guaranteed by Svelte itself, see [Svelte
+     * docs](https://svelte.dev/docs/svelte-compiler#preprocess))
+     */
+    texComponents: Record<string, TexComponentImportInfo[]>;
+
+    // /**
+    //  * Resolves an alias to the name of the component it refers to. If the input
+    //  * string is already a component name, it is returned as is. If the input
+    //  * string is neither a component name nor an alias, 'unknown' is returned.
+    //  *
+    //  * @param alias - The alias to resolve.
+    //  * @returns The name of the component the alias refers to.
+    //  */
+    // resolveTccAlias(alias: string): string {
+    //     return (
+    //         this.tccAliasToNameMap.get(alias) ??
+    //         (this._tccNames.includes(alias) ? alias : 'unknown')
+    //     );
+    // }
+
+    /**
+     * Notes a tex component in a file.
+     *
+     * @param filename - The name of the file.
+     * @param tc - The tex component to note.
+     */
+    noteTcInFile(filename: string, tc: TexComponentImportInfo) {
+        if (
+            filename in this.texComponents &&
+            this.texComponents[filename] !== undefined
+        ) {
+            if (
+                !this.texComponents[filename]?.includes(tc) &&
+                !this.texComponents[filename]?.find(
+                    (c) => c.id === tc.id || c.path === tc.path,
+                )
+            ) {
+                // Add tex component to existing entry for file if it isn't
+                // already there.
+                this.texComponents[filename]?.push(tc);
+            }
+        } else {
+            // Create new entry for file if it doesn't already exist
+            this.texComponents[filename] = [tc];
+        }
+    }
+
+    createTexComponent(
+        content: string,
+        options: TexProcessOptions,
+    ): TexComponent {
+        return TexComponent.create({
+            ...options,
+            tex: content,
+            texHandler: this,
+        });
+    }
+
+    override get configure() {
+        return async (configuration: TexConfiguration) => {
+            const oldCacheDirectory =
+                this._configuration.caching.cacheDirectory;
+            await super.configure(configuration);
+            this._configuration = mergeConfigs(
+                this._configuration,
+                configuration,
+            );
+            const newCacheDirectory =
+                this._configuration.caching.cacheDirectory;
+            if (oldCacheDirectory !== newCacheDirectory) {
+                // Reload cache if cache directory changes
+                this._cache = await SveltexCache.load(
+                    this.configuration.conversion.outputDirectory,
+                    newCacheDirectory,
+                );
+            }
         };
     }
 
-    private _handledCss: boolean = false;
-
     /**
-     * Lines of code that should be added to the `<svelte:head>` component
-     * of any page that contains any TeX on which this handler ran. This
-     * variable must be set at most once, and cannot depend on what page the
-     * handler is being used on.
+     * The constructor is private to ensure that only the
+     * {@link TexHandler.create | `TexHandler.create`} method
+     * can be used to create instances of
+     * {@link TexHandler | `TexHandler`}.
+     *
+     * @internal
      */
-    private _headLines: string[] = [];
-    get headLines() {
-        return this._headLines;
-    }
-
-    /**
-     * Lines of code that should be added to the `<script>` tag
-     * of any page that contains any TeX on which this handler ran. This
-     * variable must be set at most once, and cannot depend on what page the
-     * handler is being used on. These aren't necessarily the only lines that
-     * will be added to the `<script>` tag on this handler's behalf, but they're
-     * the only ones that don't depend on further details about the TeX content
-     * of the page.
-     */
-    private _scriptLines: string[] = [];
-    get scriptLines() {
-        return this._scriptLines;
-    }
-
     private constructor({
         backend,
         process,
+        processor,
         configure,
         configuration,
-        processor,
-        handleCss,
+        texComponents,
     }: {
-        backend: B;
-        process: TexProcessFn<B>;
-        configure: TexConfigureFn<B>;
-        configuration: TexConfiguration<B>;
-        processor: TexProcessor<B>;
-        handleCss?: (texHandler: TexHandler<B>) => Promise<void>;
+        backend: 'local';
+        process: TexProcessFn;
+        processor: TexProcessor;
+        configure?: TexConfigureFn;
+        configuration: FullTexConfiguration;
+        texComponents: Record<string, TexComponentImportInfo[]>;
     }) {
         super({
             backend,
             process,
-            configure,
-            configuration: mergeConfigs(
-                getDefaultTexConfiguration(backend),
-                configuration,
-            ),
             processor,
-        });
-        if (handleCss) this._handleCss = handleCss;
-    }
-
-    /**
-     * Creates a tex handler of the specified type.
-     *
-     * @param backend - The type of the tex processor to create.
-     * @returns A promise that resolves to a tex handler of the specified type.
-     */
-    static async create<B extends Exclude<TexBackend, 'custom'>>(
-        backend: B,
-    ): Promise<TexHandler<B>>;
-
-    static async create<B extends 'custom'>(
-        backend: B,
-        {
-            processor,
-            process,
             configure,
             configuration,
-        }: {
-            processor?: TexProcessor<'custom'>;
-            process: TexProcessFn<'custom'>;
-            configure?: TexConfigureFn<'custom'>;
-            configuration?: TexConfiguration<'custom'>;
-        },
-    ): Promise<TexHandler<B>>;
+        });
+        this.texComponents = texComponents;
+        this.configureNullOverrides = [
+            ['conversion.overrideConversion', null],
+            ['compilation.overrideCompilation', null],
+            ['optimization.overrideOptimization', null],
+        ];
+    }
+
+    poppler?: Poppler | undefined;
 
     /**
      * Creates a tex handler of the specified type.
@@ -207,441 +305,51 @@ export class TexHandler<B extends TexBackend> extends Handler<
      * @param backend - The type of the tex processor to create.
      * @returns A promise that resolves to a tex handler of the specified type.
      */
-    static async create<B extends TexBackend>(
-        backend: B,
-        custom?: B extends 'custom'
-            ? {
-                  processor?: TexProcessor<'custom'>;
-                  process: TexProcessFn<'custom'>;
-                  configure?: TexConfigureFn<'custom'>;
-                  configuration?: TexConfiguration<'custom'>;
-              }
-            : never,
-    ): Promise<TexHandler<B>> {
-        if (backend === 'custom') {
-            if (custom === undefined) {
-                throw new Error(
-                    'Called TexHandler.create("custom", custom) without a second parameter.',
-                );
+    static async create(): Promise<TexHandler> {
+        const process = async (
+            tex: string,
+            options: TexProcessOptions,
+            texHandler: TexHandler,
+        ) => {
+            const tc = TexComponent.create({
+                ...options,
+                tex,
+                texHandler,
+            });
+            if (!options.selfClosing) {
+                if (tex.trim() === '') return '';
+                await tc.compile();
             }
-            return new TexHandler<'custom'>({
-                backend: 'custom',
-                processor: custom.processor ?? {},
-                process: custom.process,
-                configure: custom.configure ?? (() => undefined),
-                configuration: custom.configuration ?? {},
-            }) as unknown as TexHandler<B>;
-        } else if (backend === 'katex') {
-            try {
-                const { renderToString } = (await import('katex')).default;
-                const process = (
-                    tex: string,
-                    { inline, options }: TexProcessOptions<'katex'>,
-                    texHandler: TexHandler<'katex'>,
-                ): string => {
-                    // Get pre- and post-transformers arrays, and KaTeX
-                    // options.
-                    const { transformers, katex } = texHandler.configuration;
-
-                    // Apply pre-transformers
-                    let transformedTex = tex;
-                    transformedTex = applyTransformations(
-                        transformedTex,
-                        { inline: inline !== false },
-                        transformers.pre,
-                    );
-
-                    // Escape CSS color variables
-                    const { escaped, cssColorVars } =
-                        escapeCssColorVars(transformedTex);
-                    transformedTex = escaped;
-
-                    // Run KaTeX
-                    let output = renderToString(transformedTex, {
-                        // Apply options from config (KaTeX doesn't have a
-                        // processor object, so the configuration has to be
-                        // passed directly to each call to `renderToString`).
-                        ...katex,
-
-                        // Apply options from method parameter, which take
-                        // precedence over the ones from the config.
-                        ...options,
-
-                        // Tell KaTeX whether the output should be rendered as
-                        // inline- or as display math.
-                        displayMode: inline === false,
-                    });
-
-                    output = unescapeCssColorVars(output, cssColorVars);
-
-                    // Apply post-transformers
-                    output = applyTransformations(
-                        output,
-                        { inline: inline !== false },
-                        transformers.post,
-                    );
-
-                    // Return result, escaping braces (which might otherwise
-                    // confuse Svelte).
-                    return escapeBraces(output);
-                };
-                const handleCss: (
-                    texHandler: TexHandler<'katex'>,
-                ) => Promise<void> = async (texHandler) => {
-                    const cssConfig = texHandler.configuration.css;
-                    const { type } = cssConfig;
-
-                    if (type === 'none') return;
-
-                    // type: 'cdn' | 'hybrid'
-
-                    const { cdn } = cssConfig;
-
-                    const v = (await getVersion('katex')) ?? 'latest';
-
-                    const cdns = isArray(cdn) ? cdn : [cdn];
-                    // if (cdns.length === 0) return;
-                    const links = cdns.map((c) =>
-                        cdnLink('katex', 'dist/katex.min.css', v, c),
-                    );
-
-                    if (type === 'cdn') {
-                        if (links[0]) {
-                            texHandler._headLines = [
-                                `<link rel="stylesheet" href="${links[0]}">`,
-                            ];
-                        } else {
-                            throw new Error(
-                                'No CDN specified for KaTeX. If you want to deactivate Sveltex CSS handling for KaTeX, set the `tex.css.type` property of the Sveltex configuration to `none`.',
-                            );
-                        }
-                        return;
-                    }
-
-                    // type: 'hybrid'
-
-                    const { dir } = cssConfig;
-
-                    const path = join(dir, `katex@${v}.min.css`);
-
-                    texHandler._headLines = [
-                        `<link rel="stylesheet" href="${prefixWithSlash(path)}">`,
-                    ];
-
-                    if (fs.existsSync(path)) return;
-
-                    let css = await fancyFetch(links);
-
-                    if (!css) return;
-
-                    const linkPrefix = cdnLink(
-                        'katex',
-                        'dist/fonts/',
-                        v,
-                        cdns[0],
-                    );
-
-                    css = css.replaceAll('fonts/', linkPrefix);
-
-                    // Write the CSS to the specified path
-                    await fancyWrite(path, css);
-                };
-                const th = new TexHandler<'katex'>({
-                    backend: 'katex',
-                    configuration: getDefaultTexConfiguration('katex'),
-                    process,
-                    configure: (configuration, handler) => {
-                        if (configuration.css?.type) {
-                            handler._configuration.css = mergeConfigs(
-                                getDefaultTexConfiguration(
-                                    'katex',
-                                    handler._configuration.css.type,
-                                ).css,
-                                configuration.css,
-                            );
-                        }
-                    },
-                    processor: {},
-                    handleCss,
-                });
-                await th.configure({});
-                return th as unknown as TexHandler<B>;
-            } catch (err) {
-                missingDeps.push('katex');
-                throw err;
-            }
-        } else if (backend === 'mathjax') {
-            try {
-                const { mathjax } = await import('mathjax-full/js/mathjax.js');
-                const { TeX } = await import('mathjax-full/js/input/tex.js');
-                const { SVG } = await import('mathjax-full/js/output/svg.js');
-                const { CHTML } = await import(
-                    'mathjax-full/js/output/chtml.js'
-                );
-                const { liteAdaptor } = await import(
-                    'mathjax-full/js/adaptors/liteAdaptor.js'
-                );
-                const { RegisterHTMLHandler } = await import(
-                    'mathjax-full/js/handlers/html.js'
-                );
-                const { AllPackages } = await import(
-                    'mathjax-full/js/input/tex/AllPackages.js'
-                );
-                const LiteElement = (
-                    await import('mathjax-full/js/adaptors/lite/Element.js')
-                ).LiteElement;
-                type LiteElementType =
-                    import('mathjax-full/js/adaptors/lite/Element.js').LiteElement;
-
-                const adaptor = liteAdaptor();
-                RegisterHTMLHandler(adaptor);
-
-                const handleCss: (
-                    texHandler: TexHandler<'mathjax'>,
-                ) => Promise<void> = async (texHandler) => {
-                    // Convenience alias
-                    const config = texHandler.configuration;
-
-                    const type = config.css.type;
-
-                    // With MathJax, there's no CSS available from CDNs (as far
-                    // as I could tell). For SVG output, I don't know why, but
-                    // for CHTML output this makes sense, as newer versions of
-                    // MathJax dynamically generate the minimal amount of CSS
-                    // needed by default. However, as far as I could tell, this
-                    // is a somewhat tricky mechanism to take advantage of
-                    // within SSR, so, for CHTML, we'll just generate the big
-                    // (~200kB) CSS file that enables MathJax's entire feature
-                    // set. Because of this, I recommend using the SVG output
-                    // format with MathJax within Sveltex.
-                    if (type === 'none') return;
-
-                    /**
-                     * The installed version of `mathjax-full`, as set in the
-                     * end user's `package.json` file.
-                     */
-                    const v = (await getVersion('mathjax-full')) ?? 'latest';
-
-                    /**
-                     * The directory to which we will write the CSS generated by
-                     * MathJax.
-                     */
-                    const dir = config.css.dir;
-
-                    /**
-                     * MathJax's output format (either `chtml` or `svg`). The
-                     * output format influences the CSS that MathJax generates
-                     * (in particular, the CSS for the `chtml` output format is
-                     * much larger than the one for the `svg` output format).
-                     * Accordingly, we want the filepath to which we write the
-                     * generated CSS to be different depending on the output
-                     * format.
-                     */
-                    const fmt = config.outputFormat;
-
-                    /**
-                     * The filepath to which we will write the CSS generated by
-                     * MathJax.
-                     */
-                    const path = join(dir, `mathjax@${v}.${fmt}.min.css`);
-
-                    texHandler._headLines = [
-                        `<link rel="stylesheet" href="${prefixWithSlash(path)}">`,
-                    ];
-
-                    // If the CSS file already exists, return early. Aside from
-                    // the file name, we don't have any "cache invalidation"
-                    // mechanism, so some cases might require manual
-                    // intervention by the end user (i.e., deleting the
-                    // generated CSS file manually if something went wrong while
-                    // generating it).
-                    if (fs.existsSync(path)) return;
-
-                    // Have MathJax generate the CSS
-                    let css: string = '';
-                    const codeGen = await runWithSpinner(
-                        () => {
-                            css = adaptor.textContent(
-                                texHandler.processor.outputJax.styleSheet(
-                                    texHandler.processor,
-                                ) as LiteElementType,
-                            );
-                        },
-                        {
-                            startMessage: `Generating MathJax stylesheet (${fmt})`,
-                            successMessage: (t) =>
-                                `Generated MathJax stylesheet (${fmt}) in ${t}`,
-                            failMessage: (t) =>
-                                `Error generating MathJax stylesheet (${fmt}) after ${t}`,
-                        },
-                    );
-
-                    // If MathJax failed to generate the CSS, return early
-                    if (codeGen !== 0) return;
-
-                    // If the output format is `chtml`, we need to modify the
-                    // CSS to point to the correct font URLs. This is because
-                    // MathJax's CSS assumes that the fonts are in the same
-                    // directory as the CSS file, but we're writing self-hosting
-                    // the CSS here, so we'll need to replace the relative URLs
-                    // with URLs pointing to the fonts on a CDN.
-                    if (fmt === 'chtml') {
-                        const { cdn } = config.css;
-                        const firstCdn = isArray(cdn) ? cdn[0] : cdn;
-
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        if (!firstCdn) {
-                            throw new Error(
-                                'No CDN specified for MathJax. If you want to deactivate Sveltex CSS handling for MathJax, set the `tex.css.type` property of the Sveltex configuration to `none`.',
-                            );
-                        }
-
-                        const linkPrefix = postfixWithSlash(
-                            config.mathjax.chtml?.fontURL ??
-                                cdnLink(
-                                    'mathjax',
-                                    'es5/output/chtml/fonts/woff-v2/',
-                                    v,
-                                    firstCdn,
-                                ),
-                        );
-                        css = css.replaceAll(
-                            'js/output/chtml/fonts/tex-woff-v2/',
-                            linkPrefix,
-                        );
-                    }
-
-                    // Minify the CSS
-                    let opt: Output;
-                    await runWithSpinner(
-                        () => {
-                            opt = new CleanCSS().minify(css);
-                            if (opt.errors.length > 0) {
-                                throw new Error(
-                                    `clean-css raised the following error(s) during minification of MathJax's stylesheet (${fmt}):\n- ${opt.errors.join(
-                                        '\n- ',
-                                    )}`,
-                                );
-                            }
-                            css = opt.styles;
-                        },
-                        {
-                            startMessage: `Minifying MathJax stylesheet (${fmt})`,
-                            successMessage: (t) =>
-                                `Minified MathJax stylesheet (${fmt}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${(opt.stats.efficiency * 100).toFixed(0)}% reduction) in ${t}`,
-                            failMessage: (t) =>
-                                `Error minifying MathJax stylesheet (${fmt}) after ${t}`,
-                        },
-                    );
-
-                    // Write the CSS to the specified filepath
-                    await fancyWrite(path, css);
-                };
-
-                const handler = new TexHandler<'mathjax'>({
-                    backend: 'mathjax',
-                    configure: (configuration, handler) => {
-                        if (configuration.css?.type) {
-                            handler._configuration.css = mergeConfigs(
-                                getDefaultTexConfiguration(
-                                    'mathjax',
-                                    handler._configuration.css.type,
-                                ).css,
-                                configuration.css,
-                            );
-                        }
-
-                        const config = handler._configuration;
-
-                        handler.processor = mathjax.document('', {
-                            InputJax: new TeX(config.mathjax.tex),
-                            OutputJax:
-                                config.outputFormat === 'chtml'
-                                    ? new CHTML(config.mathjax.chtml)
-                                    : new SVG(config.mathjax.svg),
-                        });
-                    },
-                    process: async (tex, { inline, options }, texHandler) => {
-                        // Get pre- and post-transformers arrays
-                        const { transformers } = texHandler.configuration;
-
-                        // Apply pre-transformers
-                        let transformedTex = tex;
-                        transformedTex = applyTransformations(
-                            transformedTex,
-                            { inline: inline !== false },
-                            transformers.pre,
-                        );
-
-                        // Run MathJax
-                        const result = await texHandler.processor.convert(
-                            transformedTex,
-                            {
-                                // Apply options from method parameter
-                                ...options,
-
-                                // Tell MathJax whether the output should be
-                                // rendered as inline- or as display math.
-                                display: inline === false,
-                            },
-                        );
-
-                        // Validate result
-                        if (!(result instanceof LiteElement)) {
-                            throw new Error(
-                                `MathJax did not return a valid node (result: ${String(result)}).`,
-                            );
-                        }
-
-                        // Transform the result into something we can use
-                        let output = adaptor.outerHTML(result);
-
-                        // Apply post-transformers
-                        output = applyTransformations(
-                            output,
-                            { inline: inline !== false },
-                            transformers.post,
-                        );
-
-                        // Return result, escaping braces (which might otherwise
-                        // confuse Svelte).
-                        return escapeBraces(output);
-                    },
-                    configuration: getDefaultTexConfiguration('mathjax'),
-                    processor: mathjax.document('', {
-                        InputJax: new TeX(),
-                        OutputJax: new SVG(),
-                    }),
-                    handleCss,
-                });
-                await handler.configure({
-                    mathjax: {
-                        tex: { packages: AllPackages },
-                    },
-                });
-                // Apparently, MathJax's `document` function isn't
-                // serializable. This will upset Vite, so we need to
-                // remove it from the object returned by `toJSON`.
-                (handler as unknown as { toJSON: () => object }).toJSON =
-                    () => {
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const { processor, ...rest } = handler;
-                        return rest;
-                    };
-                return handler as unknown as TexHandler<B>;
-            } catch (err) {
-                missingDeps.push('mathjax-full');
-                throw err;
-            }
-        }
-        return new TexHandler<'none'>({
-            backend: 'none',
-            process: (input) => input,
-            configure: () => {
-                return;
-            },
+            const importInfo = {
+                id: tc.id,
+                path: tc.out.sveltePath,
+            };
+            texHandler.noteTcInFile(options.filename, importInfo);
+            return tc.outputString;
+        };
+        // const configure = (
+        //     _configuration: TexConfiguration<'local'>,
+        //     texHandler: TexHandler<'local'>,
+        // ) => {
+        //     texHandler.tccMap =
+        //         _configuration.components === null
+        //             ? null
+        //             : texHandler.configuration.components;
+        // };
+        const configuration = getDefaultTexConfig();
+        const ath = new TexHandler({
+            backend: 'local',
+            process,
             processor: {},
-            configuration: {},
-        }) as unknown as TexHandler<B>;
+            // configure,
+            configuration,
+            texComponents: {},
+        });
+
+        ath._cache = await SveltexCache.load(
+            ath.configuration.conversion.outputDirectory,
+            ath.configuration.caching.cacheDirectory,
+        );
+        return ath;
     }
 }

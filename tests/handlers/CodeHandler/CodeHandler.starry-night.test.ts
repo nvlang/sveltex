@@ -13,6 +13,8 @@ import {
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
 import { spy } from '$tests/fixtures.js';
+import { supportedCdns } from '$type-guards/code.js';
+import type { SupportedCdn } from '$data/cdn.js';
 
 function fixture() {
     beforeEach(() => {
@@ -51,19 +53,38 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
 
     describe('css', () => {
         fixture();
-        it('fetches and generates CSS if run for the first time', async () => {
-            const handler = await CodeHandler.create('starry-night', {
-                theme: { type: 'self-hosted' },
-            });
-            (await handler.process('')).processed;
-            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
-            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
-                1,
-                expect.stringMatching(/src\/sveltex\/starry-night@.*\.css/),
-                expect.stringContaining(':root'),
+        describe('fetches and generates CSS if run for the first time', () => {
+            it.each([
+                ...[['jsdelivr'], ['cdnjs']],
+                ...['jsdelivr', 'cdnjs', 'esm.sh'].map(
+                    (cdn) =>
+                        [[cdn, ...supportedCdns]] as [
+                            [SupportedCdn, ...SupportedCdn[]],
+                        ],
+                ),
+            ] as (SupportedCdn | [SupportedCdn, ...SupportedCdn[]])[])(
+                'cdn: %o',
+                async (cdn) => {
+                    const handler = await CodeHandler.create(
+                        'starry-night',
+                        {},
+                    );
+                    await handler.configure({
+                        theme: { type: 'self-hosted', cdn },
+                    });
+                    await handler.process('', {});
+                    expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+                    expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                        1,
+                        expect.stringMatching(
+                            /src\/sveltex\/starry-night@.*\.css/,
+                        ),
+                        expect.stringContaining(':root'),
+                    );
+                    await handler.process('', {});
+                    expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+                },
             );
-            (await handler.process('')).processed;
-            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -81,13 +102,6 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     .processed;
                 const expected =
                     '<pre><code class="language-js"><span class="pl-k">let</span> a\n</code></pre>';
-                expect(output).toEqual(expected);
-            });
-
-            it('defaults to no language', async () => {
-                const output = (await handler.process('let a')).processed;
-                const expected =
-                    '<pre><code class="language-text">let a\n</code></pre>';
                 expect(output).toEqual(expected);
             });
 
@@ -154,7 +168,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     '<pre><code class="language-tex">\\example\n</code></pre>',
                 );
                 await handler.configure({
-                    languages: ['TeX'],
+                    languages: ['tex'],
                 });
                 expect(
                     (await handler.process('\\example', { lang: 'tex' }))
@@ -209,7 +223,7 @@ describe.concurrent("CodeHandler<'starry-night'>", () => {
                     1,
                     expect.stringContaining('Language "ebnf" not found.'),
                 );
-                await handler.configure({ languages: ['EBNF'] });
+                await handler.configure({ languages: ['ebnf'] });
                 expect(
                     (await handler.process('a ::= b', { lang: 'ebnf' }))
                         .processed,

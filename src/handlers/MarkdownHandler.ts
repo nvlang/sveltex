@@ -12,8 +12,10 @@ import type {
 // Internal dependencies
 import { missingDeps } from '$utils/env.js';
 import { Handler } from '$handlers/Handler.js';
-import { re } from '$utils/misc.js';
-import { micromarkMdx } from '$deps.js';
+import {
+    micromarkDisableIndentedCodeAndAutolinks,
+    remarkDisableIndentedCodeBlocks,
+} from '$utils/markdown.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -33,55 +35,6 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     FullMarkdownConfiguration<B>,
     MarkdownHandler<B>
 > {
-    /**
-     * Whether the markdown processor distinguishes between inline and block
-     * parsing.
-     * - `true`: `'markdown-it'`, `'marked'`, and `'custom'`
-     * - `false`: `'micromark'` and `'unified'`.
-     *
-     * @internal
-     */
-    private get distinguishesInlineAndBlock(): boolean {
-        return (
-            this.backend === 'markdown-it' ||
-            this.backend === 'marked' ||
-            this.backend === 'custom'
-        );
-    }
-
-    override get process() {
-        if (this.distinguishesInlineAndBlock) {
-            /**
-             * Process a markdown string.
-             *
-             * @param markdown - The markdown to process.
-             * @param inline - Whether to parse the markdown as inline or block.
-             * Defaults to whatever
-             * {@link MarkdownHandler.shouldParseAsInline | `MarkdownHandler.shouldParseAsInline`} returns for
-             * the markdown string.
-             * @returns The processed markdown, or a promise resolving to it.
-             */
-            return (
-                markdown: string,
-                options?: MarkdownProcessOptions | undefined,
-            ) =>
-                super.process(markdown, {
-                    inline:
-                        options?.inline ??
-                        MarkdownHandler.shouldParseAsInline(markdown),
-                });
-        } else {
-            /**
-             * Process a markdown string.
-             *
-             * @param markdown - The markdown to process.
-             * @returns The processed markdown, or a promise resolving to it.
-             */
-            return (markdown: string) =>
-                super.process(markdown, { inline: false });
-        }
-    }
-
     /**
      * Creates a markdown handler of the specified type.
      *
@@ -145,7 +98,17 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     type Processor = MarkdownProcessor<Backend>;
                     type Configuration = MarkdownConfiguration<Backend>;
                     const marked = await import('marked');
-                    const processor: Processor = new marked.Marked();
+
+                    const processor: Processor = new marked.Marked({
+                        tokenizer: {
+                            // Disable autolinks
+                            autolink: () => undefined,
+                            // Disable indented code blocks (NB: fenced code
+                            // blocks have a separate tokenizer, named
+                            // "fences").
+                            code: () => undefined,
+                        },
+                    });
                     const configure: MarkdownConfigureFn<Backend> = (
                         config: Configuration,
                         markdownHandler: MarkdownHandler<Backend>,
@@ -161,14 +124,10 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     };
                     const process: MarkdownProcessFn<Backend> = async (
                         markdown: string,
-                        options: MarkdownProcessOptions | undefined,
+                        _options: MarkdownProcessOptions | undefined,
                         markdownHandler: MarkdownHandler<Backend>,
                     ) => {
-                        return options?.inline !== false
-                            ? await markdownHandler.processor.parseInline(
-                                  markdown,
-                              )
-                            : await markdownHandler.processor.parse(markdown);
+                        return await markdownHandler.processor.parse(markdown);
                     };
                     return new MarkdownHandler<Backend>({
                         backend: 'marked',
@@ -208,7 +167,9 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                         configuration: {
                             allowDangerousHtml: true,
                             htmlExtensions: [],
-                            extensions: [micromarkMdx()],
+                            extensions: [
+                                micromarkDisableIndentedCodeAndAutolinks,
+                            ],
                         },
                     });
                 } catch (error) {
@@ -222,7 +183,11 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     type Processor = MarkdownProcessor<'markdown-it'>;
                     type Configuration = MarkdownConfiguration<'markdown-it'>;
                     const MarkdownIt = (await import('markdown-it')).default;
-                    const processor: Processor = new MarkdownIt();
+                    const processor: Processor = new MarkdownIt({
+                        html: true,
+                    });
+                    // Disable indented code blocks and autolinks
+                    processor.disable(['code', 'autolink']);
                     const configure: MarkdownConfigureFn<'markdown-it'> = (
                         config: Configuration,
                         markdownHandler: MarkdownHandler<Backend>,
@@ -245,12 +210,10 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     };
                     const process: MarkdownProcessFn<Backend> = (
                         markdown: string,
-                        options: MarkdownProcessOptions | undefined,
+                        _options: MarkdownProcessOptions | undefined,
                         markdownHandler: MarkdownHandler<Backend>,
                     ) => {
-                        return options?.inline !== false
-                            ? markdownHandler.processor.renderInline(markdown)
-                            : markdownHandler.processor.render(markdown);
+                        return markdownHandler.processor.render(markdown);
                     };
                     return new MarkdownHandler<Backend>({
                         backend: 'markdown-it',
@@ -281,8 +244,10 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                             remarkPlugins: [],
                             rehypePlugins: [],
                         };
+                    // remarkParse
                     const processor: Processor = unified()
                         .use(remarkParse)
+                        .use(remarkDisableIndentedCodeBlocks)
                         .use(remarkRehype, { allowDangerousHtml: true })
                         .use(rehypeStringify, { allowDangerousHtml: true });
                     const configure: MarkdownConfigureFn<'unified'> = (
@@ -291,6 +256,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     ) => {
                         markdownHandler.processor = unified()
                             .use(remarkParse)
+                            .use(remarkDisableIndentedCodeBlocks)
                             .use(markdownHandler.configuration.remarkPlugins)
                             .use(remarkRehype, { allowDangerousHtml: true })
                             .use(markdownHandler.configuration.rehypePlugins)
@@ -303,9 +269,10 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                         _options: MarkdownProcessOptions | undefined,
                         markdownHandler: MarkdownHandler<Backend>,
                     ) => {
-                        return (
+                        const res = (
                             await markdownHandler.processor.process(markdown)
                         ).toString();
+                        return res;
                     };
                     return new MarkdownHandler<Backend>({
                         backend: 'unified',
@@ -339,55 +306,5 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
             default:
                 throw new Error(`Unsupported markdown backend "${backend}".`);
         }
-    }
-
-    /**
-     * Regex that matches strings that should be parsed as blocks (as opposed to
-     * inline).
-     *
-     * @remarks The decision whether to parse an excerpt as a string is important;
-     * for example, the string `'example'`, if parsed as a block, would become
-     * `'<p>example</p>'`. If parsed inline, it would remain `'example`.
-     * @remarks We don't support indented code blocks (they would greatly complicate
-     * the parsing).
-     * @see https://github.github.com/gfm/
-     */
-    static readonly markdownBlockRegex = re`
-        (
-            \n\s*\n                     # multiple newlines
-            | ^\s*\#{1,6} \s            # headings
-            | ( ^.* \S .*\n )+          # setext heading
-            ^\s*(-+|=+) \s* $           # setext heading underline
-            | ^( [*+-] | \d+\. ) \s     # lists
-            | ^\s* ( \`{3,} | ~{3,} )   # fenced code blocks
-            | ^\s*                      # thematic breaks
-                (
-                    (-[\ ]*){3,}
-                    | (\*[\ ]*){3,}
-                    | (_[\ ]*){3,}
-                )$
-            | ^\s*>                     # blockquotes
-            | (?<=^|[^\\]) ((\\\\)*)    # tables
-                \| .* \n .* - .*
-                (?<=^|[^\\]) ((\\\\)*)
-                \| .* \n
-        )
-        ${'mu'}`;
-
-    /**
-     * Tries to determine whether a markdown excerpt should be parsed as inline
-     * markdown.
-     *
-     * @param excerpt - The markdown excerpt to check.
-     * @returns `true` if the excerpt should be parsed as inline markdown, `false`
-     * if it should be parsed as a block.
-     * @remarks The decision whether to parse an excerpt as a string is important;
-     * for example, the string `'example'`, if parsed as a block, would become
-     * `'<p>example</p>'`. If parsed inline, it would remain `'example`.
-     * @remarks We don't support indented code blocks (they would greatly complicate
-     * the parsing).
-     */
-    static shouldParseAsInline(excerpt: string): boolean {
-        return excerpt.match(MarkdownHandler.markdownBlockRegex) === null;
     }
 }

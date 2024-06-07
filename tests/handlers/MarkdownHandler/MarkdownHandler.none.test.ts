@@ -23,7 +23,7 @@ describe("MarkdownHandler<'none'>", () => {
             });
 
             it('leaves markdown as-is', async () => {
-                const output = (await handler.process('**strong** *em*'))
+                const output = (await handler.process('**strong** *em*', {}))
                     .processed;
                 const expected = '**strong** *em*';
                 expect(output).toEqual(expected);

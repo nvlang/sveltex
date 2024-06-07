@@ -1,5 +1,5 @@
 /* eslint-disable tsdoc/syntax */
-import type { AdvancedTexConfiguration } from '$types/handlers/AdvancedTex.js';
+import type { TexConfiguration } from '$types/handlers/Tex.js';
 import type { Transformers } from '$types/handlers/Handler.js';
 import type {
     EscapeOptions,
@@ -13,7 +13,7 @@ import type { TexComponent } from '$utils/TexComponent.js';
 
 // For TSDoc comments
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { CompilationOptions } from '$types/handlers/AdvancedTex.js';
+import type { CompilationOptions } from '$types/handlers/Tex.js';
 import type { SveltexConfiguration } from '$types/SveltexConfiguration.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -48,22 +48,7 @@ export type VerbatimConfiguration = Record<string, VerbEnvConfig>; // {
  *
  * @defaultValue
  * ```ts
- * {
- *     Code: {
- *         type: 'code',
- *         defaultAttributes: {
- *             inline: false,
- *             lang: 'plaintext',
- *         }
- *     },
- *     TeX: {
- *         type: 'advancedTex',
- *         aliases: ['tex', 'LaTeX', 'latex'],
- *         defaultAttributes: {
- *             inline: false,
- *         }
- *     }
- * }
+ * {}
  * ```
  */
 //     verbatimEnvironments?: | undefined | Record<string,
@@ -100,62 +85,52 @@ export interface SimpleEscapeInstruction {
  * Type describing the possible ways to process the inner content of a verbatim
  * environment.
  */
-export type VerbatimType =
-    | 'code'
-    | 'noop'
-    | 'advancedTex'
-    | 'escapeOnly'
-    | 'custom';
+export type VerbatimType = 'code' | 'noop' | 'tex' | 'escapeOnly';
 // | SimpleEscapeInstruction | VerbatimProcessInnerFn;
 
-/**
- * Function which takes the inner content and the attributes of a verbatim
- * environment and returns the processed content (including HTML tag).
- *
- * @param inner - The inner content of the component.
- * @param attributes - The attributes of the component.
- *
- * @example
- * ```ts
- * (inner, attributes) => {
- *     let attrStrings = Object.entries(attributes).map(
- *         ([key, value]) => `${key}="${String(value)}"`
- *     );
- *     const attrString = attrStrings.length > 0 ? ' ' + attrStrings.join(' ') : '';
- *     return `<pre${attrString}><code>${inner}</code></pre>`;
- * }
- * ```
- */
-export type VerbatimProcessInnerFn = (
-    inner: string,
-    attributes: Record<string, string | number | boolean | null | undefined>,
-) => string;
+// /**
+//  * Function which takes the inner content and the attributes of a verbatim
+//  * environment and returns the processed content (including HTML tag).
+//  *
+//  * @param inner - The inner content of the component.
+//  * @param attributes - The attributes of the component.
+//  *
+//  * @example
+//  * ```ts
+//  * (inner, attributes) => {
+//  *     let attrStrings = Object.entries(attributes).map(
+//  *         ([key, value]) => `${key}="${String(value)}"`
+//  *     );
+//  *     const attrString = attrStrings.length > 0 ? ' ' + attrStrings.join(' ') : '';
+//  *     return `<pre${attrString}><code>${inner}</code></pre>`;
+//  * }
+//  * ```
+//  */
+// export type VerbatimProcessInnerFn = (
+//     inner: string,
+//     attributes: Record<string, string | number | boolean | null | undefined>,
+// ) => string;
 
 export type FullVerbEnvConfig =
     | FullVerbEnvConfigCode
-    | FullVerbEnvConfigCustom
     | FullVerbEnvConfigEscapeOnly
     | FullVerbEnvConfigNoop
-    | FullVerbEnvConfigAdvancedTex;
+    | FullVerbEnvConfigTex;
 
 export type VerbEnvConfig =
     | VerbEnvConfigCode
-    | VerbEnvConfigCustom
     | VerbEnvConfigEscapeOnly
     | VerbEnvConfigNoop
-    | VerbEnvConfigAdvancedTex;
+    | VerbEnvConfigTex;
 
 export type FullVerbEnvConfigCode =
     RequiredNotNullOrUndefined<VerbEnvConfigCode> & FullVerbEnvConfigBase;
-export type FullVerbEnvConfigCustom =
-    RequiredNotNullOrUndefined<VerbEnvConfigCustom> & FullVerbEnvConfigBase;
 export type FullVerbEnvConfigEscapeOnly =
     RequiredNotNullOrUndefined<VerbEnvConfigEscapeOnly> & FullVerbEnvConfigBase;
 export type FullVerbEnvConfigNoop =
     RequiredNotNullOrUndefined<VerbEnvConfigNoop> & FullVerbEnvConfigBase;
-export type FullVerbEnvConfigAdvancedTex =
-    RequiredNotNullOrUndefined<VerbEnvConfigAdvancedTex> &
-        FullVerbEnvConfigBase;
+export type FullVerbEnvConfigTex =
+    RequiredNotNullOrUndefined<VerbEnvConfigTex> & FullVerbEnvConfigBase;
 
 export type FullVerbEnvConfigBase =
     RequiredNotNullOrUndefined<VerbEnvConfigBase> &
@@ -1051,7 +1026,7 @@ export interface TikzPreset {
 /**
  * TeX component configuration options.
  */
-export interface VerbEnvConfigAdvancedTex extends VerbEnvConfigBase {
+export interface VerbEnvConfigTex extends VerbEnvConfigBase {
     /**
      * Name of the component (used to define an HTML tag for SvelTeX files).
      *
@@ -1062,7 +1037,7 @@ export interface VerbEnvConfigAdvancedTex extends VerbEnvConfigBase {
      */
     // name: string;
 
-    type: 'advancedTex';
+    type: 'tex';
 
     respectSelfClosing?: false;
     component?: 'none';
@@ -1149,11 +1124,11 @@ export interface VerbEnvConfigAdvancedTex extends VerbEnvConfigBase {
         | undefined;
 
     /**
-     * Override any part of the default advanced TeX configuration inherited
-     * from the {@link SveltexConfiguration.advancedTex | `advancedTex`}
+     * Override any part of the default TeX configuration inherited
+     * from the {@link SveltexConfiguration.tex | `tex`}
      * property of the Sveltex configuration.
      */
-    overrides?: AdvancedTexConfiguration | undefined;
+    overrides?: TexConfiguration | undefined;
 
     /**
      * ⚠ **Warning**: While you can set this property, you should be aware that
@@ -1257,16 +1232,12 @@ export interface VerbEnvConfigEscapeOnly extends VerbEnvConfigBase {
     type: 'escapeOnly';
     escapeInstructions?: SimpleEscapeInstruction | undefined;
 }
-export interface VerbEnvConfigCustom extends VerbEnvConfigBase {
-    type: 'custom';
-    customProcess?: VerbatimProcessInnerFn | undefined;
-}
 
 export interface VerbEnvConfigBase {
     /**
      * How to process the inner content of the component.
      *
-     * - `'advancedTex'`: Process as advanced TeX component.
+     * - `'tex'`: Process as TeX component.
      * - `'code'`: Process inner content as code.
      * - `'noop'`: Leave inner content as-is.
      * - `'escapeOnly'`: Escape the inner content according to the given
@@ -1328,7 +1299,7 @@ export interface VerbEnvConfigBase {
      * Attributes that should not be forwarded to the output.
      *
      * @defaultValue Depends on the value of {@link type | `type`}:
-     * - `'advancedTex'`: `[]`
+     * - `'tex'`: `[]`
      * - _Otherwise:_ `['lang', 'inline', 'metaString']`
      * @see
      * {@link attributeForwardingAllowlist | `attributeForwardingAllowlist`}
@@ -1338,7 +1309,10 @@ export interface VerbEnvConfigBase {
     /**
      * HTML tags that should be treated as aliases for this component.
      *
-     * @defaultValue `[]`
+     * @defaultValue
+     * ```
+     * []
+     * ```
      *
      * @remarks
      * The output will remain the same regardless of which, if any, alias was
@@ -1348,10 +1322,10 @@ export interface VerbEnvConfigBase {
 
     /**
      * @defaultValue
-     * - `type === 'advancedTex'`: `null`, which means the processed inner
+     * - `type === 'tex'`: `null`, which means the processed inner
      *   content won't be wrapped in anything (in particular, `postprocess`
      *   should take care of this in the case of TeX components).
-     * - otherwise: `'this'`, which means the key of this object in the
+     * - _Otherwise:_ `'this'`, which means the key of this object in the
      *   `verbatim` prop is used.
      *
      * @example

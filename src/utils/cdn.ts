@@ -18,8 +18,8 @@ export function cdnLink(
 ) {
     let separator = '@';
     if (cdn === 'cdnjs') {
-        separator = '/';
         if (pkg === '@wooorm/starry-night') cdn = 'jsdelivr';
+        else separator = '/';
     }
     return `${cdnPrefixes[cdn]}${pkg}${separator}${version}/${resource}`;
 }
@@ -44,7 +44,7 @@ export async function fancyWrite(
 
 export async function fancyFetch(
     url: string | string[],
-    timeout: number = 1000,
+    timeout: number = 5000,
 ): Promise<string | undefined> {
     if (isArray(url)) {
         let result: string | undefined;
@@ -68,9 +68,13 @@ export async function fancyFetch(
     return result;
 }
 
+/**
+ * @see
+ * https://github.com/node-fetch/node-fetch?tab=readme-ov-file#request-cancellation-with-abortsignal
+ */
 export async function fetchWithTimeout(
     url: string,
-    timeout: number = 2000,
+    timeout: number = 5000,
 ): Promise<string | undefined> {
     // AbortController was added in node v14.17.0 globally
     const AbortController = globalThis.AbortController;

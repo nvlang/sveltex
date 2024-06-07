@@ -1,4 +1,4 @@
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 
 import { rimraf, resolve } from '$deps.js';
@@ -14,42 +14,22 @@ import {
     vi,
 } from 'vitest';
 import { sha256 } from '$utils/misc.js';
-import { AdvancedTexConfiguration } from '$mod.js';
+import { TexConfiguration } from '$mod.js';
 import { pathExists } from '$utils/fs.js';
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
-
-// async function handlers() {
-//     const ath = await AdvancedTexHandler.create();
-//     await ath.configure({
-//         engine: 'lualatex',
-//         caching: false,
-//         cacheDirectory: `${tmpTestsDir}/cache`,
-//         outputDirectory: `${tmpTestsDir}/output`,
-//         components: {
-//             tex: {},
-//             Example: { aliases: ['ExampleAlias'] },
-//         },
-//         conversion: {
-//             svg: {
-//                 fontFormat: 'woff2',
-//             },
-//         },
-//     });
-//     return [ath];
-// }
 
 /**
  * @example 'tmp/tests-1234567890abcdefg'
  */
 let tmpTestsDir: string;
 
-let ath: AdvancedTexHandler;
+let ath: TexHandler;
 
-async function setup(hash: string, config?: AdvancedTexConfiguration) {
+async function setup(hash: string, config?: TexConfiguration) {
     if (pathExists(`tmp/tests-${hash}`)) {
         await rimraf(resolve(`tmp/tests-${hash}`));
     }
-    ath = await AdvancedTexHandler.create();
+    ath = await TexHandler.create();
     await ath.configure({
         compilation: { engine: 'lualatex' },
         caching: {
@@ -70,7 +50,7 @@ async function setup(hash: string, config?: AdvancedTexConfiguration) {
     tmpTestsDir = `tmp/tests-${hash}`;
 }
 
-// async function setup(handler?: AdvancedTexHandler) {
+// async function setup(handler?: TexHandler) {
 //     if (handler) {
 //         handler.cache.data.int = {};
 //         handler.cache.data.svg = {};
@@ -85,10 +65,10 @@ async function teardown(hash: string) {
     }
     vi.clearAllMocks();
     tmpTestsDir = '';
-    ath = null as unknown as AdvancedTexHandler;
+    ath = null as unknown as TexHandler;
 }
 
-function fixture(config?: AdvancedTexConfiguration) {
+function fixture(config?: TexConfiguration) {
     beforeEach(async ({ task }) => {
         const hash = sha256(task.name, 'hex').slice(0, 16);
         await setup(hash, config);
@@ -101,7 +81,7 @@ function fixture(config?: AdvancedTexConfiguration) {
     });
 }
 
-describe('AdvancedTexHandler', () => {
+describe('TexHandler', () => {
     vi.restoreAllMocks();
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
@@ -128,7 +108,7 @@ describe('AdvancedTexHandler', () => {
     let log: MockInstance;
     let spawnCliInstruction: MockInstance;
 
-    describe.each([{}])('advancedTexHandler.noteTcInFile', (config) => {
+    describe.each([{}])('texHandler.noteTcInFile', (config) => {
         fixture(config);
         it('should work', () => {
             // initializes for file
@@ -177,7 +157,7 @@ describe('AdvancedTexHandler', () => {
         });
     });
 
-    describe.sequential.each([{}])('advancedTexHandler.process', (config) => {
+    describe.sequential.each([{}])('texHandler.process', (config) => {
         fixture(config);
         it('should work with self-closing components', async () => {
             expect(
@@ -187,7 +167,7 @@ describe('AdvancedTexHandler', () => {
                         attributes: { ref: 'ref' },
                         selfClosing: true,
                         filename: 'test-73cd8d85.sveltex',
-                        config: getDefaultVerbEnvConfig('advancedTex'),
+                        config: getDefaultVerbEnvConfig('tex'),
                         outerContent:
                             '<ExampleAlias ref="ref">x</ExampleAlias>',
                     })
@@ -208,7 +188,7 @@ describe('AdvancedTexHandler', () => {
                         attributes: { ref: 'ref' },
                         selfClosing: false,
                         filename: 'test-d9f77b2e.sveltex',
-                        config: getDefaultVerbEnvConfig('advancedTex'),
+                        config: getDefaultVerbEnvConfig('tex'),
                         outerContent:
                             '<ExampleAlias ref="ref">x</ExampleAlias>',
                     })
@@ -262,7 +242,7 @@ describe('AdvancedTexHandler', () => {
                     '--output-format=dvi',
                     '--output-comment=""',
                     '--no-shell-escape',
-                    '--interaction=nonstopmode',
+                    '--interaction=batchmode',
                     'root.tex',
                 ],
                 command: 'lualatex',
@@ -304,7 +284,7 @@ describe('AdvancedTexHandler', () => {
                             tag: 'tex',
                             filename:
                                 'css variables (ath-something-test-348902).sveltex',
-                            config: getDefaultVerbEnvConfig('advancedTex'),
+                            config: getDefaultVerbEnvConfig('tex'),
                             outerContent:
                                 '<tex ref="ath-something-test-348902">\\textcolor{var(--some-css-variable)}{$x$}</tex>',
                         },
@@ -363,7 +343,7 @@ describe('AdvancedTexHandler', () => {
                     '--output-format=dvi',
                     '--output-comment=""',
                     '--no-shell-escape',
-                    '--interaction=nonstopmode',
+                    '--interaction=batchmode',
                     'root.tex',
                 ],
                 command: 'lualatex',
@@ -396,18 +376,18 @@ describe('AdvancedTexHandler', () => {
     });
 });
 
-describe('AdvancedTexHandler.create', () => {
+describe('TexHandler.create', () => {
     fixture();
 
-    it('returns instance of AdvancedTexHandler', async () => {
-        const handler = await AdvancedTexHandler.create();
+    it('returns instance of TexHandler', async () => {
+        const handler = await TexHandler.create();
         expect(handler).toBeTypeOf('object');
         expect(handler).not.toBeNull();
-        expect(handler).toBeInstanceOf(AdvancedTexHandler);
+        expect(handler).toBeInstanceOf(TexHandler);
     });
 
     it('edge cases', async () => {
-        const handler = await AdvancedTexHandler.create();
+        const handler = await TexHandler.create();
         expect(
             (
                 await handler.process('', {
@@ -415,7 +395,7 @@ describe('AdvancedTexHandler.create', () => {
                     selfClosing: false,
                     tag: '',
                     filename: 'test.sveltex',
-                    config: getDefaultVerbEnvConfig('advancedTex'),
+                    config: getDefaultVerbEnvConfig('tex'),
                     outerContent: '',
                 })
             ).processed,

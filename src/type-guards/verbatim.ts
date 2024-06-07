@@ -50,13 +50,7 @@ export function isCliInstruction(x: unknown): x is CliInstruction {
     );
 }
 
-export const verbatimTypes = [
-    'advancedTex',
-    'code',
-    'escapeOnly',
-    'custom',
-    'noop',
-] as const;
+export const verbatimTypes = ['tex', 'code', 'escapeOnly', 'noop'] as const;
 
 // Ensure we didnt miss any Verbatim type
 typeAssert<Equals<(typeof verbatimTypes)[number], VerbatimType>>();

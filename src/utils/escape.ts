@@ -43,12 +43,14 @@ import {
     MdastYaml,
     inspect,
     mdastMdxJsxFromMarkdown,
+    type UnistPosition,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
 import { getDefaultSveltexConfig } from '$config/defaults.js';
 import { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
 import { CodeBackend } from '$mod.js';
+import { log, prettifyError } from '$utils/debug.js';
 
 /**
  * Given an array of ranges, returns an array of the "outermost" ranges.
@@ -166,8 +168,8 @@ export function customEscapeSequencesToHtml(escapedContent: string) {
 // 2. escape script and style tags
 // 3. run parser as above
 // 4. escape content with type
-//     - 'math' -> process with TexHandler
-//     - 'inlineMath' -> process with TexHandler
+//     - 'math' -> process with MathHandler
+//     - 'inlineMath' -> process with MathHandler
 //     - 'code' -> process with CodeHandler
 //     - 'inlineCode' -> process with CodeHandler
 //     - 'mdxTextExpression' -> unescape later, no processing required (however,
@@ -330,8 +332,8 @@ function getVerbatimES(
 export function getMathInSpecialDelimsES(
     document: string,
     texSettings: TexEscapeSettings,
-): EscapableSnippet<'tex'>[] {
-    const es: EscapableSnippet<'tex'>[] = [];
+): EscapableSnippet<'math'>[] {
+    const es: EscapableSnippet<'math'>[] = [];
     if (!texSettings.enabled) return es;
     const { display, inline } = texSettings.delims ?? {};
     (
@@ -344,7 +346,7 @@ export function getMathInSpecialDelimsES(
             es.push(
                 ...XRegExp.matchRecursive(document, ldelim, rdelim, 'gmu', {
                     unbalanced: 'skip',
-                    valueNames: [null, null, 'tex', null],
+                    valueNames: [null, null, 'math', null],
                 }).map((match) => {
                     const pad = inline ? 0 : 2;
                     const innerContent = match.value.replace(
@@ -364,8 +366,8 @@ export function getMathInSpecialDelimsES(
                         },
                         escapeOptions: { pad },
                         unescapeOptions: { removeParagraphTag: !inline },
-                        type: 'tex',
-                    } as EscapableSnippet<'tex'>;
+                        type: 'math',
+                    } as EscapableSnippet<'math'>;
                 }),
             );
         }
@@ -559,7 +561,7 @@ export function getMdastES({
                 // Get math content _with_ the surrounding delimiters
                 const outerContent = document.slice(loc.start, loc.end);
                 // Check if the delimiters are ≥2 dollar signs
-                if (outerContent.match(/^\s*\$\$.*\$\$\s*$/su)) {
+                if (/^\s*\$\$.*\$\$\s*$/su.test(outerContent)) {
                     if (isDisplayMath === 'always') {
                         inline = false;
                     } else if (isDisplayMath === 'newline') {
@@ -584,7 +586,7 @@ export function getMdastES({
             );
 
             escapableSnippets.push({
-                type: 'tex',
+                type: 'math',
                 original: { loc, outerContent: undefined },
                 escapeOptions: { pad },
                 processable: {
@@ -598,7 +600,6 @@ export function getMdastES({
         else if (isOneOf(node.type, ['inlineCode', 'code'])) {
             typeAssert(is<MdastCodeNode | MdastInlineCodeNode>(node));
             const inline = node.type === 'inlineCode';
-            const { start, end } = node.position;
             const s: EscapableSnippet<'code'> = {
                 type: 'code',
                 original: { loc, outerContent: undefined },
@@ -613,12 +614,7 @@ export function getMdastES({
                           },
                 },
                 escapeOptions: {
-                    pad: inline
-                        ? false
-                        : [
-                              lines[start.line - 1 - 1]?.trim().length !== 0,
-                              lines[end.line - 1 + 1]?.trim().length !== 0,
-                          ],
+                    pad: calcPadding(lines, node.position, inline),
                 },
                 unescapeOptions: { removeParagraphTag: !inline },
             };
@@ -640,22 +636,17 @@ export function getMdastES({
             // this case, it should be treated as plain text, just like mustache
             // tags.
             if (
-                node.value.match(/^\s*[#@:/]/) &&
+                /^\s*[#@:/]/.test(node.value) &&
                 !node.value.startsWith('@html')
             ) {
-                let pad: boolean | [string, string] = true;
                 // We don't want a logic block to be caught within a paragraph
                 // tag with other content, so we pad the escape string with
                 // newlines if necessary.
-                pad = [
+                const pad: PaddingInstruction = [
                     // `node.position.start.line - 1` = 0-based line number
-                    !lines[node.position.start.line - 1 - 1]?.trim()
-                        ? '\n\n'
-                        : '\n',
+                    1 + +!lines[node.position.start.line - 1 - 1]?.trim(),
                     // `node.position.end.line - 1` = 0-based line number
-                    !lines[node.position.end.line - 1 + 1]?.trim()
-                        ? '\n\n'
-                        : '\n',
+                    1 + +!lines[node.position.end.line - 1 + 1]?.trim(),
                 ];
                 // pad = false;
                 escapableSnippets.push({
@@ -683,7 +674,7 @@ export function getMdastES({
                     innerContent: node.value,
                     optionsForProcessor: { type: node.type },
                 },
-                escapeOptions: { pad: 2 },
+                escapeOptions: { pad: calcPadding(lines, node.position) },
                 unescapeOptions: { removeParagraphTag: true },
             });
         }
@@ -691,6 +682,53 @@ export function getMdastES({
     });
     return escapableSnippets;
 }
+
+function calcPadding(
+    lines: string[],
+    loc: UnistPosition,
+    inline: boolean = false,
+): PaddingInstruction {
+    if (inline) return false;
+    const padding: PaddingInstruction = [2, 2];
+    // 0-based line and column numbers
+    const start = { line: loc.start.line - 1, column: loc.start.column - 1 };
+    const end = { line: loc.end.line - 1, column: loc.end.column - 1 };
+    // first and last lines of the snippet
+    const lineStart = lines[start.line];
+    const lineEnd = lines[end.line];
+    nodeAssert(lineStart, 'expected starting line to be defined');
+    nodeAssert(lineEnd, 'expected ending line to be defined');
+    const leadingStart = lineStart.slice(0, start.column);
+    // Padding before
+    if (/^\s*$/.test(leadingStart)) {
+        // /^\s*START/m
+        padding[0] = '\n' + leadingStart;
+        const lineBefore = lines[start.line - 1];
+        if (!lineBefore || lineBefore.trim().length === 0) {
+            // /^\s*\n\s*START/m
+            padding[0] = leadingStart;
+        }
+    }
+    if (/^\s*(>|- |\d+. )/.test(lineStart)) {
+        padding[0] = 0;
+    }
+    // Padding after
+    if (lineEnd.slice(end.column + 1).trim().length === 0) {
+        // /END\s*$/m
+        padding[1] = 1;
+        const lineAfter = lines[end.line + 1];
+        if (!lineAfter || /^\s*(>|- |\d+. |$)/.test(lineAfter)) {
+            padding[1] = 0;
+        }
+    }
+    return padding;
+}
+
+// remarkParse.Parser.prototype.blockTokenizers.indentedCode = indentedCode
+
+// function indentedCode() {
+//   return true
+// }
 
 /**
  * Pad a string left and right.
@@ -799,36 +837,42 @@ export function escape(
     // to be able to transform any markdown that it may find within it.
     const escapedDocument = escapeColons(document);
 
-    // Escape other things using MDAST
-    const ast = parseToMdast(
-        escapedDocument,
-        [
-            ...verbatimTags,
-            'script',
-            'style',
-            // `svelte${colonUuid}head`,
-            `svelte${colonUuid}window`,
-            `svelte${colonUuid}document`,
-            `svelte${colonUuid}body`,
-            `svelte${colonUuid}options`,
-        ],
-        texSettings,
-    );
-
-    const lines = escapedDocument.split(/\r\n?|\n/);
-    return escapeSnippets(escapedDocument, [
-        ...getMdastES({
-            ast,
-            document: escapedDocument,
-            lines,
+    let ast: MdastRoot;
+    try {
+        // Escape other things using MDAST
+        ast = parseToMdast(
+            escapedDocument,
+            [
+                ...verbatimTags,
+                'script',
+                'style',
+                // `svelte${colonUuid}head`,
+                `svelte${colonUuid}window`,
+                `svelte${colonUuid}document`,
+                `svelte${colonUuid}body`,
+                `svelte${colonUuid}options`,
+            ],
             texSettings,
-        }),
-        // Escape Svelte syntax
-        ...getSvelteES(escapedDocument),
-        // Escape math in \[...\] and \(...\)
-        ...getMathInSpecialDelimsES(escapedDocument, texSettings),
-        ...getVerbatimES(document, verbatimTags, verbEnvs),
-    ]);
+        );
+
+        const lines = escapedDocument.split(/\r\n?|\n/);
+        return escapeSnippets(escapedDocument, [
+            ...getMdastES({
+                ast,
+                document: escapedDocument,
+                lines,
+                texSettings,
+            }),
+            // Escape Svelte syntax
+            ...getSvelteES(escapedDocument),
+            // Escape math in \[...\] and \(...\)
+            ...getMathInSpecialDelimsES(escapedDocument, texSettings),
+            ...getVerbatimES(document, verbatimTags, verbEnvs),
+        ]);
+    } catch (err) {
+        log('error', prettifyError(err));
+        return { escapedDocument, escapedSnippets: [] };
+    }
 }
 
 /**
@@ -892,7 +936,7 @@ export function unescapeSnippets(
 export function parseToMdast(
     document: string,
     verbatimTags: string[] | undefined = undefined,
-    texSettings: TexEscapeSettings = getDefaultSveltexConfig().general.tex,
+    texSettings: TexEscapeSettings = getDefaultSveltexConfig().general.math,
 ): MdastRoot {
     return mdastFromMarkdown(document, {
         extensions: [

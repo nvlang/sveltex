@@ -14,8 +14,21 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@nvl/sveltex": "file:..",
     "@shikijs/vitepress-twoslash": "^1.6.1",
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/markdown-it-container": "^2.0.10",
+    "autoprefixer": "^10.4.19",
+    "markdown-it-container": "^4.0.0",
+    "postcss": "^8.4.38",
+    "postcss-import": "^16.1.0",
+    "postcss-load-config": "^6.0.1",
+    "prettier-plugin-tailwindcss": "^0.6.1",
+    "tailwindcss": "^3.4.3",
     "vitepress": "^1.2.2",
     "vue": "^3.4.27"
+  },
+  "dependencies": {
+    "@phosphor-icons/vue": "^2.2.1"
   }
 }

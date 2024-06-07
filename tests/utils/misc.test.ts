@@ -1,13 +1,13 @@
 import {
     ensureDoesNotStartWithSlash,
-    prefixWithSlash,
     ensureWithinRange,
     re,
     sha256,
     copyTransformation,
     isValidComponentName,
     copyTransformations,
-    postfixWithSlash,
+    ensureEndsWith,
+    ensureStartsWith,
 } from '$utils/misc.js';
 import { spy } from '$tests/fixtures.js';
 import {
@@ -35,7 +35,7 @@ describe.concurrent('utils/misc', () => {
         vi.clearAllMocks();
     });
 
-    describe('isValidVerbEnvConfigAdvancedTex', () => {
+    describe('isValidVerbEnvConfigTex', () => {
         it('should return true for a valid configuration', () => {
             expect(isValidComponentName('something')).toBe(true);
         });
@@ -133,23 +133,23 @@ describe.concurrent('utils/misc', () => {
         });
     });
 
-    describe('prefixWithSlash', () => {
-        it('should add leading slash', () => {
-            expect(prefixWithSlash('abc')).toEqual('/abc');
+    describe('ensureStartsWith', () => {
+        it('should add prefix if necessary', () => {
+            expect(ensureStartsWith('foo', '-')).toEqual('-foo');
         });
-        it('should return strings with leading slashes as-is', () => {
-            expect(prefixWithSlash('/abc')).toEqual('/abc');
-            expect(prefixWithSlash('/abc/')).toEqual('/abc/');
+        it('should return strings that already have prefix as-is', () => {
+            expect(ensureStartsWith('-abc', '-')).toEqual('-abc');
+            expect(ensureStartsWith('-abc-', '-')).toEqual('-abc-');
         });
     });
 
-    describe('postfixWithSlash', () => {
-        it('should add leading slash', () => {
-            expect(postfixWithSlash('abc')).toEqual('abc/');
+    describe('ensureEndsWith', () => {
+        it('should add postfix if necessary', () => {
+            expect(ensureEndsWith('abc', '-')).toEqual('abc-');
         });
-        it('should return strings with leading slashes as-is', () => {
-            expect(postfixWithSlash('abc/')).toEqual('abc/');
-            expect(postfixWithSlash('/abc/')).toEqual('/abc/');
+        it('should return strings that already have postfix as-is', () => {
+            expect(ensureEndsWith('abc-', '-')).toEqual('abc-');
+            expect(ensureEndsWith('-abc-', '-')).toEqual('-abc-');
         });
     });
 

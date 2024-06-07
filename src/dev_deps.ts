@@ -11,3 +11,8 @@ export {
     vi,
     type MockInstance,
 } from 'vitest';
+
+/**
+ * Fuzzy testing.
+ */
+export { test as fuzzyTest, fc } from '@fast-check/vitest';

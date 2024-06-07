@@ -15,6 +15,8 @@ import { CodeHandler } from '$handlers/CodeHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { consoles } from '$utils/debug.js';
 import { v4 as uuid } from 'uuid';
+import { supportedCdns } from '$type-guards/code.js';
+import type { SupportedCdn } from '$data/cdn.js';
 
 function fixture() {
     beforeEach(() => {
@@ -60,21 +62,38 @@ describe("CodeHandler<'highlight.js'>", () => {
 
     describe('css', () => {
         fixture();
-        it('fetches and generates CSS if run for the first time', async () => {
-            const handler = await CodeHandler.create('highlight.js', {});
-            await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
-            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
-            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
-                1,
-                expect.stringMatching(
-                    /src\/sveltex\/highlight\.js@.*(\.min)?\.css/,
+        describe('fetches and generates CSS if run for the first time', () => {
+            it.each([
+                ...[['jsdelivr']],
+                ...supportedCdns.map(
+                    (cdn) =>
+                        [[cdn, ...supportedCdns]] as [
+                            [SupportedCdn, ...SupportedCdn[]],
+                        ],
                 ),
-                expect.stringContaining('pre code'),
+            ] as (SupportedCdn | [SupportedCdn, ...SupportedCdn[]])[])(
+                'cdn: %o',
+                async (cdn) => {
+                    const handler = await CodeHandler.create(
+                        'highlight.js',
+                        {},
+                    );
+                    await handler.configure({
+                        theme: { type: 'self-hosted', cdn },
+                    });
+                    await handler.process('', {});
+                    expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+                    expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                        1,
+                        expect.stringMatching(
+                            /src\/sveltex\/highlight\.js@.*(\.min)?\.css/,
+                        ),
+                        expect.stringContaining('pre code'),
+                    );
+                    await handler.process('', {});
+                    expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+                },
             );
-            await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
-            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
         });
 
         it("logs a message if CSS couldn't be written", async () => {
@@ -84,7 +103,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             });
             const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(consoleErrorMock).toHaveBeenCalledTimes(1);
             expect(consoleErrorMock).toHaveBeenNthCalledWith(
                 1,
@@ -95,7 +114,7 @@ describe("CodeHandler<'highlight.js'>", () => {
         it("shouldn't write CSS if configuration.theme.type is none", async () => {
             const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'none' } });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(consoleErrorMock).toHaveBeenCalledTimes(0);
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(existsSync).not.toHaveBeenCalled();
@@ -106,7 +125,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             await handler.configure({
                 theme: 123 as unknown as { type: 'none' },
             });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(log).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(existsSync).not.toHaveBeenCalled();
@@ -118,7 +137,7 @@ describe("CodeHandler<'highlight.js'>", () => {
                 .mockResolvedValueOnce(undefined);
             const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
                 1,
@@ -136,7 +155,7 @@ describe("CodeHandler<'highlight.js'>", () => {
                 .mockResolvedValueOnce(undefined);
             const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
             fetchCssMock.mockRestore();
         });
@@ -148,7 +167,7 @@ describe("CodeHandler<'highlight.js'>", () => {
             existsSync.mockReturnValueOnce(true);
             const handler = await CodeHandler.create('highlight.js', {});
             await handler.configure({ theme: { type: 'self-hosted' } });
-            (await handler.process('', {})).processed;
+            await handler.process('', {});
             expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
             fetchCssMock.mockRestore();
         });

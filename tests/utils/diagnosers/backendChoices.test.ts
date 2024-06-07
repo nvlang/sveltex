@@ -1,7 +1,7 @@
 import type { BackendChoices } from '$types/SveltexConfiguration.js';
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend } from '$types/handlers/Tex.js';
+import type { MathBackend } from '$types/handlers/Math.js';
 
 import { spy } from '$tests/fixtures.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
@@ -51,8 +51,8 @@ describe('utils/diagnosers/backendChoices', () => {
             {
                 markdownBackend: 'markdown-it',
                 codeBackend: 'none',
-                texBackend: 'katex',
-                advancedTexBackend: 'local',
+                mathBackend: 'katex',
+                texBackend: 'local',
             },
             0,
             0,
@@ -61,8 +61,8 @@ describe('utils/diagnosers/backendChoices', () => {
             {
                 markdownBackend: 'unknown',
                 codeBackend: 'unknown',
+                mathBackend: 'unknown',
                 texBackend: 'unknown',
-                advancedTexBackend: 'unknown',
                 a: null,
                 b: 1,
                 c: undefined,
@@ -74,7 +74,7 @@ describe('utils/diagnosers/backendChoices', () => {
         'diagnoseBackendChoices(%o) === { errors: %i, warnings: %i }',
         (bc, errors, warnings) => {
             const res = diagnoseBackendChoices(
-                bc as BackendChoices<MarkdownBackend, CodeBackend, TexBackend>,
+                bc as BackendChoices<MarkdownBackend, CodeBackend, MathBackend>,
             );
             expect(res.errors).toEqual(errors);
             expect(res.warnings).toEqual(warnings);

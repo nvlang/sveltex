@@ -116,36 +116,47 @@ export function re(strings: TemplateStringsArray, ...flags: string[]) {
 }
 
 /**
- * Ensures that the given path starts with a slash.
+ * Ensures that a string ends with another given string.
  *
- * @param path - The path to ensure starts with a slash.
- * @returns The path, with a slash prepended if it didn't already start with
- * one.
+ * @param str - Some string.
+ * @param postfix - The postfix to ensure the string ends with.
+ * @returns `str`, with `postfix` appended if it didn't already end with it.
  *
  * @example
  * ```ts
- * prefixWithSlash('path/to/file'); // '/path/to/file'
- * prefixWithSlash('/path/to/file'); // '/path/to/file'
+ * ensureEndsWith('foo', '-'); // 'foo-'
+ * ensureEndsWith('foo-', '-'); // 'foo-'
  * ```
  */
-export function prefixWithSlash(path: string): `/${string}` {
-    return path.startsWith('/') ? (path as `/${string}`) : `/${path}`;
+export function ensureEndsWith<Postfix extends string>(
+    str: string,
+    postfix: Postfix,
+): `${string}${Postfix}` {
+    return str.endsWith(postfix)
+        ? (str as `${string}${Postfix}`)
+        : `${str}${postfix}`;
 }
 
 /**
- * Ensures that the given path ends with a slash.
+ * Ensures that a string ends with another given string.
  *
- * @param path - The path to ensure ends with a slash.
- * @returns The path, with a slash appended if it didn't already end with one.
+ * @param str - Some string.
+ * @param prefix - The prefix to ensure the string starts with.
+ * @returns `str`, with `prefix` prepended if it didn't already start with it.
  *
  * @example
  * ```ts
- * postfixWithSlash('path/to/file'); // 'path/to/file/'
- * postfixWithSlash('path/to/file/'); // 'path/to/file/'
+ * ensureStartsWith('foo', '-'); // '-foo'
+ * ensureStartsWith('-foo', '-'); // '-foo'
  * ```
  */
-export function postfixWithSlash(path: string): `${string}/` {
-    return path.endsWith('/') ? (path as `${string}/`) : `${path}/`;
+export function ensureStartsWith<Prefix extends string>(
+    str: string,
+    prefix: Prefix,
+): `${Prefix}${string}` {
+    return str.startsWith(prefix)
+        ? (str as `${Prefix}${string}`)
+        : `${prefix}${str}`;
 }
 
 /**

@@ -24,7 +24,7 @@ describe("MarkdownHandler<'unified'>", () => {
             });
 
             it('processes markdown correctly', async () => {
-                const output = (await handler.process('**strong** *em*'))
+                const output = (await handler.process('**strong** *em*', {}))
                     .processed;
                 const expected = '<p><strong>strong</strong> <em>em</em></p>';
                 expect(output).toEqual(expected);
@@ -44,11 +44,11 @@ describe("MarkdownHandler<'unified'>", () => {
                     rehypePlugins: undefined,
                 });
                 expect(
-                    (await handler.process('**strong** *em*')).processed,
+                    (await handler.process('**strong** *em*', {})).processed,
                 ).toEqual('<p><strong>strong</strong> <em>em</em></p>');
                 await handler.configure({});
                 expect(
-                    (await handler.process('**strong** *em*')).processed,
+                    (await handler.process('**strong** *em*', {})).processed,
                 ).toEqual('<p><strong>strong</strong> <em>em</em></p>');
             });
         });

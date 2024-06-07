@@ -8,9 +8,8 @@ import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbatimConfiguration,
     FullVerbEnvConfig,
-    FullVerbEnvConfigAdvancedTex,
+    FullVerbEnvConfigTex,
     FullVerbEnvConfigCode,
-    FullVerbEnvConfigCustom,
     FullVerbEnvConfigEscapeOnly,
     FullVerbEnvConfigNoop,
     VerbatimConfiguration,
@@ -20,7 +19,7 @@ import type { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
-import { AdvancedTexHandler } from '$handlers/AdvancedTexHandler.js';
+import { TexHandler } from '$handlers/TexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
 import { log } from '$utils/debug.js';
@@ -53,10 +52,10 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
     private readonly codeHandler: CodeHandler<C>;
 
     /**
-     * Advanced TeX handler to which advanced TeX processing should be
+     * Advanced TeX handler to which TeX processing should be
      * delegated.
      */
-    private readonly advancedTexHandler: AdvancedTexHandler;
+    private readonly texHandler: TexHandler;
 
     override get configuration() {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
@@ -82,7 +81,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
 
     static create<C extends CodeBackend>(
         codeHandler: CodeHandler<C>,
-        advancedTexHandler: AdvancedTexHandler,
+        texHandler: TexHandler,
     ) {
         /**
          * @param content - The content to process (incl. HTML tag)
@@ -139,9 +138,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 log('error', `Unknown verbatim environment "${tag}".`);
                 return {
                     processed: outerContent ?? innerContent,
-                    unescapeOptions: {
-                        removeParagraphTag: false,
-                    },
+                    unescapeOptions: { removeParagraphTag: false },
                 };
             }
 
@@ -281,10 +278,10 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                     });
                 processed = processedSnippet.processed;
                 unescapeOptions = processedSnippet.unescapeOptions;
-            } else if (type === 'advancedTex') {
+            } else if (type === 'tex') {
                 // Advanced TeX Content
-                typeAssert(is<FullVerbEnvConfigAdvancedTex>(config));
-                const res = await verbatimHandler.advancedTexHandler.process(
+                typeAssert(is<FullVerbEnvConfigTex>(config));
+                const res = await verbatimHandler.texHandler.process(
                     processed,
                     {
                         attributes: mergedAttributes,
@@ -297,9 +294,6 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 );
                 processed = res.processed;
                 unescapeOptions = res.unescapeOptions;
-            } else if (type === 'custom') {
-                typeAssert(is<FullVerbEnvConfigCustom>(config));
-                processed = config.customProcess(processed, mergedAttributes);
             } else {
                 // type === 'noop'
                 typeAssert(is<FullVerbEnvConfigNoop>(config));
@@ -376,7 +370,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             process,
             configure,
             codeHandler,
-            advancedTexHandler,
+            texHandler,
         });
     }
 
@@ -387,7 +381,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
         configure,
         configuration,
         codeHandler,
-        advancedTexHandler,
+        texHandler,
     }: {
         backend?: 'verbatim' | undefined;
         process: ProcessFn<VerbatimProcessOptions, VerbatimHandler<C>>;
@@ -397,7 +391,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             | undefined;
         configuration?: FullVerbatimConfiguration | undefined;
         codeHandler: CodeHandler<C>;
-        advancedTexHandler: AdvancedTexHandler;
+        texHandler: TexHandler;
     }) {
         super({
             backend: backend ?? 'verbatim',
@@ -407,7 +401,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             configure,
         });
         this.codeHandler = codeHandler;
-        this.advancedTexHandler = advancedTexHandler;
+        this.texHandler = texHandler;
     }
 
     private _verbEnvs: Map<string, FullVerbEnvConfig> = new Map<

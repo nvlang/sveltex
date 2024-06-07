@@ -3,25 +3,17 @@ import { sveltex } from '@nvl/sveltex';
 export const sveltexPreprocessor = await sveltex({
     markdownBackend: 'markdown-it',
     codeBackend: 'highlight.js',
-    texBackend: 'mathjax',
+    mathBackend: 'mathjax',
 });
 
 await sveltexPreprocessor.configure({
     markdown: {},
-    code: {
-        escapeBraces: true,
-        escapeHtml: true,
-        languages: ['ts'],
-    },
-    tex: { outputFormat: 'svg' },
+    code: {},
+    math: { outputFormat: 'svg' },
     verbatim: {
-        Verb: {
-            type: 'escapeOnly',
-            escapeInstructions: { escapeBraces: true, escapeHtml: true },
-            component: 'p',
-        },
+        Verb: { type: 'escapeOnly', component: 'p' },
         tex: {
-            type: 'advancedTex',
+            type: 'tex',
             aliases: ['TikZ'],
             preamble: [
                 '\\usepackage{mathtools}',

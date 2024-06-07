@@ -5,9 +5,13 @@ import { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 import { getDefaultCodeConfig } from '$config/defaults.js';
 import { nodeAssert } from '$deps.js';
-import { isFunction } from '$type-guards/utils.js';
+import { isFunction, isString } from '$type-guards/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { bundledThemes } from 'shiki';
+import { bundledLanguages, bundledThemes } from 'shiki';
+
+import { fuzzyTest, fc } from '$dev_deps.js';
+import { escapeStringForRegExp } from '$utils/escape.js';
+import type { Transformer } from '$types/handlers/Handler.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
@@ -88,7 +92,7 @@ describe('CodeHandler.create', () => {
     });
 });
 
-describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
+describe.concurrent.each(codeBackends)('CodeHandler<%o>', (backend) => {
     describe('.process', () => {
         describe.each([['', {}]])('(%o) → ParsedSnippet', (input, opts) => {
             test(`_premise_`, async () => {
@@ -131,92 +135,357 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                 });
             }
         });
-        if (backend === 'shiki') {
+        if (backend !== 'none') {
             describe('features', () => {
-                describe('theme', () => {
-                    describe.each(Object.keys(bundledThemes))('%o', (theme) => {
-                        test('block', async () => {
+                describe('addLanguageClass', () => {
+                    test.each([true, false, 'something-', ''])(
+                        '%o',
+                        async (addLanguageClass) => {
                             const handler = await CodeHandler.create(backend, {
-                                shiki: { theme },
+                                addLanguageClass,
                             });
-                            const output = await handler.process('');
-                            expect(output).toBeDefined();
-                            expect(output.processed).toMatch(
-                                new RegExp(`^<pre class="shiki ${theme}"`),
-                            );
-                        });
-                        test('inline', async () => {
-                            const handler = await CodeHandler.create(backend, {
-                                shiki: { theme },
+                            const output = await handler.process('let a;', {
+                                lang: 'js',
                             });
-                            const output = await handler.process('', {
-                                inline: true,
-                            });
-                            expect(output).toBeDefined();
-                            expect(output.processed).toMatch(
-                                new RegExp(
-                                    `^<code class="language-plaintext shiki ${theme}"`,
+                            if (addLanguageClass === true) {
+                                expect(output.processed).toContain(
+                                    'class="language-js"',
+                                );
+                            } else if (isString(addLanguageClass)) {
+                                expect(output.processed).toContain(
+                                    `class="${addLanguageClass}js"`,
+                                );
+                            } else {
+                                expect(output.processed).not.toMatch(
+                                    /class=".*(js|javascript)("| .*")/,
+                                );
+                            }
+                        },
+                    );
+                });
+                if (backend === 'shiki') {
+                    describe('theme', () => {
+                        fuzzyTest.concurrent.prop(
+                            [
+                                fc.constantFrom(...Object.keys(bundledThemes)),
+                                fc.constantFrom(
+                                    ...Object.keys(bundledLanguages),
                                 ),
+                                fc.fullUnicodeString({ minLength: 1 }),
+                                fc.boolean(),
+                            ],
+                            { errorWithCause: true, verbose: 2 },
+                        )(
+                            'fuzzy: (theme, lang, inline, code)',
+                            async (theme, lang, code, inline) => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        shiki: { theme },
+                                    },
+                                );
+                                const output = await handler.process(code, {
+                                    inline,
+                                    lang,
+                                });
+                                expect(output).toBeDefined();
+                                let pre;
+                                if (inline) {
+                                    pre = `<code class="language-${escapeStringForRegExp(lang)} `;
+                                } else {
+                                    pre = `<pre class="`;
+                                }
+                                expect(output.processed).toMatch(
+                                    new RegExp(`^${pre}shiki ${theme}`),
+                                );
+                                expect(output.processed).toContain(
+                                    '<span style="color:',
+                                );
+                            },
+                        );
+                    });
+                    describe('themes', () => {
+                        fuzzyTest.concurrent.prop(
+                            [
+                                fc.constantFrom(...Object.keys(bundledThemes)),
+                                fc.dictionary(
+                                    fc.stringMatching(/^[\w-]+$/),
+                                    fc.constantFrom(
+                                        ...Object.keys(bundledThemes),
+                                    ),
+                                    { maxKeys: 5, minKeys: 1 },
+                                ),
+                                fc.constantFrom(
+                                    ...Object.keys(bundledLanguages),
+                                ),
+                                fc.fullUnicodeString({ minLength: 1 }),
+                                fc.boolean(),
+                            ],
+                            { errorWithCause: true, verbose: 2 },
+                        )(
+                            'fuzzy: (themes, lang, inline, code)',
+                            async (light, otherThemes, lang, code, inline) => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        shiki: {
+                                            themes: {
+                                                light,
+                                                ...otherThemes,
+                                            },
+                                        },
+                                    },
+                                );
+                                const output = await handler.process(code, {
+                                    inline,
+                                    lang,
+                                });
+                                expect(output).toBeDefined();
+                                const str = Object.values(otherThemes)
+                                    .map(escapeStringForRegExp)
+                                    .join(' ');
+                                let pre;
+                                if (inline) {
+                                    pre = `<code class="language-${escapeStringForRegExp(lang)} `;
+                                } else {
+                                    pre = `<pre class="`;
+                                }
+                                expect(output.processed).toMatch(
+                                    new RegExp(
+                                        `^${pre}shiki shiki-themes ${light}${str ? ' ' + str : ''}`,
+                                    ),
+                                );
+                                expect(output.processed).toContain(
+                                    '<span style="color:',
+                                );
+                            },
+                        );
+                    });
+                }
+                if (backend !== 'escapeOnly') {
+                    describe('inline syntax highlighting', () => {
+                        test('w/ language flag set internally', async () => {
+                            type PossibleBackend = typeof backend;
+                            let handler: CodeHandler<typeof backend>;
+                            if (backend === 'shiki') {
+                                handler = (await CodeHandler.create(backend, {
+                                    shiki: { theme: 'github-light' },
+                                })) as CodeHandler<PossibleBackend>;
+                            } else {
+                                handler = (await CodeHandler.create(backend, {
+                                    theme: { type: 'none' },
+                                    ...(backend === 'starry-night'
+                                        ? { languages: 'common' }
+                                        : {}),
+                                })) as CodeHandler<PossibleBackend>;
+                            }
+                            const output = await handler.process(
+                                'const x = 3;',
+                                {
+                                    inline: true,
+                                    lang: 'js',
+                                },
                             );
+                            expect(output).toBeDefined();
+                            if (backend === 'shiki') {
+                                expect(output.processed).toContain(
+                                    '<span style="color:',
+                                );
+                            } else {
+                                expect(output.processed).toContain(
+                                    '<span class=',
+                                );
+                            }
                         });
-                    });
-                });
-                describe('themes', () => {
-                    test('block', async () => {
-                        const handler = await CodeHandler.create(backend, {
-                            shiki: {
-                                themes: {
-                                    test: 'andromeeda',
-                                    light: 'github-light',
-                                    dark: 'github-dark',
-                                },
+                        test.each([
+                            'js',
+                            '{js}',
+                            '{js a b=false c}',
+                            'someAlias',
+                        ])(
+                            'w/ language flag set ad hoc (`%s ...`)',
+                            async (str) => {
+                                type PossibleBackend = typeof backend;
+                                let handler: CodeHandler<typeof backend>;
+                                if (backend === 'shiki') {
+                                    handler = (await CodeHandler.create(
+                                        backend,
+                                        {
+                                            shiki: { theme: 'github-light' },
+                                            langAlias: {
+                                                someAlias: 'javascript',
+                                            },
+                                        },
+                                    )) as CodeHandler<PossibleBackend>;
+                                } else {
+                                    handler = (await CodeHandler.create(
+                                        backend,
+                                        {
+                                            theme: { type: 'none' },
+                                            langAlias: {
+                                                someAlias: 'javascript',
+                                            },
+                                            ...(backend === 'starry-night'
+                                                ? { languages: 'common' }
+                                                : {}),
+                                        },
+                                    )) as CodeHandler<PossibleBackend>;
+                                }
+
+                                const output = await handler.process(
+                                    `${str} const x = 3;`,
+                                    { inline: true },
+                                );
+                                expect(output).toBeDefined();
+                                if (backend === 'shiki') {
+                                    expect(output.processed).toContain(
+                                        '<span style="color:',
+                                    );
+                                } else {
+                                    expect(output.processed).toContain(
+                                        '<span class=',
+                                    );
+                                }
                             },
-                        });
-                        const output = await handler.process('const x = 0;', {
-                            lang: 'js',
-                        });
-                        expect(output).toBeDefined();
-                        expect(output.processed).toMatch(
-                            new RegExp(`^<pre class="shiki shiki-themes "`),
                         );
                     });
-                    test('inline', async () => {
+                }
+                describe('appendNewline', () => {
+                    test.each([
+                        [true, 'appends \\n'],
+                        [false, "doesn't append \\n"],
+                    ])('%o → %s', async (appendNewline) => {
                         const handler = await CodeHandler.create(backend, {
-                            shiki: {
-                                themes: {
-                                    light: 'github-light',
-                                    dark: 'github-dark',
-                                },
-                            },
-                        });
-                        const output = await handler.process('', {
-                            inline: true,
-                        });
-                        expect(output).toBeDefined();
-                        expect(output.processed).toMatch(
-                            new RegExp(`^<pre class="shiki  "`),
-                        );
-                    });
-                });
-                describe('inline syntax highlighting', () => {
-                    test('works', async () => {
-                        const handler = await CodeHandler.create(backend, {
-                            shiki: {
-                                themes: {
-                                    light: 'github-light',
-                                    dark: 'github-dark',
-                                },
-                            },
+                            appendNewline,
+                            ...(backend === 'starry-night' ||
+                            backend === 'highlight.js'
+                                ? { theme: { type: 'none' } }
+                                : {}),
                         });
                         const output = await handler.process('const x = 3;', {
-                            inline: true,
-                            lang: 'js',
+                            inline: false,
                         });
-                        expect(output).toBeDefined();
-                        expect(output.processed).toContain('<span style=');
+                        if (appendNewline) {
+                            expect(output.processed).toContain('\n');
+                        } else {
+                            expect(output.processed).not.toContain('\n');
+                        }
                     });
+                    if (
+                        backend === 'starry-night' ||
+                        backend === 'highlight.js' ||
+                        backend === 'escapeOnly'
+                    ) {
+                        test.each([true, false])(
+                            '%o → empty string stays empty',
+                            async (appendNewline) => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        appendNewline,
+                                        ...(backend === 'starry-night' ||
+                                        backend === 'highlight.js'
+                                            ? { theme: { type: 'none' } }
+                                            : {}),
+                                    },
+                                );
+                                expect(
+                                    (
+                                        await handler.process('', {
+                                            inline: true,
+                                        })
+                                    ).processed,
+                                ).toMatch(
+                                    /^<code[^>]*?>(<span><\/span>)?<\/code>$/su,
+                                );
+                                expect(
+                                    (
+                                        await handler.process('', {
+                                            inline: false,
+                                        })
+                                    ).processed,
+                                ).toMatch(
+                                    /^<pre[^>]*?><code[^>]*?>(<span><\/span>)?<\/code><\/pre>$/su,
+                                );
+                            },
+                        );
+                    }
                 });
             });
         }
+    });
+});
+
+describe('misc', () => {
+    describe('configuration getter & setter', () => {
+        test('inlineMeta', async () => {
+            const handler = await CodeHandler.create('none', {});
+            expect(handler.configuration.inlineMeta).toBeTypeOf('function');
+            expect(
+                handler.configuration.inlineMeta('js let a;', () => true),
+            ).toEqual({ code: 'let a;', lang: 'js', meta: undefined });
+            await handler.configure({ inlineMeta: null });
+            expect(handler.configuration.inlineMeta).not.toEqual(null);
+            expect(handler.configuration.inlineMeta).toBeTypeOf('function');
+            expect(
+                handler.configuration.inlineMeta('js let a;', () => true),
+            ).toBeUndefined();
+        });
+        test('parseMetaString', async () => {
+            const handler = await CodeHandler.create('shiki', {});
+            expect(handler.configuration.parseMetaString).toBeTypeOf(
+                'function',
+            );
+            await handler.configure({ parseMetaString: null });
+            expect(handler.configuration.parseMetaString).not.toEqual(null);
+            expect(handler.configuration.parseMetaString).toBeTypeOf(
+                'function',
+            );
+        });
+        test('transformers', async () => {
+            const pre: Transformer = ['a', 'b'];
+            const post: Transformer = ['c', 'd'];
+            const handler = await CodeHandler.create('none', {
+                transformers: { pre, post },
+            });
+            expect(handler.configuration.transformers.pre).toEqual(pre);
+            expect(handler.configuration.transformers.post).toEqual(post);
+            expect(handler.configuration.transformers).not.toBe(pre);
+            expect(handler.configuration.transformers).not.toBe(post);
+
+            await handler.configure({
+                transformers: { pre: undefined, post: undefined },
+            });
+            expect(pre).toEqual(['a', 'b']);
+            expect(post).toEqual(['c', 'd']);
+            expect(handler.configuration.transformers.pre).toEqual(pre);
+            expect(handler.configuration.transformers.post).toEqual(post);
+            expect(handler.configuration.transformers).not.toBe(pre);
+            expect(handler.configuration.transformers).not.toBe(post);
+
+            await handler.configure({
+                transformers: { pre: null, post: null },
+            });
+            expect(pre).toEqual(['a', 'b']);
+            expect(post).toEqual(['c', 'd']);
+            expect(handler.configuration.transformers.pre).toEqual([]);
+            expect(handler.configuration.transformers.post).toEqual([]);
+
+            await handler.configure({
+                transformers: { pre, post },
+            });
+            expect(pre).toEqual(['a', 'b']);
+            expect(post).toEqual(['c', 'd']);
+            expect(handler.configuration.transformers.pre).toEqual(pre);
+            expect(handler.configuration.transformers.post).toEqual(post);
+            expect(handler.configuration.transformers).not.toBe(pre);
+            expect(handler.configuration.transformers).not.toBe(post);
+
+            await handler.configure({ transformers: { pre: [], post: [] } });
+            expect(pre).toEqual(['a', 'b']);
+            expect(post).toEqual(['c', 'd']);
+            expect(handler.configuration.transformers.pre).toEqual([]);
+            expect(handler.configuration.transformers.post).toEqual([]);
+        });
     });
 });

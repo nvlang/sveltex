@@ -9,24 +9,39 @@ hero:
   actions:
     - theme: brand
       text: Documentation
-      link: /markdown-examples
+      link: /docs
     - theme: alt
       text: Examples
-      link: /api-examples
+      link: /examples
 
 features:
   - title: Markdown
     details: Use your favorite markdown compiler and plugin ecosystem — built-in support for <code>remark-rehype</code>, <code>marked</code>, <code>markdown-it</code>, and <code>micromark</code>.
     link: /docs/markdown
+    icon:
+      light: /light/markdown-logo-duotone.svg
+      dark: /dark/markdown-logo-duotone.svg
+      alt: code icon
   - title: Code Blocks
-    details: Highlight code in fenced code blocks or custom components with <code>starry-night</code>, <code>highlight.js</code>, or a custom highlighter.
+    details: Highlight and transform code in fenced code blocks or custom "verbatim" components with Shiki, <code>starry-night</code>, or highlight.js.
     link: /docs/code
+    icon:
+      light: /light/brackets-curly-duotone.svg
+      dark: /dark/brackets-curly-duotone.svg
+      alt: code icon
   - title: LaTeX
     details: Compile any LaTeX code in your markup at build-time into optimized SVG components using your local TeX distribution.
-    link: /docs/advanced-tex
+    link: /docs/tex
+    icon:
+      light: /light/vector-two-duotone.svg
+      dark: /dark/vector-two-duotone.svg
+      alt: code icon
   - title: Math
     details: Render math expressions that don't require a full TeX distribution at build-time with MathJax or KaTeX.
-    link: /docs/tex
----
+    link: /docs/math
+    icon:
+      light: /light/pi-duotone.svg
+      dark: /dark/pi-duotone.svg
+      alt: code icon
 
 

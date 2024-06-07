@@ -16,11 +16,12 @@ import { spy } from '$tests/fixtures.js';
 import { FullVerbEnvConfig, VerbEnvConfig } from '$types/handlers/Verbatim.js';
 import { isRegExp } from 'util/types';
 import { isArray, isDefined } from '$type-guards/utils.js';
+import { fc, fuzzyTest } from '$dev_deps.js';
 
 const sveltexPreprocessor = await sveltex({
     markdownBackend: 'none',
     codeBackend: 'highlight.js',
-    texBackend: 'none',
+    mathBackend: 'none',
 });
 
 await sveltexPreprocessor.configure({
@@ -45,16 +46,9 @@ await sveltexPreprocessor.configure({
                 escapeHtml: true,
             },
         },
-        Custom: {
-            type: 'custom',
-            customProcess: (
-                content: string,
-                attributes: Record<string, unknown>,
-            ) => 'Custom: ' + content + JSON.stringify(attributes),
-        },
         Ambiguous: { type: 'noop' },
         tex: {
-            type: 'advancedTex',
+            type: 'tex',
             // aliases: ['Ambiguous'],
         },
     },
@@ -124,7 +118,7 @@ describe('VerbatimHandler', () => {
             const sp = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'none',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await sp.configure({
                 verbatim: {
@@ -159,14 +153,14 @@ describe('VerbatimHandler', () => {
             const sp = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'none',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await sp.configure({
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 verbatim: { verbatimEnvironments: undefined! },
             });
             expect(() =>
-                VerbatimHandler.create(sp.codeHandler, sp.advancedTexHandler),
+                VerbatimHandler.create(sp.codeHandler, sp.texHandler),
             ).not.toThrowError();
         });
     });
@@ -283,7 +277,7 @@ describe('VerbatimHandler', () => {
 
         it('should correctly handle self-closing components (TeX)', async () => {
             const sp = await sveltex();
-            await sp.configure({ verbatim: { tex: { type: 'advancedTex' } } });
+            await sp.configure({ verbatim: { tex: { type: 'tex' } } });
             expect(
                 (
                     await sp.verbatimHandler.process('', {
@@ -451,89 +445,104 @@ describe('VerbatimHandler', () => {
             ).toEqual('<Verbatim>\n&lt;&gt;&amp;&lbrace;</Verbatim>');
         });
 
-        it('should support custom type functions', async () => {
-            expect(
-                (
-                    await sveltexPreprocessor.verbatimHandler.process(
-                        'content',
-                        {
-                            filename: 'test.sveltex',
-                            selfClosing: false,
-                            tag: 'Custom',
-                            attributes: { attr: 'test', attr2: 'test2' },
-                            outerContent:
-                                '<Custom attr="test" attr2="test2">content</Custom>',
-                        },
-                    )
-                ).processed,
-            ).toEqual(
-                '<Custom attr="test" attr2="test2">Custom: content{"attr":"test","attr2":"test2"}</Custom>',
-            );
-
-            expect(
-                (
-                    await sveltexPreprocessor.verbatimHandler.process(
-                        'content',
-                        {
-                            filename: 'test.sveltex',
-                            selfClosing: false,
-                            tag: 'Custom',
-                            attributes: { attr: 'test', attr2: 'test2' },
-                            outerContent:
-                                '<Custom attr="test" attr2="test2">content</Custom>',
-                        },
-                    )
-                ).processed,
-            ).toEqual(
-                '<Custom attr="test" attr2="test2">Custom: content{"attr":"test","attr2":"test2"}</Custom>',
-            );
-        });
-
         describe('error handling', () => {
             fixture();
-            it("should complain if self-closing === true and innerContent !== ''", async () => {
-                expect(
-                    (
+            fuzzyTest.concurrent.prop(
+                [
+                    fc.string({ minLength: 1 }),
+                    fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9]*$/),
+                    fc.stringMatching(/^[\w %#@()&+-]+\.sveltex$/),
+                    fc.dictionary(
+                        fc.stringMatching(/^[\w-]+$/),
+                        fc.oneof(
+                            fc.string(),
+                            fc.float(),
+                            fc.boolean(),
+                            fc.integer(),
+                            fc.constantFrom(null, undefined),
+                        ),
+                        { maxKeys: 5 },
+                    ),
+                    fc.oneof(
+                        fc.constant(undefined),
+                        fc.record({
+                            pad: fc.tuple(
+                                fc.integer({ min: 0 }),
+                                fc.integer({ min: 0 }),
+                            ),
+                        }),
+                    ),
+                ],
+                { errorWithCause: true, verbose: 2 },
+            )(
+                "should complain if self-closing === true and innerContent !== ''",
+                async (input, tag, filename, attributes, escapeOptions) => {
+                    const sveltexPreprocessor = await sveltex(
+                        {},
+                        { verbatim: { [tag]: { type: 'noop' } } },
+                    );
+                    const selfClosing = true;
+                    const processed = (
                         await sveltexPreprocessor.verbatimHandler.process(
-                            'something',
+                            input,
                             {
-                                filename: 'test.sveltex',
-                                selfClosing: true,
-                                tag: 'test',
-                                attributes: {},
+                                filename,
+                                selfClosing,
+                                tag,
+                                attributes,
+                                escapeOptions,
                             },
                         )
-                    ).processed,
-                ).toEqual('something');
-                expect(log).toHaveBeenCalledTimes(1);
-                expect(log).toHaveBeenNthCalledWith(
-                    1,
-                    'error',
-                    'Self-closing HTML tag "test" should not have inner content.',
-                );
-            });
-
-            it('should complain if verbatim environment is unknown', async () => {
-                expect(
-                    (
+                    ).processed;
+                    expect(processed).toEqual(input);
+                    expect(log).toHaveBeenCalledTimes(1);
+                    expect(log).toHaveBeenNthCalledWith(
+                        1,
+                        'error',
+                        `Self-closing HTML tag "${tag}" should not have inner content.`,
+                    );
+                    log.mockClear();
+                },
+            );
+            fuzzyTest.concurrent.prop(
+                [
+                    fc.string({ minLength: 1 }),
+                    fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9]*$/),
+                    fc.stringMatching(/^[\w %#@()&+-]+\.sveltex$/),
+                    fc.dictionary(
+                        fc.stringMatching(/^[\w-]+$/),
+                        fc.oneof(
+                            fc.string(),
+                            fc.float(),
+                            fc.boolean(),
+                            fc.integer(),
+                            fc.constantFrom(null, undefined),
+                        ),
+                        { maxKeys: 5 },
+                    ),
+                    fc.constant(false),
+                ],
+                { errorWithCause: true, verbose: 2 },
+            )(
+                'should complain if verbatim environment is unknown',
+                async (input, tag, filename, attributes, selfClosing) => {
+                    const sveltexPreprocessor = await sveltex();
+                    const processed = (
                         await sveltexPreprocessor.verbatimHandler.process(
-                            'something',
-                            {
-                                filename: 'test.sveltex',
-                                selfClosing: false,
-                                tag: 'test',
-                                attributes: {},
-                            },
+                            input,
+                            { filename, selfClosing, tag, attributes },
                         )
-                    ).processed,
-                ).toEqual('something');
-                expect(log).toHaveBeenCalledTimes(1);
-                expect(log).toHaveBeenNthCalledWith(
-                    1,
-                    'error',
-                    'Unknown verbatim environment "test".',
-                );
-            });
+                    ).processed;
+                    expect(processed).toEqual(input);
+                    expect(log).toHaveBeenCalledTimes(1);
+                    expect(log).toHaveBeenNthCalledWith(
+                        1,
+                        'error',
+                        `Unknown verbatim environment "${tag}".`,
+                    );
+                    log.mockClear();
+                },
+            );
         });
 
         it('misc', async () => {

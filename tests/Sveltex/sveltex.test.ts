@@ -3,12 +3,12 @@
 
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { TexBackend } from '$types/handlers/Tex.js';
+import type { MathBackend } from '$types/handlers/Math.js';
 
 import { sveltex, type Sveltex } from '$Sveltex.js';
 
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import { TexHandler } from '$handlers/TexHandler.js';
+import { MathHandler } from '$handlers/MathHandler.js';
 import { removeEmptyLines, spy } from '$tests/fixtures.js';
 import { range } from '$tests/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -26,7 +26,7 @@ describe.concurrent('Sveltex', () => {
                 sveltex({
                     markdownBackend: 'unknown' as 'none',
                     codeBackend: 'unknown' as 'none',
-                    texBackend: 'unknown' as 'none',
+                    mathBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
             await expect(() =>
@@ -41,7 +41,7 @@ describe.concurrent('Sveltex', () => {
             ).rejects.toThrowError();
             await expect(() =>
                 sveltex({
-                    texBackend: 'unknown' as 'none',
+                    mathBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
         });
@@ -51,7 +51,7 @@ describe.concurrent('Sveltex', () => {
         it('should work if corresponding backend is custom', async () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'custom',
-                texBackend: 'custom',
+                mathBackend: 'custom',
             });
             preprocessor.markdownHandler = await MarkdownHandler.create(
                 'custom',
@@ -59,21 +59,21 @@ describe.concurrent('Sveltex', () => {
                     process: () => 'custom output markdown',
                 },
             );
-            preprocessor.texHandler = await TexHandler.create('custom', {
+            preprocessor.mathHandler = await MathHandler.create('custom', {
                 process: () => 'custom output tex',
             });
             expect(
-                (await preprocessor.markdownHandler.process('')).processed,
+                (await preprocessor.markdownHandler.process('', {})).processed,
             ).toEqual('custom output markdown');
             expect(
-                (await preprocessor.texHandler.process('')).processed,
+                (await preprocessor.mathHandler.process('')).processed,
             ).toEqual('custom output tex');
         });
         it('should throw error if corresponding backend is not custom', async () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'none',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await expect(
                 async () =>
@@ -84,9 +84,10 @@ describe.concurrent('Sveltex', () => {
             );
             await expect(
                 async () =>
-                    (preprocessor.texHandler = await TexHandler.create('none')),
+                    (preprocessor.mathHandler =
+                        await MathHandler.create('none')),
             ).rejects.toThrowError(
-                'texHandler setter can only be invoked if TeX backend is "custom" (got "none" instead).',
+                'mathHandler setter can only be invoked if TeX backend is "custom" (got "none" instead).',
             );
         });
     });
@@ -134,13 +135,13 @@ describe.concurrent('Sveltex', () => {
 const preprocessor = await sveltex({
     markdownBackend: 'marked',
     codeBackend: 'escapeOnly',
-    texBackend: 'none',
+    mathBackend: 'none',
 });
 
 function preprocessFn<
     M extends MarkdownBackend,
     C extends CodeBackend,
-    T extends TexBackend,
+    T extends MathBackend,
 >(preprocessor: Sveltex<M, C, T>) {
     return async (input: string, filename: string = 'test.sveltex') => {
         return (await preprocessor.markup({ content: input, filename }))?.code;
@@ -313,7 +314,7 @@ describe('edge cases', () => {
             verbatim: {
                 Verbatim: { type: 'escapeOnly' },
                 Verb: { type: 'escapeOnly' },
-                TeX: { type: 'advancedTex' },
+                TeX: { type: 'tex' },
             },
             code: {
                 languages: 'common',
@@ -381,9 +382,9 @@ describe('Sveltex.markup()', () => {
             '0123456789',
             'üñǐçøďė and emojis: 👍',
             String.fromCodePoint(...range(126, 1000)),
-        ])('supports unicode', async (str) => {
+        ])('supports unicode %#', async (str) => {
             expect(await preprocess(str)).toEqual(
-                '<script>\n</script>\n' + str,
+                `<script>\n</script>\n<p>${str}</p>\n`,
             );
         });
     });
@@ -434,7 +435,7 @@ describe('Sveltex.markup()', () => {
                 label: 'svelte:element tag',
                 input: '<svelte:element>foo</svelte:element>',
                 expected:
-                    '<script>\n</script>\n<svelte:element>foo</svelte:element>',
+                    '<script>\n</script>\n<p><svelte:element>foo</svelte:element></p>',
             },
             {
                 label: 'if block',
@@ -497,7 +498,7 @@ describe('Sveltex.markup()', () => {
         const preprocessor = await sveltex({
             markdownBackend: 'marked',
             codeBackend: 'escapeOnly',
-            texBackend: 'none',
+            mathBackend: 'none',
         });
         const preprocess = async (
             input: string,
@@ -511,12 +512,13 @@ describe('Sveltex.markup()', () => {
             {
                 label: 'strong',
                 input: '**strong**',
-                expected: '<script>\n</script>\n<strong>strong</strong>',
+                expected:
+                    '<script>\n</script>\n<p><strong>strong</strong></p>\n',
             },
             {
                 label: 'em',
                 input: '_em_',
-                expected: '<script>\n</script>\n<em>em</em>',
+                expected: '<script>\n</script>\n<p><em>em</em></p>\n',
             },
             // {
             //     label: 'code',
@@ -527,13 +529,13 @@ describe('Sveltex.markup()', () => {
                 label: 'a',
                 input: '[link](https://example.com)',
                 expected:
-                    '<script>\n</script>\n<a href="https://example.com">link</a>',
+                    '<script>\n</script>\n<p><a href="https://example.com">link</a></p>\n',
             },
             {
                 label: 'img',
                 input: '![alt](https://example.com/image.jpg)',
                 expected:
-                    '<script>\n</script>\n<img src="https://example.com/image.jpg" alt="alt">',
+                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="alt"></p>\n',
             },
         ];
         it.each(tests)('$label', async (test) => {
@@ -588,7 +590,7 @@ describe('Sveltex.markup()', () => {
                 label: 'code block',
                 input: '```\nsomething\n```',
                 expected:
-                    '<script>\n</script>\n\n<pre><code>something\n</code></pre>\n',
+                    '<script>\n</script>\n<pre><code>something\n</code></pre>\n',
             },
         ];
         it.each(tests)('$label', async (test) => {
@@ -601,7 +603,7 @@ describe('Sveltex.markup()', () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'marked',
                 codeBackend: 'starry-night',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await preprocessor.configure({ code: { languages: 'common' } });
             expect(
@@ -620,19 +622,19 @@ describe('Sveltex.markup()', () => {
                 label: 'code block (plain)',
                 input: '```\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n\n<pre><code class="language-text">() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n',
             },
             {
                 label: 'code block (ts)',
                 input: '```typescript\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>\n',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>\n',
             },
         ])('$label', async (test) => {
             const preprocessor = await sveltex({
                 markdownBackend: 'marked',
                 codeBackend: 'starry-night',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await preprocessor.configure({ code: { languages: 'common' } });
             const preprocess = async (
@@ -651,12 +653,13 @@ describe('Sveltex.markup()', () => {
             {
                 label: 'strong',
                 input: '**{strong}**',
-                expected: '<script>\n</script>\n<strong>{strong}</strong>',
+                expected:
+                    '<script>\n</script>\n<p><strong>{strong}</strong></p>\n',
             },
             {
                 label: 'em',
                 input: '_{em}_',
-                expected: '<script>\n</script>\n<em>{em}</em>',
+                expected: '<script>\n</script>\n<p><em>{em}</em></p>\n',
             },
             // {
             //     label: 'mustache tags in code are escaped',
@@ -667,13 +670,13 @@ describe('Sveltex.markup()', () => {
                 label: 'a',
                 input: '[{link}](https://example.com)',
                 expected:
-                    '<script>\n</script>\n<a href="https://example.com">{link}</a>',
+                    '<script>\n</script>\n<p><a href="https://example.com">{link}</a></p>\n',
             },
             {
                 label: 'img',
                 input: '![{alt}](https://example.com/image.jpg)',
                 expected:
-                    '<script>\n</script>\n<img src="https://example.com/image.jpg" alt="{alt}">',
+                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="{alt}"></p>\n',
             },
         ];
         it.each(tests)('$label', async (test) => {
@@ -733,7 +736,7 @@ describe('Sveltex.markup()', () => {
             const preprocessor = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'none',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await preprocessor.configure({
                 verbatim: {
@@ -783,7 +786,7 @@ describe('Sveltex.markup()', () => {
             const preprocessorMisc = await sveltex({
                 markdownBackend: 'none',
                 codeBackend: 'escapeOnly',
-                texBackend: 'none',
+                mathBackend: 'none',
             });
             await preprocessorMisc.configure({
                 general: {
