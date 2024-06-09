@@ -1,7 +1,7 @@
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 
-import { rimraf, resolve } from '$deps.js';
+import { rimraf, resolve, existsSync } from '$deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -15,7 +15,6 @@ import {
 } from 'vitest';
 import { sha256 } from '$utils/misc.js';
 import { TexConfiguration } from '$mod.js';
-import { pathExists } from '$utils/fs.js';
 import { getDefaultVerbEnvConfig } from '$config/defaults.js';
 
 /**
@@ -26,7 +25,7 @@ let tmpTestsDir: string;
 let ath: TexHandler;
 
 async function setup(hash: string, config?: TexConfiguration) {
-    if (pathExists(`tmp/tests-${hash}`)) {
+    if (existsSync(`tmp/tests-${hash}`)) {
         await rimraf(resolve(`tmp/tests-${hash}`));
     }
     ath = await TexHandler.create();
@@ -60,7 +59,7 @@ async function setup(hash: string, config?: TexConfiguration) {
 // }
 
 async function teardown(hash: string) {
-    if (pathExists(`tmp/tests-${hash}`)) {
+    if (existsSync(`tmp/tests-${hash}`)) {
         await rimraf(resolve(`tmp/tests-${hash}`));
     }
     vi.clearAllMocks();
@@ -93,11 +92,12 @@ describe('TexHandler', () => {
             }),
         })) as unknown as typeof import('ora').default);
         const mocks = await spy(
-            ['writeFile', 'log', 'spawnCliInstruction'],
+            ['writeFile', 'log', 'spawnCliInstruction', 'existsSync'],
             false,
         );
         writeFile = mocks.writeFile;
         log = mocks.log;
+        existsSync = mocks.existsSync;
         spawnCliInstruction = mocks.spawnCliInstruction;
     });
     afterAll(() => {
@@ -106,6 +106,7 @@ describe('TexHandler', () => {
     fixture();
     let writeFile: MockInstance;
     let log: MockInstance;
+    let existsSync: MockInstance;
     let spawnCliInstruction: MockInstance;
 
     describe.each([{}])('texHandler.noteTcInFile', (config) => {
@@ -159,7 +160,28 @@ describe('TexHandler', () => {
 
     describe.sequential.each([{}])('texHandler.process', (config) => {
         fixture(config);
+
+        it('if no .svelte file exists at the end, return empty string', async () => {
+            existsSync.mockReturnValue(false);
+            expect(
+                (
+                    await ath.process('x', {
+                        tag: 'Example',
+                        attributes: { ref: 'ref' },
+                        selfClosing: false,
+                        filename: 'test-a594eb5b.sveltex',
+                        config: getDefaultVerbEnvConfig('tex'),
+                        outerContent:
+                            '<ExampleAlias ref="ref">x</ExampleAlias>',
+                    })
+                ).processed,
+            ).toEqual('');
+            expect(log).not.toHaveBeenCalled();
+            expect(writeFile).toHaveBeenCalledTimes(3);
+        });
+
         it('should work with self-closing components', async () => {
+            existsSync.mockReturnValue(true);
             expect(
                 (
                     await ath.process('x', {
@@ -178,6 +200,7 @@ describe('TexHandler', () => {
             expect(log).not.toHaveBeenCalled();
             expect(writeFile).not.toHaveBeenCalled();
             expect(spawnCliInstruction).not.toHaveBeenCalled();
+            existsSync.mockRestore();
         });
 
         it('works', async () => {
@@ -242,7 +265,7 @@ describe('TexHandler', () => {
                     '--output-format=dvi',
                     '--output-comment=""',
                     '--no-shell-escape',
-                    '--interaction=batchmode',
+                    '--interaction=nonstopmode',
                     'root.tex',
                 ],
                 command: 'lualatex',
@@ -343,7 +366,7 @@ describe('TexHandler', () => {
                     '--output-format=dvi',
                     '--output-comment=""',
                     '--no-shell-escape',
-                    '--interaction=batchmode',
+                    '--interaction=nonstopmode',
                     'root.tex',
                 ],
                 command: 'lualatex',

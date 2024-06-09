@@ -292,6 +292,7 @@ export class Sveltex<
                         );
                     } else if (snippet.type === 'verbatim') {
                         typeAssert(is<Snippet<'verbatim'>>(snippet));
+                        // snippet.original.loc.start.line
                         processedSnippet = await verbatimHandler.process(
                             snippet.processable.innerContent,
                             {

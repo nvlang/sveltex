@@ -1,0 +1,129 @@
+[
+  {
+    "line": 1,
+    "message": "Package shellesc Info: Restricted shell escape enabled.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Driver file: pdftex.def.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `cmy' substituted by `cmy0'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `hsb' substituted by `rgb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `RGB' extended.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `HTML' substituted by `rgb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `Hsb' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `tHsb' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `HSB' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `Gray' substituted by `gray'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `wave' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package graphics Info: Driver file: pdftex.def.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "Package epstopdf-base Info: Redefining graphics rule for `.eps'",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <8>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <6>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <5>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <9>.",
+    "severity": "info"
+  }
+]

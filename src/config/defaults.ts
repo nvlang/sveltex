@@ -17,7 +17,7 @@ import type {
     FullVerbEnvConfigTex,
     FullVerbEnvConfigBase,
     FullVerbEnvConfigCode,
-    FullVerbEnvConfigEscapeOnly,
+    FullVerbEnvConfigEscape,
     Preset,
     PresetName,
     VerbatimType,
@@ -100,12 +100,7 @@ export function getDefaultMathConfiguration<
                           }
                         : { type: 'none' },
                 mathjax: {
-                    tex: {
-                        inlineMath: [
-                            ['$', '$'],
-                            ['\\(', '\\)'],
-                        ],
-                    },
+                    tex: {},
                 },
                 outputFormat: 'svg',
                 transformers: { post: [], pre: [] },
@@ -215,7 +210,15 @@ export function getDefaultTexConfig(): FullTexConfiguration {
             },
         },
         debug: {
-            verbose: false,
+            ignoreLogMessages: [
+                'Package shellesc Warning: Shell escape disabled',
+                'LaTeX Warning: Package "xcolor" has already been loaded: ignoring load-time option "dvisvgm".',
+                'Package epstopdf Warning: Shell escape feature is not enabled.',
+            ],
+            verbosity: {
+                onFailure: 'box',
+                onSuccess: 'box',
+            },
         },
         optimization: {
             currentColor: '#000',
@@ -305,6 +308,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
             addLanguageClass: 'language-',
             appendNewline: true,
             inlineMeta,
+            langAlias: {},
             parseMetaString: (metaString) => {
                 return Object.fromEntries(
                     metaString
@@ -333,28 +337,30 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         const config: FullCodeConfiguration<'highlight.js'> = {
             addLanguageClass: 'language-',
             appendNewline: true,
+            'highlight.js': {},
             inlineMeta,
+            langAlias: {},
             theme: {
                 cdn: 'jsdelivr',
-                // Even though the `dir` property doesn't really exist if `type`
-                // is 'cdn', we want to initialize it to 'src/sveltex' so that,
-                // if the user changes the `type` to 'self-hosted', the `dir`
-                // property is already set to a sensible default.
-                dir: 'src/sveltex',
                 min: true,
                 name: 'default',
-                timeout: 2000,
                 type: 'cdn',
+                // Even though the `dir` and `timeout` properties don't really
+                // exist if `type` is 'cdn', we want to initialize them to
+                // 'src/sveltex' and 2000, respectively, so that, if the user
+                // changes the `type` to 'self-hosted', the `dir` and `timeout`
+                // properties are already set to sensible defaults.
+                dir: 'src/sveltex',
+                timeout: 2000,
             },
             transformers: { post: [], pre: [] },
         } as FullCodeConfiguration<'highlight.js'>;
         return config as unknown as FullCodeConfiguration<C>;
-    } else if (codeBackend === 'escapeOnly') {
-        const config: FullCodeConfiguration<'escapeOnly'> = {
+    } else if (codeBackend === 'escape') {
+        const config: FullCodeConfiguration<'escape'> = {
             addLanguageClass: 'language-',
             appendNewline: true,
-            escapeBraces: true,
-            escapeHtml: true,
+            escape: { braces: true, html: true },
             inlineMeta,
             transformers: { post: [], pre: [] },
         };
@@ -364,19 +370,21 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
             addLanguageClass: 'language-',
             appendNewline: true,
             inlineMeta,
-            lang: undefined,
+            lang: null,
+            langAlias: {},
             languages: 'common',
             theme: {
                 cdn: 'jsdelivr',
-                // Even though the `dir` property doesn't really exist if `type`
-                // is 'cdn', we want to initialize it to 'src/sveltex' so that,
-                // if the user changes the `type` to 'self-hosted', the `dir`
-                // property is already set to a sensible default.
-                dir: 'src/sveltex',
                 mode: 'both',
                 name: 'default',
-                timeout: 2000,
                 type: 'cdn',
+                // Even though the `dir` and `timeout` properties don't really
+                // exist if `type` is 'cdn', we want to initialize them to
+                // 'src/sveltex' and 2000, respectively, so that, if the user
+                // changes the `type` to 'self-hosted', the `dir` and `timeout`
+                // properties are already set to sensible defaults.
+                dir: 'src/sveltex',
+                timeout: 2000,
             },
             transformers: { post: [], pre: [] },
         } as FullCodeConfiguration<'starry-night'>;
@@ -421,7 +429,7 @@ export function getDefaultSveltexConfig<
                     inline: { escapedParentheses: true, singleDollar: true },
                     display: { escapedSquareBrackets: true },
                 },
-                $$: { isDisplayMath: 'always' },
+                doubleDollarSignsDisplay: 'fenced',
             },
         },
         math: getDefaultMathConfiguration(t),
@@ -455,8 +463,8 @@ type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'tex'
     ? FullVerbEnvConfigTex
     : T extends 'code'
       ? FullVerbEnvConfigCode
-      : T extends 'escapeOnly'
-        ? FullVerbEnvConfigEscapeOnly
+      : T extends 'escape'
+        ? FullVerbEnvConfigEscape
         : FullVerbEnvConfigBase;
 
 export function getDefaultVerbEnvConfig<T extends VerbatimType>(
@@ -476,11 +484,11 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
     switch (type) {
         case 'noop':
             return common as DefaultVerbEnvConfig<T>;
-        case 'escapeOnly':
+        case 'escape':
             return {
                 ...common,
-                escapeInstructions: { escapeBraces: true, escapeHtml: true },
-            } as DefaultVerbEnvConfig<'escapeOnly'> as DefaultVerbEnvConfig<T>;
+                escape: { braces: true, html: true },
+            } as DefaultVerbEnvConfig<'escape'> as DefaultVerbEnvConfig<T>;
         case 'code':
             return {
                 ...common,

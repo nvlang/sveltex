@@ -262,7 +262,7 @@ describe.concurrent.each(codeBackends)('CodeHandler<%o>', (backend) => {
                         );
                     });
                 }
-                if (backend !== 'escapeOnly') {
+                if (backend !== 'escape') {
                     describe('inline syntax highlighting', () => {
                         test('w/ language flag set internally', async () => {
                             type PossibleBackend = typeof backend;
@@ -374,7 +374,7 @@ describe.concurrent.each(codeBackends)('CodeHandler<%o>', (backend) => {
                     if (
                         backend === 'starry-night' ||
                         backend === 'highlight.js' ||
-                        backend === 'escapeOnly'
+                        backend === 'escape'
                     ) {
                         test.each([true, false])(
                             '%o → empty string stays empty',
@@ -437,10 +437,7 @@ describe('misc', () => {
                 'function',
             );
             await handler.configure({ parseMetaString: null });
-            expect(handler.configuration.parseMetaString).not.toEqual(null);
-            expect(handler.configuration.parseMetaString).toBeTypeOf(
-                'function',
-            );
+            expect(handler.configuration.parseMetaString).toEqual(null);
         });
         test('transformers', async () => {
             const pre: Transformer = ['a', 'b'];

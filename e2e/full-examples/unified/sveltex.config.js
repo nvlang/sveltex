@@ -16,7 +16,7 @@ export const sveltexPreprocessor = await sveltex(
         math: { css: { type: 'cdn' } },
         verbatim: {
             Verb: {
-                type: 'escapeOnly',
+                type: 'escape',
                 component: 'p',
             },
             tex: {

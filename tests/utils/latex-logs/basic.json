@@ -1,0 +1,224 @@
+[
+  {
+    "line": 1,
+    "message": "Package shellesc Warning: Shell escape disabled.",
+    "severity": "warn"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\noprotrusionifhmode.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\leftprotrusion.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\rightprotrusion.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\textls.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\textmicrotypecontext.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\lsstyle.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\lslig.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Loading configuration file microtype.cfg.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Driver file: dvisvgm.def.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `cmy' substituted by `cmy0'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `RGB' extended.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `HTML' substituted by `rgb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `Hsb' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `tHsb' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `HSB' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `Gray' substituted by `gray'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package xcolor Info: Model `wave' substituted by `hsb'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package graphics Info: Driver file: dvisvgm.def.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Warning: Package \"xcolor\" has already been loaded: ignoring load-time option \"dvisvgm\".",
+    "severity": "warn"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Info: Redefining \\microtypecontext.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Applying patch `item'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Applying patch `toc'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Applying patch `eqnum'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Applying patch `footnote'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Applying patch `verbatim'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Generating DVI output.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Character protrusion enabled (level 2).",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: Using default protrusion set `alltext'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: No font expansion.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: No adjustment of tracking.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: No adjustment of interword spacing.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package microtype Info: No adjustment of character kerning.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <7>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <5>.",
+    "severity": "info"
+  },
+  {
+    "line": 17,
+    "message": "Undefined control sequence: \\text",
+    "severity": "error"
+  }
+]

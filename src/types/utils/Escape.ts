@@ -164,7 +164,7 @@ export interface Snippet<T extends SnippetType = SnippetType> {
      *     `type` set to `code`.
      *   - Otherwise: the `VerbatimHandler` will take care of the processing
      *     itself (this is the case for `type` values `noop`,
-     *     `escapeOnly`).
+     *     `escape`).
      * - `'mustacheTag'`: A mustache tag, like `{...}`.
      * - `'svelte'`: Svelte syntax (other than mustache tags), like
      *   `{@html ...}`, `{#if ...}`, `<svelte:head>`, `<script>`, `<style>`,
@@ -198,15 +198,38 @@ export interface TexEscapeSettings {
     enabled: boolean;
 
     /**
-     *
+     * Enable or disable delimiters beyond `$$...$$` (or `$$$...$$$`,
+     * `$$$$...$$$$`, etc.).
      */
     delims?: {
+        /**
+         * Delimiters that can be enabled or disabled whose content will always
+         * be treated as _inline_ math.
+         */
         inline?: {
             /**
+             * TODO: Improve documentation here.
+             *
              * Whether `$...$` should be treated as math (`true`) or not
              * (`false`).
              *
-             * @defaultValue `true`
+             * @remarks
+             * You can always write `\$` to escape a dollar sign outside of math
+             * mode. Inside of math mode, this won't work, but there are a few
+             * possible remedies:
+             *
+             * -   If this option is set to `false`, you can surround the inline
+             *     math with _n_ ≥ 2 dollar signs, and then use up to _n_ - 1
+             *     consecutive dollar signs inside the math without having to
+             *     worry about escaping them. This mirrors the behavior of
+             *     backticks in markdown. For example: `$$\text{Let $x = 2$}$$`.
+             *     Note, however, that `\n$$\n123\n$$\n` will be rendered as
+             *     display math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
              */
             singleDollar?: boolean;
 
@@ -214,53 +237,65 @@ export interface TexEscapeSettings {
              * Whether `\(...\)` should be treated as math (`true`) or regular
              * text (`false`). If it _is_ interpreted as math, it will always be
              * interpreted as inline math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
              */
             escapedParentheses?: boolean;
         };
+        /**
+         * Delimiters that can be enabled or disabled whose content will always
+         * be treated as _display_ math.
+         */
         display?: {
             /**
              * Whether `\[...\]` should be treated as math (`true`) or regular
              * text (`false`). If it _is_ interpreted as math, it will always be
              * interpreted as display math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
              */
             escapedSquareBrackets?: boolean;
         };
     };
-    $$?: {
-        /**
-         * Controls when dollar-delimited math should be treated as display
-         * math.
-         *
-         * - `'always'`: Always display `$$...$$` as display math.
-         * - `'newline'`: Display `$$...$$` as display math iff it's on its own
-         *   line(s) (i.e., if it matches `/^\s*\$\$.*?\$\$\s*$/msu`).
-         * - `'fenced'`: Display `$$...$$` as display math iff the opening and
-         *   closing delimiters each have an entire line for themselves.
-         *
-         * @defaultValue `'always'`
-         *
-         * @example
-         * Consider the following markdown:
-         *
-         * ```md
-         * text $$ a $$ text
-         *
-         * $$ b $$
-         *
-         * $$
-         * c
-         * $$
-         * ```
-         *
-         * The following table shows how the `isDisplayMath` setting would
-         * affect the rendering of the math blocks:
-         *
-         * |     | `'always'` | `'newline'` | `'fenced'` |
-         * |-----|:----------:|:-----------:|:----------:|
-         * | `a` | display    | inline      | inline     |
-         * | `b` | display    | display     | inline     |
-         * | `c` | display    | display     | display    |
-         */
-        isDisplayMath?: 'always' | 'newline' | 'fenced';
-    };
+    /**
+     * Controls when dollar-delimited math should be treated as display
+     * math.
+     *
+     * - `'always'`: Always display `$$...$$` as display math.
+     * - `'newline'`: Display `$$...$$` as display math iff it's on its own
+     *   line(s) (i.e., if it matches `/^\s*\$\$.*?\$\$\s*$/msu`).
+     * - `'fenced'`: Display `$$...$$` as display math iff the opening and
+     *   closing delimiters each have an entire line for themselves.
+     *
+     * @defaultValue `'fenced'`
+     *
+     * @example
+     * Consider the following markdown:
+     *
+     * ```md
+     * text $$ a $$ text
+     *
+     * $$ b $$
+     *
+     * $$
+     * c
+     * $$
+     * ```
+     *
+     * The following table shows how the `isDisplayMath` setting would
+     * affect the rendering of the math blocks:
+     *
+     * |     | `'always'` | `'newline'` | `'fenced'` |
+     * |-----|:----------:|:-----------:|:----------:|
+     * | `a` | display    | inline      | inline     |
+     * | `b` | display    | display     | inline     |
+     * | `c` | display    | display     | display    |
+     */
+    doubleDollarSignsDisplay?: 'always' | 'newline' | 'fenced' | undefined;
 }

@@ -15,12 +15,14 @@ import {
 
 describe('Sveltex', () => {
     let log: MockInstance;
+    let existsSync: MockInstance;
     beforeAll(async () => {
         const mocks = await spy(
             ['fancyWrite', 'spawnCliInstruction', 'log', 'mkdir', 'existsSync'],
             true,
         );
         log = mocks.log;
+        existsSync = mocks.existsSync;
     });
 
     let sp: Sveltex<'micromark', 'highlight.js', 'mathjax'>;
@@ -78,6 +80,7 @@ describe('Sveltex', () => {
 
     describe('Sveltex.markup + Sveltex.script', () => {
         it('works (basic)', async () => {
+            existsSync.mockReturnValue(true);
             const markupOut = await sp.markup({
                 content: '<tex ref="something">x</tex>\n`code`\n$x$',
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
@@ -99,7 +102,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n",
+                "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\n",
             );
             expect(log).toHaveBeenCalledTimes(1);
 
@@ -158,7 +161,7 @@ describe('Sveltex', () => {
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nimport \'/src/sveltex/highlight.js@11.9.0.default.min.css\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
+                '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
             );
 
             sp.texHandler.texComponents = {};
@@ -187,7 +190,7 @@ describe('Sveltex', () => {
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
-                "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\nimport '/src/sveltex/highlight.js@11.9.0.default.min.css';\n```\n",
+                "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\n```\n",
             );
 
             sp.texHandler.texComponents = {};

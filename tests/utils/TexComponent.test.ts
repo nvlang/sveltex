@@ -2,25 +2,30 @@ import {
     getDefaultTexConfig,
     getDefaultVerbEnvConfig,
 } from '$config/defaults.js';
-import { texBaseCommand } from '$data/tex.js';
+import { texBaseCommand, type TexLogSeverity } from '$data/tex.js';
 import {
     readFile as nodeReadFile,
+    readFileSync,
     resolve,
     rimraf,
     spawn,
     uuid,
+    writeFile,
 } from '$deps.js';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/fixtures.js';
 import { cartesianProduct } from '$tests/utils.js';
 import { supportedTexEngines } from '$type-guards/verbatim.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import type { Problem } from '$types/handlers/Tex.js';
 import { VerbEnvConfigTex } from '$types/handlers/Verbatim.js';
 import { CliInstruction } from '$types/utils/CliInstruction.js';
 import {
     TexComponent,
     enactPresets,
     extendedPreamble,
+    parseLatexLog,
+    printLogProblems,
 } from '$utils/TexComponent.js';
 import { fs, pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
@@ -118,6 +123,7 @@ describe('(setter) configuration', () => {
     it('should correctly set configuration', async () => {
         const ath = await TexHandler.create();
         const tc = TexComponent.create({
+            filename: 'file.sveltex',
             texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
@@ -139,6 +145,7 @@ describe('(getter) documentClass', () => {
         const config = getDefaultVerbEnvConfig('tex');
         config.documentClass = 'standalone';
         const tc = TexComponent.create({
+            filename: 'file.sveltex',
             texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
@@ -152,6 +159,7 @@ describe('(getter) documentClass', () => {
     it("{} → '\\documentclass[dvisvgm]{standalone}'", async () => {
         const ath = await TexHandler.create();
         const tc = TexComponent.create({
+            filename: 'file.sveltex',
             texHandler: ath,
             attributes: { ref: 'ref' },
             tex: '',
@@ -167,9 +175,13 @@ describe('(getter) documentClass', () => {
 
 describe('compile(): catches errors', () => {
     fixture();
-    it.each(['', ' (custom)'])(
+    it.each([
+        [''],
+        [" (verbosity: 'error')", { verbosity: { onFailure: 'error' } }],
+        [' (custom)', { custom: true }],
+    ] as [string, Record<string, unknown>?][])(
         'TeX → DVI/PDF (child process)%s',
-        async (custom) => {
+        async (label, opts) => {
             const { spawnCliInstruction, log } = await spy(
                 ['writeFile', 'spawnCliInstruction', 'log'],
                 false,
@@ -178,13 +190,11 @@ describe('compile(): catches errors', () => {
             const id = uuid();
             const ref = 'ref';
             const ath = await TexHandler.create();
+            const verbosity = opts?.['verbosity'] ?? 'all';
             await ath.configure({
-                caching: {
-                    cacheDirectory: `tmp/tests/${id}/cache`,
-                },
-                conversion: {
-                    outputDirectory: `tmp/tests/${id}/output`,
-                },
+                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                conversion: { outputDirectory: `tmp/tests/${id}/output` },
+                debug: { verbosity },
             });
             const tc = ath.createTexComponent('$x$', {
                 attributes: { ref },
@@ -194,7 +204,7 @@ describe('compile(): catches errors', () => {
                 config: defaultConfig,
             });
 
-            if (custom) {
+            if (opts?.['custom']) {
                 tc.configuration.overrides.compilation = {
                     overrideCompilation: () => ({ command: 'false' }),
                 };
@@ -207,17 +217,21 @@ describe('compile(): catches errors', () => {
             }
             const code = await tc.compile();
             expect(code).toEqual(1);
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenCalledWith(
-                { severity: 'error', style: 'dim' },
-                custom
-                    ? expect.stringMatching(
-                          /[\w\W]*compilation[\w\W]*The following stderr was produced:[\w\W]*\(no stderr output\)/,
-                      )
-                    : expect.stringMatching(
-                          /[\w\W]*compilation[\w\W]*The following stderr was produced:\n\nexample stderr/,
-                      ),
-            );
+            if (verbosity !== 'all') {
+                expect(log).toHaveBeenCalledTimes(0);
+            } else {
+                expect(log).toHaveBeenCalledTimes(1);
+                expect(log).toHaveBeenCalledWith(
+                    { severity: 'error', style: 'dim' },
+                    label
+                        ? expect.stringMatching(
+                              /[\w\W]*compilation[\w\W]*The following stderr was produced:[\w\W]*\(no stderr output\)/,
+                          )
+                        : expect.stringMatching(
+                              /[\w\W]*compilation[\w\W]*The following stderr was produced:\n\nexample stderr/,
+                          ),
+                );
+            }
         },
     );
 
@@ -642,6 +656,7 @@ describe('TexHandler.createTexComponent()', () => {
                 conversion: {
                     outputDirectory: `tmp/tests/${id}/output`,
                 },
+                debug: { verbosity: 'box' },
             });
             const { writeFile, spawnCliInstruction, log } = await spy(
                 ['writeFile', 'spawnCliInstruction', 'log'],
@@ -671,7 +686,7 @@ describe('TexHandler.createTexComponent()', () => {
                 args: [
                     '-output-format=pdf',
                     '-no-shell-escape',
-                    '-interaction=batchmode',
+                    '-interaction=nonstopmode',
                     'root.tex',
                 ],
                 command: 'pdflatex',
@@ -867,6 +882,7 @@ describe.concurrent('compile()', () => {
                     );
                     const tc = ath.createTexComponent(
                         [
+                            '',
                             '\\begin{tikzpicture}',
                             '\\fill [ left color = red, right color = blue ] (0,0) rectangle (1,1);',
                             '\\end{tikzpicture}',
@@ -1321,6 +1337,167 @@ describe('enactPresets()', () => {
                 ],
                 gdlibraries: [],
             });
+        });
+    });
+});
+
+describe('printLogProblems()', () => {
+    it.each([
+        [
+            'respects verbosity setting',
+            [{ line: 1, message: 'something', severity: 'info' }],
+            {},
+            'none',
+        ],
+        [
+            'logs errors',
+            [{ line: 1, message: 'something', severity: 'error' }],
+            { error: 1 },
+            'info',
+        ],
+        [
+            'logs warnings',
+            [{ line: 1, message: 'something', severity: 'warn' }],
+            { warn: 1 },
+            'info',
+        ],
+        [
+            'logs boxes',
+            [{ line: 1, message: 'something', severity: 'box' }],
+            { box: 1 },
+            'info',
+        ],
+        [
+            'logs info',
+            [{ line: 1, message: 'something', severity: 'info' }],
+            { info: 1 },
+            'info',
+        ],
+        [
+            'logs info (with column)',
+            [{ line: 1, col: 2, message: 'something', severity: 'info' }],
+            { info: 1 },
+            'info',
+        ],
+        [
+            'ignores specified log messages',
+            [
+                { line: 1, message: 'something', severity: 'info' },
+                { line: 1, message: 'a 123 b', severity: 'info' },
+            ],
+            {},
+            'info',
+            ['something', /\d+/],
+        ],
+    ] as [
+        string,
+        Problem[],
+        { warn?: number; error?: number; box?: number; info?: number },
+        ('all' | TexLogSeverity | 'none')?,
+        (string | RegExp)[]?,
+    ][])(
+        '%s',
+        async (_label, problems, expected, verbosity, ignoreLogMessages) => {
+            const log = await spy('log');
+            const prints: unknown[][] = [];
+            log.mockImplementation((...args) => prints.push(args));
+            printLogProblems(
+                problems,
+                verbosity ?? 'box',
+                '',
+                ignoreLogMessages ?? [],
+            );
+            const errors = expected.error ?? 0;
+            const warns = expected.warn ?? 0;
+            const boxes = expected.box ?? 0;
+            const infos = expected.info ?? 0;
+            const total = errors + warns + boxes + infos;
+            expect(log).toHaveBeenCalledTimes(total);
+            expect(prints.filter((args) => args[0] === 'error')).toHaveLength(
+                errors,
+            );
+            expect(prints.filter((args) => args[0] === 'warn')).toHaveLength(
+                warns,
+            );
+            expect(prints.filter((args) => args[0] === 'box')).toHaveLength(
+                boxes,
+            );
+            expect(prints.filter((args) => args[0] === 'info')).toHaveLength(
+                infos,
+            );
+        },
+    );
+});
+
+describe('parseLatexLog()', () => {
+    describe('real log files', () => {
+        it.each([
+            ['basic.log', 'basic.json'],
+            ['gradient.log', 'gradient.json'],
+            ['plot.log', 'plot.json'],
+            ['text.log', 'text.json'],
+            ['transparency.log', 'transparency.json'],
+            ['gradient-error.log', 'gradient-error.json'],
+            ['text-error.log', 'text-error.json'],
+            ['overfull-error.log', 'overfull-error.json'],
+            ['underfull-error.log', 'underfull-error.json'],
+            ['biber-warning.log', 'biber-warning.json'],
+        ] as [string, string, boolean?][])(
+            '%o',
+            async (logfile, jsonfile, golden) => {
+                const logContents = readFileSync(
+                    `tests/utils/latex-logs/${logfile}`,
+                    'utf-8',
+                );
+                if (golden) {
+                    await writeFile(
+                        `tests/utils/latex-logs/${jsonfile}`,
+                        JSON.stringify(parseLatexLog(logContents, 0)),
+                    );
+                }
+                expect(parseLatexLog(logContents, 0, 0)).toEqual(
+                    JSON.parse(
+                        readFileSync(
+                            `tests/utils/latex-logs/${jsonfile}`,
+                            'utf-8',
+                        ),
+                    ),
+                );
+            },
+        );
+    });
+    describe('single lines', () => {
+        it.each([
+            [
+                './something.tex:123: Package example Info: something',
+                {
+                    line: 123,
+                    message: 'Package example Info: something',
+                    severity: 'info',
+                },
+            ],
+            [
+                'LaTeX Info: something',
+                { line: 1, message: 'LaTeX Info: something', severity: 'info' },
+            ],
+            [
+                'LaTeX Warning: something',
+                {
+                    line: 1,
+                    message: 'LaTeX Warning: something',
+                    severity: 'warn',
+                },
+            ],
+            [
+                'LaTeX Error: something',
+                {
+                    line: 1,
+                    message: 'LaTeX Error: something',
+                    severity: 'error',
+                },
+            ],
+        ] as [string, Problem][])('%o', (logContents, problem) => {
+            expect(parseLatexLog(logContents, 0, 0)).toEqual([problem]);
         });
     });
 });

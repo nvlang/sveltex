@@ -24,6 +24,7 @@ export interface VerbatimProcessOptions {
     tag: string;
     outerContent?: string | undefined;
     escapeOptions?: EscapeOptions | undefined;
+    lineOffset?: number | undefined;
 }
 
 export type FullVerbatimConfiguration = Record<string, FullVerbEnvConfig>;
@@ -60,32 +61,40 @@ export type VerbatimConfiguration = Record<string, VerbEnvConfig>; // {
  */
 export interface SimpleEscapeInstruction {
     /**
-     * Braces (aka. curly brackets) should be escaped:
+     * Whether braces (aka. curly brackets) should be escaped.
+     *
      * - `{` → `&lbrace;`
      * - `}` → `&rbrace;`
      *
-     * @defaultValue `false`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
-    escapeBraces?: boolean | undefined;
+    braces?: boolean | undefined;
 
     /**
-     * HTML should be escaped:
+     * Whether HTML should be escaped.
+     *
      * - `<` → `&lt;`
      * - `>` → `&gt;`
      * - `&` → `&amp;`
      * - `"` → `&quot;`
      * - `'` → `&apos;`
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
-    escapeHtml?: boolean | undefined;
+    html?: boolean | undefined;
 }
 
 /**
  * Type describing the possible ways to process the inner content of a verbatim
  * environment.
  */
-export type VerbatimType = 'code' | 'noop' | 'tex' | 'escapeOnly';
+export type VerbatimType = 'code' | 'noop' | 'tex' | 'escape';
 // | SimpleEscapeInstruction | VerbatimProcessInnerFn;
 
 // /**
@@ -113,20 +122,20 @@ export type VerbatimType = 'code' | 'noop' | 'tex' | 'escapeOnly';
 
 export type FullVerbEnvConfig =
     | FullVerbEnvConfigCode
-    | FullVerbEnvConfigEscapeOnly
+    | FullVerbEnvConfigEscape
     | FullVerbEnvConfigNoop
     | FullVerbEnvConfigTex;
 
 export type VerbEnvConfig =
     | VerbEnvConfigCode
-    | VerbEnvConfigEscapeOnly
+    | VerbEnvConfigEscape
     | VerbEnvConfigNoop
     | VerbEnvConfigTex;
 
 export type FullVerbEnvConfigCode =
     RequiredNotNullOrUndefined<VerbEnvConfigCode> & FullVerbEnvConfigBase;
-export type FullVerbEnvConfigEscapeOnly =
-    RequiredNotNullOrUndefined<VerbEnvConfigEscapeOnly> & FullVerbEnvConfigBase;
+export type FullVerbEnvConfigEscape =
+    RequiredNotNullOrUndefined<VerbEnvConfigEscape> & FullVerbEnvConfigBase;
 export type FullVerbEnvConfigNoop =
     RequiredNotNullOrUndefined<VerbEnvConfigNoop> & FullVerbEnvConfigBase;
 export type FullVerbEnvConfigTex =
@@ -1228,9 +1237,9 @@ export interface VerbEnvConfigCode extends VerbEnvConfigBase {
     wrap?: boolean | undefined;
 }
 
-export interface VerbEnvConfigEscapeOnly extends VerbEnvConfigBase {
-    type: 'escapeOnly';
-    escapeInstructions?: SimpleEscapeInstruction | undefined;
+export interface VerbEnvConfigEscape extends VerbEnvConfigBase {
+    type: 'escape';
+    escape?: SimpleEscapeInstruction | undefined;
 }
 
 export interface VerbEnvConfigBase {
@@ -1240,7 +1249,7 @@ export interface VerbEnvConfigBase {
      * - `'tex'`: Process as TeX component.
      * - `'code'`: Process inner content as code.
      * - `'noop'`: Leave inner content as-is.
-     * - `'escapeOnly'`: Escape the inner content according to the given
+     * - `'escape'`: Escape the inner content according to the given
      *   instructions.
      * - `'custom'`: Use the `customProcess` prop to provide a function which
      *   takes the inner content and the attributes of the component and returns

@@ -49,7 +49,7 @@ const processors = await Promise.all(
 const processorsMarkdownOnly = await Promise.all(
     mainMarkdownBackends.map(
         async (markdownBackend) =>
-            await sveltex({ markdownBackend, codeBackend: 'escapeOnly' }),
+            await sveltex({ markdownBackend, codeBackend: 'escape' }),
     ),
 );
 

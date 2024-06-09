@@ -1,0 +1,153 @@
+[
+  {
+    "line": 1,
+    "message": "Missing character: There is no f (U+0066) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no @ (U+0040) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no E (U+0045) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no x (U+0078) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no a (U+0061) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no m (U+006D) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no p (U+0070) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no l (U+006C) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no e (U+0065) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no . (U+002E) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Missing character: There is no 1 (U+0031) in font nullfont",
+    "severity": "error"
+  },
+  {
+    "line": 1,
+    "message": "Package fontspec Info: Could not resolve font \"fdsfdsfsdfsdfds/BI\" (it probably doesn't exist).",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package fontspec Info: Could not resolve font \"fdsfdsfsdfsdfds/B\" (it probably doesn't exist).",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package fontspec Info: Could not resolve font \"fdsfdsfsdfsdfds/I\" (it probably doesn't exist).",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package fontspec Info: Font family 'fdsfdsfsdfsdfds(0)' created for font 'fdsfdsfsdfsdfds' with options [Ligatures=TeX].",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <7>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: External font `cmex10' loaded for size <5>.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package graphics Info: Driver file: luatex.def.",
+    "severity": "info"
+  },
+  {
+    "line": 4,
+    "message": "Package fontspec Error: The font \"fdsfdsfsdfsdfds\" cannot be found; this may be but usually is not a fontspec bug. Either there is a typo in the font name/file, the font is not installed (correctly), or there is a bug in the underlying font loading engine (XeTeX/luaotfload).",
+    "severity": "error"
+  },
+  {
+    "line": 4,
+    "message": "Package fontspec Error: The font \"fdsfdsfsdfsdfds\" cannot be found; this may be but usually is not a fontspec bug. Either there is a typo in the font name/file, the font is not installed (correctly), or there is a bug in the underlying font loading engine (XeTeX/luaotfload).",
+    "severity": "error"
+  },
+  {
+    "line": 4,
+    "message": "Package fontspec Error: The font \"fdsfdsfsdfsdfds\" cannot be found; this may be but usually is not a fontspec bug. Either there is a typo in the font name/file, the font is not installed (correctly), or there is a bug in the underlying font loading engine (XeTeX/luaotfload).",
+    "severity": "error"
+  },
+  {
+    "line": 4,
+    "message": "LaTeX Error: Missing \\begin{document}.",
+    "severity": "error"
+  },
+  { "line": 6, "message": "Missing $ inserted.", "severity": "warn" },
+  {
+    "line": 7,
+    "message": "Underfull \\hbox (badness 10000) in paragraph",
+    "severity": "box"
+  },
+  {
+    "line": 7,
+    "message": "Underfull \\hbox (badness 10000) in paragraph",
+    "severity": "box"
+  },
+  {
+    "line": 7,
+    "message": "LaTeX Error: Missing \\begin{document}.",
+    "severity": "error"
+  },
+  {
+    "line": 9,
+    "message": "LaTeX Error: Missing \\begin{document}.",
+    "severity": "error"
+  },
+  {
+    "line": 11,
+    "message": "LaTeX Error: Missing \\begin{document}.",
+    "severity": "error"
+  },
+  {
+    "line": 11,
+    "message": "Missing number, treated as zero.",
+    "severity": "warn"
+  },
+  {
+    "line": 13,
+    "message": "Missing number, treated as zero.",
+    "severity": "warn"
+  },
+  {
+    "line": 14,
+    "message": "LaTeX Error: \\begin{[} on input line 4 ended by \\end{document}.",
+    "severity": "error"
+  }
+]

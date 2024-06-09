@@ -24,17 +24,30 @@ code {
         'ss08' 1,
         'liga' 1,
         'calt' 1;
-    font-style: var(--shiki-dark-font-style) !important;
+    span.line span {
+        font-style: var(--shiki-dark-font-style);
+    }
 }
 
-#VPContent div.content main div.language-ts.vp-adaptive-theme pre code span {
-    font-style: var(--shiki-dark-font-style);
+div.v-popper__wrapper
+    > div.v-popper__inner
+    > div
+    > span
+    > div.twoslash-popup-docs.twoslash-popup-docs-tags.vp-doc
+    > span
+    > span.twoslash-popup-docs-tag-value
+    > code {
+    background: none;
+    padding: 0;
+}
+
+.twoslash-popup-container {
 }
 
 :root,
 body {
     font-family: 'Inter', sans-serif;
-    --vp-font-family-mono: 'Monaspace Argon VF', monospace;
+    --vp-font-family-mono: 'Monaspace Argon', monospace;
 
     /* font-optical-sizing: auto;
     font-variation-settings: 'opsz' 32; */

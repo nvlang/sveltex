@@ -1,6 +1,8 @@
 // Internal dependencies
 import { getDefaultTexConfig } from '$config/defaults.js';
+import { isRegExp } from '$deps.js';
 import {
+    isArray,
     isBoolean,
     isFunction,
     isNonNullObject,
@@ -13,6 +15,7 @@ import {
     isSupportedTexEngine,
     supportedTexEngines,
 } from '$type-guards/verbatim.js';
+import { extendedLogSeverities } from '$utils/TexComponent.js';
 import { Diagnoser, enquote } from '$utils/diagnosers/Diagnoser.js';
 
 /**
@@ -140,7 +143,33 @@ export function diagnoseTexConfig(x: object) {
     );
 
     // Debug options
-    d.ifPresent('debug.verbose', 'a boolean', isBoolean, 'boolean');
+    d.ifPresent(
+        'debug.ignoreLogMessages',
+        'an array of strings or regular expressions',
+        (v) => isArray(v, (elem) => isString(elem) || isRegExp(elem)),
+        'object',
+    );
+    d.ifPresent(
+        'debug.verbosity',
+        `a non-null object or one of: ${extendedLogSeverities.map(enquote).join(', ')}`,
+        (v) => isNonNullObject(v) || isOneOf(v, extendedLogSeverities),
+        ['object', 'string'],
+    );
+    d.ifPresent(
+        'debug.verbosity.onFailure',
+        `one of: ${extendedLogSeverities.map(enquote).join(', ')}`,
+        (v) => isOneOf(v, extendedLogSeverities),
+        'string',
+    );
+    const logSeveritiesWithoutError = extendedLogSeverities.filter(
+        (s) => s !== 'error',
+    );
+    d.ifPresent(
+        'debug.verbosity.onSuccess',
+        `one of: ${logSeveritiesWithoutError.map(enquote).join(', ')}`,
+        (v) => isOneOf(v, logSeveritiesWithoutError),
+        'string',
+    );
 
     d.noteUnexpectedProperties(Object.keys(getDefaultTexConfig()));
     return d;

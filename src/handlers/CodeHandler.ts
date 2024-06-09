@@ -123,12 +123,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             // by the backend (see the `create` method below).
             processed = (await super.process(processed, mergedOpts)).processed;
 
-            // Shiki and escapeOnly don't add a \n at the end of the code block
+            // Shiki and escape don't add a \n at the end of the code block
             // by default.
             // if (!mergedOpts.inline) {
             //     if (
             //         this._configuration.appendNewline &&
-            //         (this.backend === 'shiki' || this.backend === 'escapeOnly')
+            //         (this.backend === 'shiki' || this.backend === 'escape')
             //     ) {
             //         const m = processed.match(
             //             /^(<pre[^>]*?><code[^>]*?>)(.*[^\r\n])(<\/code><\/pre>)$/su,
@@ -324,7 +324,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             ) => {
                 const config = handler._configuration;
                 if (inline) {
-                    const inlineParsed = config.inlineMeta(
+                    const inlineParsed = config.inlineMeta?.(
                         code,
                         (tag) =>
                             !!handler.processor.getLanguage(
@@ -452,7 +452,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             ) => {
                 const config = handler._configuration;
                 if (inline) {
-                    const inlineParsed = config.inlineMeta(
+                    const inlineParsed = config.inlineMeta?.(
                         code,
                         (tag) =>
                             !!handler.processor.flagToScope(
@@ -650,7 +650,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 const config = handler._configuration;
                 let shouldAddNewline = !inline && config.appendNewline;
                 if (inline) {
-                    const inlineParsed = config.inlineMeta(code, (tag) =>
+                    const inlineParsed = config.inlineMeta?.(code, (tag) =>
                         shikiValidLanguageTags.includes(
                             (config.langAlias?.[tag] ?? tag)
                                 .toLowerCase()
@@ -794,9 +794,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 process,
             });
             return handler as unknown as CodeHandler<B>;
-        } else if (backend === 'escapeOnly') {
-            typeAssert(is<CodeConfiguration<'escapeOnly'>>(cfg));
-            const process: CodeProcessFn<'escapeOnly'> = (
+        } else if (backend === 'escape') {
+            typeAssert(is<CodeConfiguration<'escape'>>(cfg));
+            const process: CodeProcessFn<'escape'> = (
                 code,
                 { lang, inline },
                 handler,
@@ -808,19 +808,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     config.appendNewline &&
                     code !== '' &&
                     !/(?:\r\n?|\n)$/.test(code);
-                if (config.escapeHtml) {
-                    escaped = escapeHtml(escaped);
-                }
                 // NB: It's important to escape braces _after_ escaping HTML,
                 // since escaping braces will introduce ampersands which
                 // escapeHtml would escape
-                if (config.escapeBraces) {
-                    escaped = escapeBraces(escaped);
-                }
-                if (shouldAddNewline) {
-                    escaped += '\n';
-                }
-
+                if (config.escape.html) escaped = escapeHtml(escaped);
+                if (config.escape.braces) escaped = escapeBraces(escaped);
+                if (shouldAddNewline) escaped += '\n';
                 const { addLanguageClass } = config;
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
@@ -835,11 +828,11 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 return escaped;
             };
             const configuration = mergeConfigs(
-                getDefaultCodeConfig('escapeOnly'),
+                getDefaultCodeConfig('escape'),
                 cfg,
             );
-            return new CodeHandler<'escapeOnly'>({
-                backend: 'escapeOnly',
+            return new CodeHandler<'escape'>({
+                backend: 'escape',
                 processor: {},
                 configuration,
                 process,

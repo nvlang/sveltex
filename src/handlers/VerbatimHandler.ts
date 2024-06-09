@@ -10,7 +10,7 @@ import type {
     FullVerbEnvConfig,
     FullVerbEnvConfigTex,
     FullVerbEnvConfigCode,
-    FullVerbEnvConfigEscapeOnly,
+    FullVerbEnvConfigEscape,
     FullVerbEnvConfigNoop,
     VerbatimConfiguration,
     VerbatimProcessOptions,
@@ -259,15 +259,15 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 }
             }
 
-            if (type === 'escapeOnly') {
-                typeAssert(is<FullVerbEnvConfigEscapeOnly>(config));
-                if (config.escapeInstructions.escapeHtml) {
+            if (type === 'escape') {
+                typeAssert(is<FullVerbEnvConfigEscape>(config));
+                if (config.escape.html) {
                     processed = escapeHtml(processed);
                 }
                 // NB: It's important to escape braces _after_ escaping HTML, since
                 // escaping braces will introduce ampersands which escapeHtml would
                 // escape
-                if (config.escapeInstructions.escapeBraces) {
+                if (config.escape.braces) {
                     processed = escapeBraces(processed);
                 }
             } else if (type === 'code') {
@@ -284,12 +284,12 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 const res = await verbatimHandler.texHandler.process(
                     processed,
                     {
+                        ...options,
                         attributes: mergedAttributes,
                         tag,
-                        filename: options.filename,
                         selfClosing,
                         outerContent,
-                        config: config,
+                        config,
                     },
                 );
                 processed = res.processed;

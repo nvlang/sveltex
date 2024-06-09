@@ -23,7 +23,7 @@ export const markdownBackends = [
     'custom',
 ] as const;
 export const codeBackends = [
-    'escapeOnly',
+    'escape',
     'highlight.js',
     'starry-night',
     'shiki',

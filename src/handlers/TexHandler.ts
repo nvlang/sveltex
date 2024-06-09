@@ -17,6 +17,7 @@ import { TexComponent } from '$utils/TexComponent.js';
 import { SveltexCache } from '$utils/cache.js';
 import { Handler } from '$handlers/Handler.js';
 import { mergeConfigs } from '$utils/merge.js';
+import { pathExists } from '$utils/fs.js';
 
 export class TexHandler extends Handler<
     TexBackend,
@@ -227,6 +228,7 @@ export class TexHandler extends Handler<
         }
     }
 
+    // TODO: remove this method (only used by tests)
     createTexComponent(
         content: string,
         options: TexProcessOptions,
@@ -324,8 +326,11 @@ export class TexHandler extends Handler<
                 id: tc.id,
                 path: tc.out.sveltePath,
             };
-            texHandler.noteTcInFile(options.filename, importInfo);
-            return tc.outputString;
+            if (pathExists(tc.out.sveltePath)) {
+                texHandler.noteTcInFile(options.filename, importInfo);
+                return tc.outputString;
+            }
+            return '';
         };
         // const configure = (
         //     _configuration: TexConfiguration<'local'>,

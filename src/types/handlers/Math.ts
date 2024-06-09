@@ -63,7 +63,7 @@ export type MathProcessor<B extends MathBackend> = B extends 'katex'
 export type MathConfiguration<B extends MathBackend> = B extends 'katex'
     ? WithTransformers<B> & SveltexKatexConfig
     : B extends 'mathjax'
-      ? SveltexMathjaxConfig & WithTransformers<B>
+      ? WithTransformers<B> & SveltexMathjaxConfig
       : B extends 'custom'
         ? WithTransformers<B> & Record<string, unknown>
         : B extends 'none'

@@ -29,3 +29,6 @@ export const enginePrettyName: Record<SupportedTexEngine, string> = {
     pdflatexmk: 'LaTeXmk (pdfLaTeX)',
     lualatexmk: 'LaTeXmk (LuaLaTeX)',
 } as const;
+
+export const logSeverities = ['info', 'box', 'warn', 'error'] as const;
+export type TexLogSeverity = (typeof logSeverities)[number];

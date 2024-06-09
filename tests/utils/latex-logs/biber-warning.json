@@ -1,0 +1,274 @@
+[
+  {
+    "line": 1,
+    "message": "LaTeX Info: File `biber-warning.bib' already exists on the system.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package pdftexcmds Info: \\pdf@primitive is available.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package pdftexcmds Info: \\pdf@ifprimitive is available.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package pdftexcmds Info: \\pdfdraftmode found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load biblatex default data model...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'blx-dm.def' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load biblatex custom data model...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'biblatex-dm.cfg' not found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load compatibility code...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'blx-compat.def' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load generic definitions...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'biblatex.def' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load bibliography style 'numeric'...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'numeric.bbx' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load bibliography style 'standard'...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'standard.bbx' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load citation style 'numeric'...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'numeric.cbx' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\cite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\parencite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\footcite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\footcitetext'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\smartcite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\supercite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\textcite'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\textcites'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\cites'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\parencites'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Redefining '\\smartcites'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load configuration file...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'biblatex.cfg' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Input encoding 'utf8' detected.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Document encoding is UTF8 ....",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... and expl3 2024-05-08 L3 programming layer (loader) is new enough (at least 2020/04/06), setting 'casechanger=expl3'.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load language 'english'...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'english.lbx' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Input encoding 'utf8' detected.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Automatic encoding selection.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Trying to load bibliographic data...",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: ... file 'biber-warning.bbl' found.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Reference section=0.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Info: Reference segment=0.",
+    "severity": "info"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Warning: Citation 'unknown' on page 1 undefined.",
+    "severity": "warn"
+  },
+  {
+    "line": 1,
+    "message": "LaTeX Warning: There were undefined references.",
+    "severity": "warn"
+  },
+  {
+    "line": 1,
+    "message": "Package biblatex Warning: Please (re)run Biber on the file: biber-warning and rerun LaTeX afterwards.",
+    "severity": "warn"
+  },
+  {
+    "line": 1,
+    "message": "Package logreq Info: Writing requests to 'biber-warning.run.xml'.",
+    "severity": "info"
+  }
+]

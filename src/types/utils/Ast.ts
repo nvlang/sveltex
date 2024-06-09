@@ -29,6 +29,15 @@ export interface Offsets {
      * the substring to which this `Location` object refers.
      */
     end: number;
+
+    /**
+     * Used for LaTeX verbatim environments, to shift the line numbers from
+     * error messages. Should correspond to line number of the first line of the
+     * inner content of the verbatim environment.
+     *
+     * @internal
+     */
+    lineOffset?: number;
 }
 
 /**

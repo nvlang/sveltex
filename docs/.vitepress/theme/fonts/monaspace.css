@@ -1,22 +1,46 @@
 @font-face {
-    font-family: 'Monaspace Argon VF';
+    font-family: 'Monaspace Argon';
+    font-style: normal;
+    font-weight: 400;
     src: url('/fonts/monaspace/MonaspaceArgon-Regular.woff2') format('woff2');
-    font-weight: 400;
 }
+
 @font-face {
-    font-family: 'Monaspace Argon VF';
+    font-family: 'Monaspace Argon';
+    font-style: normal;
+    font-weight: 500;
+    src: url('/fonts/monaspace/MonaspaceArgon-Medium.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Monaspace Argon';
+    font-style: normal;
+    font-weight: 700;
+    src: url('/fonts/monaspace/MonaspaceArgon-Bold.woff2') format('woff2');
+}
+
+/*
+We're sort of "lying" with the italics here, and using Monaspace Radon instead.
+*/
+
+@font-face {
+    font-family: 'Monaspace Argon';
     font-style: italic;
     font-weight: 400;
     src: url('/fonts/monaspace/MonaspaceRadon-Italic.woff2') format('woff2');
 }
+
 @font-face {
-    font-family: 'Monaspace Neon VF';
-    src: url('/fonts/monaspace/MonaspaceNeon-Regular.woff2') format('woff2');
-    font-weight: 400;
-}
-@font-face {
-    font-family: 'Monaspace Neon VF';
+    font-family: 'Monaspace Argon';
     font-style: italic;
-    font-weight: 400;
-    src: url('/fonts/monaspace/MonaspaceRadon-Italic.woff2') format('woff2');
+    font-weight: 500;
+    src: url('/fonts/monaspace/MonaspaceRadon-MediumItalic.woff2')
+        format('woff2');
+}
+
+@font-face {
+    font-family: 'Monaspace Argon';
+    font-style: italic;
+    font-weight: 700;
+    src: url('/fonts/monaspace/MonaspaceRadon-BoldItalic.woff2') format('woff2');
 }

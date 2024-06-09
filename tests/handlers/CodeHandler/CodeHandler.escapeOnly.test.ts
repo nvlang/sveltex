@@ -4,13 +4,13 @@ import { CodeHandler } from '$handlers/CodeHandler.js';
 
 // vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
-describe("CodeHandler<'escapeOnly'>", () => {
-    let handler: CodeHandler<'escapeOnly'>;
+describe("CodeHandler<'escape'>", () => {
+    let handler: CodeHandler<'escape'>;
     beforeAll(async () => {
-        handler = await CodeHandler.create('escapeOnly', {});
+        handler = await CodeHandler.create('escape', {});
     });
 
-    describe("CodeHandler.create('escapeOnly')", () => {
+    describe("CodeHandler.create('escape')", () => {
         it('returns instance of CodeHandler', () => {
             expect(handler).toBeTypeOf('object');
             expect(handler).not.toBeNull();
@@ -49,10 +49,10 @@ describe("CodeHandler<'escapeOnly'>", () => {
             });
 
             it('correctly configures handler', async () => {
-                await handler.configure({ escapeBraces: false });
-                expect(handler.configuration.escapeBraces).toEqual(false);
-                await handler.configure({ escapeBraces: true });
-                expect(handler.configuration.escapeBraces).toEqual(true);
+                await handler.configure({ escape: { braces: false } });
+                expect(handler.configuration.escape?.braces).toEqual(false);
+                await handler.configure({ escape: { braces: true } });
+                expect(handler.configuration.escape?.braces).toEqual(true);
             });
         });
 
@@ -74,8 +74,8 @@ describe("CodeHandler<'escapeOnly'>", () => {
     });
 
     describe('backend', () => {
-        it("is 'escapeOnly'", () => {
-            expect(handler.backend).toBe('escapeOnly');
+        it("is 'escape'", () => {
+            expect(handler.backend).toBe('escape');
         });
     });
 });

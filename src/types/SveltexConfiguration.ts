@@ -111,7 +111,7 @@ export interface BackendChoices<
      *       <pnpm|bun|npm|yarn> add -D highlight.js
      * ```
      *
-     * -   `'escapeOnly'`: Escape special HTML characters and curly brackets in
+     * -   `'escape'`: Escape special HTML characters and curly brackets in
      *     code blocks, but don't apply syntax highlighting. By default, code
      *     blocks will be surrounded by `<pre><code>` tags, and inline code
      *     snippets will be surrounded by `<code>` tags.
@@ -131,26 +131,22 @@ export interface BackendChoices<
 
     /* eslint-disable tsdoc/syntax */
     /**
-     * Engine to use to render "basic" TeX blocks (e.g., `$x^2$`).
+     * Engine to use to render math (e.g., `$$x^2$$`).
      *
      * @defaultValue `'none'`.
      *
      * @remarks
-     * - `'katex'`:
-     *   - Make sure you have `katex` installed as a devDependency (or regular
-     *     dependency).
-     *   - Make sure you include the [KaTeX CSS
-     *     file](https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css)
-     *     in your HTML file.
-     *   - See also: https://katex.org/docs/browser.html
-     *   - **NB**: If you're only using KaTeX within SvelTeX, you don't actually
-     *     have to load any scripts for KaTeX, since the rendering will take
-     *     place during preprocessing. This is also why it suffices to have
-     *     KaTeX as a devDependency (as opposed to a regular dependency).
-     * - `'mathjax'`:
-     *   - Make sure you have `mathjax-full` installed as a devDependency (or
-     *     regular dependency).
-     *   - Make sure you include the MathJax CSS file in your HTML file.
+     * -   `'katex'`: Install:
+     *
+     *     ```sh
+     *     <pnpm|bun|npm|yarn> add -D katex
+     *     ```
+     *
+     * -   `'mathjax'`: Install:
+     *
+     *     ```sh
+     *     <pnpm|bun|npm|yarn> add -D mathjax
+     *     ```
      */
     /* eslint-enable tsdoc/syntax */
     mathBackend?: T | undefined;
@@ -165,45 +161,41 @@ export interface SveltexConfiguration<
     T extends MathBackend,
 > {
     /**
-     * Configuration options for the markdown parser (e.g., `marked`, `unified`,
-     * `markdown-it`, or `micromark`).
+     * Configuration options for the markdown processor.
      *
      * ⚠ **Warning**: These options, and their meaning, depend on the specific
      * markdown backend in use. For documentation of the options beyond what
      * IntelliSense may provide, please refer to the documentation of the
      * backend in question:
-     * - `marked`: [Docs](https://marked.js.org/using_advanced) /
-     *   [GitHub](https://github.com/markedjs/marked)
+     * - `unified`: [Website](https://unifiedjs.com/) /
+     *   [GitHub](https://github.com/unifiedjs/unified)
      * - `markdown-it`: [Docs](https://markdown-it.github.io/markdown-it/) /
      *   [GitHub](https://github.com/markdown-it/markdown-it)
      * - `micromark`: [GitHub](https://github.com/micromark/micromark)
-     * - `unified`: [Website](https://unifiedjs.com/) /
-     *   [GitHub](https://github.com/unifiedjs/unified)
+     * - `marked`: [Docs](https://marked.js.org/using_advanced) /
+     *   [GitHub](https://github.com/markedjs/marked)
      */
     markdown?: MarkdownConfiguration<M>;
 
     /**
-     * Configuration options for the syntax highlighter (e.g., `highlight.js` or
-     * `starry-night`).
+     * Configuration options for the syntax highlighter.
      *
      * ⚠ **Warning**: These options, and their meaning, depend on the specific
      * "code backend" (i.e., syntax highlighter) in use. For documentation of
      * the options beyond what IntelliSense may provide, please refer to the
      * documentation of the backend in question:
      *
-     * - `highlight.js`: [Docs](https://highlightjs.readthedocs.io/en/latest/) /
-     *   [GitHub](https://github.com/highlightjs/highlight.js) /
-     *   [Website](https://highlightjs.org)
-     * - `starry-night`: [GitHub](https://github.com/wooorm/starry-night)
-     * - `prismjs`: [Docs](https://prismjs.com/) /
-     *   [GitHub](https://github.com/PrismJS/prism)
+     * -   `shiki`: [Website](https://shiki.style) /
+     *     [GitHub](https://github.com/shikijs/shiki)
+     * -   `starry-night`: [GitHub](https://github.com/wooorm/starry-night)
+     * -   `highlight.js`: [Docs](https://highlightjs.readthedocs.io/en/latest/)
+     *     / [GitHub](https://github.com/highlightjs/highlight.js) /
+     *     [Website](https://highlightjs.org)
      */
     code?: CodeConfiguration<C>;
 
     /**
-     * Configuration options for the TeX processor (KaTeX or MathJax). This is
-     * the TeX processor that will be used to, for example, render math in
-     * SvelTeX files.
+     * Configuration options for the math processor (KaTeX or MathJax).
      *
      * ⚠ **Warning**: These options depend on the specific TeX backend in use.
      * For example, if you are using KaTeX, different options will be available
@@ -244,9 +236,20 @@ export interface SveltexConfiguration<
      * ```ts
      * {
      *     Example: {
-     *
-     *     }
+     *         type: 'tex',
+     *     },
      * }
+     * ```
+     *
+     * Now, you can write the following in any Svelte file on which SvelTeX will
+     * run:
+     *
+     * ```html
+     * <Example ref="figure-1">
+     * \begin{tikzpicture}
+     *     \draw (0, 0) circle (1);
+     * \end{tikzpicture}
+     * </Example>
      * ```
      */
     verbatim?: VerbatimConfiguration;

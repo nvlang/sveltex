@@ -45,7 +45,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
     const d = new Diagnoser(x);
     d.ifPresent(
         'type',
-        `one of: "tex", "code", "escapeOnly", "custom", "noop"`,
+        `one of: "tex", "code", "escape", "custom", "noop"`,
         isVerbatimType,
         'string',
     );
@@ -111,7 +111,7 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         'boolean',
     );
     if (type === 'code') d.ifPresent('wrap', 'a boolean', isBoolean, 'boolean');
-    if (type === 'escapeOnly') {
+    if (type === 'escape') {
         d.ifPresent(
             'escapeInstructions',
             'an object of type { escapeBraces?: boolean; escapeHtml?: boolean }',

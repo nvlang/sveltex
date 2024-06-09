@@ -134,7 +134,7 @@ describe.concurrent('Sveltex', () => {
 
 const preprocessor = await sveltex({
     markdownBackend: 'marked',
-    codeBackend: 'escapeOnly',
+    codeBackend: 'escape',
     mathBackend: 'none',
 });
 
@@ -151,7 +151,7 @@ function preprocessFn<
 const preprocess = preprocessFn(preprocessor);
 preprocessor.configure({
     verbatim: {
-        Verbatim: { type: 'escapeOnly' },
+        Verbatim: { type: 'escape' },
     },
 });
 
@@ -312,8 +312,8 @@ describe('edge cases', () => {
         });
         await s.configure({
             verbatim: {
-                Verbatim: { type: 'escapeOnly' },
-                Verb: { type: 'escapeOnly' },
+                Verbatim: { type: 'escape' },
+                Verb: { type: 'escape' },
                 TeX: { type: 'tex' },
             },
             code: {
@@ -497,7 +497,7 @@ describe('Sveltex.markup()', () => {
     describe.concurrent('transforms inline markdown', async () => {
         const preprocessor = await sveltex({
             markdownBackend: 'marked',
-            codeBackend: 'escapeOnly',
+            codeBackend: 'escape',
             mathBackend: 'none',
         });
         const preprocess = async (
@@ -696,10 +696,10 @@ describe('Sveltex.markup()', () => {
             await preprocessorVerbatim.configure({
                 verbatim: {
                     Verbatim: {
-                        type: 'escapeOnly',
-                        escapeInstructions: {
-                            escapeBraces: true,
-                            escapeHtml: true,
+                        type: 'escape',
+                        escape: {
+                            braces: true,
+                            html: true,
                         },
                     },
                     Code: {
@@ -741,10 +741,10 @@ describe('Sveltex.markup()', () => {
             await preprocessor.configure({
                 verbatim: {
                     Verbatim: {
-                        type: 'escapeOnly',
-                        escapeInstructions: {
-                            escapeBraces: true,
-                            escapeHtml: true,
+                        type: 'escape',
+                        escape: {
+                            braces: true,
+                            html: true,
                         },
                     },
                 },
@@ -785,7 +785,7 @@ describe('Sveltex.markup()', () => {
         beforeAll(async () => {
             const preprocessorMisc = await sveltex({
                 markdownBackend: 'none',
-                codeBackend: 'escapeOnly',
+                codeBackend: 'escape',
                 mathBackend: 'none',
             });
             await preprocessorMisc.configure({

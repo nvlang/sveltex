@@ -1456,8 +1456,8 @@ function generateTexTests(): [
         2,
         3,
     ];
-    return isDisplayMath.map((isDisplayMath) => [
-        `tex (${isDisplayMath})`,
+    return isDisplayMath.map((doubleDollarSignsDisplay) => [
+        `tex (${doubleDollarSignsDisplay})`,
         cartesianProduct(delims, range(0, 1), range(0, 2), range(0, 2)).map(
             ([delims, inner, leftOuter, rightOuter]) =>
                 texTest({
@@ -1489,7 +1489,7 @@ function generateTexTests(): [
                                 escapedSquareBrackets: true,
                             },
                         },
-                        $$: { isDisplayMath },
+                        doubleDollarSignsDisplay,
                     },
                 }),
         ),
@@ -1540,9 +1540,9 @@ function texTest(opts: {
     let inline =
         delims === '\\(...\\)' || (delims !== '\\[...\\]' && delims[1] <= 1);
     if (!inline && delims !== '\\[...\\]') {
-        if (settings.$$?.isDisplayMath === 'newline') {
+        if (settings.doubleDollarSignsDisplay === 'newline') {
             inline = !(left.outer > 0 && right.outer > 0);
-        } else if (settings.$$?.isDisplayMath === 'fenced') {
+        } else if (settings.doubleDollarSignsDisplay === 'fenced') {
             inline = !(
                 left.outer > 0 &&
                 right.outer > 0 &&

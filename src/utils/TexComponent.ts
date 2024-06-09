@@ -2,6 +2,7 @@
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type {
     FullTexConfiguration,
+    Problem,
     TexComponentImportInfo,
 } from '$types/handlers/Tex.js';
 import type {
@@ -17,7 +18,12 @@ import {
     getDefaultVerbEnvConfig,
     sanitizePopplerSvgOptions,
 } from '$config/defaults.js';
-import { enginePrettyName, texBaseCommand } from '$data/tex.js';
+import {
+    enginePrettyName,
+    logSeverities,
+    texBaseCommand,
+    type TexLogSeverity,
+} from '$data/tex.js';
 import { isArray, isObject, isString } from '$type-guards/utils.js';
 import { InterpretedAttributes } from '$types/utils/Escape.js';
 import { spawnCliInstruction } from '$utils/cli.js';
@@ -37,14 +43,16 @@ import { insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { buildDvisvgmInstruction } from '$utils/dvisvgm.js';
 import { fs, pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
-import { sha256 } from '$utils/misc.js';
+import { re, sha256 } from '$utils/misc.js';
 
 // External dependencies
 import {
     basename,
     dirname,
     flattenObject,
+    isRegExp,
     join,
+    nodeAssert,
     ora,
     pc,
     prettyBytes,
@@ -58,7 +66,6 @@ import {
  * — whose contents will be rendered using a TeX engine, after which the entire
  * component gets replaced by a Svelte component which imports the rendered SVG.
  *
- * @internal
  */
 export class TexComponent {
     /**
@@ -73,7 +80,6 @@ export class TexComponent {
      *     === 'Sveltex_tikz_myfig' // true
      * ```
      *
-     * @internal
      */
     static id({ ref, name }: { ref: string; name: string }): string {
         return (
@@ -90,7 +96,6 @@ export class TexComponent {
      * @example
      * 'Sveltex_tikz_myfig'
      *
-     * @internal
      */
     get id() {
         return TexComponent.id({
@@ -111,7 +116,6 @@ export class TexComponent {
     }
 
     /**
-     * @internal
      */
     static svgComponentTag({
         ref,
@@ -124,7 +128,6 @@ export class TexComponent {
     }
 
     /**
-     * @internal
      */
     get svgComponentTag() {
         return TexComponent.svgComponentTag({
@@ -134,14 +137,12 @@ export class TexComponent {
     }
 
     /**
-     * @internal
      */
     get outputString() {
         return this.configuration.postprocess(this.svgComponentTag, this);
     }
 
     /**
-     * @internal
      */
     tag: string;
 
@@ -162,7 +163,6 @@ export class TexComponent {
      * provided configuration that were set to `null` or `undefined` will also
      * be ignored.
      *
-     * @internal
      */
     set configuration(config: VerbEnvConfigTex) {
         this._configuration = mergeConfigs(this._configuration, config);
@@ -196,7 +196,6 @@ export class TexComponent {
      * ⚠ **Warning**: The actual configuration object is returned, not a copy,
      * so changes to the object will affect the component.
      *
-     * @internal
      */
     get configuration(): FullVerbEnvConfigTex {
         return this._configuration;
@@ -206,7 +205,6 @@ export class TexComponent {
      * Getter to access the cache object of the TeX handler which
      * created this component.
      *
-     * @internal
      */
     get cache() {
         return this.texHandler.cache;
@@ -224,30 +222,31 @@ export class TexComponent {
      * between `\begin{document}` and `\end{document}`). This is *before*
      * escaping CSS variables.
      *
-     * @internal
      */
     private texDocumentBodyWithCssVars: string;
 
     /**
-     * The name of the directory to create for files associated with this
-     * component.
+     * The name of the directory to create in the cache for files associated
+     * with this component, and the basename of the final `.svelte` component
+     * file.
      *
      * @example 'myfig'
      *
      * @remarks Please provide a string without any extensions (i.e., *not*
      * ending in `.svg`, `.tex`, etc.).
      *
-     * @remarks The TexComponent will log an error to the console if the
-     * filename includes any path separators (`'/'` or `'\'`), and replace them
-     * with `'+'` before using the filename.
+     * @remarks This property can include path separators, in which case the
+     * component will be saved in the specified subdirectory. The last part of
+     * the path will be used as the base name of the component.
      *
-     * @example
-     * If `this.ref` is `'myfig'` and `this.config.outputDirectory` is
-     * `'src/sveltex/tikz'` the rendered TeX file will be saved to
-     * `src/sveltex/tikz/myfig.svg`.
+     * @remarks
+     * **Example**: If `this.ref` is `'myfig'` and `this.config.outputDirectory`
+     * is `'src/sveltex/tikz'`, the rendered TeX file will be saved to
+     * `src/sveltex/tikz/myfig.svelte`.
      *
-     * @readonly
-     * @internal
+     * Similarly, if `this.ref` is `'subdir/myfig'` and
+     * `this.config.outputDirectory` is `'src/sveltex/tikz'`, the rendered TeX
+     * file will be saved to `src/sveltex/tikz/subdir/myfig.svelte`.
      */
     private _ref: string | undefined;
 
@@ -257,7 +256,6 @@ export class TexComponent {
      *
      * @throws If `this._ref` is not set.
      * @example 'myfig'
-     * @internal
      */
     get ref(): string {
         /* v8 ignore next 5 (unreachable code) */
@@ -273,41 +271,37 @@ export class TexComponent {
      * `\jobname` to use for the `.tex` file. This will also be the base name of
      * the `.pdf` or `.dvi` file produced by the TeX engine.
      *
-     * @internal
+     * @readonly
      */
     readonly jobname = 'root';
 
     /**
-     * @internal
+     * Get the locations of the source files for the component, and related
+     * info.
      */
     get source(): {
         /* eslint-disable tsdoc/syntax */
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/ref'
-         * @internal
          */
         dir: string;
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/myfig/root.tex'
-         * @internal
          */
         texPath: `${string}.tex`;
         /**
          * @example 'root.tex'
-         * @internal
          */
         texName: `${string}.tex`;
         texExt: 'tex';
         texBaseName: string;
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/myfig/root.pdf'
-         * @internal
          */
         intPath: `${string}.${'pdf' | 'dvi' | 'xdv'}`;
         intExt: 'pdf' | 'dvi' | 'xdv';
         /**
          * @example 'root.pdf'
-         * @internal
          */
         intName: `${string}.${'pdf' | 'dvi' | 'xdv'}`;
         intBaseName: string;
@@ -346,9 +340,7 @@ export class TexComponent {
 
     /**
      * Output directory and paths for the rendered SVG and the Svelte component
-     * file.
-     *
-     * @internal
+     * file, as well as related info.
      */
     get out(): {
         /**
@@ -367,6 +359,9 @@ export class TexComponent {
          * @example 'ref'
          */
         svgBaseName: string;
+        /**
+         * @example 'svg'
+         */
         svgExt: 'svg';
         /**
          * @example 'src/sveltex/tikz/ref.svelte'
@@ -380,6 +375,9 @@ export class TexComponent {
          * @example 'ref'
          */
         svelteBaseName: string;
+        /**
+         * @example 'svelte'
+         */
         svelteExt: 'svelte';
     } {
         const dir = dirname(this.ref);
@@ -417,13 +415,16 @@ export class TexComponent {
      * @param attributes - The attributes of the component as matched in the
      * source file before preprocessing.
      * @param tex - The TeX content of the component.
-     * @param texHandler - The TeX handler used by the Sveltex
-     * instance parsing the source file containing the TeX component we're
-     * trying to create.
+     * @param texHandler - The TeX handler used by the Sveltex instance parsing
+     * the source file containing the TeX component we're trying to create.
+     * @param filename - The path to the Svelte file containing the markup that
+     * generated this TeX component.
+     * @param lineOffset - The line number of the first line of the inner
+     * content of the TeX component in Svelte file containing the markup that
+     * generated this TeX component.
      * @returns A new TeX component.
      * @throws If the `attributes` object passed to this method has neither a
      * `ref` attribute nor any valueless attribute.
-     * @internal
      */
     static create({
         attributes,
@@ -431,6 +432,8 @@ export class TexComponent {
         texHandler,
         config,
         tag,
+        lineOffset,
+        filename,
     }: {
         attributes: Record<
             string,
@@ -440,6 +443,8 @@ export class TexComponent {
         texHandler: TexHandler;
         config: VerbEnvConfigTex;
         tag: string;
+        lineOffset?: number | undefined;
+        filename: string;
     }): TexComponent {
         const tc = new TexComponent({
             texHandler,
@@ -448,8 +453,13 @@ export class TexComponent {
             tag,
         });
         tc._handledAttributes = tc.handleAttributes(attributes);
+        tc.lineOffset = lineOffset;
+        tc.filename = filename;
         return tc;
     }
+
+    lineOffset?: number | undefined;
+    filename!: string;
 
     /**
      * Handle the attributes that the user provided to the component. This is
@@ -463,7 +473,6 @@ export class TexComponent {
      *    {@link configuration | `configuration`}) on the attributes object
      *    returned by the previous step.
      *
-     * @internal
      */
     get handleAttributes() {
         return (
@@ -484,21 +493,18 @@ export class TexComponent {
      * method. This object is intended to be used by the
      * {@link VerbEnvConfigTex.postprocess | `postprocess`} method.
      *
-     * @internal
      */
     private _handledAttributes: Record<string, unknown> = {};
 
     /**
      * Getter for the {@link _handledAttributes | `_handledAttributes`} object.
      *
-     * @internal
      */
     get handledAttributes(): Record<string, unknown> {
         return this._handledAttributes;
     }
 
     /**
-     * @internal
      */
     private constructor({
         config,
@@ -522,7 +528,6 @@ export class TexComponent {
      * "Key path" of the component, which is the path to the component's source
      * files' directory relative to the cache directory.
      *
-     * @internal
      */
     get keyPath() {
         return join(this.tag, this.ref) as KeyPath;
@@ -546,7 +551,6 @@ export class TexComponent {
      * \end{document}
      * ```
      *
-     * @internal
      */
     get contentWithCssVars(): string {
         return [
@@ -590,7 +594,6 @@ export class TexComponent {
      *     command.
      * 4.  Save the SVG to the specified output directory.
      *
-     * @internal
      */
     readonly compile = async (): Promise<number | null> => {
         // 1. Get the escaped TeX content.
@@ -701,6 +704,26 @@ export class TexComponent {
             // Compile the TeX file
             const compilation = await spawnCliInstruction(compileCmd);
 
+            const texLines = compilableTexContent.split(/\r\n?|\n/);
+            const leadingWhitespaceInner =
+                /^\s+/.exec(this.texDocumentBodyWithCssVars)?.[0] ?? '';
+            const additionalTexLineOffset =
+                leadingWhitespaceInner.split(/\r\n?|\n/).length;
+
+            const texLineOffset =
+                1 +
+                texLines.indexOf('\\begin{document}') +
+                additionalTexLineOffset;
+            const svelteLineOffset = this.lineOffset;
+
+            const parsedLog = parseLatexLog(
+                compilation.stdout,
+                texLineOffset,
+                svelteLineOffset,
+            );
+            const { verbosity, ignoreLogMessages } = texConfig.debug;
+            const filepath = this.filename;
+
             if (compilation.code !== 0) {
                 // Stop spinner and replace with "failure message"
                 spinnerTex.fail(
@@ -716,11 +739,24 @@ export class TexComponent {
                     ' ' +
                     (compileCmd.args?.join(' ') ?? '');
 
+                const verbosityOnFailure = isString(verbosity)
+                    ? verbosity
+                    : verbosity.onFailure;
+
                 // Log error message
-                log(
-                    { severity: 'error', style: 'dim' },
-                    `\nThe compilation was attempted by running the following command from within "${String(compileCmd.cwd ?? process.cwd())}":\n\n${compileCmdString}\n\nThe following stderr was produced:${compilation.stderr.length > 0 ? '\n\n' + compilation.stderr : pc.italic(' (no stderr output)')}\n\nThe following stdout was produced: ${compilation.stdout.length > 0 ? '\n\n' + compilation.stdout : pc.italic(' (no stdout output)')}\n`,
-                );
+                if (verbosityOnFailure === 'all') {
+                    log(
+                        { severity: 'error', style: 'dim' },
+                        `\nThe compilation was attempted by running the following command from within "${String(compileCmd.cwd ?? process.cwd())}":\n\n${compileCmdString}\n\nThe following stderr was produced:${compilation.stderr.length > 0 ? '\n\n' + compilation.stderr : pc.italic(' (no stderr output)')}\n\nThe following stdout was produced: ${compilation.stdout.length > 0 ? '\n\n' + compilation.stdout : pc.italic(' (no stdout output)')}\n`,
+                    );
+                } else {
+                    printLogProblems(
+                        parsedLog,
+                        verbosityOnFailure,
+                        filepath,
+                        ignoreLogMessages,
+                    );
+                }
 
                 // Return the error code that the compilation child process
                 // returned.
@@ -737,6 +773,17 @@ export class TexComponent {
                     pc.green(
                         `${keyPath}: TeX → ${formatPretty} (${prettyBytes(size)}) with ${enginePretty} in ${timeToString(timeSince(startTex))}`,
                     ),
+                );
+
+                const verbosityOnSuccess = isString(verbosity)
+                    ? verbosity
+                    : verbosity.onSuccess;
+
+                printLogProblems(
+                    parsedLog,
+                    verbosityOnSuccess,
+                    filepath,
+                    ignoreLogMessages,
                 );
             }
         } catch (err: unknown) {
@@ -986,7 +1033,6 @@ export class TexComponent {
     /**
      * CLI instruction with which to convert the TeX output DVI/PDF/XDV to an SVG.
      *
-     * @internal
      */
     get convertCmd(): CliInstruction {
         const texConfig = this.texConfig;
@@ -1163,8 +1209,11 @@ export class TexComponent {
         // interaction mode, because it would be impossible for the user to
         // interact with the compiler anyway, given that it's running in a
         // separate child process. Accordingly, it is "hard-coded" to
-        // `batchmode`.
-        args.push(`${pre}interaction=batchmode`);
+        // `nonstopmode`. It's not set to `batchmode` because that would force
+        // SvelTeX to read the `.log` file from the file system to check for
+        // errors, which would be somewhat more cumbersome than just checking
+        // the `stdout` output of the child process.
+        args.push(`${pre}interaction=nonstopmode`);
 
         // args.push(`${pre}silent`);
 
@@ -1274,3 +1323,445 @@ export function enactPresets(
     if (tikzlibraries.includes('fixedpointarithmetic')) packages.push('fp');
     return { tikzlibraries, gdlibraries, packages };
 }
+
+export function parseLatexLog(
+    stdout: string,
+    texLineOffset: number,
+    svelteLineOffset?: number | undefined,
+) {
+    const problems: Problem[] = [];
+    specialCases.forEach((specialCase) => {
+        const [regExp, handler] = specialCase;
+        let match;
+        while ((match = regExp.exec(stdout))) {
+            const problem = handler(match);
+            if (svelteLineOffset !== undefined) {
+                if (problem.line === 1) {
+                    // LaTeX errors with line number 1 are usually meant as
+                    // global errors. In particular, line number 1 contains
+                    // `\documentclass[...]{...}`, and isn't part of the inner
+                    // content of the TeX component. As such, we'll just point
+                    // to the first line of said inner content. If we subtracted
+                    // `texLineOffset` from `svelteLineOffset`, we'd likely get
+                    // a line number outside of the TeX component, which would
+                    // be more confusing and unhelpful than what we do here.
+                    problem.line += svelteLineOffset;
+                } else {
+                    problem.line += svelteLineOffset - texLineOffset;
+                }
+            }
+            problems.push(problem);
+        }
+    });
+    problems.sort((a, b) => a.line - b.line);
+    return problems;
+}
+
+export const extendedLogSeverities = ['all', ...logSeverities, 'none'] as const;
+
+export function printLogProblems(
+    problems: Problem[],
+    verbosity: 'all' | TexLogSeverity | 'none',
+    filepath: string,
+    ignoreLogMessages: (string | RegExp)[],
+) {
+    problems.forEach((problem) => {
+        if (
+            extendedLogSeverities.indexOf(problem.severity) >=
+                extendedLogSeverities.indexOf(verbosity) &&
+            !ignoreLogMessages.some((ignore) =>
+                isRegExp(ignore)
+                    ? ignore.test(problem.message)
+                    : problem.message.includes(ignore),
+            )
+        ) {
+            log(
+                problem.severity,
+                `${filepath}:${String(problem.line)}${problem.col ? `:${String(problem.col)}` : ''}\n${problem.message}\n`,
+            );
+        }
+    });
+}
+
+/**
+ * Match groups:
+ *
+ * 1.  Message
+ * 2.  "LaTeX" / "Class" / "Package" / ...
+ * 3.  _(Optional)_ Class/package/module name
+ * 4.  Severity (`'Error'`, `'Warning'`, or `'Info'`)
+ * 5.  _(Optional)_ Line number
+ * 6.  _(Optional)_ Ending punctuation
+ */
+const errorRegExp1 = re`
+    ^
+    (                           # 1: Message
+        (?:                     # -:
+            (                   # 2:
+                Class
+                | Package
+                | Module
+                | LaTeX
+                | LaTeX3
+            )
+            (?:                 # -: Extra context, optional
+                [\ ]
+                (               # 3: Class/package/module name
+                    \S+         # (non-whitespace characters, ≥1, greedy)
+                )
+            )?
+        )
+        [\ ]                    # (space)
+        (                       # 4: Severity
+            Error
+          | Warning
+          | Info
+        ):
+        \s+                     # (whitespace characters, ≥1, greedy)
+        .*?                     # (any character (excl. newline), ≥0, lazy)
+        (?:                     # -: Extra lines, ≥0, greedy
+            (?:                 # -: cross-platform newline character
+                \r\n?           # (CR or CRLF)
+              | \n              # (LF)
+            )
+            \(                  # (opening parenthesis)
+            (?:                 # (backreference to group 2 or 3)
+                \2
+              | \3
+            )
+            \)                  # (closing parenthesis)
+            .+?                 # (any character (excl. newline), ≥1, lazy)
+        )*
+    )
+    (?:                         # -: " on [input] line <n>"
+        [\ ] on                 # (" on")
+        (?:                     # -: " input", optional
+            [\ ] input          # (" input")
+        )?
+        [\ ] line [\ ]          # (" line ")
+        (                       # 5: Line number
+            \d+                 # (digit, ≥1, greedy)
+        )
+    )?
+    (                           # 6: Ending punctuation
+        \.                      # (period)
+      | \?                      # (question mark)
+    )?
+    $                           # (end of line)
+
+    # FLAGS
+    ${'gmu'}                    # g = Global (find all matches)
+                                # m = Multi-line (^/$ match start/end of line)
+                                # u = Unicode support
+`;
+
+/**
+ * Match groups:
+ *
+ * 1.  First line of message
+ * 2.  _(Optional)_ Line number
+ * 3.  _(Optional)_ If "undefined control sequence", this is the undefined
+ *     control sequence in question.
+ */
+const errorRegExp = re`
+    ^                       # (start of line)
+    ! [\ ]                  # ("! ")
+    (                       # 1: Message
+        .+?                 # (any character (excl. newline), ≥1, lazy)
+    )
+    (?: \r\n? | \n )        # (cross-platform newline character)
+    (?:                     # -: more lines, ≥0, lazy
+        (?<! ! [\ ] )       # (negative lookbehind for "! ")
+        .*?                 # (any character (excl. newline), ≥0, lazy)
+        (?: \r\n? | \n )    # (cross-platform newline character)
+    )*?
+    (?:                     # -: "l.<n> " (optional)
+        l \.? [\ ]?
+        (                   # 2: Line number
+            \d+             # (digit, ≥1, greedy)
+        )
+    )?
+    (?:                     # -: if "undefined control sequence", this is the
+                            #    1st extra line, containing the control sequence
+                            #    in question. Otherwise, this should usually not
+                            #    be matched.
+        .*?                 # (any character (excl. newline), ≥0, lazy)
+        (                   # 3: Control sequence
+            \\              # (backslash)
+            [\w@]+          # (alphanumeric character or _ or @, ≥1, greedy)
+        )
+       (?: \r\n? | \n )     # (cross-platform newline character)
+    )?
+
+    # FLAGS
+    ${'gmu'}                # g = Global (find all matches)
+                            # m = Multi-line (^/$ match start/end of line)
+                            # u = Unicode support
+`;
+
+// const fds =
+//     /^\![ ](.+?)(?:\r\n?|\n)(?:(?<!\![ ]).*?(?:\r\n?|\n))*?(?:l\.?[ ]?(\d+))?(?:.*?(\\[\w\@]+)(?:\r\n?|\n))?/gmu;
+
+/**
+ * Match groups:
+ *
+ * 1.  Message
+ * 2.  _(Optional)_ Start line number (if range in paragraph)
+ * 3.  _(Optional)_ Line number (if detected at specific line)
+ */
+const boxRegExp = re`
+    ^                       # (start of line)
+    (                       # 1: Message
+        (?:                 # -:
+            (?:             # -: type of problem
+                Overfull
+              | Underfull
+            )
+            [\ ]            # (space)
+            \\ [vh] box     # ('\\vbox' or '\\hbox')
+            [\ ]            # (space)
+            \(              # (opening parenthesis)
+            (?:             # -: e.g., '12.34pt too wide' or 'badness 10000'
+                [^)]+?      # (any character except closing parenthesis, ≥1, lazy)
+            )
+            \)              # (closing parenthesis)
+        )
+        (?:                 # -: if problem arose in paragraph, we want to
+                            #    mention this fact in the message. Similarly, if
+                            #    the problem occurred "while \\output is
+                            #    active", we also want to mention that.
+            [\ ] in
+            [\ ] paragraph
+          | [\ ] has
+            [\ ] occurred
+            [\ ] while
+            [\ ] \\ output
+            [\ ] is
+            [\ ] active
+        )?
+    )
+    (?:                     # -: ' at lines 4--7' (iff problem in paragraph), or
+                            #    ' detected at line 123', or
+                            #    ' [123]' (or ' []') (optional page number)
+        [\ ] at
+        [\ ] lines
+        [\ ]
+        (                   # 2: Start line number
+            \d+             # (digit, ≥1, greedy)
+        )
+        (?:                 # -: End line number
+            --              # ('--')
+            \d+             # (digit, ≥1, greedy)
+        )
+      | [\ ] detected
+        [\ ] at
+        [\ ] line
+        [\ ]
+        (                   # 3: Line number
+            \d+             # (digit, ≥1, greedy)
+        )
+      | (?:                 # -: optional page number; e.g., ' [1]'
+            [\ ]            # (' ')
+            \[              # ('[')
+            (?:             # -: page number
+                \d*         # (digit, ≥0, greedy)
+            )
+            \]              # (']')
+        )?
+    )
+    $                       # (end of line)
+
+    # FLAGS
+    ${'gmu'}                # g = Global (find all matches)
+                            # m = Multi-line ('^'/'$' match start/end of line)
+                            # u = Unicode support
+`;
+
+/**
+ * Match groups:
+ *
+ * 1.  Line number
+ * 2.  Message
+ * 3.  _(Optional)_ Class/package/module name
+ * 4.  `'Error'`, `'Warning'`, `'Info'`, or `'Missing'`
+ */
+const errmessageRegExp = re`
+    ^                   # (start of line)
+    [^:\r\n]+?          # (any character (excl. newlines and colons), ≥1, lazy)
+    \.tex:              # (".tex:")
+    (                   # 1: Line number
+        \d+             # (digit, ≥1, greedy)
+    )
+    :[\ ]               # (": ")
+    (                   # 2: Message
+        (?:             # -:
+            (?:         # -:
+                Package
+              | Class
+              | Module
+            )
+            [\ ]        # (space)
+            (           # 3: Class/package/module name
+                \S+     # (non-whitespace characters, ≥1, greedy
+            )
+            [\ ]        # (space)
+        )?
+        .*?             # (any character (incl. newline), ≥0, lazy)
+        (               # 4: Severity, or "Missing"
+            Error
+            | Warning
+            | Info
+            | Missing
+        )
+        .*              # (any character (incl. newline), ≥0, greedy)
+        (?:             # -: Extra lines, ≥0, greedy
+            (?:         # -: cross-platform newline character
+                \r\n?   # (CR or CRLF)
+              | \n      # (LF)
+            )
+            \(          # (opening parenthesis)
+            \3          # (backreference to match group 3)
+            \)          # (closing parenthesis)
+            .+?         # (any character (excl. newline), ≥1, lazy)
+        )*
+    )
+    $                   # (end of line)
+
+    # FLAGS
+    ${'gimu'}           # g = Global (find all matches)
+                        # i = Case-insensitive
+                        # m = Multi-line ('^'/'$' match start/end of line)
+                        # u = Unicode support
+`;
+
+const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
+    [
+        boxRegExp,
+        (match) => {
+            // Assert truthy-ness of mandatory _non-empty_ match groups
+            nodeAssert(match[1]);
+
+            // Set severity
+            const severity = 'box';
+
+            // Determine message to use
+            const message = match[1];
+
+            // Determine line number
+            let line = match[2]
+                ? parseInt(match[2])
+                : match[3]
+                  ? parseInt(match[3])
+                  : 1;
+            /* v8 ignore next 1 (unreachable code, due to regex format) */
+            if (Number.isNaN(line)) line = 1;
+
+            return { line, message, severity };
+        },
+    ],
+    [
+        /^\s*(Missing character:.*?)!/gmu,
+        (match) => {
+            // Assert truthy-ness of mandatory _non-empty_ match groups
+            nodeAssert(match[1]);
+            return {
+                line: 1,
+                message: match[1],
+                severity: 'error',
+            };
+        },
+    ],
+    [
+        errorRegExp1,
+        (match) => {
+            // Assert truthy-ness of mandatory _non-empty_ match groups
+            nodeAssert(match[1] && match[2] && match[4]);
+
+            // Set severity
+            const s = match[4].toLowerCase();
+            const severity =
+                s === 'error' ? 'error' : s === 'warning' ? 'warn' : 'info';
+
+            // Determine message to use
+            let message = match[1] + (match[6] ?? '');
+            if (/\r\n?|\n/.test(message)) {
+                const regexp = new RegExp(
+                    '^\\((?:' +
+                        match[2] +
+                        (match[3] ? '|' + match[3] : '') +
+                        ')\\)\\s*(.*?)$',
+                    'gmu',
+                );
+                message = message.replaceAll(regexp, ' $1');
+            }
+            message = message.replaceAll(/\s+/gu, ' ').trim();
+
+            // Determine line number
+            let line = parseInt(match[4]);
+            if (Number.isNaN(line)) line = 1;
+
+            return { line, message, severity };
+        },
+    ],
+    [
+        errorRegExp,
+        (match) => {
+            // Assert truthy-ness of mandatory _non-empty_ match groups
+            nodeAssert(match[1]);
+
+            // Set severity
+            const severity = 'error';
+
+            // Determine message to use
+            let message = match[1];
+            if (message.includes('Undefined control sequence') && match[3]) {
+                message = `Undefined control sequence: ${match[3]}`;
+            }
+
+            // ! Undefined control sequence.
+            // l.20 ...nt_{0}^{1} \sum x_{i}^{3} \mathrm{d}\textt
+            //                                                   {a}$};
+
+            // Determine line number
+            let line = match[2] ? parseInt(match[2]) : 1;
+            /* v8 ignore next 1 (unreachable code, due to regex format) */
+            if (Number.isNaN(line)) line = 1;
+
+            return { line, message, severity };
+        },
+    ],
+    [
+        errmessageRegExp,
+        (match) => {
+            // Assert truthy-ness of mandatory _non-empty_ match groups
+            nodeAssert(match[1] && match[2] && match[4]);
+
+            // Set severity
+            const s = match[4].toLowerCase();
+            const severity =
+                s === 'error'
+                    ? 'error'
+                    : s === 'warning' || s === 'missing'
+                      ? 'warn'
+                      : 'info';
+
+            // Determine message to use
+            let message = match[2];
+            if (/\r\n?|\n/.test(message) && match[3]) {
+                const regexp = new RegExp(
+                    '^\\((?:' + match[3] + ')\\)\\s*(.*?)$',
+                    'gmu',
+                );
+                message = message.replaceAll(regexp, ' $1');
+            }
+            message = message.replaceAll(/\s+/gu, ' ').trim();
+
+            // Determine line number
+            let line = parseInt(match[1]);
+            /* v8 ignore next 1 (unreachable code, due to regex format) */
+            if (Number.isNaN(line)) line = 1;
+
+            return { line, message, severity };
+        },
+    ],
+];

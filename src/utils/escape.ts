@@ -294,10 +294,16 @@ function getVerbatimES(
         const parsedComponent = parseComponent(outerContent);
         let { innerContent } = parsedComponent;
         const { tag, attributes, selfClosing } = parsedComponent;
-        const loc = {
-            start: match.index,
-            end: match.index + outerContent.length,
-        };
+
+        const start = match.index;
+        const end = start + outerContent.length;
+
+        // Get line at which match starts
+        const lineOffset: number = content
+            .slice(0, content.lastIndexOf(innerContent, end))
+            .split(/\r\n?|\n/).length;
+
+        const loc = { start, end, lineOffset };
 
         const config = verbEnvs?.get(tag);
         let inline = config?.defaultAttributes['inline'] === true;
@@ -308,9 +314,7 @@ function getVerbatimES(
                 '$1',
             );
         }
-        const escapeOptions: EscapeOptions = {
-            pad: inline ? 0 : 2,
-        };
+        const escapeOptions: EscapeOptions = { pad: inline ? 0 : 2 };
         es.push({
             type: 'verbatim',
             original: { loc, outerContent },
@@ -321,6 +325,7 @@ function getVerbatimES(
                     attributes,
                     selfClosing,
                     outerContent,
+                    lineOffset,
                 },
             },
             escapeOptions,
@@ -538,8 +543,10 @@ export function getMdastES({
         if (isOneOf(node.type, ['inlineMath', 'math'])) {
             if (!texSettings.enabled) return true;
             typeAssert(is<MdastMathNode | MdastInlineMathNode>(node));
-            const isDisplayMath = texSettings.$$?.isDisplayMath ?? 'always';
+            const isDisplayMath =
+                texSettings.doubleDollarSignsDisplay ?? 'always';
             let inline: boolean = node.type === 'inlineMath';
+
             // Micromark parses a lot of stuff that some might expect to be
             // display math as inline math, so we need to check if it really is
             // inline math given the user's preferences. On the other hand, if
@@ -867,7 +874,7 @@ export function escape(
             ...getSvelteES(escapedDocument),
             // Escape math in \[...\] and \(...\)
             ...getMathInSpecialDelimsES(escapedDocument, texSettings),
-            ...getVerbatimES(document, verbatimTags, verbEnvs),
+            ...getVerbatimES(escapedDocument, verbatimTags, verbEnvs),
         ]);
     } catch (err) {
         log('error', prettifyError(err));

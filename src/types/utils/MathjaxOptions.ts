@@ -1,4 +1,7 @@
 export interface MathjaxConfiguration {
+    /**
+     * Document options.
+     */
     options?: MathjaxOptions | undefined;
 
     /**
@@ -16,6 +19,9 @@ export interface MathjaxConfiguration {
      */
     tex?: MathjaxTexInputProcessorOptions | undefined;
 
+    /**
+     * Options for the MathML input processor.
+     */
     mml?: MathjaxMathmlInputProcessorOptions | undefined;
 }
 
@@ -32,7 +38,10 @@ export interface MathjaxConversionOptions {
     /**
      * Specifies whether the math is in display-mode or not (for TeX input).
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
     display?: boolean;
 
@@ -102,7 +111,10 @@ export interface MathjaxAsciimathInputProcessorOptions
      * Specifies whether to use TeX mapping or unicode mapping for the `fixphi`
      * option.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      *
      * Determines whether MathJax will switch the Unicode values for `phi` and
      * `varphi`. If set to true MathJax will use the TeX mapping, otherwise the
@@ -114,7 +126,10 @@ export interface MathjaxAsciimathInputProcessorOptions
      * Specifies whether to use displaystyle typesetting or in-line typesetting
      * for the `displaystyle` option.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      *
      * Determines whether operators like summation symbols will have their
      * limits above and below the operators (true) or to their right (false).
@@ -225,7 +240,10 @@ export interface MathjaxMathmlInputProcessorOptions
         /**
          * Check if number of children is correct.
          *
-         * @defaultValue `true`
+         * @defaultValue
+         * ```ts
+         * true
+         * ```
          *
          * This specifies whether the number of children is verified or not. The
          * default is to check for the correct number of children. If the number
@@ -269,7 +287,10 @@ export interface MathjaxMathmlInputProcessorOptions
         /**
          * Fix unbalanced mmultiscripts.
          *
-         * @defaultValue `true`
+         * @defaultValue
+         * ```ts
+         * true
+         * ```
          *
          * This specifies whether extra `<none/>` entries are added to
          * `<mmultiscripts>` elements to balance the super- and subscripts, as
@@ -281,7 +302,10 @@ export interface MathjaxMathmlInputProcessorOptions
         /**
          * Fix incorrect nesting in mtables.
          *
-         * @defaultValue `true`
+         * @defaultValue
+         * ```ts
+         * true
+         * ```
          *
          * This specifies whether missing `<mtable>`, `<mtr>` and `<mtd>`
          * elements are placed around cells or not. When true, MathJax will
@@ -425,7 +449,7 @@ export interface MathjaxTexInputProcessorOptions
      * @remarks Within Sveltex, the default value is actually
      * `[['$', '$'], ['\\(', '\\)']]`.
      */
-    inlineMath?: [string, string][];
+    // inlineMath?: [string, string][];
 
     /**
      * Start and end delimiter pairs for display math.
@@ -442,12 +466,15 @@ export interface MathjaxTexInputProcessorOptions
      * before MathJax has the chance to run.  You can only include text, not
      * tags, as your math delimiters.
      */
-    displayMath?: [string, string][];
+    // displayMath?: [string, string][];
 
     /**
      * Use `$` to produce a literal dollar sign.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      *
      * When set to `true`, you may use `\$` to represent a literal dollar sign,
      * rather than using it as a math delimiter, and `\\` to represent a literal
@@ -460,13 +487,16 @@ export interface MathjaxTexInputProcessorOptions
      *
      * @remarks In MathJax v2, the default was `false`.
      */
-    processEscapes?: boolean;
+    // processEscapes?: boolean;
 
     /* eslint-disable tsdoc/syntax */
     /**
      * Process `\begin{xxx}...\end{xxx}` outside math mode.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      *
      * When `true`, `tex2jax` looks not only for the in-line and display math
      * delimiters, but also for LaTeX environments (`\begin{something} ...
@@ -479,10 +509,14 @@ export interface MathjaxTexInputProcessorOptions
     /**
      * Process `\ref{...}` outside of math mode.
      *
-     * @defaultValue `true`
-     *
+     * @remarks
      * When set to `true`, MathJax will process `\ref{...}` outside of math
      * mode.
+     *
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
     processRefs?: boolean;
 
@@ -546,7 +580,10 @@ export interface MathjaxTexInputProcessorOptions
     /**
      * Use label name rather than tag for ids.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      *
      * This controls whether element IDs for tags use the `\label` name or the
      * equation number. When `true`, use the label, when `false`, use the
@@ -816,7 +853,10 @@ export interface MathjaxSvgOutputProcessorOptions
      * it has been generated or included as an attribute on the root MathML
      * element.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
     internalSpeechTitles?: boolean;
 
@@ -882,7 +922,10 @@ export interface MathjaxChtmlOutputProcessorOptions {
      * ex-height to have the same ratio in the surrounding text as in the math
      * fonts, which is unlikely).
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
     matchFontHeight?: boolean;
 
@@ -916,7 +959,10 @@ export interface MathjaxChtmlOutputProcessorOptions {
      *
      * to clear the font cache.
      *
-     * @defaultValue `true`
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
      */
     adaptiveCSS?: boolean;
 }

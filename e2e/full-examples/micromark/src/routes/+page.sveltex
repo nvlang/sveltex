@@ -84,11 +84,11 @@ A "tex" block:
     \draw (1,2) circle (2.44);
     \draw[dashed, var(--some-color), thick] (-.5,0) rectangle (3, 3);
     \draw[red, thick] (-1,1) rectangle (2.5, 4);
-    \node at (1,2) {$\int_{0}^{1} \sum x_{i}^{3} \mathrm{d}\text{a}$};
+    \node at (1,2) {$\int_{0}^{1} \sum x_{i}^{3} \mathrm{d}\textt{a}$};
 \end{tikzpicture}
 </tex>
 
-That same tex block, referenced with a self-closing tag:
+That same tex block, referenced with a self-closing tag:.
 
 
 

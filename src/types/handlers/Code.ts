@@ -10,6 +10,7 @@ import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
 import type { CssConfiguration } from '$types/handlers/Css.js';
 import type {
+    DeepRequiredNotUndefined,
     RequiredNotNullOrUndefined,
     StringLiteralUnion,
 } from '$types/utils/utility-types.js';
@@ -22,7 +23,7 @@ export type CodeBackend =
     | 'highlight.js'
     | 'starry-night'
     | 'shiki'
-    | 'escapeOnly'
+    | 'escape'
     | 'none';
 
 /**
@@ -34,7 +35,7 @@ export type CodeBackend =
  * - `starry-night`: Awaited return type of the module's `createStarryNight`
  *   function.
  * - `shiki`: `object` (no processor).
- * - `escapeOnly`: `object` (no processor).
+ * - `escape`: `object` (no processor).
  * - `none`: `object` (no processor).
  *
  * @remarks This is the type of the `processor` property of the code handler.
@@ -47,7 +48,7 @@ export type CodeProcessor<B extends CodeBackend> = B extends 'highlight.js'
         >
       : B extends 'shiki'
         ? object
-        : B extends 'escapeOnly'
+        : B extends 'escape'
           ? object
           : B extends 'none'
             ? object
@@ -179,7 +180,7 @@ export interface CommonCodeConfiguration {
  * - `highlight.js`: The module's `HLJSOptions` type.
  * - `starry-night`: `{ customLanguages?: Grammar[]; options?: Options }`, where
  *   `Options` and `Grammar` are types from the `@wooorm/starry-night` module.
- * - `escapeOnly`: {@link SimpleEscapeInstruction | `SimpleEscapeInstruction`}.
+ * - `escape`: {@link SimpleEscapeInstruction | `SimpleEscapeInstruction`}.
  * - `custom`: `Record<string, unknown>`.
  * - `none`: `Record<string, unknown>`.
  *
@@ -193,8 +194,10 @@ export type SpecificCodeConfiguration<B extends CodeBackend> =
           ? StarryNightConfig
           : B extends 'shiki'
             ? ShikiConfig
-            : B extends 'escapeOnly'
-              ? SimpleEscapeInstruction
+            : B extends 'escape'
+              ? {
+                    escape?: SimpleEscapeInstruction | undefined;
+                }
               : B extends 'none'
                 ? object
                 : never;
@@ -209,7 +212,14 @@ export interface HighlightJsConfig {
      * Options to pass to the `highlight` function from
      * `highlight.js`.
      */
-    'highlight.js'?: Partial<import('highlight.js').HLJSOptions> | undefined;
+    'highlight.js'?:
+        | Partial<
+              Omit<
+                  import('highlight.js').HLJSOptions,
+                  'noHighlightRe' | 'languageDetectRe'
+              >
+          >
+        | undefined;
 
     /**
      * Record of language aliases.
@@ -266,10 +276,10 @@ export interface StarryNightConfig {
      *
      * @defaultValue
      * ```ts
-     * undefined
+     * null
      * ```
      */
-    lang?: StarryNightLanguage | undefined;
+    lang?: StarryNightLanguage | null | undefined;
 
     /**
      * Record of language aliases.
@@ -401,7 +411,7 @@ export type CodeConfiguration<B extends CodeBackend> = CommonCodeConfiguration &
  * @typeParam B - Code backend.
  */
 export type FullCodeConfiguration<B extends CodeBackend> =
-    RequiredNotNullOrUndefined<CommonCodeConfiguration> &
+    DeepRequiredNotUndefined<CommonCodeConfiguration> &
         (B extends CodeBackendWithCss
             ? Omit<SpecificCodeConfiguration<B>, 'theme'> & {
                   theme: FullCodeTheme<B>;
@@ -434,7 +444,9 @@ export type FullCodeConfiguration<B extends CodeBackend> =
                             >
                         >;
                 }
-              : SpecificCodeConfiguration<B>);
+              : B extends 'escape'
+                ? DeepRequiredNotUndefined<SpecificCodeConfiguration<B>>
+                : SpecificCodeConfiguration<B>);
 /**
  * Type of the {@link CodeHandler | `CodeHandler`}'s `process` function.
  *

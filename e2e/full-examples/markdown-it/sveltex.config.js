@@ -11,7 +11,7 @@ await sveltexPreprocessor.configure({
     code: {},
     math: { outputFormat: 'svg' },
     verbatim: {
-        Verb: { type: 'escapeOnly', component: 'p' },
+        Verb: { type: 'escape', component: 'p' },
         tex: {
             type: 'tex',
             aliases: ['TikZ'],

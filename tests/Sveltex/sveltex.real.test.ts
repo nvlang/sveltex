@@ -44,7 +44,7 @@ const preprocessors = [
     await sveltex(
         {
             markdownBackend: 'micromark',
-            codeBackend: 'escapeOnly',
+            codeBackend: 'escape',
             mathBackend: 'mathjax',
         },
         {

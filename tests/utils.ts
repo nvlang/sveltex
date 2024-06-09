@@ -121,7 +121,7 @@ export async function generateTests(
               : ['none'];
     const codeBackends =
         vary.code === true
-            ? ['escapeOnly', 'highlight.js', 'starry-night']
+            ? ['escape', 'highlight.js', 'starry-night']
             : isArray(vary.code)
               ? vary.code
               : ['none'];

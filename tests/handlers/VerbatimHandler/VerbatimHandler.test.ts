@@ -40,10 +40,10 @@ await sveltexPreprocessor.configure({
             component: 'JavaScript',
         },
         Verbatim: {
-            type: 'escapeOnly',
-            escapeInstructions: {
-                escapeBraces: true,
-                escapeHtml: true,
+            type: 'escape',
+            escape: {
+                braces: true,
+                html: true,
             },
         },
         Ambiguous: { type: 'noop' },
@@ -65,9 +65,11 @@ function fixture() {
 
 describe('VerbatimHandler', () => {
     let log: MockInstance;
+    let existsSync: MockInstance;
     beforeAll(async () => {
-        const mocks = await spy(['log']);
+        const mocks = await spy(['log', 'existsSync']);
         log = mocks.log;
+        existsSync = mocks.existsSync;
     });
     afterAll(() => {
         vi.restoreAllMocks();
@@ -276,6 +278,7 @@ describe('VerbatimHandler', () => {
         });
 
         it('should correctly handle self-closing components (TeX)', async () => {
+            existsSync.mockReturnValue(true);
             const sp = await sveltex();
             await sp.configure({ verbatim: { tex: { type: 'tex' } } });
             expect(
@@ -291,6 +294,7 @@ describe('VerbatimHandler', () => {
             ).toEqual(
                 '<figure>\n<svelte:component this={Sveltex__tex__something} />\n</figure>',
             );
+            existsSync.mockReset();
         });
 
         it('should work with custom transformers', async () => {

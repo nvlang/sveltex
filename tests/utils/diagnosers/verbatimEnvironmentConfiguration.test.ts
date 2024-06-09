@@ -32,7 +32,7 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
     it.each([
         {},
         getDefaultVerbEnvConfig('code'),
-        getDefaultVerbEnvConfig('escapeOnly'),
+        getDefaultVerbEnvConfig('escape'),
         getDefaultVerbEnvConfig('noop'),
         getDefaultVerbEnvConfig('tex'),
         {

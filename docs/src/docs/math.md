@@ -12,27 +12,23 @@ import { PhFileCss, PhPalette, PhGear, PhArrowFatLineRight } from '@phosphor-ico
 Render math expressions that don't require a full TeX distribution at build-time
 with MathJax or KaTeX.
 
-
-
 <div class="features-list mt-8">
 
--   <PhFileCss :size="28" weight="duotone"/>
+-   <PhFileCss color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Automatic CSS**: MathJax and KaTeX need CSS to work properly. SvelTeX
     will by default automatically take care of this for you.
 
--   <PhPalette :size="28" weight="duotone"/>
+-   <PhPalette color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Adaptive theming**: MathJax and KaTeX both use `currentColor` for their
     output by default. KaTeX also natively supports **CSS color variables**, and
     for MathJax this behavior is emulated by SvelTeX.
 
--   <PhGear :size="28" weight="duotone"/>
+-   <PhGear color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Custom transformers**: Inject custom transformers to pre- and post-process
     the in- and output of the math renderer, respectively.
-
-<!-- -   <PhArrowFatLineRight :size="28" weight="duotone"/> -->
 
 </div>
 
@@ -56,6 +52,11 @@ The following backends are supported for math rendering:
 -   **KaTeX** [[web](https://katex.org/) / [github](https://github.com/KaTeX/KaTeX) / [npm](https://www.npmjs.com/package/katex)]: A fast math renderer that supports [many](https://katex.org/docs/supported.html) TeX and LaTeX commands and produces CHTML output. It supports fewer commands than MathJax, and only a few [extensions](https://katex.org/docs/libs.html).
 
 
+## Configuration
+
+**Hint**: Hover over the different properties in the code block to show some
+IntelliSense.
+
 ::: code-group
 
 ```js twoslash [MathJax]
@@ -63,29 +64,50 @@ The following backends are supported for math rendering:
 import { sveltex } from '@nvl/sveltex'
 
 export default await sveltex({
-    texBackend: 'mathjax',
+    mathBackend: 'mathjax',
 }, {
     math: {
         css: {
             type: 'hybrid',
             cdn: 'jsdelivr'
-        }
+        },
+        mathjax: {
+            // Options passed to MathJax; note that some of the
+            // options may be ineffective, since SvelTeX takes
+            // care of some of the functionality that MathJax
+            // usually provides (e.g., finding math within a
+            // source file).
+        },
+        outputFormat: 'svg',
+        transformers: {
+            pre: [],
+            post: [],
+        },
     }
 })
 ```
 
 ```ts [KaTeX]
-fdsfds
-```
+// sveltex.config.js
+import { sveltex } from '@nvl/sveltex'
 
-```ts twoslash
-console.log('hello')
+export default await sveltex({
+    mathBackend: 'katex',
+}, {
+    math: {
+        css: {
+            type: 'cdn',
+            cdn: 'jsdelivr'
+        },
+        katex: {
+            // Options passed to KaTeX
+        },
+        transformers: {
+            pre: [],
+            post: [],
+        },
+    }
+})
 ```
 
 :::
-
-
-
-```ts twoslash
-console.log('hello')
-```
