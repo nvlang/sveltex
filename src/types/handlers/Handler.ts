@@ -33,13 +33,13 @@ export type Transformer<Options extends object = object> =
 
 export interface Transformers<Options extends object> {
     /**
-     * Transformations to apply to the tex content before passing it to the TeX
-     * backend for processing.
+     * Transformations to apply to the content before passing it to the backend
+     * for processing.
      *
      * @remarks Each transformation may be a function `(str: string, opts:
      * Options) => string`, or a 2-tuple `[string | RegExp, string]`. The
-     * transformers are called in the order they are listed on the output of
-     * the previous transformation (or on the original content if it's the first
+     * transformers are called in the order they are listed on the output of the
+     * previous transformation (or on the original content if it's the first
      * transformation). Each transformation `transformation` is applied as
      * follows, depending on its type:
      * - 2-tuple: `transformed = content.replaceAll(...transformation)`
@@ -48,7 +48,7 @@ export interface Transformers<Options extends object> {
     pre?: Transformer<Options> | Transformer<Options>[] | undefined | null;
 
     /**
-     * Transformations to apply to the output produced by Sveltex.
+     * Transformations to apply to the output produced by the backend.
      *
      * @remarks Each transformation may be a function `(str: string, opts:
      * Options) => string`, or a 2-tuple `[string | RegExp, string]`. The

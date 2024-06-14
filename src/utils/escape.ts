@@ -11,7 +11,7 @@ import type {
 } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { isArray, isOneOf, isString } from '$type-guards/utils.js';
+import { isArray, isOneOf, isString } from '$typeGuards/utils.js';
 import { getLocationUnist, walkMdast } from '$utils/ast.js';
 import { parseComponent } from '$utils/parseComponent.js';
 
@@ -42,7 +42,6 @@ import {
     mdastFrontmatterFromMarkdown,
     MdastYaml,
     inspect,
-    mdastMdxJsxFromMarkdown,
     type UnistPosition,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
@@ -303,7 +302,7 @@ function getVerbatimES(
             .slice(0, content.lastIndexOf(innerContent, end))
             .split(/\r\n?|\n/).length;
 
-        const loc = { start, end, lineOffset };
+        const loc: Offsets = { start, end, lineOffset };
 
         const config = verbEnvs?.get(tag);
         let inline = config?.defaultAttributes['inline'] === true;
@@ -974,7 +973,7 @@ export function parseToMdast(
             ]),
             mdastMathFromMarkdown(),
             mdastMdxExpressionFromMarkdown(),
-            mdastMdxJsxFromMarkdown(),
+            // mdastMdxJsxFromMarkdown(),
         ],
     });
 }

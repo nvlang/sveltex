@@ -6,24 +6,40 @@ export { existsSync, readFileSync } from 'node:fs';
 export { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 export { homedir } from 'node:os';
 export {
-    dirname,
     basename,
+    dirname,
     join,
     normalize,
+    sep as pathSep,
     relative,
     resolve,
-    sep as pathSep,
 } from 'node:path';
 export { inspect } from 'node:util';
 export { isRegExp } from 'node:util/types';
 
-export { default as CleanCSS, Output } from 'clean-css';
 export { deepmergeCustom } from 'deepmerge-ts';
 export { default as findCacheDirectory } from 'find-cache-dir';
 export { Glob } from 'glob';
 export { escape as escapeHtml } from 'html-escaper';
 export { htmlTagNames } from 'html-tag-names';
 export { default as MagicString, type SourceMap } from 'magic-string';
+
+// export { load as loadPackageJson } from '@npmcli/package-json';
+
+export type {
+    Code as MicromarkCode,
+    Construct as MicromarkConstruct,
+    Effects as MicromarkEffects,
+    State as MicromarkState,
+    TokenizeContext as MicromarkTokenizeContext,
+} from 'micromark-util-types';
+
+export {
+    markdownLineEnding as micromarkMarkdownLineEnding,
+    markdownLineEndingOrSpace as micromarkMarkdownLineEndingOrSpace,
+} from 'micromark-util-character';
+export { codes as asciiCodes } from 'micromark-util-symbol';
+export { htmlRawNames } from 'micromark-util-html-tag-name';
 
 /**
  * MDAST types for better type-safety.
@@ -82,7 +98,6 @@ export {
     type MdxFlowExpression as MdastMdxFlowExpressionNode,
     type MdxTextExpression as MdastMdxTextExpressionNode,
 } from 'mdast-util-mdx-expression';
-export { mdxJsxFromMarkdown as mdastMdxJsxFromMarkdown } from 'mdast-util-mdx-jsx';
 export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
 export {
     math as micromarkMath,
@@ -127,11 +142,14 @@ export { optimize as svgoOptimize, type Config as SvgoOptions } from 'svgo';
 export { is, assert as typeAssert, type Equals, type Extends } from 'tsafe';
 export type {
     Node as UnistNode,
-    Position as UnistPosition,
     Point as UnistPoint,
+    Position as UnistPosition,
 } from 'unist';
 export { v4 as uuid } from 'uuid';
-export { default as XRegExp } from 'xregexp';
+// export { default as XRegExp } from 'xregexp';
+import { default as XRegExpOrig } from 'xregexp';
+XRegExpOrig.install({ namespacing: true });
+export const XRegExp = XRegExpOrig;
 
 export { Poppler } from 'node-poppler';
 

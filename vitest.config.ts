@@ -5,8 +5,16 @@ import os from 'node:os';
 export default defineConfig({
     plugins: [tsconfigPaths()],
     test: {
-        include: ['./tests/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
-        exclude: ['./e2e/**/*'],
+        include: ['./tests/unit/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
+        exclude: ['./tests/e2e/**/*'],
+        typecheck: {
+            tsconfig: './tests/unit/tsconfig.json',
+            enabled: true,
+            only: false,
+        },
+        bail: 10,
+        // dir: './tests/unit',
+        silent: true,
         maxConcurrency: 100,
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
@@ -23,7 +31,7 @@ export default defineConfig({
                 '**/*.d.ts',
                 '**/external/**',
                 '**/examples/**',
-                '**/e2e/**',
+                '**/e2e-old/**',
                 '**/src/types/**',
                 '**/legacy/**',
                 '**/html/**',

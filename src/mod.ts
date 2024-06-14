@@ -18,3 +18,14 @@ export type { SveltexConfiguration } from '$types/SveltexConfiguration.js';
 export { sveltex } from './Sveltex.js';
 
 export type { Sveltex } from './Sveltex.js';
+
+export {
+    getDefaultCodeConfig,
+    getDefaultMarkdownConfig,
+    getDefaultMathConfiguration,
+    getDefaultSveltexConfig,
+    getDefaultTexConfig,
+    getDefaultVerbEnvConfig,
+    getTexPresetDefaults,
+    defaultCacheDirectory,
+} from '$config/defaults.js';

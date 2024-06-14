@@ -616,7 +616,7 @@ export const githubDarkDefault = {
             },
         },
     ],
-    fg: '#ffa198',
+    fg: '#e6edf3',
     bg: '#0d1117',
     type: 'dark' as 'dark' | 'light',
 };

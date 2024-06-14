@@ -6,7 +6,7 @@ import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { MathBackend } from '$types/handlers/Math.js';
 
 // Internal dependencies
-import { isNonNullObject, isOneOf } from '$type-guards/utils.js';
+import { isNonNullObject, isOneOf } from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 

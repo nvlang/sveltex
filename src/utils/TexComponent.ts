@@ -24,7 +24,7 @@ import {
     texBaseCommand,
     type TexLogSeverity,
 } from '$data/tex.js';
-import { isArray, isObject, isString } from '$type-guards/utils.js';
+import { isArray, isObject, isString } from '$typeGuards/utils.js';
 import { InterpretedAttributes } from '$types/utils/Escape.js';
 import { spawnCliInstruction } from '$utils/cli.js';
 import {
@@ -248,7 +248,7 @@ export class TexComponent {
      * `this.config.outputDirectory` is `'src/sveltex/tikz'`, the rendered TeX
      * file will be saved to `src/sveltex/tikz/subdir/myfig.svelte`.
      */
-    private _ref: string | undefined;
+    private _ref!: string;
 
     /**
      * The reference of the component, which is the base filename to use for
@@ -258,12 +258,6 @@ export class TexComponent {
      * @example 'myfig'
      */
     get ref(): string {
-        /* v8 ignore next 5 (unreachable code) */
-        if (this._ref === undefined || this._ref.length === 0) {
-            throw new Error(
-                'Tried to access uninitialized "ref" of TeX component.',
-            );
-        }
         return this._ref;
     }
 
@@ -711,9 +705,7 @@ export class TexComponent {
                 leadingWhitespaceInner.split(/\r\n?|\n/).length;
 
             const texLineOffset =
-                1 +
-                texLines.indexOf('\\begin{document}') +
-                additionalTexLineOffset;
+                texLines.indexOf('\\begin{document}') + additionalTexLineOffset;
             const svelteLineOffset = this.lineOffset;
 
             const parsedLog = parseLatexLog(

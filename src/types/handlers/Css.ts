@@ -75,11 +75,18 @@ interface HasTimeout {
 interface HasDir {
     /**
      * The directory to write the stylesheet to after fetching it from a CDN.
-     * This is relative to the project root.
+     * This is relative to the `static` folder.
      *
-     * @defaultValue `'src/sveltex'`
+     * @defaultValue `'sveltex'`
      */
     dir?: string | undefined;
+
+    /**
+     * The `static` directory of the project, relative to the project root.
+     *
+     * @defaultValue `'static'`
+     */
+    staticDir?: string | undefined;
 }
 
 export type FullCssConfiguration<T extends CssApproach = CssApproach> =

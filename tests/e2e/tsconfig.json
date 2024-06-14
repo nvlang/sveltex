@@ -1,0 +1,64 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "skipDefaultLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "ESNext",
+
+    // Basic settings
+    "rootDir": "./",
+    "outDir": "dist",
+    "importHelpers": true,
+
+    // Type-checking
+    "allowSyntheticDefaultImports": true,
+    "exactOptionalPropertyTypes": true, // recommended
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+
+    // Best practices
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    // "forceConsistentCasingInFileNames": true, // recommended
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
+  // except $lib which is handled by https://kit.svelte.dev/docs/configuration#files
+  //
+  // If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
+  // from the referenced tsconfig.json - TypeScript does not merge them in
+  "include": [
+    "ambient.d.ts",
+    "non-ambient.d.ts",
+    "./types/**/$types.d.ts",
+    "./vite.config.js",
+    "./vite.config.ts",
+    "./src/**/*.js",
+    "./src/**/*.ts",
+    "./src/**/*.svelte",
+    "./tests/**/*.js",
+    "./tests/**/*.ts",
+    "./tests/**/*.svelte",
+    // additions
+    "*.ts",
+    "*.js"
+  ],
+  "exclude": [
+    "./node_modules/**",
+    "./src/service-worker.js",
+    "./src/service-worker.ts",
+    "./src/service-worker.d.ts"
+  ]
+}

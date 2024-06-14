@@ -20,6 +20,14 @@ test-results
 tmp
 vitest-report
 
+scripts/tex/build
+scripts/tex/markdown
+scripts/tex/results
+scripts/tex/svg
+scripts/tex/svg-optimized
+
+tests/e2e/src/routes/generated
+
 # Docs
 docs/.vitepress/cache/
 

@@ -16,9 +16,10 @@ import {
     isArray,
     isNonNullObject,
     isPresentAndDefined,
+    isRecord,
     isString,
-} from '$type-guards/utils.js';
-import { isMetaHttpEquiv, isMetaName } from '$type-guards/frontmatter.js';
+} from '$typeGuards/utils.js';
+import { isMetaHttpEquiv, isMetaName } from '$typeGuards/frontmatter.js';
 
 export function parseFrontmatter(
     snippet: ProcessableSnippet<'frontmatter'>,
@@ -237,16 +238,37 @@ function addMetaHttpEquiv(
 export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
     headLines: string[];
     scriptLines: string[];
+    frontmatter: Frontmatter | undefined;
 } {
     const frontmatter = interpretFrontmatter(parseFrontmatter(snippet));
     const headLines: string[] = [];
     const scriptLines: string[] = [];
-    if (frontmatter === undefined) return { headLines, scriptLines };
-    const { title, base, noscript, link, meta } = frontmatter;
+    if (frontmatter === undefined)
+        return { headLines, scriptLines, frontmatter };
+    const { title, base, noscript, link, meta, imports } = frontmatter;
 
     Object.entries(frontmatter).forEach(([key, value]) => {
         scriptLines.push(`const ${key} = ${JSON.stringify(value)};`);
     });
+
+    // Imports
+    if (
+        imports &&
+        isRecord(
+            imports,
+            ([k, v]) => (isString(k) && isString(v)) || isArray(v, isString),
+        )
+    ) {
+        Object.entries(imports).forEach(([path, value]) => {
+            if (isString(value)) {
+                scriptLines.push(`import ${value} from '${path}';`);
+            } else if (isArray(value)) {
+                scriptLines.push(
+                    `import { ${value.join(', ')} } from '${path}';`,
+                );
+            }
+        });
+    }
 
     // Title
     if (title && isString(title)) {
@@ -289,18 +311,16 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
     }
 
     // Meta
-    if (meta) {
-        if (Array.isArray(meta)) {
-            meta.forEach((metaEntry) => {
-                let metaString = '<meta';
-                Object.entries(metaEntry).forEach(([key, value]) => {
-                    metaString += ` ${key}="${String(value)}"`;
-                });
-                metaString += '>';
-                headLines.push(metaString);
+    if (meta && isArray(meta)) {
+        meta.forEach((metaEntry) => {
+            let metaString = '<meta';
+            Object.entries(metaEntry).forEach(([key, value]) => {
+                metaString += ` ${key}="${String(value)}"`;
             });
-        }
+            metaString += '>';
+            headLines.push(metaString);
+        });
     }
 
-    return { headLines, scriptLines };
+    return { headLines, scriptLines, frontmatter };
 }

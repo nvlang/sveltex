@@ -116,9 +116,6 @@ export class SveltexCache {
 
     async cleanup(): Promise<void> {
         const cachedPaths = await this.cacheDirGlob.walk();
-        // const cachedPaths = (await this.cacheDirGlob.walk()).sort((a, b) =>
-        //     dirContains(a, b) ? -1 : 0,
-        // );
         const usedKeyPaths = Object.keys(this.data.svg).map((kp) =>
             join(this.cacheDirAbs, kp),
         );

@@ -9,12 +9,12 @@ import {
     isOneOf,
     isString,
     isStringArray,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 import {
     isCliInstruction,
     isSupportedTexEngine,
     supportedTexEngines,
-} from '$type-guards/verbatim.js';
+} from '$typeGuards/verbatim.js';
 import { extendedLogSeverities } from '$utils/TexComponent.js';
 import { Diagnoser, enquote } from '$utils/diagnosers/Diagnoser.js';
 

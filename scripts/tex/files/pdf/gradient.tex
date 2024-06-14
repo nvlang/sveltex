@@ -1,0 +1,11 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepgflibrary{shadings}
+
+\begin{document}
+\begin{tikzpicture}
+\fill [ left color = red, right color = blue ] (0,0) rectangle (2,2);
+\fill [ left color = blue, right color = green ] (2,0) rectangle (4,2);
+\fill [ left color = green, right color = red ] (4,0) rectangle (6,2);
+\end{tikzpicture}
+\end{document}

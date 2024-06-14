@@ -9,25 +9,27 @@ import { PhFileCss, PhPalette, PhGear, PhArrowFatLineRight } from '@phosphor-ico
 
 # Math
 
+<p class="text-lg">
 Render math expressions that don't require a full TeX distribution at build-time
 with MathJax or KaTeX.
+</p>
 
 <div class="features-list mt-8">
 
 -   <PhFileCss color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Automatic CSS**: MathJax and KaTeX need CSS to work properly. SvelTeX
+    **Automatic CSS:** MathJax and KaTeX need CSS to work properly. SvelTeX
     will by default automatically take care of this for you.
 
 -   <PhPalette color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Adaptive theming**: MathJax and KaTeX both use `currentColor` for their
+    **Adaptive theming:** MathJax and KaTeX both use `currentColor` for their
     output by default. KaTeX also natively supports **CSS color variables**, and
     for MathJax this behavior is emulated by SvelTeX.
 
 -   <PhGear color="var(--hig-orange)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Custom transformers**: Inject custom transformers to pre- and post-process
+    **Custom transformers:** Inject custom transformers to pre- and post-process
     the in- and output of the math renderer, respectively.
 
 </div>
@@ -54,7 +56,7 @@ The following backends are supported for math rendering:
 
 ## Configuration
 
-**Hint**: Hover over the different properties in the code block to show some
+**Hint:** Hover over the different properties in the code block to show some
 IntelliSense.
 
 ::: code-group

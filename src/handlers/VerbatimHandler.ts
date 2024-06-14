@@ -28,7 +28,14 @@ import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { escapeHtml, is, nodeAssert, rfdc, typeAssert } from '$deps.js';
+import {
+    escapeHtml,
+    inspect,
+    is,
+    nodeAssert,
+    rfdc,
+    typeAssert,
+} from '$deps.js';
 import { applyTransformations } from '$utils/transformers.js';
 import { copyTransformations } from '$utils/misc.js';
 
@@ -313,16 +320,20 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             return { processed, unescapeOptions };
         };
         const configure = (
-            _configuration: VerbatimConfiguration,
+            configuration: VerbatimConfiguration,
             verbatimHandler: VerbatimHandler<C>,
         ) => {
-            const verbatimEnvironments = verbatimHandler._configuration;
-
+            const newVerbatimEnvironments = configuration;
+            console.log(
+                'newVerbatimEnvironments:',
+                inspect(newVerbatimEnvironments, { depth: 5 }),
+            );
             const verbEnvs = verbatimHandler._verbEnvs;
+            console.log('verbEnvs:', inspect(verbEnvs, { depth: 5 }));
             const aliasMap = verbatimHandler._aliasMap;
 
-            const validVerbatimEnvironments: [string, FullVerbEnvConfig][] =
-                Object.entries(verbatimEnvironments)
+            const validNewVerbatimEnvironments: [string, FullVerbEnvConfig][] =
+                Object.entries(newVerbatimEnvironments)
                     .filter(
                         ([env, config]) =>
                             diagnoseVerbEnvConfig(config, env).errors === 0,
@@ -336,7 +347,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                     ]);
 
             // Add "main" names of verbatim environments
-            for (const [env, config] of validVerbatimEnvironments) {
+            for (const [env, config] of validNewVerbatimEnvironments) {
                 verbEnvs.set(env, config);
             }
 
@@ -344,7 +355,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             const duplicates: string[] = [];
 
             // Add aliases, and check for duplicates
-            for (const [env, config] of validVerbatimEnvironments) {
+            for (const [env, config] of validNewVerbatimEnvironments) {
                 for (const alias of config.aliases) {
                     if (alias !== env) {
                         if (verbEnvs.has(alias)) {

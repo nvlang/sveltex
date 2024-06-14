@@ -41,6 +41,8 @@ import { mergeConfigs } from '$utils/merge.js';
 // External dependencies
 import { MagicString, is, typeAssert } from '$deps.js';
 import { handleFrontmatter } from '$utils/frontmatter.js';
+import type { Frontmatter } from '$types/utils/Frontmatter.js';
+import { applyTransformations } from '$utils/transformers.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -160,7 +162,7 @@ export class Sveltex<
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
-        if (this.texPresent[filename]) {
+        if (this.mathPresent[filename]) {
             script.push(...this.mathHandler.scriptLines);
         }
         if (this.codePresent[filename]) {
@@ -207,7 +209,7 @@ export class Sveltex<
     };
 
     private codePresent: Record<string, boolean> = {};
-    private texPresent: Record<string, boolean> = {};
+    private mathPresent: Record<string, boolean> = {};
 
     private scriptLines: Record<string, string[]> = {};
 
@@ -253,19 +255,16 @@ export class Sveltex<
             //         inline code, and content inside "verbatim" environments).
             const { escapedDocument, escapedSnippets } = escape(
                 content,
-                [
-                    ...this.verbatimHandler.verbEnvs.keys(),
-                    // ...this.texHandler.tccNames,
-                    // ...this.texHandler.tccAliases,
-                ],
+                [...this.verbatimHandler.verbEnvs.keys()],
                 this.configuration.general.math,
-                this._verbatimHandler.verbEnvs,
+                this.verbatimHandler.verbEnvs,
             );
 
             let headId: string | undefined = undefined;
             let headSnippet: ProcessedSnippet | undefined = undefined;
             let scriptPresent: boolean = false;
             const prependToProcessed: string[] = [];
+            let frontmatter: Frontmatter | undefined = undefined;
 
             let codePresent = false;
             let mathPresent = false;
@@ -316,6 +315,7 @@ export class Sveltex<
                         headLines.push(...handledFrontmatter.headLines);
                         this.scriptLines[filename] =
                             handledFrontmatter.scriptLines;
+                        frontmatter = handledFrontmatter.frontmatter;
                         processedSnippet = {
                             processed: '',
                             unescapeOptions,
@@ -356,8 +356,9 @@ export class Sveltex<
             // the warning.
             /* eslint-disable @typescript-eslint/no-unnecessary-condition */
             if (mathPresent) {
-                this.texPresent[filename] = true;
+                this.mathPresent[filename] = true;
                 headLines.push(...this.mathHandler.headLines);
+                await this.mathHandler.updateCss();
             }
             if (codePresent) {
                 this.codePresent[filename] = true;
@@ -387,10 +388,25 @@ export class Sveltex<
             if (!scriptPresent) {
                 prependToProcessed.push('<script>', '</script>');
             }
-            /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 
-            const html = (await markdownHandler.process(escapedDocument, {}))
-                .processed;
+            let html = escapedDocument;
+
+            // Apply the pre-transformers
+            html = applyTransformations(
+                html,
+                frontmatter ?? {},
+                markdownHandler.configuration.transformers.pre,
+            );
+
+            html = (await markdownHandler.process(html, {})).processed;
+
+            // Apply the post-transformers
+            html = applyTransformations(
+                html,
+                frontmatter ?? {},
+                markdownHandler.configuration.transformers.post,
+            );
+            /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 
             let code = unescapeSnippets(html, processedSnippets);
             code = unescapeColons(code);
@@ -421,22 +437,35 @@ export class Sveltex<
         const mergedConfig = mergeConfigs(this._configuration, configuration);
 
         await Promise.all([
-            this.markdownHandler.configure(mergedConfig.markdown),
-            this.codeHandler.configure(
-                mergedConfig.code as CodeConfiguration<C>,
-            ),
-            this.mathHandler.configure(
-                mergedConfig.math as MathConfiguration<T>,
-            ),
-            this.texHandler.configure(mergedConfig.tex),
+            configuration.markdown !== undefined
+                ? this.markdownHandler.configure(configuration.markdown)
+                : Promise.resolve(),
+            configuration.code !== undefined
+                ? this.codeHandler.configure(configuration.code)
+                : Promise.resolve(),
+            configuration.math !== undefined
+                ? this.mathHandler.configure(configuration.math)
+                : Promise.resolve(),
+            configuration.tex !== undefined
+                ? this.texHandler.configure(configuration.tex)
+                : Promise.resolve(),
         ]);
 
         // Since VerbatimHandler uses CodeHandler and TexHandler, we
         // want to make sure that those dependencies are fully configured before
         // configuring the VerbatimHandler.
-        await this.verbatimHandler.configure(mergedConfig.verbatim);
+        if (configuration.verbatim !== undefined) {
+            await this.verbatimHandler.configure(configuration.verbatim);
+        }
 
-        this._configuration = mergedConfig;
+        this._configuration = {
+            markdown: this._markdownHandler.configuration,
+            code: this._codeHandler.configuration,
+            math: this._mathHandler.configuration,
+            tex: this._texHandler.configuration,
+            verbatim: this._verbatimHandler.configuration,
+            general: mergedConfig.general,
+        };
     }
 
     get configuration() {
@@ -611,7 +640,7 @@ export class Sveltex<
         if (errors.length > 0) {
             const install =
                 '\n\nPlease install the necessary dependencies by running:\n\n' +
-                `${detectPackageManager()} add -D ${missingDeps.join(' ')}`;
+                `${await detectPackageManager()} add -D ${missingDeps.join(' ')}`;
 
             throw Error(`Failed to create Sveltex preprocessor.` + install, {
                 cause:

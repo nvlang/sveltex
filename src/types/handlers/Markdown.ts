@@ -1,5 +1,10 @@
 import type { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import type { ProcessFn } from '$types/handlers/Handler.js';
+import type { ProcessFn, Transformers } from '$types/handlers/Handler.js';
+import type { Frontmatter } from '$types/utils/Frontmatter.js';
+import type {
+    RequiredNotNullOrUndefined,
+    RequiredNotUndefined,
+} from '$types/utils/utility-types.js';
 
 /**
  * Supported markdown processors.
@@ -65,20 +70,20 @@ export type MarkdownProcessor<B> = B extends 'markdown-it'
  */
 export type MarkdownConfiguration<B extends MarkdownBackend> =
     B extends 'markdown-it'
-        ? {
+        ? MarkdownCommonConfiguration & {
               /**
                * Options to pass to the `markdown-it` processor.
                *
                * @see https://github.com/markdown-it/markdown-it
                *
-               * @remarks The `highlight` and `langPrefix` options are not
-               * supported here, since they relate to features that are dealt
-               * with by the Sveltex instance's code handler, instead of its
-               * markdown handler.
+               * @remarks The `highlight`, `html`, and `langPrefix` options are
+               * not supported here, since they relate to features that are
+               * dealt with by the Sveltex instance's code handler, instead of
+               * its markdown handler.
                */
               options?: Omit<
                   import('markdown-it').Options,
-                  'highlight' | 'langPrefix'
+                  'highlight' | 'langPrefix' | 'html'
               >;
 
               extensions?: (
@@ -95,7 +100,7 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
               // | [unknown, Record<string, unknown>]
           }
         : B extends 'marked'
-          ? {
+          ? MarkdownCommonConfiguration & {
                 /**
                  * Options to pass to the `marked` processor.
                  *
@@ -111,9 +116,13 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                 extensions?: import('marked').MarkedExtension[];
             }
           : B extends 'micromark'
-            ? import('micromark').Options
+            ? MarkdownCommonConfiguration & {
+                  options?:
+                      | Omit<import('micromark').Options, 'allowDangerousHtml'>
+                      | undefined;
+              }
             : B extends 'unified'
-              ? {
+              ? MarkdownCommonConfiguration & {
                     /**
                      * Plugins to use with the `remark` processor.
                      *
@@ -134,15 +143,58 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      */
                     rehypePlugins?: import('unified').PluggableList | undefined;
                 }
-              : B extends 'custom'
-                ? Record<string, unknown>
-                : B extends 'none'
-                  ? Record<string, unknown>
-                  : never;
+              : MarkdownCommonConfiguration & Record<string, unknown>;
+
+interface MarkdownCommonConfiguration {
+    /**
+     * Transformers to apply to
+     * -   the content about to be passed to the markdown processor, or to
+     * -   the output produced by the markdown processor.
+     *
+     * @remarks
+     * Note that, in either case, code blocks, math content, TeX content, and the
+     * frontmatter will have been escaped to an UUIDv4 string before the
+     * transformers are applied.
+     */
+    transformers?: Transformers<Frontmatter> | undefined;
+
+    /**
+     * By default, SvelTeX makes some adjustments to some kinds of markup that
+     * would, if CommonMark were complied with strictly, yield unexpected or
+     * even invalid HTML output. If you want to disable these adjustments and
+     * comply more strictly with CommonMark for these cases, set this property
+     * to `true`.
+     *
+     * @see https://sveltex.dev/dovs/implementation/markdown
+     *
+     * @remarks Setting this property to `true` will void the
+     * {@link prefersInline | `prefersInline`} property.
+     *
+     * @defaultValue
+     * ```ts
+     * false
+     * ```
+     */
+    strict?: boolean | undefined;
+
+    /**
+     * @see https://sveltex.dev/dovs/implementation/markdown
+     *
+     * @defaultValue
+     * ```ts
+     * () => true
+     * ```
+     */
+    prefersInline?: ((tag: string) => boolean) | undefined;
+}
+
+type FullMarkdownCommonConfiguration = {
+    transformers: RequiredNotNullOrUndefined<Transformers<Frontmatter>>;
+} & RequiredNotUndefined<MarkdownCommonConfiguration>;
 
 export type FullMarkdownConfiguration<B extends MarkdownBackend> =
     B extends 'markdown-it'
-        ? {
+        ? FullMarkdownCommonConfiguration & {
               options?: Omit<
                   import('markdown-it').Options,
                   'highlight' | 'langPrefix'
@@ -158,22 +210,23 @@ export type FullMarkdownConfiguration<B extends MarkdownBackend> =
               )[];
           }
         : B extends 'marked'
-          ? {
+          ? FullMarkdownCommonConfiguration & {
                 options: import('marked').MarkedOptions;
                 extensions: import('marked').MarkedExtension[];
             }
           : B extends 'micromark'
-            ? import('micromark').Options
+            ? FullMarkdownCommonConfiguration & {
+                  options: Omit<
+                      import('micromark').Options,
+                      'allowDangerousHtml'
+                  >;
+              }
             : B extends 'unified'
-              ? {
+              ? FullMarkdownCommonConfiguration & {
                     remarkPlugins: import('unified').PluggableList;
                     rehypePlugins: import('unified').PluggableList;
                 }
-              : B extends 'custom'
-                ? Record<string, unknown>
-                : B extends 'none'
-                  ? Record<string, unknown>
-                  : never;
+              : FullMarkdownCommonConfiguration & Record<string, unknown>;
 
 /**
  * Type of the function that processes a markdown string.

@@ -9,7 +9,7 @@ import {
     isOneOf,
     isPresentAndDefined,
     isString,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 
 // External dependencies
 import { inspect, ora, pc } from '$deps.js';

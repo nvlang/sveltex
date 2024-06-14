@@ -3,10 +3,7 @@ import type { LineColumn, Offsets } from '$types/utils/Ast.js';
 import type { UnistNode } from '$deps.js';
 
 // Internal dependencies
-import {
-    hasStartEnd_LineColumn,
-    hasStartEnd_Offset,
-} from '$type-guards/ast.js';
+import { hasStartEnd_LineColumn, hasStartEnd_Offset } from '$typeGuards/ast.js';
 
 // External dependencies
 import { inspect } from '$deps.js';

@@ -12,6 +12,7 @@ import type {
 import type {
     FullMathConfiguration,
     MathBackend,
+    MathJaxFullCssConfiguration,
 } from '$types/handlers/Math.js';
 import type {
     FullVerbEnvConfigTex,
@@ -28,7 +29,7 @@ import {
     isNonNullObject,
     isPresentAndDefined,
     isString,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 
 // External dependencies
 import {
@@ -78,7 +79,8 @@ export function getDefaultMathConfiguration<
                         : ca === 'hybrid'
                           ? {
                                 cdn: ['jsdelivr', 'esm.sh', 'cdnjs', 'unpkg'],
-                                dir: 'src/sveltex',
+                                dir: 'sveltex',
+                                staticDir: 'static',
                                 timeout: 2000,
                                 type: 'hybrid',
                             }
@@ -90,24 +92,28 @@ export function getDefaultMathConfiguration<
         }
         case 'mathjax': {
             const rv: FullMathConfiguration<'mathjax'> = {
-                css:
-                    ca === 'hybrid'
-                        ? {
-                              cdn: ['jsdelivr', 'esm.sh', 'cdnjs', 'unpkg'],
-                              dir: 'src/sveltex',
-                              timeout: 2000,
-                              type: 'hybrid',
-                          }
-                        : { type: 'none' },
+                css: {
+                    cdn: ['jsdelivr', 'esm.sh', 'cdnjs', 'unpkg'],
+                    dir: 'sveltex',
+                    staticDir: 'static',
+                    timeout: 2000,
+                    type: ca === 'hybrid' ? 'hybrid' : 'none',
+                    font: 'modern',
+                } as MathJaxFullCssConfiguration,
                 mathjax: {
                     tex: {},
+                    chtml: {
+                        adaptiveCSS: false,
+                        fontURL:
+                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/',
+                    },
                 },
                 outputFormat: 'svg',
                 transformers: { post: [], pre: [] },
                 // mathjax: { chtml: { fontURL:
                 //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                 // }}
-            };
+            } as FullMathConfiguration<'mathjax'>;
             return rv as FullMathConfiguration<T>;
         }
         default:
@@ -120,6 +126,15 @@ export function getDefaultMathConfiguration<
 }
 
 const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
+
+/**
+ * The default cache directory for SvelTeX.
+ *
+ * @example
+ * ```ts
+ * 'node_modules/.cache/@nvl/sveltex'
+ * ```
+ */
 export const defaultCacheDirectory = cacheDir
     ? relative(process.cwd(), cacheDir)
     : resolve(
@@ -347,10 +362,11 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                 type: 'cdn',
                 // Even though the `dir` and `timeout` properties don't really
                 // exist if `type` is 'cdn', we want to initialize them to
-                // 'src/sveltex' and 2000, respectively, so that, if the user
+                // 'sveltex' and 2000, respectively, so that, if the user
                 // changes the `type` to 'self-hosted', the `dir` and `timeout`
                 // properties are already set to sensible defaults.
-                dir: 'src/sveltex',
+                dir: 'sveltex',
+                staticDir: 'static',
                 timeout: 2000,
             },
             transformers: { post: [], pre: [] },
@@ -380,10 +396,11 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                 type: 'cdn',
                 // Even though the `dir` and `timeout` properties don't really
                 // exist if `type` is 'cdn', we want to initialize them to
-                // 'src/sveltex' and 2000, respectively, so that, if the user
+                // 'sveltex' and 2000, respectively, so that, if the user
                 // changes the `type` to 'self-hosted', the `dir` and `timeout`
                 // properties are already set to sensible defaults.
-                dir: 'src/sveltex',
+                dir: 'sveltex',
+                staticDir: 'static',
                 timeout: 2000,
             },
             transformers: { post: [], pre: [] },
@@ -448,14 +465,54 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
             return {
                 remarkPlugins: [],
                 rehypePlugins: [],
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
             } as FullMarkdownConfiguration<'unified'> as FullMarkdownConfiguration<M>;
         case 'marked':
             return {
                 options: {},
                 extensions: [],
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
             } as FullMarkdownConfiguration<'marked'> as FullMarkdownConfiguration<M>;
+        case 'micromark':
+            return {
+                options: {
+                    allowDangerousHtml: true,
+                    extensions: [],
+                    htmlExtensions: [],
+                    allowDangerousProtocol: false,
+                },
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
+            } as FullMarkdownConfiguration<'micromark'> as FullMarkdownConfiguration<M>;
+        case 'markdown-it':
+            return {
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
+            } as FullMarkdownConfiguration<'markdown-it'> as FullMarkdownConfiguration<M>;
+        case 'custom':
+            return {
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
+            } as FullMarkdownConfiguration<'custom'> as FullMarkdownConfiguration<M>;
         default:
-            return {} as FullMarkdownConfiguration<M>;
+            return {
+                // Common options
+                prefersInline: () => true,
+                strict: false,
+                transformers: { post: [], pre: [] },
+            } as FullMarkdownConfiguration<'none'> as FullMarkdownConfiguration<M>;
     }
 }
 

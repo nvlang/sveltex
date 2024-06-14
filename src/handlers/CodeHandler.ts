@@ -15,8 +15,8 @@ import type { ProcessedSnippet } from '$types/utils/Escape.js';
 // Internal dependencies
 import { getDefaultCodeConfig } from '$config/defaults.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
-import { isCodeBackendWithCss } from '$type-guards/code.js';
-import { isArray, isObject, isString } from '$type-guards/utils.js';
+import { isCodeBackendWithCss } from '$typeGuards/code.js';
+import { isArray, isObject, isString } from '$typeGuards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
 import { log } from '$utils/debug.js';
 import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
@@ -240,7 +240,8 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         }
 
         // Build the path to which we should write the fetched stylesheet
-        const path = join(theme.dir, `${this.backend}@${v}.${resourceName}`);
+        const href = join(theme.dir, `${this.backend}@${v}.${resourceName}`);
+        const path = join(theme.staticDir, href);
 
         // If the file already exists, don't fetch it again
         if (fs.existsSync(path)) return;
@@ -254,7 +255,10 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         // Write the fetched CSS to the specified path
         await fancyWrite(path, css);
 
-        this._scriptLines = [`import '${ensureStartsWith(path, '/')}';`];
+        // this._scriptLines = [`import '${ensureStartsWith(href, '/')}';`];
+        this._headLines = [
+            `<link rel="stylesheet" href="${ensureStartsWith(href, '/')}">`,
+        ];
     }
 
     // Setting a config value to `null` should be akin to "disabling" the

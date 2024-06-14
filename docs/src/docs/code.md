@@ -4,10 +4,11 @@ import PipelineImage from './PipelineImage.vue';
 import { PhFileCss, PhHighlighter, PhGear, PhArrowUDownRight } from '@phosphor-icons/vue';
 </script>
 
-# Overview
+# Code
 
 <p class="text-lg">
-Highlight code blocks and inline code spans with one of three backends.
+Highlight code blocks and inline code spans at build-time with one of three
+backends.
 </p>
 
 
@@ -17,24 +18,24 @@ Highlight code blocks and inline code spans with one of three backends.
 
 -   <PhFileCss color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Automatic CSS**: `starry-night` and highlight.js need CSS to apply a given
+    **Automatic CSS:** `starry-night` and highlight.js need CSS to apply a given
     syntax theme. SvelTeX will by default automatically take care of this for
     you. Simply specify the theme you want to use in your configuration file.
 
 -   <PhHighlighter color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Inline syntax highlighting**: Highlight inline code in the same way as you
+    **Inline syntax highlighting:** Highlight inline code in the same way as you
     would code blocks. You can even customize what syntax to use to specify the
     language for the code span.
 
 -   <PhGear color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Custom transformers**: Inject custom transformers to pre- and post-process
+    **Custom transformers:** Inject custom transformers to pre- and post-process
     the in- and output of the syntax highlighter, respectively.
 
 -   <PhArrowUDownRight color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
-    **Language Aliases**: Define custom aliases for languages.
+    **Language Aliases:** Define custom aliases for languages.
 
 </div>
 
@@ -63,10 +64,10 @@ The following backends are supported for syntax highlighting in code blocks:
 
 The following two "backends" are not actually syntax highlighters:
 
--   **`escape`**: You can use this backend if you want to escape braces and HTML
+-   **`escape`:** You can use this backend if you want to escape braces and HTML
     characters that might otherwise interfere with Svelte's compiler, but leave
     the code as-is otherwise.
--   **`none`**: You can use this backend if you don't want any syntax
+-   **`none`:** You can use this backend if you don't want any syntax
     highlighting at all.
 
 Note that, with both of the above, custom transformers can still be used to pre-
@@ -199,15 +200,15 @@ export default await sveltex({ codeBackend: 'none' }, {
 
 ::: details What about Prism?
 
-[Prism.js](https://github.com/PrismJS/prism/) is not supported as a backend for
-syntax highlighting in code blocks. This isn't for lack of trying. Prism.js v1
+[Prism](https://github.com/PrismJS/prism/) is not supported as a backend for
+syntax highlighting in code blocks. This isn't for lack of trying. Prism v1
 is somewhat outdated (it's currently a CommonJS module), and though I got it to
 work _somewhat_, I couldn't load any languages beyond JS or TS. In any event,
 SvelTeX's use-case isn't really what Prism was designed for. One of Prism's main
 selling points is it's small size, but this isn't a primary concern for
 preprocessors such as SvelTeX.
 
-Prism.js's maintainers' focus has shifted to v2, which is not yet available.
+Prism's maintainers' focus has shifted to v2, which is not yet available.
 When v2 becomes available, I'll consider adding support for it in SvelTeX.
 
 :::

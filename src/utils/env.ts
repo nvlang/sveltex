@@ -1,5 +1,6 @@
 // Internal dependencies
 import { resolve } from '$deps.js';
+import { defaultCacheDirectory } from '$mod.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs, pathExists } from '$utils/fs.js';
 
@@ -16,11 +17,15 @@ export async function getVersion(
 ): Promise<string | undefined> {
     let backendVersion: string | undefined;
     try {
+        const prefix = defaultCacheDirectory.includes('node_modules')
+            ? defaultCacheDirectory.split('node_modules')[0]
+            : '';
+        const path = prefix
+            ? resolve(prefix, 'node_modules', pkg, 'package.json')
+            : resolve('node_modules', pkg, 'package.json');
         backendVersion = (
-            (await import(`${pkg}/package.json`, {
-                with: { type: 'json' },
-            })) as { default: { version: string } }
-        ).default.version;
+            JSON.parse(await fs.readFile(path, 'utf-8')) as { version?: string }
+        ).version;
     } catch (err) {
         backendVersion = undefined;
         log(
@@ -37,12 +42,14 @@ export async function getVersion(
  * @returns The package manager ('pnpm', 'bun', 'npm', or 'yarn'), or
  * `undefined` if not found (or unknown package manager is found).
  */
-export function getPmFromPackageJson(
+export async function getPmFromPackageJson(
     cwd = process.cwd(),
-): 'pnpm' | 'bun' | 'npm' | 'yarn' | undefined {
+): Promise<'pnpm' | 'bun' | 'npm' | 'yarn' | undefined> {
     const packageJsonPath = resolve(cwd, 'package.json');
     if (pathExists(packageJsonPath)) {
-        const packageJsonContent = fs.readFileSync(packageJsonPath).toString();
+        const packageJsonContent = (
+            await fs.readFile(packageJsonPath)
+        ).toString();
         const packageJsonObj: unknown = JSON.parse(packageJsonContent);
         if (
             typeof packageJsonObj !== 'object' ||
@@ -91,11 +98,11 @@ export function getPmFromLockfile(
  * no package manager is detected, or an unknown package manager is detected,
  * returns 'npm'.
  */
-export function detectPackageManager(
+export async function detectPackageManager(
     cwd = process.cwd(),
-): 'pnpm' | 'bun' | 'npm' | 'yarn' {
+): Promise<'pnpm' | 'bun' | 'npm' | 'yarn'> {
     // First, attempt to determine the package manager from package.json
-    const packageManager = getPmFromPackageJson(cwd);
+    const packageManager = await getPmFromPackageJson(cwd);
     if (packageManager) {
         return packageManager;
     }

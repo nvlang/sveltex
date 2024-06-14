@@ -10,8 +10,10 @@ export default tseslint.config(
         ignores: [
             '.DS_Store',
             'node_modules',
+            '**/node_modules/**',
             'dist',
             '/package',
+            'tests/e2e',
             '.env',
             '.env.*',
             '!.env.example',
@@ -67,16 +69,16 @@ export default tseslint.config(
     },
     {
         // Vitest test files
-        files: ['tests/**/*.{test,spec}.ts'],
+        files: ['tests/unit/**/*.{test,spec}.ts'],
         plugins: { vitest },
-        rules: vitest.configs.recommended.rules, // vitest.configs.recommended.rules,
+        rules: vitest.configs.recommended.rules,
         languageOptions: {
             globals: vitest.environments.env.globals,
         },
     },
     {
         // Playwright test files
-        files: ['e2e/**/*.{test,spec}.ts'],
+        files: ['tests/e2e/**/*.{test,spec}.ts'],
         plugins: { playwright },
         rules: playwright.configs.recommended.rules,
     },

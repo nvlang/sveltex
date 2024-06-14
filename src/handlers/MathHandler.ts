@@ -12,9 +12,8 @@ import type {
 // Internal dependencies
 import { getDefaultMathConfiguration } from '$config/defaults.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
-import { isArray, isOneOf } from '$type-guards/utils.js';
+import { isArray, isOneOf } from '$typeGuards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
-import { runWithSpinner } from '$utils/debug.js';
 import { escapeBraces } from '$utils/escape.js';
 import { fs } from '$utils/fs.js';
 import { getVersion, missingDeps } from '$utils/env.js';
@@ -26,7 +25,11 @@ import {
 } from '$utils/misc.js';
 
 // External dependencies
-import { CleanCSS, Output, join, prettyBytes } from '$deps.js';
+import {
+    join,
+    nodeAssert,
+    // CleanCSS, Output, prettyBytes
+} from '$deps.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '$utils/css.js';
 import { applyTransformations } from '$utils/transformers.js';
 
@@ -61,8 +64,9 @@ export class MathHandler<B extends MathBackend> extends Handler<
             isOneOf(this.backend, ['mathjax', 'katex'])
                 ? {
                       type: 'none',
-                      dir: 'src/sveltex',
-                      timeout: 1000,
+                      dir: 'sveltex',
+                      staticDir: 'static',
+                      timeout: 2000,
                       cdn: 'jsdelivr',
                   }
                 : undefined,
@@ -87,6 +91,22 @@ export class MathHandler<B extends MathBackend> extends Handler<
     }
 
     private _handledCss: boolean = false;
+
+    private _updateCss: (mathHandler: this) => Promise<void> = () =>
+        Promise.resolve();
+
+    get updateCss() {
+        return async () => {
+            if (
+                this.backend === 'mathjax' &&
+                (this._configuration as FullMathConfiguration<'mathjax'>).css
+                    .type === 'hybrid' &&
+                (this._configuration as FullMathConfiguration<'mathjax'>)
+                    .outputFormat === 'chtml'
+            )
+                await this._updateCss(this);
+        };
+    }
 
     /**
      * Lines of code that should be added to the `<svelte:head>` component
@@ -140,6 +160,27 @@ export class MathHandler<B extends MathBackend> extends Handler<
         });
         if (handleCss) this._handleCss = handleCss;
     }
+
+    /**
+     * The version string of the tex processor used by this handler.
+     *
+     * This property is only available for the `katex` and `mathjax` backends.
+     *
+     * @example
+     * For KaTeX this could e.g. be:
+     * ```ts
+     * '0.16.10'
+     * ```
+     * For MathJax, this could e.g. be:
+     * ```ts
+     * '3.2.2'
+     * ```
+     * or
+     * ```ts
+     * '4.0.0-beta.6'
+     * ```
+     */
+    version: string | undefined = undefined;
 
     /**
      * Creates a math handler of the specified type.
@@ -285,12 +326,13 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
                     // type: 'hybrid'
 
-                    const { dir } = cssConfig;
+                    const { dir, staticDir } = cssConfig;
 
-                    const path = join(dir, `katex@${v}.min.css`);
+                    const href = join(dir, `katex@${v}.min.css`);
+                    const path = join(staticDir, href);
 
                     mathHandler._headLines = [
-                        `<link rel="stylesheet" href="${ensureStartsWith(path, '/')}">`,
+                        `<link rel="stylesheet" href="${ensureStartsWith(href, '/')}">`,
                     ];
 
                     if (fs.existsSync(path)) return;
@@ -349,6 +391,9 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 const { RegisterHTMLHandler } = await import(
                     'mathjax-full/js/handlers/html.js'
                 );
+                // const { AssistiveMmlHandler } = await import(
+                //     'mathjax-full/js/a11y/assistive-mml.js'
+                // );
                 const { AllPackages } = await import(
                     'mathjax-full/js/input/tex/AllPackages.js'
                 );
@@ -360,11 +405,12 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
                 const adaptor = liteAdaptor();
                 RegisterHTMLHandler(adaptor);
+                /// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+                // AssistiveMmlHandler(adaptor as any);
 
                 const handleCss: (
                     mathHandler: MathHandler<'mathjax'>,
                 ) => Promise<void> = async (mathHandler) => {
-                    // Convenience alias
                     const config = mathHandler.configuration;
 
                     const type = config.css.type;
@@ -373,12 +419,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     // as I could tell). For SVG output, I don't know why, but
                     // for CHTML output this makes sense, as newer versions of
                     // MathJax dynamically generate the minimal amount of CSS
-                    // needed by default. However, as far as I could tell, this
-                    // is a somewhat tricky mechanism to take advantage of
-                    // within SSR, so, for CHTML, we'll just generate the big
-                    // (~200kB) CSS file that enables MathJax's entire feature
-                    // set. Because of this, I recommend using the SVG output
-                    // format with MathJax within Sveltex.
+                    // needed by default.
                     if (type === 'none') return;
 
                     /**
@@ -386,12 +427,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                      * end user's `package.json` file.
                      */
                     const v = (await getVersion('mathjax-full')) ?? 'latest';
-
-                    /**
-                     * The directory to which we will write the CSS generated by
-                     * MathJax.
-                     */
-                    const dir = config.css.dir;
+                    mathHandler.version = v;
 
                     /**
                      * MathJax's output format (either `chtml` or `svg`). The
@@ -404,15 +440,65 @@ export class MathHandler<B extends MathBackend> extends Handler<
                      */
                     const fmt = config.outputFormat;
 
+                    if (fmt === 'chtml') {
+                        // If the output format is `chtml`, we need to ensure
+                        // that mathjax.chtml.fontURL is set correctly.
+                        const { cdn } = config.css;
+                        const firstCdn = isArray(cdn) ? cdn[0] : cdn;
+                        const isV4 = v && /^[^\d]*4\.\d+\.\d+/.test(v);
+                        const linkPrefix = ensureEndsWith(
+                            // We don't test two MathJax versions at the
+                            // same time, so one of these branches will
+                            // always be missed.
+                            /* v8 ignore next 13 */
+                            isV4
+                                ? cdnLink(
+                                      `mathjax-${config.css.font ?? 'modern'}-font`,
+                                      'chtml/woff/',
+                                      v,
+                                      'jsdelivr',
+                                  )
+                                : cdnLink(
+                                      'mathjax',
+                                      'es5/output/chtml/fonts/woff-v2/',
+                                      v,
+                                      firstCdn,
+                                  ),
+                            '/',
+                        );
+                        await mathHandler.configure({
+                            mathjax: { chtml: { fontURL: linkPrefix } },
+                        });
+                    }
+
+                    /**
+                     * The directory to which we will write the CSS generated by
+                     * MathJax.
+                     */
+                    const { dir, staticDir } = config.css;
+
+                    /**
+                     * The href to which the `<link>` tag in the `<svelte:head>`
+                     * component will point.
+                     */
+                    const href = join(dir, `mathjax@${v}.${fmt}.min.css`);
                     /**
                      * The filepath to which we will write the CSS generated by
                      * MathJax.
                      */
-                    const path = join(dir, `mathjax@${v}.${fmt}.min.css`);
+                    const path = join(staticDir, href);
 
                     mathHandler._headLines = [
-                        `<link rel="stylesheet" href="${ensureStartsWith(path, '/')}">`,
+                        `<link rel="stylesheet" href="${ensureStartsWith(href, '/')}">`,
                     ];
+
+                    // If the output format is `chtml`, we don't want to
+                    // generate the CSS file yet, because the MathJax processor
+                    // won't have rendered any math yet, so the CSS file would
+                    // be very incomplete. Instead, we'll call it with
+                    // `updateCss` at the end of the preprocessor run on each
+                    // page.
+                    if (fmt === 'chtml') return;
 
                     // If the CSS file already exists, return early. Aside from
                     // the file name, we don't have any "cache invalidation"
@@ -423,26 +509,78 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     if (fs.existsSync(path)) return;
 
                     // Have MathJax generate the CSS
-                    let css: string = '';
-                    const codeGen = await runWithSpinner(
-                        () => {
-                            css = adaptor.textContent(
-                                mathHandler.processor.outputJax.styleSheet(
-                                    mathHandler.processor,
-                                ) as LiteElementType,
-                            );
-                        },
-                        {
-                            startMessage: `Generating MathJax stylesheet (${fmt})`,
-                            successMessage: (t) =>
-                                `Generated MathJax stylesheet (${fmt}) in ${t}`,
-                            failMessage: (t) =>
-                                `Error generating MathJax stylesheet (${fmt}) after ${t}`,
-                        },
+                    const css = adaptor.textContent(
+                        mathHandler.processor.outputJax.styleSheet(
+                            mathHandler.processor,
+                        ) as LiteElementType,
                     );
 
-                    // If MathJax failed to generate the CSS, return early
-                    if (codeGen !== 0) return;
+                    // if (fmt === 'chtml') {
+                    //     (await import('mathjax-full')).init({
+                    //         loader: {
+                    //             source: await import('mathjax-full/components/src/source.js'),
+                    //             load: ['adaptors/liteDOM', 'tex-chtml']
+                    //         },
+                    //         tex:
+                    //     })
+                    // }
+
+                    // Minify the CSS
+                    // let opt: Output;
+                    // await runWithSpinner(
+                    //     () => {
+                    //         opt = new CleanCSS().minify(css);
+                    //         if (opt.errors.length > 0) {
+                    //             throw new Error(
+                    //                 `clean-css raised the following error(s) during minification of MathJax's stylesheet (${fmt}):\n- ${opt.errors.join(
+                    //                     '\n- ',
+                    //                 )}`,
+                    //             );
+                    //         }
+                    //         css = opt.styles;
+                    //     },
+                    //     {
+                    //         startMessage: `Minifying MathJax stylesheet (${fmt})`,
+                    //         successMessage: (t) =>
+                    //             `Minified MathJax stylesheet (${fmt}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${(opt.stats.efficiency * 100).toFixed(0)}% reduction) in ${t}`,
+                    //         failMessage: (t) =>
+                    //             `Error minifying MathJax stylesheet (${fmt}) after ${t}`,
+                    //     },
+                    // );
+
+                    // Write the CSS to the specified filepath
+                    await fancyWrite(path, css);
+                };
+
+                /**
+                 * This is only meant to be called when the output format is
+                 * `chtml` and the CSS type is `hybrid`. This function is
+                 * responsible for updating the MathJax stylesheet to cover
+                 * all of the math that the MathJax processor has been requested
+                 * to render thus far. Unfortunately, since we can't know what
+                 * page is processed last, we have to call this function at the
+                 * end of every page that contains any MathJax math.
+                 */
+                const updateCss: (
+                    mathHandler: MathHandler<'mathjax'>,
+                ) => Promise<void> = async (mathHandler) => {
+                    const config = mathHandler.configuration;
+
+                    nodeAssert(
+                        config.outputFormat === 'chtml',
+                        "Expected `outputFormat` to be 'chtml' in `updateCss` call.",
+                    );
+                    nodeAssert(
+                        config.css.type === 'hybrid',
+                        "Expected `css.type` to be 'hybrid' in `updateCss` call.",
+                    );
+
+                    // Have MathJax generate the CSS
+                    const css: string = adaptor.textContent(
+                        mathHandler.processor.outputJax.styleSheet(
+                            mathHandler.processor,
+                        ) as LiteElementType,
+                    );
 
                     // If the output format is `chtml`, we need to modify the
                     // CSS to point to the correct font URLs. This is because
@@ -450,58 +588,70 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     // directory as the CSS file, but we're writing self-hosting
                     // the CSS here, so we'll need to replace the relative URLs
                     // with URLs pointing to the fonts on a CDN.
-                    if (fmt === 'chtml') {
-                        const { cdn } = config.css;
-                        const firstCdn = isArray(cdn) ? cdn[0] : cdn;
+                    const { cdn } = config.css;
+                    const firstCdn = isArray(cdn) ? cdn[0] : cdn;
 
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        if (!firstCdn) {
-                            throw new Error(
-                                'No CDN specified for MathJax. If you want to deactivate Sveltex CSS handling for MathJax, set the `tex.css.type` property of the Sveltex configuration to `none`.',
-                            );
-                        }
-
-                        const linkPrefix = ensureEndsWith(
-                            config.mathjax.chtml?.fontURL ??
-                                cdnLink(
-                                    'mathjax',
-                                    'es5/output/chtml/fonts/woff-v2/',
-                                    v,
-                                    firstCdn,
-                                ),
-                            '/',
-                        );
-                        css = css.replaceAll(
-                            'js/output/chtml/fonts/tex-woff-v2/',
-                            linkPrefix,
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (!firstCdn) {
+                        throw new Error(
+                            'No CDN specified for MathJax. If you want to deactivate Sveltex CSS handling for MathJax, set the `tex.css.type` property of the Sveltex configuration to `none`.',
                         );
                     }
 
-                    // Minify the CSS
-                    let opt: Output;
-                    await runWithSpinner(
-                        () => {
-                            opt = new CleanCSS().minify(css);
-                            if (opt.errors.length > 0) {
-                                throw new Error(
-                                    `clean-css raised the following error(s) during minification of MathJax's stylesheet (${fmt}):\n- ${opt.errors.join(
-                                        '\n- ',
-                                    )}`,
-                                );
-                            }
-                            css = opt.styles;
-                        },
-                        {
-                            startMessage: `Minifying MathJax stylesheet (${fmt})`,
-                            successMessage: (t) =>
-                                `Minified MathJax stylesheet (${fmt}) (${prettyBytes(opt.stats.originalSize)} → ${prettyBytes(opt.stats.minifiedSize)}, ${(opt.stats.efficiency * 100).toFixed(0)}% reduction) in ${t}`,
-                            failMessage: (t) =>
-                                `Error minifying MathJax stylesheet (${fmt}) after ${t}`,
-                        },
+                    nodeAssert(
+                        mathHandler.version,
+                        'Expected `handleCss` to have been called before `updateCss`.',
                     );
 
-                    // Write the CSS to the specified filepath
-                    await fancyWrite(path, css);
+                    /**
+                     * The installed version of `mathjax-full`, as set in the
+                     * end user's `package.json` file.
+                     */
+                    const v = mathHandler.version;
+
+                    // css = css.replaceAll(
+                    //     // We don't test two MathJax versions at the same
+                    //     // time, so one of these branches will always be
+                    //     // missed.
+                    //     /* v8 ignore next 3 */
+                    //     isV4
+                    //         ? '/chtml/woff/'
+                    //         : 'js/output/chtml/fonts/tex-woff-v2/',
+                    //     linkPrefix,
+                    // );
+                    // if (isV4 && config.css.font) {
+                    //     css = css.replaceAll(
+                    //         new RegExp(`(${linkPrefix}.*?)-mm-`, 'gu'),
+                    //         `$1-${
+                    //             {
+                    //                 stix2: 'stx',
+                    //                 fira: 'fira',
+                    //                 asana: 'asna',
+                    //                 tex: 'tex',
+                    //                 modern: 'mm',
+                    //                 bonum: 'gb',
+                    //                 dejavu: 'gdv',
+                    //                 pagella: 'gp',
+                    //                 schola: 'gs',
+                    //                 termes: 'gt',
+                    //                 ncm: 'ncm',
+                    //             }[config.css.font]
+                    //         }-`,
+                    //     );
+                    // }
+
+                    const { dir, staticDir } = config.css;
+
+                    /**
+                     * The filepath to which we will write the CSS generated by
+                     * MathJax.
+                     */
+                    const path = join(
+                        staticDir,
+                        dir,
+                        `mathjax@${v}.chtml.min.css`,
+                    );
+                    await fs.writeFileEnsureDir(path, css);
                 };
 
                 const handler = new MathHandler<'mathjax'>({
@@ -520,7 +670,10 @@ export class MathHandler<B extends MathBackend> extends Handler<
                         const config = handler._configuration;
 
                         handler.processor = mathjax.document('', {
-                            InputJax: new TeX(config.mathjax.tex),
+                            InputJax: new TeX({
+                                packages: AllPackages,
+                                ...config.mathjax.tex,
+                            }),
                             OutputJax:
                                 config.outputFormat === 'chtml'
                                     ? new CHTML(config.mathjax.chtml)
@@ -575,15 +728,14 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     },
                     configuration: getDefaultMathConfiguration('mathjax'),
                     processor: mathjax.document('', {
-                        InputJax: new TeX(),
+                        InputJax: new TeX({ packages: AllPackages }),
                         OutputJax: new SVG(),
                     }),
                     handleCss,
                 });
+                handler._updateCss = updateCss;
                 await handler.configure({
-                    mathjax: {
-                        tex: { packages: AllPackages },
-                    },
+                    mathjax: { tex: { packages: AllPackages } },
                 });
                 // Apparently, MathJax's `document` function isn't
                 // serializable. This will upset Vite, so we need to

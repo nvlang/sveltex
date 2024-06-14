@@ -1,6 +1,6 @@
 // Internal dependencies
 import { is, typeAssert } from '$deps.js';
-import { isBoolean, isNumber, isString } from '$type-guards/utils.js';
+import { isBoolean, isNumber, isString } from '$typeGuards/utils.js';
 import { InterpretedAttributes, ParsedComponent } from '$types/utils/Escape.js';
 import { escapeWhitespace } from '$utils/debug.js';
 import { re } from '$utils/misc.js';

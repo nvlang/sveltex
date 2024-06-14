@@ -42,17 +42,19 @@
   "exclude": [
     "coverage",
     "dist",
-    "e2e",
+    "e2e-old",
+    "tests",
     "examples",
     "external",
     "ideas",
     "legacy",
     "node_modules",
     "static",
-    "tmp"
+    "tmp",
+    "**/e2e/**"
   ],
   // "ts-node": {
   //   // "swc": true
   // },
-  "include": ["*.config.js", "*.config.ts", "package.json", "src", "tests"]
+  "include": ["*.config.js", "*.config.ts", "package.json", "src"]
 }

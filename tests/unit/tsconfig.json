@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    // Best practices
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    // Performance
+    // "skipLibCheck": true, // recommended
+    // Aliases
+    "baseUrl": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
+    "exactOptionalPropertyTypes": true, // recommended
+    "forceConsistentCasingInFileNames": true, // recommended
+    "importHelpers": true,
+    "lib": ["ESNext"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "./dist",
+    "paths": {
+      "$*": ["../../src/*"],
+      "$tests/*": ["../*"]
+    },
+    "resolveJsonModule": true,
+    // Basic settings
+    "rootDir": "../../",
+    "noEmit": true,
+    // Debugging
+    "sourceMap": true,
+    // Type-checking
+    "strict": true,
+    // Versions and APIs
+    "target": "ESNext"
+  },
+  "exclude": [
+    "**/e2e/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/tests/**",
+    "**/examples/**",
+    "**/external/**",
+    "**/ideas/**",
+    "**/legacy/**",
+    "**/static/**",
+    "**/tmp/**"
+  ],
+  // "ts-node": {
+  //   // "swc": true
+  // },
+  "include": ["./**/*.ts"]
+}

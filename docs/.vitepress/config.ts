@@ -3,6 +3,8 @@ import { defineConfig } from 'vitepress';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { githubDarkDefault } from './theme/code-theme.js';
 
+import markdownItMultimdTable from 'markdown-it-multimd-table';
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: 'SvelTeX',
@@ -12,8 +14,16 @@ export default defineConfig({
             light: 'github-light-default',
             dark: githubDarkDefault,
         },
+        math: true,
         codeTransformers: [transformerTwoslash()],
         config: (md) => {
+            (md as any).use(markdownItMultimdTable, {
+                autolabel: true,
+                headerless: true,
+                multibody: true,
+                multiline: true,
+                rowspan: true,
+            });
             md.use(container, 'info', {
                 render: (tokens, idx) => {
                     const token = tokens[idx];
@@ -137,18 +147,15 @@ export default defineConfig({
                 base: '/docs/implementation',
                 collapsed: true,
                 items: [
+                    { text: 'Escaping', link: '/escaping' },
                     { text: 'Markdown', link: '/markdown' },
-                    { text: 'Code', link: '/code' },
-                    { text: 'Math', link: '/math' },
+                    { text: 'Testing', link: '/testing' },
                     {
                         text: 'TeX',
                         collapsed: false,
                         base: '/docs/implementation/tex',
                         items: [
-                            {
-                                text: 'Overview',
-                                link: '/',
-                            },
+                            { text: 'Overview', link: '/' },
                             {
                                 text: 'Compilation: TeX → DVI',
                                 link: '/compilation',
@@ -161,10 +168,8 @@ export default defineConfig({
                                 text: 'Optimization: SVG → Svelte',
                                 link: '/optimization',
                             },
-                            {
-                                text: 'Caching',
-                                link: '/caching',
-                            },
+                            { text: 'Caching', link: '/caching' },
+                            { text: 'Benchmarks', link: '/benchmarks' },
                         ],
                     },
                 ],

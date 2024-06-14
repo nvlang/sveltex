@@ -9,12 +9,12 @@ import {
     isRecord,
     isString,
     isStringArray,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 import {
     isSimpleEscapeInstruction,
     isVerbatimType,
     verbatimTypes,
-} from '$type-guards/verbatim.js';
+} from '$typeGuards/verbatim.js';
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
 import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';

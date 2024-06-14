@@ -17,8 +17,8 @@ import {
     isPaperSize,
     isTexDim,
     isTexDimUnitless,
-} from '$type-guards/dvisvgm.js';
-import { isString } from '$type-guards/utils.js';
+} from '$typeGuards/dvisvgm.js';
+import { isString } from '$typeGuards/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { ensureWithinRange } from '$utils/misc.js';
 
@@ -197,7 +197,6 @@ export function buildDvisvgmInstruction({
         optimize,
         precision,
         relative,
-        zip,
     } = fullDvisvgmOptions.svg;
 
     // Set --bbox flag, if applicable
@@ -300,35 +299,7 @@ export function buildDvisvgmInstruction({
     // Set --relative flag, if applicable
     if (relative !== null && relative) args.push('--relative');
 
-    // Set --zip flag, if applicable
-    if (zip !== null && zip !== false) {
-        if (zip === true) {
-            args.push('--zip');
-        } else {
-            args.push(`--zip=${String(ensureWithinRange(zip, [1, 9]))}`);
-        }
-    }
-
-    const { color, message, progress, verbosity } = fullDvisvgmOptions.console;
-
-    // Set --color flag, if applicable
-    if (color !== null && color) {
-        args.push('--color');
-    }
-
-    // Set --message flag, if applicable
-    if (message !== null) {
-        args.push(`--message=${message}`);
-    }
-
-    // Set --progress flag, if applicable
-    if (progress !== null && progress !== false) {
-        if (progress === true) {
-            args.push('--progress');
-        } else {
-            args.push(`--progress=${String(progress)}`);
-        }
-    }
+    const { verbosity } = fullDvisvgmOptions.console;
 
     // Set --verbosity flag, if applicable
     if (verbosity !== null) {

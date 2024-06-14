@@ -4,7 +4,7 @@ import {
     isString,
     ifPresentAndDefined,
     isArray,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
 
 // External dependencies

@@ -30,13 +30,9 @@ code {
 }
 
 div.v-popper__wrapper
-    > div.v-popper__inner
-    > div
-    > span
-    > div.twoslash-popup-docs.twoslash-popup-docs-tags.vp-doc
-    > span
-    > span.twoslash-popup-docs-tag-value
-    > code {
+    div.v-popper__inner
+    div.twoslash-popup-docs
+    code:has(> pre:only-child) {
     background: none;
     padding: 0;
 }
@@ -59,10 +55,11 @@ body {
      * - ss07: Square punctuation
      * - ss08: Square quotes
      * - liga: Standard ligatures
-     * - case: Case-sensitive forms (Alternate glyphs that matches capital
-     *         letters and numbers)
      * - calt: Contextual alternates (Depending on the surrounding context,
      *         different glyphs are used. Enabled by default.)
+     * - dlig: Discretionary ligatures (Disabled by default.)
+     * - tnum: Tabular numbers (Disabled by default.)
+     * - case: Case-sensitive forms.
      */
     font-feature-settings:
         'cv01' 1,
@@ -71,7 +68,19 @@ body {
         'ss07' 1,
         'ss08' 1,
         'liga' 1,
-        'calt' 1;
+        'calt' 1,
+        'dlig' 1,
+        'tnum' 1;
+}
+
+.outline {
+    color: var(--vp-c-divider);
+}
+
+h4 {
+    /* text-transform: uppercase; */
+    margin-top: 0.75em;
+    /* font-size: 18px; */
 }
 
 /**
@@ -95,6 +104,10 @@ body {
     --vp-c-text-soft: #91919188;
 
     --vp-c-brand-1: #0058a6;
+    --vp-c-brand-1-red: 0;
+    --vp-c-brand-1-green: 88;
+    --vp-c-brand-1-blue: 166;
+
     --vp-c-brand-2: #0065bb;
     --vp-c-brand-3: #3678c9;
     --vp-c-brand-soft: rgba(0, 126, 231, 0.14);
@@ -104,8 +117,12 @@ body {
     --vp-c-gray-3: var(--gray-400);
     --vp-c-gray-soft: #91919124;
 
+    --vp-c-link: var(--vp-c-text-1);
+    --vp-c-link-hover: var(--vp-c-text-0);
+
     --vp-code-color: var(--vp-c-text-1);
     --vp-code-link-color: var(--vp-c-text-1);
+    --vp-code-link-hover-color: var(--vp-c-text-0);
 
     --vp-c-yellow-bright: var(--72-50);
     --vp-c-yellow-0: var(--72-150);
@@ -116,9 +133,51 @@ body {
     --vp-c-yellow-soft: var(--72-750);
 
     --vp-button-alt-text: var(--gray-200);
+
+    --focus-ring-color: var(--vp-c-brand-2);
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+
+    --vp-local-search-result-selected-border: rgba(
+        var(--vp-c-brand-1-red),
+        var(--vp-c-brand-1-green),
+        var(--vp-c-brand-1-blue),
+        0.6
+    );
+}
+
+/* div.VPDoc */
+/* div.container */
+/* div.content */
+/* div.content-container */
+/* main.main */
+/* div.vp-doc */
+
+/* button {
+    &:focus-visible {
+        outline-color: red;
+    }
+} */
+
+:focus-visible,
+:focus,
+button:focus-visible {
+    outline-color: var(--focus-ring-color);
+    /* outline-width: var(--focus-ring-width); */
+    /* outline-offset: var(--focus-ring-offset); */
+}
+
+div.VPLocalSearchBox {
+    form.search-bar:focus-within {
+        border-color: var(--vp-c-divider);
+        outline: var(--focus-ring-width) solid var(--focus-ring-color);
+        outline-offset: var(--focus-ring-offset);
+    }
 }
 
 .dark {
+    /* --focus-ring-color: red; */
+
     --vp-button-alt-text: var(--gray-900);
 
     --vp-c-text-bright: var(--gray-1000);
@@ -128,6 +187,10 @@ body {
     --vp-c-text-3: var(--gray-600);
 
     --vp-c-brand-1: #8cb8fb;
+    --vp-c-brand-1-red: 140;
+    --vp-c-brand-1-green: 184;
+    --vp-c-brand-1-blue: 251;
+
     /* --vp-c-brand-1: var(--264-700); */
     --vp-c-brand-2: #137ce2; /* HCT(260, 61, 52) */
     --vp-c-brand-3: #006dca; /* HCT(260, 58, 46) */
@@ -173,6 +236,9 @@ body {
 
 /* Change unordered list markers */
 .VPDoc .vp-doc {
+    ul li > p {
+        line-height: var(--li-line-height);
+    }
     .features-list ul {
         list-style: none;
         li {
@@ -290,6 +356,9 @@ body {
         border-color: var(--vp-c-gray-soft);
         padding-top: 2px;
         padding-bottom: 2px;
+        code {
+            background-color: transparent;
+        }
     }
 
     th {
@@ -298,6 +367,10 @@ body {
 
     tbody tr:last-child {
         border-bottom: 2px solid var(--vp-c-gray-soft);
+    }
+
+    tr td {
+        /* line-height: 2; */
     }
 
     &_docs_latex {
@@ -339,15 +412,25 @@ body {
         p {
             margin: 0;
         }
-
-        &.details summary {
-            &::before {
-                content: '';
-                padding-right: 4px;
+        border-radius: 12px;
+        &.details {
+            background: none;
+            border: 1.5px solid var(--vp-c-divider);
+            summary {
+                &::before {
+                    content: '';
+                    padding-right: 4px;
+                }
+                margin: 0;
             }
-            margin: 0;
+            a {
+                color: var(--vp-c-link);
+                opacity: 1;
+                &:hover {
+                    color: var(--vp-c-link-hover);
+                }
+            }
         }
-
         .icon {
             /* scale: 0.8; */
             margin-left: -4px;
@@ -366,10 +449,57 @@ body {
             }
         }
         &.info {
-            background-color: var(--vp-c-brand-soft);
+            /* background-color: var(--vp-c-brand-soft);
             color: var(--vp-c-brand-1);
             .icon {
                 color: var(--vp-c-brand-2);
+            } */
+            @apply text-240-250
+            bg-240-750
+            bg-opacity-50
+            dark:bg-240-250
+            dark:bg-opacity-50
+            dark:text-240-750;
+
+            strong {
+                @apply text-240-200
+                dark:text-240-800;
+            }
+
+            a {
+                @apply text-240-200
+                decoration-240-500
+                hover:text-240-100
+                hover:decoration-240-300
+                dark:text-240-800
+                dark:decoration-240-400
+                dark:hover:text-240-100
+                dark:hover:decoration-240-500;
+                dark: text-240-800;
+                &:hover {
+                    @apply text-240-100
+                opacity-100
+                dark:text-240-900;
+                }
+            }
+            .icon {
+                @apply text-240-300
+                    dark:text-240-700;
+            }
+            ::marker {
+                @apply text-240-200/50
+                    dark:text-240-800/50;
+            }
+            .compact {
+                li {
+                    @apply leading-normal;
+                    &:not(:has(> ul)) {
+                        margin: 4px 0;
+                    }
+                    ul {
+                        margin: 0;
+                    }
+                }
             }
         }
         &.warning {
@@ -379,6 +509,11 @@ body {
                 dark:bg-72-250
                 dark:bg-opacity-50
                 dark:text-72-750;
+
+            strong {
+                @apply text-72-200
+                    dark:text-72-800;
+            }
 
             a {
                 @apply text-72-200
@@ -475,7 +610,7 @@ body {
 .vp-doc .custom-block .vp-code-group .tabs {
     box-shadow: none;
     /* border-bottom: 6px solid var(--vp-code-tab-divider); */
-    border-radius: 12px;
+    @apply sm:rounded-xl;
 }
 
 .vp-code-group .tabs label::after {
@@ -485,18 +620,10 @@ body {
 }
 
 .vp-doc .vp-code-group.vp-adaptive-theme {
-    /* border: 1px solid black; */
     gap: 8px;
-
     div.blocks {
-        border-radius: 12px;
-        /* background-color: var(--vp-code-block-bg); */
-        /* background-color: var(--shiki-dark-bg); */
-        /* background-color: transparent; */
+        @apply sm:rounded-xl;
         background: none;
-        div.vp-adaptive-theme {
-            margin: 0;
-        }
     }
     margin-bottom: 1rem;
     display: flex;
@@ -504,23 +631,14 @@ body {
 }
 
 .vp-doc div[class*='language-'] {
-    /* gap: 8px; */
-    border-radius: 12px;
+    @apply sm:rounded-xl;
     background: transparent;
 }
 
 .vp-doc [class*='language-'] pre {
     background-color: var(--vp-code-block-bg);
-    /* background-color: var(--shiki-dark-bg); */
-    /* border: 1px solid black; */
-    border-radius: 12px;
+    @apply sm:rounded-xl;
 }
-
-/* .vp-doc [class*='language-'] pre {
-    background-color: var(--shiki-dark-bg);
-    border: 1px solid black;
-    border-radius: 120px;
-} */
 
 .vp-doc .vp-code-group div[class*='language-'].vp-adaptive-theme {
     border: none;
@@ -532,4 +650,49 @@ body {
 
 .DocSearch-Button:hover {
     border-color: var(--vp-c-brand-2);
+}
+table {
+    /* overflow-x: scroll; */
+    max-width: 100%;
+}
+
+#VPContent div.content main details.custom-block > :last-child {
+    margin-bottom: 0;
+}
+
+/*
+Fix horizontal overflow for display math.
+*/
+mjx-container.MathJax[display='true'] {
+    overflow-x: scroll;
+    --p: 1rem;
+    padding-top: var(--p);
+    padding-bottom: var(--p);
+    /* Unfortunately, the two "!important"s below are necessary, as MathJax
+       sets the default margin property with an inline style attribute. */
+    margin-top: calc(1em - var(--p)) !important;
+    margin-bottom: calc(1em - var(--p)) !important;
+}
+
+.checkerboard {
+    background: linear-gradient(
+            45deg,
+            var(--vp-c-divider) 25%,
+            transparent 25%,
+            transparent 75%,
+            var(--vp-c-divider) 75%
+        ),
+        linear-gradient(
+            45deg,
+            var(--vp-c-divider) 25%,
+            transparent 25%,
+            transparent 75%,
+            var(--vp-c-divider) 75%
+        );
+    /* Size of the squares */
+    background-size: 20px 20px;
+    /* Offset to align squares correctly */
+    background-position:
+        0 0,
+        10px 10px;
 }

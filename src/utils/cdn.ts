@@ -3,15 +3,22 @@ import { SupportedCdn } from '$types/handlers/Css.js';
 
 // Internal dependencies
 import { cdnPrefixes } from '$data/cdn.js';
-import { isArray } from '$type-guards/utils.js';
+import { isArray } from '$typeGuards/utils.js';
 import { log, prettifyError, runWithSpinner } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
 
 // External dependencies
 import { AbortError, nodeFetch } from '$deps.js';
+import type { StringLiteralUnion } from '$types/utils/utility-types.js';
 
 export function cdnLink(
-    pkg: 'mathjax' | 'katex' | '@wooorm/starry-night' | 'highlight.js',
+    pkg: StringLiteralUnion<
+        | 'mathjax'
+        | 'katex'
+        | '@wooorm/starry-night'
+        | 'highlight.js'
+        | `mathjax-${string}-font`
+    >,
     resource: string,
     version: string = 'latest',
     cdn: SupportedCdn = 'jsdelivr',

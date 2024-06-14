@@ -3,18 +3,18 @@
 
 ## TeX engines
 
--   **pdfLaTeX**: The default LaTeX engine for SvelTeX. Despite the name, the
+-   **pdfLaTeX:** The default LaTeX engine for SvelTeX. Despite the name, the
     engine can output both PDF and DVI files, and in SvelTeX's case, it's
     configured to output DVI files by default. pdfLaTeX is fast and widespread,
     but it doesn't support OpenType fonts in the same way that LuaLaTeX and
     XeLaTeX do.
--   **LuaLaTeX**: A modern LaTeX engine that supports OpenType fonts and Unicode
+-   **LuaLaTeX:** A modern LaTeX engine that supports OpenType fonts and Unicode
     characters. It's slower than pdfLaTeX, but it's very powerful, as it can
     make use of Lua scripts to extend its functionality.
--   **XeLaTeX**: Though slowly waning in popularity (as far as I can tell),
+-   **XeLaTeX:** Though slowly waning in popularity (as far as I can tell),
     XeLaTeX is still a powerful LaTeX engine that supports OpenType fonts and
     Unicode characters.
--   **{pdf,Lua}LaTeXmk**: These are _not_ engines, but rather informal names for
+-   **{pdf,Lua}LaTeXmk:** These are _not_ engines, but rather informal names for
     different configurations of [LaTeXmk](https://ctan.org/pkg/latexmk), which
     is a Perl script that automates the process of compiling LaTeX documents by
     running the necessary commands in the correct order. Generally speaking,

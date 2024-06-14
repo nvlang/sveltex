@@ -307,7 +307,7 @@ export interface SveltexConfiguration<
         //     | Record<string, VerbatimEnvironmentConfiguration>;
 
         /**
-         * General options surrounding SvelTeX's LaTeX support.
+         * General options surrounding SvelTeX's support for math expressions.
          */
         math?: undefined | Omit<TexEscapeSettings, 'enabled'>;
     };

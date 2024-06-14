@@ -1,4 +1,5 @@
-import { isArray, isString } from '$type-guards/utils.js';
+import { isRegExp } from '$deps.js';
+import { isArray, isString } from '$typeGuards/utils.js';
 import type { Transformer } from '$types/handlers/Handler.js';
 
 export function applyTransformations<
@@ -15,7 +16,7 @@ export function applyTransformations<
             : [transformationsRaw as Transformer<Options>];
     transformers.forEach((transformation) => {
         if (isArray(transformation)) {
-            if (!isString(transformation[0])) {
+            if (isRegExp(transformation[0])) {
                 const { flags } = transformation[0];
                 if (flags === '' || !flags.includes('g')) {
                     transformation[0] = new RegExp(

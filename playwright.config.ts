@@ -33,66 +33,39 @@ export const config = defineConfig({
     projects: [
         {
             name: 'chrome',
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                ...devices['Desktop Chrome'],
+                baseURL: 'http://localhost:3033',
+            },
             retries: 3,
         },
         {
             name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
+            use: {
+                ...devices['Desktop Firefox'],
+                baseURL: 'http://localhost:3033',
+            },
             retries: 3,
         },
         {
             name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
+            use: {
+                ...devices['Desktop Safari'],
+                baseURL: 'http://localhost:3033',
+            },
             retries: 3,
         },
-        // {
-        //     name: 'full-examples/unified',
-        //     testDir: './e2e/full-examples/unified',
-        //     use: {
-        //         baseURL: 'http://127.0.0.1:3001',
-        //     },
-        // },
-        // {
-        //     name: 'full-examples/marked',
-        //     testDir: './e2e/full-examples/marked',
-        //     use: {
-        //         baseURL: 'http://127.0.0.1:3002',
-        //     },
-        // },
     ],
 
     /* Run your local dev server before starting the tests */
-    webServer: [
-        {
-            cwd: './e2e/full-examples/markdown-it/',
-            command: 'pnpm build && pnpm preview',
-            url: 'http://localhost:3001',
-            reuseExistingServer: !process.env['CI'],
-            timeout: 40000,
-        },
-        {
-            cwd: './e2e/full-examples/marked/',
-            command: 'pnpm build && pnpm preview',
-            url: 'http://localhost:3002',
-            reuseExistingServer: !process.env['CI'],
-            timeout: 40000,
-        },
-        {
-            cwd: './e2e/full-examples/micromark/',
-            command: 'pnpm build && pnpm preview',
-            url: 'http://localhost:3003',
-            reuseExistingServer: !process.env['CI'],
-            timeout: 40000,
-        },
-        {
-            cwd: './e2e/full-examples/unified/',
-            command: 'pnpm build && pnpm preview',
-            url: 'http://localhost:3004/',
-            reuseExistingServer: !process.env['CI'],
-            timeout: 40000,
-        },
-    ],
+    webServer: {
+        cwd: './tests/e2e/',
+        command: 'pnpm build && pnpm preview',
+        url: 'http://localhost:3033',
+        reuseExistingServer: !process.env['CI'],
+        timeout: 40000,
+    },
+    name: 'Integration tests',
 });
 
 /* Opt out of parallel tests on CI. */

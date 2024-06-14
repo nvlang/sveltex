@@ -10,7 +10,7 @@ import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
 import { getProperty, rfdc, setProperty } from '$deps.js';
-import { isString } from '$type-guards/utils.js';
+import { isString } from '$typeGuards/utils.js';
 
 export const deepClone = rfdc();
 

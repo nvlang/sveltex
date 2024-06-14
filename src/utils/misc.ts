@@ -3,7 +3,7 @@ import type { BinaryToTextEncoding } from '$deps.js';
 import type { Transformer } from '$types/handlers/Handler.js';
 
 // Internal dependencies
-import { isArray, isString } from '$type-guards/utils.js';
+import { isArray, isString } from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
 
 // External dependencies

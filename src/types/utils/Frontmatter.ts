@@ -7,7 +7,10 @@ export type MetaName =
     | 'description'
     | 'generator'
     | 'keywords'
-    | 'viewport';
+    | 'viewport'
+    | 'referrer'
+    | 'theme-color'
+    | 'color-scheme';
 export type MetaHttpEquiv = 'content-security-policy' | 'default-style';
 // export type Meta =
 //     | { name: MetaName; content: string }
@@ -115,7 +118,10 @@ export interface Frontmatter extends Record<string, unknown> {
         rel: string;
         [key: string]: unknown;
     }[];
+    imports?: Record<ImportPath, string | string[]>;
 }
+
+type ImportPath = string;
 
 export interface MdastToml extends MdastLiteral {
     type: 'toml';

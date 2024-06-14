@@ -1,28 +1,27 @@
-import type { Construct } from 'micromark-util-types';
-import { codes } from 'micromark-util-symbol';
-import { tokenizeSkipFlow } from './skip-flow.js';
-// import { tokenizeSkipText } from '$utils/micromark/skip-text.js';
+import type { MicromarkConstruct as Construct } from '$deps.js';
+import { asciiCodes as codes } from '$deps.js';
+import { tokenizeSkipFlowFactory } from './skipFlow.js';
 
-const skipFlow: Construct = {
-    name: 'skipFlow',
-    tokenize: tokenizeSkipFlow,
-    // resolveTo: resolveToSkipFlow,
-    concrete: true,
-};
+function skipFlowFactory(skipTags: string[]): Construct {
+    return {
+        name: 'skipFlow',
+        tokenize: tokenizeSkipFlowFactory(skipTags),
+        concrete: true,
+    };
+}
 
-export let skipTags: string[];
-
-// const skipText: Construct = {
-//     name: 'skipText',
-//     tokenize: tokenizeSkipText,
-// };
-
+/**
+ * Create a micromark extension that makes micromark skip HTML elements whose
+ * tag is among those in the provided array.
+ *
+ * @param skipTags - Tags to skip.
+ * @returns Micromark extension.
+ */
 export function micromarkSkip(
     tags: string[] | undefined = ['script', 'style'],
 ) {
-    skipTags = tags;
     return {
-        flow: { [codes.lessThan]: skipFlow },
-        text: { [codes.lessThan]: skipFlow },
+        flow: { [codes.lessThan]: skipFlowFactory(tags) },
+        text: { [codes.lessThan]: skipFlowFactory(tags) },
     };
 }

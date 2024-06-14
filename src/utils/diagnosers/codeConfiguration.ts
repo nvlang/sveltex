@@ -10,7 +10,7 @@ import {
     isCodeBackendWithCss,
     supportedCdns,
     codeBackendsWithCss,
-} from '$type-guards/code.js';
+} from '$typeGuards/code.js';
 import {
     isArray,
     isBoolean,
@@ -20,7 +20,7 @@ import {
     isOneOf,
     isPresentAndDefined,
     isString,
-} from '$type-guards/utils.js';
+} from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
 import { Diagnoser, enquote, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 

@@ -106,8 +106,8 @@ export type MarkPartialUndefinable<T, K extends keyof T> = T &
     Partial<MakePropertiesUndefinable<Pick<T, K>>>;
 
 /**
+ * Taken from Shiki's definition of the same type.
+ *
  * @see https://github.com/microsoft/TypeScript/issues/29729#issuecomment-471566609
  */
-export type StringLiteralUnion<T extends U, U = string> =
-    | T
-    | (U & { ___: never });
+export type StringLiteralUnion<T extends U, U = string> = T | (U & {});

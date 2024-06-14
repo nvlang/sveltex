@@ -4,7 +4,7 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src", "tests"],
+  "include": ["src", "tests/unit"],
   "exclude": [
     "node_modules",
     "dist",
@@ -12,6 +12,8 @@
     "examples",
     "ideas",
     "res",
-    "legacy"
+    "legacy",
+    "tests/e2e",
+    "**/e2e/**"
   ]
 }
