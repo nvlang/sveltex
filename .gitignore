@@ -30,6 +30,7 @@ tests/e2e/src/routes/generated
 
 # Docs
 docs/.vitepress/cache/
+docs/.vitepress/cache/**/*
 
 # Fonts
 *.woff2

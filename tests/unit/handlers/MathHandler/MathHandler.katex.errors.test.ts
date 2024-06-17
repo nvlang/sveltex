@@ -40,12 +40,20 @@ describe("MathHandler<'katex'>", () => {
     describe('error handling', () => {
         it('should silently log error if there is a problem fetching KaTeX stylesheet', async () => {
             const id = uuid();
+            const mathHandler = await MathHandler.create('katex', {
+                css: { type: 'cdn', cdn: [] as unknown as 'jsdelivr' },
+            });
+            await mathHandler.process('');
+            expect(log).toHaveBeenCalled();
+            expect(log).toHaveBeenCalledWith('error', expect.any(String));
+            log.mockClear();
             vi.mock('node-fetch');
             vi.mocked(fetch).mockImplementation(() => {
                 throw new Error(id);
             });
-            const th1 = await MathHandler.create('katex');
-            await th1.configure({ css: { type: 'hybrid' } });
+            const th1 = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await th1.process('');
             expect(log).toHaveBeenCalledTimes(4);
             range(1, 4).forEach((i) => {
@@ -60,8 +68,9 @@ describe("MathHandler<'katex'>", () => {
                 ok: false,
                 status: 404,
             } as Response);
-            const th2 = await MathHandler.create('katex');
-            await th2.configure({ css: { type: 'hybrid' } });
+            const th2 = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await th2.process('');
             expect(log).toHaveBeenCalledTimes(4);
             range(1, 4).forEach((i) => {

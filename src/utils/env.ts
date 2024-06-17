@@ -1,6 +1,6 @@
 // Internal dependencies
 import { resolve } from '$deps.js';
-import { defaultCacheDirectory } from '$mod.js';
+import { defaultCacheDirectory } from '$config/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs, pathExists } from '$utils/fs.js';
 
@@ -17,15 +17,14 @@ export async function getVersion(
 ): Promise<string | undefined> {
     let backendVersion: string | undefined;
     try {
-        const prefix = defaultCacheDirectory.includes('node_modules')
-            ? defaultCacheDirectory.split('node_modules')[0]
-            : '';
-        const path = prefix
-            ? resolve(prefix, 'node_modules', pkg, 'package.json')
-            : resolve('node_modules', pkg, 'package.json');
-        backendVersion = (
-            JSON.parse(await fs.readFile(path, 'utf-8')) as { version?: string }
-        ).version;
+        const prefix =
+            /(.*?)\/node_modules/.exec(defaultCacheDirectory)?.[1] ?? '';
+        const path = resolve(prefix, 'node_modules', pkg, 'package.json');
+        const fileContents = await fs.readFile(path, 'utf-8');
+        if (fileContents) {
+            const json = JSON.parse(fileContents) as { version?: string };
+            if (json.version) backendVersion = json.version;
+        }
     } catch (err) {
         backendVersion = undefined;
         log(

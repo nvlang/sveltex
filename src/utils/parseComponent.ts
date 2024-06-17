@@ -121,7 +121,7 @@ export function parseComponent(html: string): ParsedComponent {
                         ? val.slice(1, -1)
                         : val;
             }
-            if (val === undefined) val = 'true';
+            // if (val === undefined) val = 'true';
             rawAttributes[key] = val;
         }
     }

@@ -1,13 +1,13 @@
 // Types
 import type { Offsets } from '$types/utils/Ast.js';
 import type {
+    DirectiveEscapeSettings,
     EscapableSnippet,
     EscapeOptions,
     EscapedSnippet,
     PaddingInstruction,
     ProcessedSnippet,
     Snippet,
-    TexEscapeSettings,
 } from '$types/utils/Escape.js';
 
 // Internal dependencies
@@ -39,17 +39,19 @@ import {
     nodeAssert,
     uuid,
     micromarkFrontmatter,
+    micromarkDirective,
     mdastFrontmatterFromMarkdown,
     MdastYaml,
     inspect,
     type UnistPosition,
+    directiveFromMarkdown,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
-import { getDefaultSveltexConfig } from '$config/defaults.js';
 import { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
 import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
-import { CodeBackend } from '$mod.js';
+import { CodeBackend, getDefaultMathConfiguration } from '$mod.js';
 import { log, prettifyError } from '$utils/debug.js';
+import type { WithFullDelims } from '$types/handlers/Math.js';
 
 /**
  * Given an array of ranges, returns an array of the "outermost" ranges.
@@ -335,15 +337,14 @@ function getVerbatimES(
 
 export function getMathInSpecialDelimsES(
     document: string,
-    texSettings: TexEscapeSettings,
+    texSettings: WithFullDelims['delims'],
 ): EscapableSnippet<'math'>[] {
     const es: EscapableSnippet<'math'>[] = [];
-    if (!texSettings.enabled) return es;
-    const { display, inline } = texSettings.delims ?? {};
+    const { display, inline } = texSettings;
     (
         [
-            [!!display?.escapedSquareBrackets, '\\\\\\[', '\\\\\\]', false],
-            [!!inline?.escapedParentheses, '\\\\\\(', '\\\\\\)', true],
+            [!!display.escapedSquareBrackets, '\\\\\\[', '\\\\\\]', false],
+            [!!inline.escapedParentheses, '\\\\\\(', '\\\\\\)', true],
         ] as const
     ).forEach(([enabled, ldelim, rdelim, inline]) => {
         if (enabled) {
@@ -503,11 +504,13 @@ export function getMdastES({
     document,
     lines,
     texSettings,
+    directiveSettings,
 }: {
     ast: MdastRoot;
     document: string;
     lines: string[];
-    texSettings: TexEscapeSettings;
+    texSettings: WithFullDelims['delims'];
+    directiveSettings: DirectiveEscapeSettings;
 }): EscapableSnippet[] {
     const escapableSnippets: EscapableSnippet[] = [];
     walkMdast(ast, (node) => {
@@ -525,6 +528,10 @@ export function getMdastES({
                 // Mustache tags ({...})
                 'mdxTextExpression',
                 'mdxFlowExpression',
+                // Directives
+                'containerDirective',
+                'leafDirective',
+                'textDirective',
                 // Frontmatter
                 'yaml',
                 'toml',
@@ -540,10 +547,8 @@ export function getMdastES({
         const loc = getLocationUnist(node, lines);
         // Inline math and display math
         if (isOneOf(node.type, ['inlineMath', 'math'])) {
-            if (!texSettings.enabled) return true;
             typeAssert(is<MdastMathNode | MdastInlineMathNode>(node));
-            const isDisplayMath =
-                texSettings.doubleDollarSignsDisplay ?? 'always';
+            const isDisplayMath = texSettings.doubleDollarSignsDisplay;
             let inline: boolean = node.type === 'inlineMath';
 
             // Micromark parses a lot of stuff that some might expect to be
@@ -634,16 +639,17 @@ export function getMdastES({
                 ),
             );
             const outerContent = document.slice(loc.start, loc.end);
-            // const innerContent = node.value;
-            // If the expression starts with `#`, `:`, or `/`, it's a Svelte
-            // logic block. In this case, we want to remove any <p>...</p> tags
-            // with which the markdown processor may wrap the escaped string.
-            // If the expression starts with `@html`, it's a raw HTML block. In
-            // this case, it should be treated as plain text, just like mustache
-            // tags.
+            // const innerContent = node.value; If the expression starts with
+            // `#if`, `:else`, `/if`, etc., it's a Svelte logic block. In this
+            // case, we want to remove any <p>...</p> tags with which the
+            // markdown processor may wrap the escaped string. If the expression
+            // starts with `@html`, it's a raw HTML block. In this case, it
+            // should be treated as plain text, just like mustache tags, and so
+            // we don't remove any <p>...</p> tags or add any padding.
             if (
-                /^\s*[#@:/]/.test(node.value) &&
-                !node.value.startsWith('@html')
+                /^\s*[#/](?:if|each|await|key)/.test(node.value) ||
+                /^\s*[:](?:else|then|catch)/.test(node.value) ||
+                /^\s*[@](?!html)/.test(node.value)
             ) {
                 // We don't want a logic block to be caught within a paragraph
                 // tag with other content, so we pad the escape string with
@@ -662,6 +668,18 @@ export function getMdastES({
                     type: 'svelte',
                     unescapeOptions: { removeParagraphTag: true },
                 });
+            } else if (
+                directiveSettings.enabled &&
+                directiveSettings.bracesArePartOfDirective?.({
+                    document,
+                    loc,
+                    innerContent: node.value,
+                })
+            ) {
+                // If we reached this branch, it means that the user loosened
+                // the directive syntax, and doesn't want this pair of braces to
+                // be escaped. Accordingly, we don't push anything to
+                // `escapableSnippets` here.
             } else {
                 escapableSnippets.push({
                     type: 'mustacheTag',
@@ -833,9 +851,10 @@ export function unescapeColons(document: string): string {
 
 export function escape(
     document: string,
-    verbatimTags: string[] = [],
-    texSettings: TexEscapeSettings = { enabled: true },
+    verbatimTags: string[],
+    texSettings: WithFullDelims['delims'],
     verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
+    directiveSettings: DirectiveEscapeSettings = {},
 ) {
     // Escape colons inside special Svelte elements (e.g. <svelte:component>) so
     // that they don't confuse the markdown processor. We don't want to escape
@@ -859,6 +878,7 @@ export function escape(
                 `svelte${colonUuid}options`,
             ],
             texSettings,
+            directiveSettings,
         );
 
         const lines = escapedDocument.split(/\r\n?|\n/);
@@ -868,6 +888,7 @@ export function escape(
                 document: escapedDocument,
                 lines,
                 texSettings,
+                directiveSettings,
             }),
             // Escape Svelte syntax
             ...getSvelteES(escapedDocument),
@@ -930,7 +951,7 @@ export function unescapeSnippets(
  * Parse a document into an MDAST.
  *
  * @param document - The document to parse.
- * @param texSettings - The settings for escaping TeX math.
+ * @param mathDelims - The settings for escaping TeX math.
  * @returns The MDAST of the document.
  *
  * @remarks This function uses the following modules and plugins to parse the
@@ -942,7 +963,9 @@ export function unescapeSnippets(
 export function parseToMdast(
     document: string,
     verbatimTags: string[] | undefined = undefined,
-    texSettings: TexEscapeSettings = getDefaultSveltexConfig().general.math,
+    mathDelims: WithFullDelims['delims'] = getDefaultMathConfiguration('custom')
+        .delims,
+    directiveSettings: DirectiveEscapeSettings = {},
 ): MdastRoot {
     return mdastFromMarkdown(document, {
         extensions: [
@@ -953,14 +976,17 @@ export function parseToMdast(
                 { type: 'toml', fence: { open: '---toml', close: '---' } },
                 { type: 'json', fence: { open: '---json', close: '---' } },
             ]),
+            ...(directiveSettings.enabled ? [micromarkDirective()] : []),
             micromarkMdxMd(),
             micromarkMdxJsx(),
             micromarkSkip(verbatimTags),
-            micromarkMath({
-                singleDollarTextMath:
-                    texSettings.enabled &&
-                    (texSettings.delims?.inline?.singleDollar ?? true),
-            }),
+            ...(mathDelims.dollars
+                ? [
+                      micromarkMath({
+                          singleDollarTextMath: mathDelims.inline.singleDollar,
+                      }),
+                  ]
+                : []),
             micromarkMdxExpression(),
         ],
         mdastExtensions: [
@@ -973,6 +999,7 @@ export function parseToMdast(
             ]),
             mdastMathFromMarkdown(),
             mdastMdxExpressionFromMarkdown(),
+            ...(directiveSettings.enabled ? [directiveFromMarkdown()] : []),
             // mdastMdxJsxFromMarkdown(),
         ],
     });

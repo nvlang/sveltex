@@ -6,7 +6,7 @@ import type {
     InterpretedAttributes,
 } from '$types/utils/Escape.js';
 import type {
-    FirstTwoLevelsRequiredNotNullOrUndefined,
+    FirstTwoLevelsRequiredNotUndefined,
     RequiredNotNullOrUndefined,
 } from '$types/utils/utility-types.js';
 import type { TexComponent } from '$utils/TexComponent.js';
@@ -143,7 +143,7 @@ export type FullVerbEnvConfigTex =
 
 export type FullVerbEnvConfigBase =
     RequiredNotNullOrUndefined<VerbEnvConfigBase> &
-        FirstTwoLevelsRequiredNotNullOrUndefined<
+        FirstTwoLevelsRequiredNotUndefined<
             Pick<VerbEnvConfigBase, 'transformers'>
         >;
 

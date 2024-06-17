@@ -5,7 +5,7 @@ outline: deep
 ---
 
 <script lang="ts" setup>
-import { PhMarkdownLogo, PhLifebuoy, PhGear, PhListDashes } from '@phosphor-icons/vue';
+import { PhMarkdownLogo, PhLifebuoy, PhDotsSix, PhGear, PhListDashes } from '@phosphor-icons/vue';
 </script>
 
 <style scoped>
@@ -39,6 +39,11 @@ with MathJax or KaTeX.
     **Forgiving:** SvelTeX will try to ensure your markup wouldn't yield
     unexpected results according to CommonMark, possibly making whitespace
     adjustments before passing it to the markdown processor.
+
+-   <PhDotsSix color="var(--hig-pink)" class="opacity-80" :size="28" weight="duotone"/>
+
+    **Directives:** Use markdown directives syntax, incl. curly brackets,
+    without confusing the Svelte compiler.
 
 -   <PhListDashes color="var(--hig-pink)" class="opacity-80" :size="28" weight="duotone"/>
 
@@ -487,5 +492,6 @@ base:
 :::
 ::::
 
+<!-- [^1]: (Note: the processing of the directives is the markdown backend's responsibility.) -->
 
 [standard metadata names]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta/name

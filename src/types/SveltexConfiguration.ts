@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 /**
  * This file, `SveltexConfig.d.ts`, contains type definitions for the
  * `SveltexConfig` interface, which is used to configure the SvelTeX
@@ -33,8 +34,6 @@ import type {
     FullVerbatimConfiguration,
     VerbatimConfiguration,
 } from '$types/handlers/Verbatim.js';
-import { TexEscapeSettings } from '$types/utils/Escape.js';
-import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
 
 /**
  * Supported TeX engines.
@@ -75,15 +74,20 @@ export interface BackendChoices<
      *
      * - [`'unified'`](https://npmjs.com/package/unified) (with
      *   [`remark-parse`](https://npmjs.com/package/remark-parse),
-     *   [`remark-rehype`](https://npmjs.com/package/remark-rehype), and
-     *   [`rehype-stringify`](https://npmjs.com/package/rehype-stringify))
+     *   [`remark-rehype`](https://npmjs.com/package/remark-rehype),
+     *   [`rehype-retext`](https://www.npmjs.com/package/rehype-retext),
+     *   [`rehype-stringify`](https://npmjs.com/package/rehype-stringify), and
+     *   [`@types/mdast`](https://npmjs.com/package/@types/mdast))
      *
      * ```sh
-     *       npm add -D unified remark-parse remark-rehype rehype-stringify
+     *       npm add -D unified remark-parse remark-rehype rehype-retext rehype-stringify "@types/mdast"
      * ```
      *
      *
-     * @defaultValue `'none'`
+     * @defaultValue
+     * ```ts
+     * 'none'
+     * ```
      */
     markdownBackend?: M | undefined;
 
@@ -175,7 +179,7 @@ export interface SveltexConfiguration<
      * - `marked`: [Docs](https://marked.js.org/using_advanced) /
      *   [GitHub](https://github.com/markedjs/marked)
      */
-    markdown?: MarkdownConfiguration<M>;
+    markdown?: MarkdownConfiguration<M> | undefined;
 
     /**
      * Configuration options for the syntax highlighter.
@@ -192,7 +196,7 @@ export interface SveltexConfiguration<
      *     / [GitHub](https://github.com/highlightjs/highlight.js) /
      *     [Website](https://highlightjs.org)
      */
-    code?: CodeConfiguration<C>;
+    code?: CodeConfiguration<C> | undefined;
 
     /**
      * Configuration options for the math processor (KaTeX or MathJax).
@@ -210,12 +214,12 @@ export interface SveltexConfiguration<
      * -   `mathjax`: [Docs](https://docs.mathjax.org/en/latest/) /
      *     [GitHub](https://github.com/mathjax/MathJax-src)
      */
-    math?: MathConfiguration<T>;
+    math?: MathConfiguration<T> | undefined;
 
     /**
      * Configuration options for the TeX processor.
      */
-    tex?: TexConfiguration;
+    tex?: TexConfiguration | undefined;
 
     /**
      * Define "verbatim" environments. These are environments in which the
@@ -252,65 +256,16 @@ export interface SveltexConfiguration<
      * </Example>
      * ```
      */
-    verbatim?: VerbatimConfiguration;
+    verbatim?: VerbatimConfiguration | undefined;
 
-    general?: {
-        /**
-         * File extensions which will be processed by the preprocessor.
-         *
-         * @remarks Be sure to include these in your `svelte.config.js` file.
-         *
-         * @defaultValue `['.sveltex']`
-         */
-        extensions?: undefined | `.${string}`[];
-
-        // /**
-        //  * Verbatim environments.
-        //  *
-        //  * @remarks The keys are the names of the environments, and the values
-        //  * describe how to process the inner content of the environment.
-        //  *
-        //  * @example
-        //  * ```ts
-        //  * { Verbatim: { escapeBraces: true, escapeHtml: true } }
-        //  * ```
-        //  *
-        //  * This environment would then be used as follows:
-        //  * ```html
-        //  * <Verbatim>
-        //  * Content.
-        //  * </Verbatim>
-        //  * ```
-        //  *
-        //  * @defaultValue
-        //  * ```ts
-        //  * {
-        //  *     Code: {
-        //  *         type: 'code',
-        //  *         defaultAttributes: {
-        //  *             inline: false,
-        //  *             lang: 'plaintext',
-        //  *         }
-        //  *     },
-        //  *     TeX: {
-        //  *         type: 'tex',
-        //  *         aliases: ['tex', 'LaTeX', 'latex'],
-        //  *         defaultAttributes: {
-        //  *             inline: false,
-        //  *         }
-        //  *     }
-        //  * }
-        //  * ```
-        //  */
-        // verbatimEnvironments?:
-        //     | undefined
-        //     | Record<string, VerbatimEnvironmentConfiguration>;
-
-        /**
-         * General options surrounding SvelTeX's support for math expressions.
-         */
-        math?: undefined | Omit<TexEscapeSettings, 'enabled'>;
-    };
+    /**
+     * File extensions which will be processed by the preprocessor.
+     *
+     * @remarks Be sure to include these in your `svelte.config.js` file.
+     *
+     * @defaultValue `['.sveltex']`
+     */
+    extensions?: undefined | `.${string}`[];
 }
 
 /**
@@ -321,9 +276,7 @@ export interface FullSveltexConfiguration<
     C extends CodeBackend,
     T extends MathBackend,
 > {
-    general: NonNullable<
-        RequiredNotNullOrUndefined<SveltexConfiguration<M, C, T>['general']>
-    > & { math: { enabled: boolean } };
+    extensions: `.${string}`[];
     markdown: FullMarkdownConfiguration<M>;
     code: FullCodeConfiguration<C>;
     math: FullMathConfiguration<T>;

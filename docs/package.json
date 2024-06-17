@@ -19,8 +19,10 @@
     "@shikijs/vitepress-twoslash": "^1.6.1",
     "@tailwindcss/typography": "^0.5.13",
     "@types/markdown-it-container": "^2.0.10",
+    "@types/markdown-it-footnote": "^3.0.4",
     "autoprefixer": "^10.4.19",
     "markdown-it-container": "^4.0.0",
+    "markdown-it-footnote": "^4.0.0",
     "markdown-it-mathjax3": "^4.3.2",
     "markdown-it-multimd-table": "^4.2.3",
     "postcss": "^8.4.38",
@@ -32,6 +34,7 @@
     "vue": "^3.4.27"
   },
   "dependencies": {
-    "@phosphor-icons/vue": "^2.2.1"
+    "@phosphor-icons/vue": "^2.2.1",
+    "floating-vue": "^5.2.2"
   }
 }

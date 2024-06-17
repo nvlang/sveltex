@@ -3,10 +3,7 @@
  * @packageDocumentation
  */
 
-export type {
-    TexBackend as TexBackend,
-    TexConfiguration as TexConfiguration,
-} from '$types/handlers/Tex.js';
+export type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
 export type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 export type {
     MarkdownBackend,

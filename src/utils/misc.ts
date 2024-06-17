@@ -193,8 +193,9 @@ export function copyTransformation<Options extends object>(
  * @returns A copy of the given transformation(s).
  */
 export function copyTransformations<Options extends object>(
-    t: Transformer<Options> | Transformer<Options>[],
-): Transformer<Options> | Transformer<Options>[] {
+    t: Transformer<Options> | Transformer<Options>[] | null,
+): Transformer<Options> | Transformer<Options>[] | null {
+    if (t === null) return null;
     return isArray(t) && !isString(t[1])
         ? (t as Transformer<Options>[]).map(copyTransformation)
         : copyTransformation(t as Transformer<Options>);

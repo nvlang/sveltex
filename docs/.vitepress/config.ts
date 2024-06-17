@@ -4,6 +4,7 @@ import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { githubDarkDefault } from './theme/code-theme.js';
 
 import markdownItMultimdTable from 'markdown-it-multimd-table';
+import footnote from 'markdown-it-footnote';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -17,6 +18,7 @@ export default defineConfig({
         math: true,
         codeTransformers: [transformerTwoslash()],
         config: (md) => {
+            md.use(footnote);
             (md as any).use(markdownItMultimdTable, {
                 autolabel: true,
                 headerless: true,

@@ -601,14 +601,14 @@ export type FullTexConfiguration = DeepRequiredNotUndefined<
 /**
  * Type of the function that processes a TeX string.
  *
- * @typeParam B - Advanced TeX backend.
+ * @typeParam B - TeX backend.
  */
 export type TexProcessFn = ProcessFn<TexProcessOptions, TexHandler>;
 
 /**
  * Type of the function that configures a TeX processor of the specified type.
  *
- * @typeParam B - Advanced TeX backend.
+ * @typeParam B - TeX backend.
  */
 export type TexConfigureFn = ConfigureFn<TexConfiguration, TexHandler>;
 

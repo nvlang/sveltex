@@ -42,8 +42,8 @@ export async function fancyWrite(
         },
         {
             startMessage: `Writing ${path}`,
-            failMessage: (t) => `Couldn't write ${path} (${t})`,
-            successMessage: (t) => `Wrote ${path} (${t})`,
+            failMessage: (t) => `Couldn't write ${path} after ${t}`,
+            successMessage: (t) => `Wrote ${path} in ${t}`,
         },
         [timeout],
     );

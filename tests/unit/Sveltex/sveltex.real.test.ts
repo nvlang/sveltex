@@ -26,7 +26,7 @@ import {
     vi,
 } from 'vitest';
 import { cartesianProduct } from '$tests/unit/utils.js';
-import type { SveltexConfiguration } from '$mod.js';
+import { mergeConfigs } from '$utils/merge.js';
 
 function fixture() {
     beforeEach(() => {
@@ -86,22 +86,12 @@ const preprocessors = [
         },
     ),
     await sveltex(
-        {
-            codeBackend: 'highlight.js',
-            mathBackend: 'katex',
-        },
-        {
-            code: { theme: { type: 'cdn' } },
-            math: { css: { type: 'cdn' } },
-        },
+        { codeBackend: 'highlight.js', mathBackend: 'katex' },
+        { code: { theme: { type: 'cdn' } }, math: { css: { type: 'cdn' } } },
     ),
     await sveltex(
-        {
-            codeBackend: 'highlight.js',
-        },
-        {
-            code: { theme: { type: 'none' } },
-        },
+        { codeBackend: 'highlight.js' },
+        { code: { theme: { type: 'none' } } },
     ),
     await sveltex(
         {
@@ -238,18 +228,27 @@ describe('Sveltex', () => {
             ] as [string, string, MarkdownConfiguration<MarkdownBackend>?][])(
                 '%o → %o',
                 async (input, expected, configuration) => {
-                    const originalConfiguration = p.configuration.markdown;
+                    let output;
                     if (configuration) {
-                        await p.configure({ markdown: configuration });
+                        const originalConfiguration = p.configuration;
+                        const { codeBackend, mathBackend, markdownBackend } = p;
+                        const configuredPreprocessor = await sveltex(
+                            { codeBackend, mathBackend, markdownBackend },
+                            mergeConfigs(originalConfiguration, {
+                                markdown: configuration,
+                            }),
+                        );
+                        output = await preprocess(
+                            configuredPreprocessor,
+                            input,
+                        );
+                    } else {
+                        output = await preprocess(p, input);
                     }
-                    let output = await preprocess(p, input);
                     if (p.markdownBackend === 'marked') {
                         // Marked doesn't currently collapse consecutive '\n's,
                         // contrary to CommonMark specification.
                         output = output.replaceAll(/\n{2,}/g, '\n');
-                    }
-                    if (configuration) {
-                        await p.configure({ markdown: originalConfiguration });
                     }
                     expect(output).toMatch(expected);
                     expect(log).not.toHaveBeenCalled();

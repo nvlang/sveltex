@@ -2,13 +2,11 @@
 import type { Poppler } from '$deps.js';
 import type {
     TexBackend as TexBackend,
-    TexConfiguration as TexConfiguration,
-    TexConfigureFn,
     TexProcessFn,
     TexProcessOptions as TexProcessOptions,
-    TexProcessor as TexProcessor,
     FullTexConfiguration as FullTexConfiguration,
     TexComponentImportInfo,
+    TexConfiguration,
 } from '$types/handlers/Tex.js';
 
 // Internal dependencies
@@ -16,15 +14,13 @@ import { getDefaultTexConfig } from '$config/defaults.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { SveltexCache } from '$utils/cache.js';
 import { Handler } from '$handlers/Handler.js';
-import { mergeConfigs } from '$utils/merge.js';
 import { pathExists } from '$utils/fs.js';
+import { mergeConfigs } from '$utils/merge.js';
 
 export class TexHandler extends Handler<
     TexBackend,
     TexBackend,
-    TexProcessor,
     TexProcessOptions,
-    TexConfiguration,
     FullTexConfiguration,
     TexHandler
 > {
@@ -53,99 +49,7 @@ export class TexHandler extends Handler<
         };
     }
 
-    // /**
-    //  * TeX component configurations map.
-    //  *
-    //  * - key: component configuration name
-    //  * - val: component configuration
-    //  */
-    // private _tccMap: Map<string, VerbEnvConfigTexuration<B>> = new Map<
-    //     string,
-    //     VerbEnvConfigTexuration<B>
-    // >();
-
-    // private _tccNames: string[] = [];
-
-    // /**
-    //  * Copy of the {@link _tccNames | `_tccNames`} property.
-    //  *
-    //  * @remarks Mutating this array will not affect the `_tccNames` property.
-    //  */
-    // public get tccNames(): string[] {
-    //     return [...this._tccNames];
-    // }
-
-    // private _tccAliases: string[] = [];
-
-    // /**
-    //  * Copy of the {@link _tccAliases | `_tccAliases`} property.
-    //  *
-    //  * @remarks Mutating this array will not affect the `_tccAliases` property.
-    //  */
-    // public get tccAliases(): string[] {
-    //     return [...this._tccAliases];
-    // }
-
-    // private readonly tccAliasToNameMap: Map<string, string> = new Map<
-    //     string,
-    //     string
-    // >();
-
-    // set tccMap(tccs: Record<string, VerbEnvConfigTexuration<B>> | null) {
-    //     if (tccs === null) {
-    //         // Reset tccMap, tccNames, tccAliases, and tccAliasToNameMap
-    //         this._tccMap = new Map<string, VerbEnvConfigTexuration<B>>();
-    //         this._tccNames = [];
-    //         this._tccAliases = [];
-    //         this.tccAliasToNameMap.clear();
-    //         return;
-    //     }
-
-    //     const components = new Map<string, VerbEnvConfigTexuration<B>>();
-
-    //     // Add "main" names of tex components
-    //     for (const [name, config] of Object.entries(tccs)) {
-    //         components.set(name, config);
-    //         if (!this._tccNames.includes(name)) {
-    //             this._tccNames.push(name);
-    //         }
-    //     }
-
-    //     // Array to store duplicate aliases, for logging
-    //     const duplicates: string[] = [];
-
-    //     // Add aliases, and check for duplicates
-    //     for (const [name, config] of Object.entries(tccs)) {
-    //         if (typeof config === 'object' && 'aliases' in config) {
-    //             for (const alias of config.aliases) {
-    //                 if (alias !== name) {
-    //                     if (components.has(alias)) {
-    //                         duplicates.push(alias);
-    //                     }
-    //                     this.tccAliasToNameMap.set(alias, name);
-    //                     if (!this._tccAliases.includes(alias)) {
-    //                         this._tccAliases.push(alias);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // Log error about duplicates, if present
-    //     [...new Set(duplicates)].forEach((alias) => {
-    //         log(
-    //             'error',
-    //             `Duplicate TeX component name/alias "${alias}".`,
-    //         );
-    //     });
-
-    //     this._tccMap = components;
-    // }
-
-    // get tccMap(): Map<string, VerbEnvConfigTexuration<B>> {
-    //     return this._tccMap;
-    // }
-
+    // TODO: check if documentation below is still up to date
     /**
      * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the
      * parent `Sveltex` instance.
@@ -186,21 +90,6 @@ export class TexHandler extends Handler<
      */
     texComponents: Record<string, TexComponentImportInfo[]>;
 
-    // /**
-    //  * Resolves an alias to the name of the component it refers to. If the input
-    //  * string is already a component name, it is returned as is. If the input
-    //  * string is neither a component name nor an alias, 'unknown' is returned.
-    //  *
-    //  * @param alias - The alias to resolve.
-    //  * @returns The name of the component the alias refers to.
-    //  */
-    // resolveTccAlias(alias: string): string {
-    //     return (
-    //         this.tccAliasToNameMap.get(alias) ??
-    //         (this._tccNames.includes(alias) ? alias : 'unknown')
-    //     );
-    // }
-
     /**
      * Notes a tex component in a file.
      *
@@ -228,39 +117,6 @@ export class TexHandler extends Handler<
         }
     }
 
-    // TODO: remove this method (only used by tests)
-    createTexComponent(
-        content: string,
-        options: TexProcessOptions,
-    ): TexComponent {
-        return TexComponent.create({
-            ...options,
-            tex: content,
-            texHandler: this,
-        });
-    }
-
-    override get configure() {
-        return async (configuration: TexConfiguration) => {
-            const oldCacheDirectory =
-                this._configuration.caching.cacheDirectory;
-            await super.configure(configuration);
-            this._configuration = mergeConfigs(
-                this._configuration,
-                configuration,
-            );
-            const newCacheDirectory =
-                this._configuration.caching.cacheDirectory;
-            if (oldCacheDirectory !== newCacheDirectory) {
-                // Reload cache if cache directory changes
-                this._cache = await SveltexCache.load(
-                    this.configuration.conversion.outputDirectory,
-                    newCacheDirectory,
-                );
-            }
-        };
-    }
-
     /**
      * The constructor is private to ensure that only the
      * {@link TexHandler.create | `TexHandler.create`} method
@@ -272,31 +128,16 @@ export class TexHandler extends Handler<
     private constructor({
         backend,
         process,
-        processor,
-        configure,
         configuration,
         texComponents,
     }: {
         backend: 'local';
         process: TexProcessFn;
-        processor: TexProcessor;
-        configure?: TexConfigureFn;
         configuration: FullTexConfiguration;
         texComponents: Record<string, TexComponentImportInfo[]>;
     }) {
-        super({
-            backend,
-            process,
-            processor,
-            configure,
-            configuration,
-        });
+        super({ backend, process, configuration });
         this.texComponents = texComponents;
-        this.configureNullOverrides = [
-            ['conversion.overrideConversion', null],
-            ['compilation.overrideCompilation', null],
-            ['optimization.overrideOptimization', null],
-        ];
     }
 
     poppler?: Poppler | undefined;
@@ -307,7 +148,13 @@ export class TexHandler extends Handler<
      * @param backend - The type of the tex processor to create.
      * @returns A promise that resolves to a tex handler of the specified type.
      */
-    static async create(): Promise<TexHandler> {
+    static async create(userConfig?: TexConfiguration): Promise<TexHandler> {
+        // Merge user-provided configuration into the default configuration.
+        const configuration = mergeConfigs(
+            getDefaultTexConfig(),
+            userConfig ?? {},
+        );
+
         const process = async (
             tex: string,
             options: TexProcessOptions,
@@ -332,21 +179,10 @@ export class TexHandler extends Handler<
             }
             return '';
         };
-        // const configure = (
-        //     _configuration: TexConfiguration<'local'>,
-        //     texHandler: TexHandler<'local'>,
-        // ) => {
-        //     texHandler.tccMap =
-        //         _configuration.components === null
-        //             ? null
-        //             : texHandler.configuration.components;
-        // };
-        const configuration = getDefaultTexConfig();
+
         const ath = new TexHandler({
             backend: 'local',
             process,
-            processor: {},
-            // configure,
             configuration,
             texComponents: {},
         });

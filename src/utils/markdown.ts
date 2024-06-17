@@ -1,7 +1,7 @@
 /**
  * Small remark plugin to disable indented code blocks and autolinks.
  */
-export function remarkDisableIndentedCodeBlocks(
+export function remarkDisableIndentedCodeBlocksAndAutolinks(
     this: import('unified').Processor,
 ) {
     const data = this.data();

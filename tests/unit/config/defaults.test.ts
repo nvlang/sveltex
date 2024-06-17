@@ -15,6 +15,7 @@ import {
     getDefaultVerbEnvConfig,
     sanitizePopplerSvgOptions,
     getTexPresetDefaults,
+    getDefaultMarkdownConfig,
 } from '$config/defaults.js';
 import path from 'node:path';
 import os from 'node:os';
@@ -28,13 +29,18 @@ import {
 } from '$types/handlers/Verbatim.js';
 import { isCodeBackendWithCss } from '$typeGuards/code.js';
 import { isPresentAndDefined } from '$typeGuards/utils.js';
-import { codeBackends } from '$utils/diagnosers/backendChoices.js';
+import {
+    codeBackends,
+    markdownBackends,
+} from '$utils/diagnosers/backendChoices.js';
 import { is, typeAssert } from '$deps.js';
 import {
     CleanPopplerSvgOptions,
     PopplerSvgOptions,
 } from '$types/utils/PopplerOptions.js';
 import { MakePropertiesNotUndefined } from '$types/utils/utility-types.js';
+import { fc, fuzzyTest } from '$dev_deps.js';
+import { TexComponent } from '$utils/TexComponent.js';
 
 function fixture() {
     beforeEach(() => {
@@ -78,19 +84,15 @@ describe.concurrent('config/defaults', () => {
                             expect(
                                 defaultVerbEnvConfig.handleAttributes,
                             ).toBeDefined();
-                            const ath = await TexHandler.create();
-                            const tc = ath.createTexComponent(
-                                'TexComponent.test.ts content',
-                                {
-                                    attributes: {
-                                        ref: 'TexComponent_test_ref',
-                                    },
-                                    filename: 'TexComponent_test_ts.sveltex',
-                                    selfClosing: false,
-                                    tag: 'tex',
-                                    config: getDefaultVerbEnvConfig('tex'),
-                                },
-                            );
+                            const texHandler = await TexHandler.create();
+                            const tc = TexComponent.create({
+                                texHandler,
+                                attributes: { ref: 'TexComponent_test_ref' },
+                                filename: 'TexComponent_test_ts.sveltex',
+                                tex: 'TexComponent.test.ts content',
+                                tag: 'tex',
+                                config: getDefaultVerbEnvConfig('tex'),
+                            });
 
                             expect(
                                 tc.configuration.overrides.conversion
@@ -246,13 +248,14 @@ describe.concurrent('config/defaults', () => {
     describe('postprocess()', () => {
         fixture();
         it('should work', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent: '<tex ref="ref">test</tex>',
+                // outerContent: '<tex ref="ref">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
@@ -264,18 +267,18 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: {
                     ref: 'ref',
                     attr: 'something',
                     class: 'class-example',
                 },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent:
-                    '<tex ref="ref" attr="something" class="class-example">test</tex>',
+                // outerContent: '<tex ref="ref" attr="something" class="class-example">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
@@ -289,17 +292,17 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: {
                     ref: 'ref',
                     caption: 'example caption',
                 },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent:
-                    '<tex ref="ref" caption="example caption">test</tex>',
+                // outerContent: '<tex ref="ref" caption="example caption">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
@@ -313,8 +316,10 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure caption attributes', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: {
                     ref: 'ref',
                     caption: 'example caption',
@@ -322,10 +327,8 @@ describe.concurrent('config/defaults', () => {
                     'figcaption:attr': 'something',
                 },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent:
-                    '<tex ref="ref" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
+                // outerContent: '<tex ref="ref" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
@@ -339,8 +342,10 @@ describe.concurrent('config/defaults', () => {
         });
 
         it('figure attributes + caption attributes', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: {
                     ref: 'ref',
                     class: 'class-example-figure',
@@ -349,10 +354,8 @@ describe.concurrent('config/defaults', () => {
                     'figcaption:attr': 'something',
                 },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent:
-                    '<tex ref="ref" class="class-example-figure" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
+                // outerContent: '<tex ref="ref" class="class-example-figure" caption="example caption" fig_caption_class="class-example" figcaption:attr="something">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(
@@ -369,13 +372,14 @@ describe.concurrent('config/defaults', () => {
     describe('handleAttributes', () => {
         fixture();
         it.skip('should complain if non-string attributes are passed', async () => {
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: { ref: 'ref', something: 123 },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent: '<tex ref="ref">test</tex>',
+                // outerContent: '<tex ref="ref">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
             expect(tc.handledAttributes).toEqual({
@@ -400,13 +404,14 @@ describe.concurrent('config/defaults', () => {
                 preamble: '\\usepackage{amsmath}',
                 documentClass: 'article',
             };
-            const ath = await TexHandler.create();
-            const tc = ath.createTexComponent('test', {
+            const texHandler = await TexHandler.create();
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
-                selfClosing: false,
                 tag: 'tex',
-                outerContent: '<tex ref="ref">test</tex>',
+                // outerContent: '<tex ref="ref">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
             });
 
@@ -452,6 +457,20 @@ describe.concurrent('config/defaults', () => {
                     calc: true,
                 },
             });
+        });
+    });
+});
+
+/* -------------------------------------------------------------------------- */
+/*                            Overly specific tests                           */
+/* -------------------------------------------------------------------------- */
+
+describe('prefersInline is () => true by default', () => {
+    describe.each(markdownBackends)('%s', (backend) => {
+        fuzzyTest.prop([fc.string()])('arbitrary input string', (input) => {
+            expect(getDefaultMarkdownConfig(backend).prefersInline(input)).toBe(
+                true,
+            );
         });
     });
 });

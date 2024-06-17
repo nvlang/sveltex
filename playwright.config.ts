@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export const config = defineConfig({
-    testDir: './e2e/',
+    testDir: 'tests/e2e',
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -37,6 +37,7 @@ export const config = defineConfig({
                 ...devices['Desktop Chrome'],
                 baseURL: 'http://localhost:3033',
             },
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
         {
@@ -45,6 +46,7 @@ export const config = defineConfig({
                 ...devices['Desktop Firefox'],
                 baseURL: 'http://localhost:3033',
             },
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
         {
@@ -53,17 +55,48 @@ export const config = defineConfig({
                 ...devices['Desktop Safari'],
                 baseURL: 'http://localhost:3033',
             },
+            timeout: 120e3, // 2 minutes
+            retries: 3,
+        },
+        {
+            name: 'iPhone SE',
+            use: {
+                ...devices['iPhone SE'],
+                colorScheme: 'dark',
+                baseURL: 'http://localhost:3033',
+            },
+            timeout: 120e3, // 2 minutes
+            retries: 3,
+        },
+        {
+            name: 'iPad Mini',
+            use: {
+                ...devices['iPad Mini'],
+                colorScheme: 'light',
+                baseURL: 'http://localhost:3033',
+            },
+            timeout: 120e3, // 2 minutes
+            retries: 3,
+        },
+        {
+            name: 'Galaxy S9+',
+            use: {
+                ...devices['Galaxy S9+'],
+                colorScheme: 'no-preference',
+                baseURL: 'http://localhost:3033',
+            },
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
     ],
 
     /* Run your local dev server before starting the tests */
     webServer: {
-        cwd: './tests/e2e/',
-        command: 'pnpm build && pnpm preview',
+        cwd: 'tests/e2e',
+        command: 'pnpm i && pnpm build && pnpm preview',
         url: 'http://localhost:3033',
         reuseExistingServer: !process.env['CI'],
-        timeout: 40000,
+        timeout: 300e3, // 5 minutes
     },
     name: 'Integration tests',
 });

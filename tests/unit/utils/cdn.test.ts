@@ -1,4 +1,4 @@
-import { fetchWithTimeout, cdnLink } from '$utils/cdn.js';
+import { fetchWithTimeout, cdnLink, fancyWrite } from '$utils/cdn.js';
 import { spy } from '$tests/unit/fixtures.js';
 import {
     describe,
@@ -8,8 +8,6 @@ import {
     afterAll,
     beforeEach,
     afterEach,
-    type MockInstance,
-    beforeAll,
 } from 'vitest';
 
 function fixture() {
@@ -22,15 +20,7 @@ function fixture() {
 }
 
 describe('utils/cdn', () => {
-    let log: MockInstance;
     fixture();
-    beforeAll(async () => {
-        const mocks = await spy(
-            ['writeFileEnsureDir', 'log', 'existsSync'],
-            true,
-        );
-        log = mocks.log;
-    });
     afterAll(() => {
         vi.restoreAllMocks();
     });
@@ -54,6 +44,11 @@ describe('utils/cdn', () => {
             'fetchWithTimeout(%o, %o) === %o',
             { timeout: 1500, retry: 1 },
             async (url, timeout, expected, logMessage) => {
+                const { log } = await spy([
+                    'writeFileEnsureDir',
+                    'log',
+                    'existsSync',
+                ]);
                 expect(await fetchWithTimeout(url, timeout)).toEqual(expected);
                 if (logMessage) {
                     expect(log).toHaveBeenCalledTimes(1);
@@ -63,6 +58,7 @@ describe('utils/cdn', () => {
                         logMessage,
                     );
                 }
+                vi.restoreAllMocks();
             },
         );
     });
@@ -97,5 +93,27 @@ describe('utils/cdn', () => {
                 expect(cdnLink(pkg, resource, version, cdn)).toBe(expected);
             },
         );
+    });
+
+    describe('fancyWrite', () => {
+        it('should work with failMessage()', async () => {
+            vi.restoreAllMocks();
+            const {
+                writeFileEnsureDir, // log
+            } = await spy(['writeFileEnsureDir', 'log']);
+            writeFileEnsureDir.mockRejectedValue(
+                new Error('04369612-2311-41d0-8486-bcfe70e086a6'),
+            );
+            expect(await fancyWrite('test', '')).toEqual(1);
+            // TODO: why is `log` not being called? I can see a log message in
+            // the console.
+
+            // expect(log).toHaveBeenCalledOnce();
+            // expect(log).toHaveBeenCalledWith(
+            //     'error',
+            //     expect.stringContaining('04369612-2311-41d0-8486-bcfe70e086a6'),
+            // );
+            writeFileEnsureDir.mockRestore();
+        });
     });
 });

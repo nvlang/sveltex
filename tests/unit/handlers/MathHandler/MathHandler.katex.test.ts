@@ -11,7 +11,6 @@ import {
 import { MathHandler } from '$handlers/MathHandler.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { v4 as uuid } from 'uuid';
-import { SupportedCdn } from '$types/handlers/Css.js';
 import { MathConfiguration } from '$types/handlers/Math.js';
 
 function fixture() {
@@ -59,8 +58,9 @@ describe("MathHandler<'katex'>", () => {
         });
 
         it('generates CSS', async () => {
-            const th = await MathHandler.create('katex');
-            await th.configure({ css: { type: 'hybrid' } });
+            const th = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await th.process('');
             expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(fancyWrite).toHaveBeenNthCalledWith(
@@ -74,8 +74,9 @@ describe("MathHandler<'katex'>", () => {
         });
 
         it("doesn't generate CSS twice", async () => {
-            const handler = await MathHandler.create('katex');
-            await handler.configure({ css: { type: 'hybrid' } });
+            const handler = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await handler.process('');
             await handler.process('');
             expect(fancyWrite).toHaveBeenCalledTimes(1);
@@ -91,8 +92,9 @@ describe("MathHandler<'katex'>", () => {
 
         it("doesn't generate CSS if the file already exists", async () => {
             existsSync.mockReturnValueOnce(true);
-            const th = await MathHandler.create('katex');
-            await th.configure({ css: { type: 'hybrid' } });
+            const th = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await th.process('');
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
@@ -100,21 +102,12 @@ describe("MathHandler<'katex'>", () => {
 
         it("doesn't generate CSS if `configuration.css.type` is 'none'", async () => {
             existsSync.mockReturnValueOnce(true);
-            const handler = await MathHandler.create('katex');
-            await handler.configure({ css: { type: 'none' } });
+            const handler = await MathHandler.create('katex', {
+                css: { type: 'none' },
+            });
             await handler.process('');
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
-        });
-
-        it("complains if type is 'cdn' but empty cdn array was given", async () => {
-            const th = await MathHandler.create('katex');
-            await th.configure({
-                css: { type: 'cdn', cdn: [] as unknown as SupportedCdn },
-            });
-            await expect(
-                async () => await th.process(''),
-            ).rejects.toThrowError();
         });
     });
 
@@ -142,8 +135,10 @@ describe("MathHandler<'katex'>", () => {
                 ] as [MathConfiguration<'katex'>?, (string | RegExp)?][])(
                     '%o',
                     async (config, expected) => {
-                        const handler = await MathHandler.create('katex');
-                        await handler.configure(config ?? {});
+                        const handler = await MathHandler.create(
+                            'katex',
+                            config,
+                        );
                         expect((await handler.process('x')).processed).toMatch(
                             expected ??
                                 '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
@@ -183,7 +178,7 @@ describe("MathHandler<'katex'>", () => {
             });
 
             it('should support transformers', async () => {
-                await handler.configure({
+                const handler = await MathHandler.create('katex', {
                     transformers: {
                         pre: [
                             [/\*/g, '\\cdot'],
@@ -199,46 +194,6 @@ describe("MathHandler<'katex'>", () => {
                 ).toEqual(
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
                 );
-                await handler.configure({
-                    transformers: { pre: [], post: [] },
-                });
-                expect(log).not.toHaveBeenCalled();
-            });
-        });
-
-        describe('processor', () => {
-            fixture();
-            it('should equal {}', () => {
-                expect(handler.processor).toEqual({});
-            });
-        });
-
-        describe('configure()', () => {
-            fixture();
-            it('is a function', () => {
-                expect(handler.configure).toBeTypeOf('function');
-                expect(handler.configure).not.toBeNull();
-            });
-
-            it('configures code correctly', async () => {
-                await handler.configure({ katex: { output: 'mathml' } });
-                expect(
-                    (await handler.process('x', { inline: true })).processed,
-                ).toEqual(
-                    '<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span>',
-                );
-                await handler.configure({ katex: { output: 'html' } });
-                expect(log).not.toHaveBeenCalled();
-            });
-
-            it('works with null overrides', async () => {
-                await handler.configure({
-                    transformers: null as unknown as { pre: []; post: [] },
-                });
-                expect(handler.configuration.transformers).toEqual({
-                    pre: [],
-                    post: [],
-                });
                 expect(log).not.toHaveBeenCalled();
             });
         });
@@ -252,8 +207,9 @@ describe("MathHandler<'katex'>", () => {
             writeFileEnsureDir.mockImplementationOnce(() => {
                 throw new Error(id);
             });
-            const th = await MathHandler.create('katex');
-            await th.configure({ css: { type: 'hybrid' } });
+            const th = await MathHandler.create('katex', {
+                css: { type: 'hybrid' },
+            });
             await th.process('');
             expect(log).toHaveBeenCalledTimes(1);
             expect(log).toHaveBeenNthCalledWith(

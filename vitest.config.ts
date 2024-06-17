@@ -12,7 +12,7 @@ export default defineConfig({
             enabled: true,
             only: false,
         },
-        bail: 10,
+        // bail: 10,
         // dir: './tests/unit',
         silent: true,
         maxConcurrency: 100,

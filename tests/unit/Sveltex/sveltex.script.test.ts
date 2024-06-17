@@ -14,40 +14,40 @@ import {
 } from 'vitest';
 
 describe('Sveltex', () => {
-    let log: MockInstance;
     let existsSync: MockInstance;
     beforeAll(async () => {
         const mocks = await spy(
             ['fancyWrite', 'spawnCliInstruction', 'log', 'mkdir', 'existsSync'],
             true,
         );
-        log = mocks.log;
         existsSync = mocks.existsSync;
     });
 
-    let sp: Sveltex<'micromark', 'highlight.js', 'mathjax'>;
+    let sp: Sveltex<'micromark', 'highlight.js', 'katex'>;
 
     beforeAll(async () => {
-        sp = await sveltex({
-            markdownBackend: 'micromark',
-            codeBackend: 'highlight.js',
-            mathBackend: 'mathjax',
-        });
-        await sp.configure({
-            math: {
-                css: {
-                    type: 'hybrid',
+        sp = await sveltex(
+            {
+                markdownBackend: 'micromark',
+                codeBackend: 'highlight.js',
+                mathBackend: 'katex',
+            },
+            {
+                math: {
+                    css: {
+                        type: 'hybrid',
+                    },
+                },
+                code: {
+                    theme: {
+                        type: 'self-hosted',
+                    },
+                },
+                verbatim: {
+                    tex: { aliases: ['TeX'], type: 'tex' },
                 },
             },
-            code: {
-                theme: {
-                    type: 'self-hosted',
-                },
-            },
-            verbatim: {
-                tex: { aliases: ['TeX'], type: 'tex' },
-            },
-        });
+        );
         mockFs({});
     });
     afterAll(() => {
@@ -86,15 +86,8 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toMatch(
-                /<svelte:head>\n.{0,100}<link rel="stylesheet" href="\/sveltex\/mathjax@.{1,20}\.svg\.min\.css">\n.{0,100}<\/svelte:head>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this={Sveltex__tex__something} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<mjx-container class="MathJax"/s,
+                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this={Sveltex__tex__something} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/s,
             );
-            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
-            expect(
-                sp.texHandler.texComponents[
-                    '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex'
-                ]?.length,
-            ).toEqual(1);
-
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
@@ -104,8 +97,6 @@ describe('Sveltex', () => {
             expect((scriptOut as Processed).code).toEqual(
                 "\nimport Sveltex__tex__something from '/src/sveltex/tex/something.svelte';\n",
             );
-            expect(log).toHaveBeenCalledTimes(1); // compilation error, due to existsSync mock
-            sp.texHandler.texComponents = {};
             existsSync.mockReset();
         });
 
@@ -117,12 +108,6 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toEqual(
                 '<script>\n</script>\n<p>something</p>',
             );
-            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(0);
-            expect(
-                sp.texHandler.texComponents[
-                    '7a541239-3058-460b-b3c6-5076a2f3f73b.sveltex'
-                ],
-            ).toBeUndefined();
 
             expect(
                 (
@@ -135,7 +120,6 @@ describe('Sveltex', () => {
                     })
                 )?.code,
             ).toBeUndefined();
-            sp.texHandler.texComponents = {};
         });
         it('works', async () => {
             existsSync.mockReturnValue(true);
@@ -146,17 +130,11 @@ describe('Sveltex', () => {
             });
             const res = (markupOut as Processed).code;
             expect(res).toMatch(
-                /<svelte:head>\n<title>Example<\/title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href=".{0,20}\/sveltex\/mathjax@.{1,100}\.svg\.min\.css">\n/,
+                /<svelte:head>\n<title>Example<\/title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href=".{1,100}\.css">\n/,
             );
             expect(res).toMatch(
-                /<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} \/>\n<figcaption id="caption-id">some text here<\/figcaption>\n<\/figure>\n<p><code>code<\/code>\n<mjx-container class="MathJax" jax="SVG"/,
+                /<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} \/>\n<figcaption id="caption-id">some text here<\/figcaption>\n<\/figure>\n<p><code>code<\/code>\n<span class="katex">/,
             );
-            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
-            expect(
-                sp.texHandler.texComponents[
-                    '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex'
-                ]?.length,
-            ).toEqual(1);
 
             const scriptOut = await sp.script({
                 content: '',
@@ -168,7 +146,6 @@ describe('Sveltex', () => {
                 '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
             );
 
-            sp.texHandler.texComponents = {};
             existsSync.mockReset();
         });
 
@@ -182,12 +159,6 @@ describe('Sveltex', () => {
             expect((markupOut as Processed).code).toContain(
                 '<script>\n</script>\n<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} />\n<figcaption id="caption-id">some text here</figcaption>\n</figure>',
             );
-            expect(Object.keys(sp.texHandler.texComponents).length).toEqual(1);
-            expect(
-                sp.texHandler.texComponents[
-                    '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex'
-                ]?.length,
-            ).toEqual(1);
 
             const scriptOut = await sp.script({
                 content: '',
@@ -199,7 +170,6 @@ describe('Sveltex', () => {
                 "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\n```\n",
             );
 
-            sp.texHandler.texComponents = {};
             existsSync.mockReset();
         });
     });

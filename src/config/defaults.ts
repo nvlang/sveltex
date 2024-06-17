@@ -49,6 +49,10 @@ import {
 import { MakePropertiesNotUndefined } from '$types/utils/utility-types.js';
 import { sveltexHtmlAttributes } from '$data/keys.js';
 
+// if (getDefaultMathConfiguration('custom').delims) {
+//     console.log('getDefaultMathConfiguration works');
+// }
+
 /**
  * Get the default configuration for a TeX backend.
  */
@@ -87,6 +91,12 @@ export function getDefaultMathConfiguration<
                           : { type: 'none' },
                 katex: {},
                 transformers: { post: [], pre: [] },
+                delims: {
+                    dollars: true,
+                    inline: { singleDollar: true, escapedParentheses: true },
+                    display: { escapedSquareBrackets: true },
+                    doubleDollarSignsDisplay: 'fenced',
+                },
             };
             return rv as FullMathConfiguration<T>;
         }
@@ -105,20 +115,43 @@ export function getDefaultMathConfiguration<
                     chtml: {
                         adaptiveCSS: false,
                         fontURL:
-                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2/',
+                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                     },
                 },
-                outputFormat: 'svg',
+                outputFormat: 'chtml',
                 transformers: { post: [], pre: [] },
+                delims: {
+                    dollars: true,
+                    inline: { singleDollar: true, escapedParentheses: true },
+                    display: { escapedSquareBrackets: true },
+                    doubleDollarSignsDisplay: 'fenced',
+                },
                 // mathjax: { chtml: { fontURL:
                 //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
                 // }}
             } as FullMathConfiguration<'mathjax'>;
             return rv as FullMathConfiguration<T>;
         }
+        case 'custom':
+            return {
+                transformers: { post: [], pre: [] },
+                process: (content: string) => content,
+                delims: {
+                    dollars: true,
+                    inline: { singleDollar: true, escapedParentheses: true },
+                    display: { escapedSquareBrackets: true },
+                    doubleDollarSignsDisplay: 'fenced',
+                },
+            } as FullMathConfiguration<'custom'> as FullMathConfiguration<T>;
         default:
             return {
                 transformers: { post: [], pre: [] },
+                delims: {
+                    dollars: false,
+                    inline: { singleDollar: false, escapedParentheses: false },
+                    display: { escapedSquareBrackets: false },
+                    doubleDollarSignsDisplay: 'fenced',
+                },
             } as FullMathConfiguration<
                 'custom' | 'none'
             > as FullMathConfiguration<T>;
@@ -420,38 +453,28 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
 /**
  * Get the default SvelTeX configuration options for the given backends.
  *
- * @param m - The Markdown backend.
- * @param c - The Code backend.
- * @param t - The Math backend.
+ * @param markdownBackend - The Markdown backend.
+ * @param codeBackend - The Code backend.
+ * @param mathBackend - The Math backend.
  * @returns The default SvelTeX configuration options.
  *
  * @remarks Mutating the returned object will not affect return values of
  * subsequent calls to this function.
  */
 export function getDefaultSveltexConfig<
-    M extends MarkdownBackend = 'none',
+    MD extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',
-    T extends MathBackend = 'none',
+    MT extends MathBackend = 'none',
 >(
-    m: M = 'none' as M,
-    c: C = 'none' as C,
-    t: T = 'none' as T,
-): FullSveltexConfiguration<M, C, T> {
+    markdownBackend: MD = 'none' as MD,
+    codeBackend: C = 'none' as C,
+    mathBackend: MT = 'none' as MT,
+): FullSveltexConfiguration<MD, C, MT> {
     return {
-        general: {
-            extensions: ['.sveltex'] as `.${string}`[],
-            math: {
-                enabled: t !== 'none',
-                delims: {
-                    inline: { escapedParentheses: true, singleDollar: true },
-                    display: { escapedSquareBrackets: true },
-                },
-                doubleDollarSignsDisplay: 'fenced',
-            },
-        },
-        math: getDefaultMathConfiguration(t),
-        code: getDefaultCodeConfig(c),
-        markdown: getDefaultMarkdownConfig(m),
+        extensions: ['.sveltex'] as `.${string}`[],
+        math: getDefaultMathConfiguration(mathBackend),
+        code: getDefaultCodeConfig(codeBackend),
+        markdown: getDefaultMarkdownConfig(markdownBackend),
         tex: getDefaultTexConfig(),
         verbatim: {},
     };
@@ -465,10 +488,15 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
             return {
                 remarkPlugins: [],
                 rehypePlugins: [],
+                retextPlugins: [],
                 // Common options
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'unified'> as FullMarkdownConfiguration<M>;
         case 'marked':
             return {
@@ -478,6 +506,10 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'marked'> as FullMarkdownConfiguration<M>;
         case 'micromark':
             return {
@@ -491,6 +523,10 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'micromark'> as FullMarkdownConfiguration<M>;
         case 'markdown-it':
             return {
@@ -498,13 +534,22 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'markdown-it'> as FullMarkdownConfiguration<M>;
         case 'custom':
             return {
+                process: (content: string) => content,
                 // Common options
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'custom'> as FullMarkdownConfiguration<M>;
         default:
             return {
@@ -512,6 +557,10 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 prefersInline: () => true,
                 strict: false,
                 transformers: { post: [], pre: [] },
+                directives: {
+                    enabled: true,
+                    bracesArePartOfDirective: null,
+                },
             } as FullMarkdownConfiguration<'none'> as FullMarkdownConfiguration<M>;
     }
 }

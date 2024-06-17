@@ -7,8 +7,13 @@ export function applyTransformations<
 >(
     str: string,
     opts: Options,
-    transformationsRaw: Transformer<Options> | Transformer<Options>[],
+    transformationsRaw:
+        | Transformer<Options>
+        | Transformer<Options>[]
+        | null
+        | undefined,
 ): string {
+    if (!transformationsRaw) return str;
     let transformed = str;
     const transformers =
         isArray(transformationsRaw) && !isString(transformationsRaw[1])

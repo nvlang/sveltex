@@ -528,7 +528,7 @@ export class TexComponent {
     }
 
     /**
-     * Advanced TeX handler that created this component.
+     * TeX handler that created this component.
      */
     private readonly texHandler: TexHandler;
 

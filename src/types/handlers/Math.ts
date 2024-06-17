@@ -12,7 +12,12 @@ import type {
     MathjaxConfiguration,
     MathjaxConversionOptions,
 } from '$types/utils/MathjaxOptions.js';
-import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
+import type {
+    ExcludeUndefined,
+    FirstTwoLevelsRequiredNotNullOrUndefined,
+    RequiredNotNullOrUndefined,
+    RequiredNotUndefined,
+} from '$types/utils/utility-types.js';
 
 /**
  * Supported math backends.
@@ -61,13 +66,14 @@ export type MathProcessor<B extends MathBackend> = B extends 'katex'
  * `configure` function.
  */
 export type MathConfiguration<B extends MathBackend> = B extends 'katex'
-    ? WithTransformers<B> & SveltexKatexConfig
+    ? WithDelims & WithTransformers<B> & SveltexKatexConfig
     : B extends 'mathjax'
-      ? WithTransformers<B> & SveltexMathjaxConfig
+      ? WithDelims & WithTransformers<B> & SveltexMathjaxConfig
       : B extends 'custom'
-        ? WithTransformers<B> & Record<string, unknown>
+        ? WithDelims &
+              WithTransformers<B> & { process: MathProcessFn<'custom'> }
         : B extends 'none'
-          ? WithTransformers<B> & Record<string, unknown>
+          ? WithDelims & WithTransformers<B> & Record<string, unknown>
           : never;
 
 interface SveltexKatexConfig {
@@ -98,8 +104,19 @@ interface SveltexKatexConfig {
 }
 
 interface SveltexMathjaxConfig {
+    /**
+     * @defaultValue
+     * ```ts
+     * 'chtml'
+     * ```
+     */
     outputFormat?: 'svg' | 'chtml' | undefined;
+
+    /**
+     * Configuration options for MathJax.
+     */
     mathjax?: MathjaxConfiguration | undefined;
+
     /**
      * MathJax needs CSS to work properly. By default, Sveltex takes care
      * of this itself. This property allows you to configure this behavior.
@@ -200,6 +217,124 @@ export type MathJaxFullCssConfiguration<
         | undefined;
 };
 
+export interface WithDelims {
+    /**
+     * Enable or disable delimiters for math.
+     */
+    delims?: {
+        /**
+         * If this is set to `false`, content inside `$...$`, `$$...$$`,
+         * `$$$...$$$`, etc. will not be processed by the math processor, and
+         * won't be escaped either, meaning that the markdown processor will
+         * process it however it sees fit.
+         *
+         * @remarks
+         * Setting this to `false` renders `inline.singleDollar` and
+         * `doubleDollarSignsDisplay` useless.
+         *
+         * @defaultValue
+         * `true` if and only if the math backend isn't `'none'`.
+         */
+        dollars?: boolean | undefined;
+
+        /**
+         * Delimiters that can be enabled or disabled whose content will always
+         * be treated as _inline_ math.
+         */
+        inline?: {
+            /**
+             * TODO: Improve documentation here.
+             *
+             * Whether `$...$` should be treated as math (`true`) or not
+             * (`false`).
+             *
+             * @remarks
+             * You can always write `\$` to escape a dollar sign outside of math
+             * mode. Inside of math mode, this won't work, but there are a few
+             * possible remedies:
+             *
+             * -   If this option is set to `false`, you can surround the inline
+             *     math with _n_ ≥ 2 dollar signs, and then use up to _n_ - 1
+             *     consecutive dollar signs inside the math without having to
+             *     worry about escaping them. This mirrors the behavior of
+             *     backticks in markdown. For example: `$$\text{Let $x = 2$}$$`.
+             *     Note, however, that `\n$$\n123\n$$\n` will be rendered as
+             *     display math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
+             */
+            singleDollar?: boolean;
+
+            /**
+             * Whether `\(...\)` should be treated as math (`true`) or regular
+             * text (`false`). If it _is_ interpreted as math, it will always be
+             * interpreted as inline math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
+             */
+            escapedParentheses?: boolean;
+        };
+        /**
+         * Delimiters that can be enabled or disabled whose content will always
+         * be treated as _display_ math.
+         */
+        display?: {
+            /**
+             * Whether `\[...\]` should be treated as math (`true`) or regular
+             * text (`false`). If it _is_ interpreted as math, it will always be
+             * interpreted as display math.
+             *
+             * @defaultValue
+             * ```
+             * true
+             * ```
+             */
+            escapedSquareBrackets?: boolean;
+        };
+        /**
+         * Controls when dollar-delimited math should be treated as display
+         * math.
+         *
+         * - `'always'`: Always display `$$...$$` as display math.
+         * - `'newline'`: Display `$$...$$` as display math iff it's on its own
+         *   line(s) (i.e., if it matches `/^\s*\$\$.*?\$\$\s*$/msu`).
+         * - `'fenced'`: Display `$$...$$` as display math iff the opening and
+         *   closing delimiters each have an entire line for themselves.
+         *
+         * @defaultValue `'fenced'`
+         *
+         * @example
+         * Consider the following markdown:
+         *
+         * ```md
+         * text $$ a $$ text
+         *
+         * $$ b $$
+         *
+         * $$
+         * c
+         * $$
+         * ```
+         *
+         * The following table shows how the `isDisplayMath` setting would
+         * affect the rendering of the math blocks:
+         *
+         * |     | `'always'` | `'newline'` | `'fenced'` |
+         * |-----|:----------:|:-----------:|:----------:|
+         * | `a` | display    | inline      | inline     |
+         * | `b` | display    | display     | inline     |
+         * | `c` | display    | display     | display    |
+         */
+        doubleDollarSignsDisplay?: 'always' | 'newline' | 'fenced' | undefined;
+    };
+}
+
 interface WithTransformers<T extends MathBackend> {
     /**
      * Transformers to apply to
@@ -212,9 +347,15 @@ interface WithTransformers<T extends MathBackend> {
         | undefined;
 }
 
-interface WithTransformersRequiredNonNullable<T extends MathBackend> {
-    transformers: RequiredNotNullOrUndefined<
+interface WithFullTransformers<T extends MathBackend> {
+    transformers: RequiredNotUndefined<
         Transformers<MathProcessOptionsWithoutTransformers<T>>
+    >;
+}
+
+export interface WithFullDelims {
+    delims: FirstTwoLevelsRequiredNotNullOrUndefined<
+        ExcludeUndefined<WithDelims['delims']>
     >;
 }
 
@@ -226,20 +367,22 @@ type MathProcessOptionsWithoutTransformers<B extends MathBackend> =
           };
 
 /**
- * Return type of the
- * {@link MathHandler.configuration | `MathHandler.configuration`} getter.
+ * Return type of the `configuration` getter.
  *
  * @typeParam B - The type of the math backend.
  */
 export type FullMathConfiguration<B extends MathBackend> = B extends
     | 'mathjax'
     | 'katex'
-    ? WithFullCssConfiguration<B> &
-          WithTransformersRequiredNonNullable<B> &
+    ? WithFullDelims &
+          WithFullCssConfiguration<B> &
+          WithFullTransformers<B> &
           RequiredNotNullOrUndefined<
-              Omit<MathConfiguration<B>, 'transformers' | 'css'>
+              Omit<MathConfiguration<B>, 'transformers' | 'css' | 'delims'>
           >
-    : WithTransformersRequiredNonNullable<B> & MathConfiguration<B>;
+    : WithFullDelims &
+          WithFullTransformers<B> &
+          Omit<MathConfiguration<B>, 'transformers' | 'delims'>;
 
 export type PossibleMathCssApproach<B extends MathBackend> = B extends 'mathjax'
     ? 'hybrid' | 'none'

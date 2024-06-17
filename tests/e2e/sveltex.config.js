@@ -14,11 +14,9 @@ export const preprocessors = await Promise.all(
         mathBackend: mathBackend.split("-")[0]
       },
       {
-        general: {
-          extensions: [
-            `.${markdownBackend.replace(/-/g, "")}AND${codeBackend.replace(/-/g, "")}AND${mathBackend.replace(/-/g, "")}ANDsveltex`
-          ]
-        },
+        extensions: [
+          `.${markdownBackend.replace(/-/g, "")}AND${codeBackend.replace(/-/g, "")}AND${mathBackend.replace(/-/g, "")}ANDsveltex`
+        ],
         verbatim: {
           Verb: { type: "escape", component: "p" },
           tex: {

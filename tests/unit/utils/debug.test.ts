@@ -153,6 +153,19 @@ describe('debug', () => {
                 ),
             ).toEqual(1);
         });
+        it('should work with failMessage()', async () => {
+            expect(
+                await runWithSpinner(
+                    () => 'something',
+                    {
+                        startMessage: 'test',
+                        successMessage: () => 'success',
+                        failMessage: () => 'failed',
+                    },
+                    ['something'],
+                ),
+            ).toEqual(1);
+        });
     });
 
     describe('prettifyError', () => {

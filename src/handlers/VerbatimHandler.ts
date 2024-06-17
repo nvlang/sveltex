@@ -4,7 +4,7 @@
 
 // Types
 import type { CodeBackend } from '$types/handlers/Code.js';
-import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
+import type { ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbatimConfiguration,
     FullVerbEnvConfig,
@@ -28,16 +28,8 @@ import { escapeBraces } from '$utils/escape.js';
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import {
-    escapeHtml,
-    inspect,
-    is,
-    nodeAssert,
-    rfdc,
-    typeAssert,
-} from '$deps.js';
+import { escapeHtml, is, nodeAssert, rfdc, typeAssert } from '$deps.js';
 import { applyTransformations } from '$utils/transformers.js';
-import { copyTransformations } from '$utils/misc.js';
 
 const deepClone = rfdc();
 
@@ -47,9 +39,7 @@ const deepClone = rfdc();
 export class VerbatimHandler<C extends CodeBackend> extends Handler<
     'verbatim',
     'verbatim',
-    Record<string, never>,
     VerbatimProcessOptions,
-    VerbatimConfiguration,
     FullVerbatimConfiguration,
     VerbatimHandler<C>
 > {
@@ -59,37 +49,16 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
     private readonly codeHandler: CodeHandler<C>;
 
     /**
-     * Advanced TeX handler to which TeX processing should be
+     * TeX handler to which TeX processing should be
      * delegated.
      */
     private readonly texHandler: TexHandler;
 
-    override get configuration() {
-        // rfdc doesn't handle RegExps well, so we have to copy them manually
-        return Object.fromEntries(
-            Object.entries(deepClone(this._configuration)).map(([k, v]) => {
-                const real = this._configuration[k];
-                nodeAssert(real?.transformers);
-                const { transformers: transformers } = real;
-                const { pre, post } = transformers;
-                return [
-                    k,
-                    {
-                        ...v,
-                        transformers: {
-                            pre: copyTransformations(pre),
-                            post: copyTransformations(post),
-                        },
-                    },
-                ];
-            }),
-        );
-    }
-
     static create<C extends CodeBackend>(
         codeHandler: CodeHandler<C>,
         texHandler: TexHandler,
-    ) {
+        userConfig: VerbatimConfiguration = {},
+    ): VerbatimHandler<C> {
         /**
          * @param content - The content to process (incl. HTML tag)
          * @returns The processed content
@@ -118,36 +87,19 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
              */
             let processed: string = innerContent;
 
-            // Error handling: it shouldn't be possible for self-closing tags to
-            // have non-empty inner content.
-            if (selfClosing && innerContent) {
-                log(
-                    'error',
-                    `Self-closing HTML tag "${tag}" should not have inner content.`,
-                );
-                return {
-                    processed: outerContent ?? innerContent,
-                    unescapeOptions: {
-                        // We'll remove the paragraph tag iff we added padding
-                        // around the content, which we only do if the tag is
-                        // supposed to be a flow element (as opposed to inline).
-                        removeParagraphTag: !!options.escapeOptions?.pad,
-                    },
-                };
-            }
+            nodeAssert(
+                !(selfClosing && innerContent),
+                'Self-closing tags should not have inner content.',
+            );
 
             // Get the configuration for the verbatim environment being
             // processed.
             const config = verbatimHandler._verbEnvs.get(tag);
 
-            // Error handling: unknown verbatim environment.
-            if (!config) {
-                log('error', `Unknown verbatim environment "${tag}".`);
-                return {
-                    processed: outerContent ?? innerContent,
-                    unescapeOptions: { removeParagraphTag: false },
-                };
-            }
+            nodeAssert(
+                config !== undefined,
+                "Unknown verbatim environment shouldn't have been matched to begin with.",
+            );
 
             const {
                 type,
@@ -286,7 +238,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 processed = processedSnippet.processed;
                 unescapeOptions = processedSnippet.unescapeOptions;
             } else if (type === 'tex') {
-                // Advanced TeX Content
+                // TeX Content
                 typeAssert(is<FullVerbEnvConfigTex>(config));
                 const res = await verbatimHandler.texHandler.process(
                     processed,
@@ -319,87 +271,84 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
 
             return { processed, unescapeOptions };
         };
-        const configure = (
-            configuration: VerbatimConfiguration,
-            verbatimHandler: VerbatimHandler<C>,
-        ) => {
-            const newVerbatimEnvironments = configuration;
-            console.log(
-                'newVerbatimEnvironments:',
-                inspect(newVerbatimEnvironments, { depth: 5 }),
-            );
-            const verbEnvs = verbatimHandler._verbEnvs;
-            console.log('verbEnvs:', inspect(verbEnvs, { depth: 5 }));
-            const aliasMap = verbatimHandler._aliasMap;
 
-            const validNewVerbatimEnvironments: [string, FullVerbEnvConfig][] =
-                Object.entries(newVerbatimEnvironments)
-                    .filter(
-                        ([env, config]) =>
-                            diagnoseVerbEnvConfig(config, env).errors === 0,
-                    )
-                    .map(([env, config]) => [
-                        env,
-                        mergeConfigs(
-                            getDefaultVerbEnvConfig(config.type),
-                            config,
-                        ) as FullVerbEnvConfig,
-                    ]);
-
-            // Add "main" names of verbatim environments
-            for (const [env, config] of validNewVerbatimEnvironments) {
-                verbEnvs.set(env, config);
-            }
-
-            // Array to store duplicate aliases, for logging
-            const duplicates: string[] = [];
-
-            // Add aliases, and check for duplicates
-            for (const [env, config] of validNewVerbatimEnvironments) {
-                for (const alias of config.aliases) {
-                    if (alias !== env) {
-                        if (verbEnvs.has(alias)) {
-                            duplicates.push(alias);
-                        }
-                        verbEnvs.set(alias, config);
-                        aliasMap.set(alias, env);
-                    }
-                }
-            }
-
-            // Log error about duplicates, if present
-            [...new Set(duplicates)].forEach((alias) => {
-                log(
-                    'error',
-                    `Duplicate verbatim environment name/alias "${alias}".`,
-                );
-            });
-
-            verbatimHandler._verbEnvs = verbEnvs;
-        };
-        return new VerbatimHandler<C>({
+        const verbatimHandler = new VerbatimHandler<C>({
             process,
-            configure,
             codeHandler,
             texHandler,
         });
+
+        /**
+         * - Key: "main" name of a verbatim environment
+         * - Value: Full configuration of the verbatim environment
+         */
+        const verbEnvs = verbatimHandler._verbEnvs;
+
+        /**
+         * - Key: Alias of a verbatim environment
+         * - Value: "Main" name of the verbatim environment
+         */
+        const aliasMap = verbatimHandler._aliasMap;
+
+        // Filter out invalid verbatim environment configurations
+        const validVerbEnvConfigs: [string, FullVerbEnvConfig][] =
+            Object.entries(userConfig)
+                .filter(
+                    ([env, config]) =>
+                        diagnoseVerbEnvConfig(config, env).errors === 0,
+                )
+                .map(([env, config]) => [
+                    env,
+                    mergeConfigs(
+                        getDefaultVerbEnvConfig(config.type),
+                        config,
+                    ) as FullVerbEnvConfig,
+                ]);
+
+        verbatimHandler._configuration =
+            Object.fromEntries(validVerbEnvConfigs);
+
+        // Add "main" names of verbatim environments
+        for (const [env, verbEnvConfig] of validVerbEnvConfigs) {
+            verbEnvs.set(env, verbEnvConfig);
+        }
+
+        // Array to store duplicate aliases, for logging
+        const duplicates: string[] = [];
+
+        // Add aliases, and check for duplicates
+        for (const [env, verbEnvConfig] of validVerbEnvConfigs) {
+            for (const alias of verbEnvConfig.aliases) {
+                if (alias !== env) {
+                    if (verbEnvs.has(alias)) {
+                        duplicates.push(alias);
+                    }
+                    verbEnvs.set(alias, verbEnvConfig);
+                    aliasMap.set(alias, env);
+                }
+            }
+        }
+
+        // Log error about duplicates, if present
+        [...new Set(duplicates)].forEach((alias) => {
+            log(
+                'error',
+                `Duplicate verbatim environment name/alias "${alias}".`,
+            );
+        });
+        verbatimHandler._verbEnvs = verbEnvs;
+        return verbatimHandler;
     }
 
     private constructor({
         backend,
-        processor,
         process,
-        configure,
         configuration,
         codeHandler,
         texHandler,
     }: {
         backend?: 'verbatim' | undefined;
         process: ProcessFn<VerbatimProcessOptions, VerbatimHandler<C>>;
-        processor?: Record<string, never> | undefined;
-        configure?:
-            | ConfigureFn<VerbatimConfiguration, VerbatimHandler<C>>
-            | undefined;
         configuration?: FullVerbatimConfiguration | undefined;
         codeHandler: CodeHandler<C>;
         texHandler: TexHandler;
@@ -408,8 +357,6 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
             backend: backend ?? 'verbatim',
             configuration: configuration ?? {},
             process,
-            processor: processor ?? {},
-            configure,
         });
         this.codeHandler = codeHandler;
         this.texHandler = texHandler;

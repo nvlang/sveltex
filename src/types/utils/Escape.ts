@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 import type { CodeProcessOptionsBase } from '$types/handlers/Code.js';
 import type { MathBackend, MathProcessOptions } from '$types/handlers/Math.js';
 import type { VerbatimProcessOptions } from '$types/handlers/Verbatim.js';
@@ -298,4 +299,182 @@ export interface TexEscapeSettings {
      * | `c` | display    | display     | display    |
      */
     doubleDollarSignsDisplay?: 'always' | 'newline' | 'fenced' | undefined;
+}
+
+export interface DirectiveEscapeSettings {
+    /**
+     * Whether markdown directives are being used in the document. In
+     * particular, this setting should be set to `true` iff you're using curly
+     * braces (`{...}`) in your markdown that are _not_ part of a Svelte
+     * mustache tag, Svelte element directive, Svelte logic block, code block,
+     * code span, math, or verbatim environment.
+     *
+     * @remarks
+     * SvelTeX does _not_ actually transform markdown directives itself; this
+     * must still be done by the markdown processor, which will usually require
+     * some sort of plugin / extension.
+     *
+     * For some context on markdown directives, see:
+     * - [Discussion in CommonMark
+     *   forum](https://talk.commonmark.org/t/generic-directives-plugins-syntax/444)
+     * - [Description of directives
+     *   syntax](https://www.npmjs.com/package/micromark-extension-directive#syntax)
+     *   used in the `micromark-extension-directive` package. SvelTeX uses
+     *   `micromark-extension-directive` internally to determine whether
+     *   something should be interpreted as a directive or not.
+     *
+     * @see {@link bracesArePartOfDirective | `bracesArePartOfDirective`}
+     *
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
+     */
+    enabled?: boolean | undefined;
+
+    /**
+     * If {@link enabled | `markdown.directives.enabled`} is `true`, SvelTeX
+     * uses
+     * [`micromark-extension-directive`](https://www.npmjs.com/package/micromark-extension-directive)
+     * internally to determine whether a pair of braces should be considered
+     * part of a directive or not. I personally like the syntax for directives
+     * proposed there, but for some it might feel too strict. Since, as far as I
+     * know, there is no official spec regarding directives, it mostly just
+     * boils down to personal preference (and whatever the tools you're using
+     * expect). Accordingly, this setting is provided for those that may want to
+     * loosen the syntax. (Note: You can't use this setting to make the syntax
+     * _more_ strict.)
+     *
+     * If this setting is set to a function, said function will be used to
+     * determine whether matched pairs of braces encountered in the document
+     * should be considered part of a directive or not.
+     *
+     * @remarks
+     * If set to `null`, this will be effectively equivalent to `() => false`.
+     *
+     * @remarks
+     * ⚠ **Warning**: If you make the syntax for directives looser than that of
+     * whatever plugin you're passing to your markdown processor to handle
+     * directives, you can get unexpected results. For example, if you set this
+     * setting to `() => true`, and are using
+     * [`remark-directive`](https://github.com/remarkjs/remark-directive) (which
+     * follows the same syntax for directives as
+     * `micromark-extension-directive`) then the following markdown...
+     *
+     * ```markdown
+     * ::: example { 1*2*3 }
+     * text
+     * :::
+     * ```
+     *
+     * ...would become...
+     *
+     * ```html
+     * <p>::: example { 1<em>2</em>3 }
+     * text
+     * :::</p>
+     * ```
+     *
+     * ...before it is passed to the Svelte compiler. This is not only probably
+     * not what you want, but also not valid Svelte, since `1<em>2</em>3` is not
+     * valid JavaScript.
+     *
+     * @example
+     * Suppose the following markdown is encountered:
+     *
+     * ```markdown
+     * text 1
+     * ::: directive {#id .class key=value}
+     * content
+     * :::
+     * text 2
+     * ```
+     *
+     * Then, in order to decide whether `{#id .class key=value}` should be
+     * considered a Svelte mustache tag (in which case it would be escaped
+     * before the markdown processor gets a chance to parse it) or a part of a
+     * directive (in which case it wouldn't be escaped, so that the markdown
+     * parser can parse it), the `bracesArePartOfDirective` function would be
+     * called with the following arguments:
+     *
+     * ```ts
+     * bracesArePartOfDirective({
+     *     document: 'text 1\n'
+     *         + '::: directive {#id .class key=value}\n'
+     *         + 'content\n'
+     *         + ':::\n'
+     *         + 'text 2',
+     *     innerContent: '#id .class key=value',
+     *     loc: { start: 21, end: 42 },
+     * });
+     * ```
+     *
+     * Note that the `loc` object contains character offsets, and that
+     * `document.slice(loc.start, loc.end)` would return the string `'{#id
+     * .class key=value}'`, i.e., would include the braces.
+     *
+     * @example
+     * The following function would _partially_ imitate the syntax of
+     * `micromark-extension-directive`:
+     *
+     * ```ts
+     * const bracesArePartOfDirective = ({
+     *     document,
+     *     loc,
+     * }: {
+     *     document: string;
+     *     loc: { start: number; end: number };
+     * }) => {
+     *     const { end } = loc;
+     *     const trimmed = document.slice(0, end);
+     *     return directiveRegex.test(trimmed);
+     * };
+     * ```
+     *
+     * In the above, `directiveRegex` would be the following regex (presented
+     * here in the extended regex format for readability):
+     *
+     * ```
+     * (?:                 # -: directive must be preceded by whitespace or
+     *                     #    start of string
+     *     ^               # (start of string)
+     *   | \s              # (whitespace)
+     * )
+     * :+                  # (colon, ≥1 times, greedy)
+     * [a-zA-Z]            # (directive name must start with a letter)
+     * (?:                 # -: rest of directive name
+     *     [a-zA-Z0-9]*    # (directive name can be alphanumeric...)
+     *   | [\w-]*          # (...and contain hyphens or underscores...)
+     *     [a-zA-Z0-9]     # (...as long as it doesn't end with one)
+     * )
+     * (?:                 # -: optional label part
+     *     \[              # (opening bracket)
+     *     [^              # (not...)
+     *         \]          # (...a closing bracket...)
+     *         \r\n?       # (...or newline)
+     *     ]*              # (≥0 times, greedy)
+     *     \]              # (closing bracket)
+     * )?
+     * \{                  # (opening brace)
+     *     [^              # (not...)
+     *         \}          # (...a closing bracket...)
+     *         \r\n?       # (...or newline)
+     *     ]*              # (≥0 times, greedy)
+     * \}                  # (closing brace)
+     * $                   # (end of string)
+     * ```
+     *
+     * @defaultValue
+     * ```ts
+     * null
+     * ```
+     */
+    bracesArePartOfDirective?:
+        | ((info: {
+              document: string;
+              innerContent: string;
+              loc: { start: number; end: number };
+          }) => boolean)
+        | undefined
+        | null;
 }

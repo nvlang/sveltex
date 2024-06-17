@@ -8,10 +8,7 @@ const config = {
     // for more information about preprocessors
     preprocess: [sveltexPreprocessor, vitePreprocess()],
 
-    extensions: [
-        '.svelte',
-        ...sveltexPreprocessor.configuration.general.extensions,
-    ],
+    extensions: ['.svelte', ...sveltexPreprocessor.configuration.extensions],
 
     kit: {
         // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.

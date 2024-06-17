@@ -452,19 +452,13 @@ export type FullCodeConfiguration<B extends CodeBackend> =
  *
  * @typeParam  B - Code backend.
  */
-export type CodeProcessFn<B extends CodeBackend> =
+export type CodeProcessFn =
     /**
      * @param code - The code to process.
      * @param inline - Whether to parse the code as inline or block.
-     * @param codeHandler - The code handler to use to process the
-     * code.
      * @returns The processed code, or a promise resolving to it.
      */
-    (
-        code: string,
-        options: CodeProcessOptionsBase,
-        codeHandler: CodeHandler<B>,
-    ) => string | Promise<string>;
+    (code: string, options: CodeProcessOptionsBase) => string | Promise<string>;
 
 /**
  * Type of the options object that may be passed to the

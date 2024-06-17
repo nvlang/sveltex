@@ -188,6 +188,14 @@ following:
 
 
 
+
+## Directives
+
+Directives are great. They're also somewhat tricky for us, since they can contain curly brackets, which could be mistaken for e.g. Svelte mustache tags. There
+
+
+
+
 <!-- Dingus -->
 
 [html-blocks]: https://spec.commonmark.org/0.31.2/#html-blocks

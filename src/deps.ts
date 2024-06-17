@@ -98,7 +98,9 @@ export {
     type MdxFlowExpression as MdastMdxFlowExpressionNode,
     type MdxTextExpression as MdastMdxTextExpressionNode,
 } from 'mdast-util-mdx-expression';
+export { directiveFromMarkdown } from 'mdast-util-directive';
 export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
+export { directive as micromarkDirective } from 'micromark-extension-directive';
 export {
     math as micromarkMath,
     type Options as MicromarkMathOptions,

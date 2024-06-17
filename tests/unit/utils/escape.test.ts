@@ -30,10 +30,13 @@ import {
     EscapedSnippet,
     ProcessedSnippet,
     Snippet,
-    TexEscapeSettings,
     UnescapeOptions,
 } from '$types/utils/Escape.js';
 import { isArray, isString } from '$typeGuards/utils.js';
+import type { FullVerbEnvConfig } from '$types/handlers/Verbatim.js';
+import { getDefaultMathConfiguration } from '$mod.js';
+import { mergeConfigs } from '$utils/merge.js';
+import type { WithDelims } from '$types/handlers/Math.js';
 
 function fixture() {
     beforeEach(() => {
@@ -43,6 +46,8 @@ function fixture() {
         vi.resetAllMocks();
     });
 }
+
+const verbEnvs = new Map<string, FullVerbEnvConfig>();
 
 describe.concurrent.shuffle('escape()', () => {
     fixture();
@@ -145,7 +150,7 @@ describe.concurrent.shuffle('escape()', () => {
             string,
             string,
             Partial<EscapedSnippet>[],
-            TexEscapeSettings | undefined,
+            WithDelims['delims'] | undefined,
         ][],
     ][])('%s', (_label, tests) => {
         it.concurrent.each(tests)(
@@ -155,7 +160,17 @@ describe.concurrent.shuffle('escape()', () => {
                 //     escapedDocument: 'a',
                 //     escapedSnippets: [],
                 // });
-                const res = escape(raw, undefined, texEscapeSettings);
+
+                const res = escape(
+                    raw,
+                    [],
+                    mergeConfigs(
+                        getDefaultMathConfiguration('custom').delims,
+                        texEscapeSettings ?? {},
+                    ),
+                    verbEnvs,
+                    {},
+                );
                 expect(res.escapedDocument).toEqual(
                     expect.stringMatching(
                         new RegExp(
@@ -268,7 +283,7 @@ describe.concurrent.shuffle('escape()', () => {
                 ],
             ],
             [
-                'a $$b$$ c',
+                'a \\[b\\] c',
                 'a \n\n□\n\n c',
                 [
                     {
@@ -283,7 +298,13 @@ describe.concurrent.shuffle('escape()', () => {
         ] as [string, string, PartialSnippet[]][])(
             '%o → %o',
             (str, escaped, snippets) => {
-                const res = escape(str);
+                const res = escape(
+                    str,
+                    [],
+                    getDefaultMathConfiguration('custom').delims,
+                    verbEnvs,
+                    {},
+                );
                 expect(res.escapedDocument).toMatch(
                     new RegExp(
                         escapeStringForRegExp(escaped).replaceAll(
@@ -858,11 +879,13 @@ describe.concurrent.shuffle('getMathInSpecialDelimsES()', () => {
                 (document, _outerContent, escapedSnippets) => {
                     expect(
                         getMathInSpecialDelimsES(document, {
-                            enabled,
-                            delims: {
-                                inline: { escapedParentheses: true },
-                                display: { escapedSquareBrackets: true },
+                            dollars: enabled,
+                            inline: {
+                                singleDollar: enabled,
+                                escapedParentheses: enabled,
                             },
+                            display: { escapedSquareBrackets: enabled },
+                            doubleDollarSignsDisplay: 'fenced',
                         }),
                     ).toMatchObject(escapedSnippets);
                 },
@@ -933,9 +956,11 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings: { enabled: true },
+                        texSettings:
+                            getDefaultMathConfiguration('custom').delims,
                         document,
                         lines: document.split('\n'),
+                        directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
             },
@@ -981,7 +1006,9 @@ describe.concurrent.shuffle('getMdastES()', () => {
                         ast: parseToMdast(document),
                         document,
                         lines: document.split('\n'),
-                        texSettings: { enabled: true },
+                        texSettings:
+                            getDefaultMathConfiguration('custom').delims,
+                        directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
             },
@@ -994,10 +1021,6 @@ describe.concurrent.shuffle('getMdastES()', () => {
             'a{@const b}c',
             'a{#if b}c',
             'a{/if b}c',
-            'a{#else if b}c',
-            'a{/else if b}c',
-            'a{#else b}c',
-            'a{/else b}c',
             'a{#each b}c',
             'a{/each b}c',
             'a{#await b}c',
@@ -1035,9 +1058,11 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings: { enabled: true },
+                        texSettings:
+                            getDefaultMathConfiguration('custom').delims,
                         document,
                         lines: document.split('\n'),
+                        directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
             },
@@ -1085,9 +1110,11 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document.replaceAll('␠', ' ')),
-                        texSettings: { enabled: true },
+                        texSettings:
+                            getDefaultMathConfiguration('custom').delims,
                         document,
                         lines: document.split('\n'),
+                        directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
             },
@@ -1137,9 +1164,11 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings: { enabled: true },
+                        texSettings:
+                            getDefaultMathConfiguration('custom').delims,
                         document,
                         lines: document.split('\n'),
+                        directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
             },
@@ -1338,9 +1367,12 @@ describe.concurrent.shuffle('getMdastES()', () => {
                         expect(
                             getMdastES({
                                 ast,
-                                texSettings: { enabled: true },
+                                texSettings:
+                                    getDefaultMathConfiguration('custom')
+                                        .delims,
                                 document,
                                 lines: document.split('\n'),
+                                directiveSettings: {},
                             }).length,
                         ).toEqual(n);
                     }
@@ -1360,7 +1392,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
             ).map(
                 ([enabled, singleDollar]) =>
                     [
-                        `tex (${enabled ? 'enabled' : 'disabled'}${enabled ? (singleDollar ? ', singleDollar: true' : ', singleDollar: false') : ''})`,
+                        `tex (${enabled ? 'enabled' : 'disabled'}${enabled ? (singleDollar ? ', singleDollar: true' : ', singleDollar: false') + ", doubleDollarSignsDisplay: 'always'" : ''})`,
                         [
                             { str: 'a$b$c', n: 1 },
                             { str: 'a$$b$$c', n: 2 },
@@ -1373,9 +1405,10 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                         ? undefined
                                         : str.slice(1, -1),
                                     {
-                                        enabled,
-                                        delims: { inline: { singleDollar } },
-                                    } as TexEscapeSettings,
+                                        dollars: enabled,
+                                        inline: { singleDollar },
+                                        doubleDollarSignsDisplay: 'always',
+                                    } as WithDelims['delims'],
                                     !enabled || (n === 1 && !singleDollar)
                                         ? []
                                         : [
@@ -1398,7 +1431,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                 ] as [
                                     string,
                                     string | undefined,
-                                    TexEscapeSettings,
+                                    WithDelims['delims'],
                                     EscapableSnippet[],
                                 ],
                         ),
@@ -1407,7 +1440,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                         [
                             string,
                             string | undefined,
-                            TexEscapeSettings,
+                            WithDelims['delims'],
                             EscapableSnippet[],
                         ][],
                     ],
@@ -1426,11 +1459,19 @@ describe.concurrent.shuffle('getMdastES()', () => {
                             ast: parseToMdast(
                                 document,
                                 undefined,
-                                texEscapeSettings,
+                                mergeConfigs(
+                                    getDefaultMathConfiguration('custom')
+                                        .delims,
+                                    texEscapeSettings ?? {},
+                                ),
                             ),
                             document,
                             lines: document.split('\n'),
-                            texSettings: texEscapeSettings,
+                            texSettings: mergeConfigs(
+                                getDefaultMathConfiguration('custom').delims,
+                                texEscapeSettings ?? {},
+                            ),
+                            directiveSettings: {},
                         }),
                     ).toMatchObject(escapedSnippets);
                 },
@@ -1445,7 +1486,7 @@ function generateTexTests(): [
         string,
         string,
         Partial<EscapedSnippet>[],
-        TexEscapeSettings | undefined,
+        WithDelims['delims'] | undefined,
     ][],
 ][] {
     const isDisplayMath = ['always', 'newline', 'fenced'] as const;
@@ -1479,15 +1520,13 @@ function generateTexTests(): [
                         delims: isString(delims) ? delims : ['$', delims],
                     },
                     settings: {
-                        enabled: true,
-                        delims: {
-                            inline: {
-                                singleDollar: true,
-                                escapedParentheses: true,
-                            },
-                            display: {
-                                escapedSquareBrackets: true,
-                            },
+                        dollars: true,
+                        inline: {
+                            singleDollar: true,
+                            escapedParentheses: true,
+                        },
+                        display: {
+                            escapedSquareBrackets: true,
                         },
                         doubleDollarSignsDisplay,
                     },
@@ -1508,8 +1547,13 @@ function texTest(opts: {
         };
         delims: ['$', number] | '\\[...\\]' | '\\(...\\)';
     };
-    settings: TexEscapeSettings;
-}): [string, string, Partial<EscapedSnippet>[], TexEscapeSettings | undefined] {
+    settings: WithDelims['delims'];
+}): [
+    string,
+    string,
+    Partial<EscapedSnippet>[],
+    WithDelims['delims'] | undefined,
+] {
     const { input, settings } = opts;
     const { padding, delims, content } = input;
     const { left, right } = padding;
@@ -1540,9 +1584,9 @@ function texTest(opts: {
     let inline =
         delims === '\\(...\\)' || (delims !== '\\[...\\]' && delims[1] <= 1);
     if (!inline && delims !== '\\[...\\]') {
-        if (settings.doubleDollarSignsDisplay === 'newline') {
+        if (settings?.doubleDollarSignsDisplay === 'newline') {
             inline = !(left.outer > 0 && right.outer > 0);
-        } else if (settings.doubleDollarSignsDisplay === 'fenced') {
+        } else if (settings?.doubleDollarSignsDisplay === 'fenced') {
             inline = !(
                 left.outer > 0 &&
                 right.outer > 0 &&

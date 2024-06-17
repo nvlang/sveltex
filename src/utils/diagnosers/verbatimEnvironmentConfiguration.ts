@@ -59,11 +59,18 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
             : undefined;
 
     d.ifPresent(
+        'transformers',
+        'an object with "pre" and "post" properties',
+        (obj) => isRecord(obj, ([k]) => k === 'pre' || k === 'post'),
+        'object',
+    );
+
+    d.ifPresent(
         'defaultAttributes',
         'an object with string keys and string, number, boolean, null, or undefined values',
-        (v) =>
+        (obj) =>
             isRecord(
-                v,
+                obj,
                 ([k, v]) =>
                     isString(k) &&
                     (isString(v) ||

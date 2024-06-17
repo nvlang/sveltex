@@ -165,7 +165,7 @@ describe('parseComponent', () => {
                 '<a:b-c_d test />',
                 {
                     tag: 'a:b-c_d',
-                    attributes: { test: true },
+                    attributes: { test: undefined },
                     innerContent: '',
                     selfClosing: true,
                 },

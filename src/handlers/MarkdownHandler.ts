@@ -3,7 +3,6 @@ import type {
     FullMarkdownConfiguration,
     MarkdownBackend,
     MarkdownConfiguration,
-    MarkdownConfigureFn,
     MarkdownProcessFn,
     MarkdownProcessOptions,
     MarkdownProcessor,
@@ -14,14 +13,14 @@ import { missingDeps } from '$utils/env.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import {
     micromarkDisableIndentedCodeAndAutolinks,
-    remarkDisableIndentedCodeBlocks,
+    remarkDisableIndentedCodeBlocksAndAutolinks,
 } from '$utils/markdown.js';
 import { getDefaultMarkdownConfig } from '$config/defaults.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';
 import XRegExp from 'xregexp';
-import { nodeAssert, uuid } from '$deps.js';
+import { is, nodeAssert, typeAssert, uuid } from '$deps.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -35,9 +34,7 @@ import { nodeAssert, uuid } from '$deps.js';
 export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     B,
     MarkdownBackend,
-    MarkdownProcessor<B>,
     MarkdownProcessOptions,
-    MarkdownConfiguration<B>,
     FullMarkdownConfiguration<B>,
     MarkdownHandler<B>
 > {
@@ -82,268 +79,250 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
      * Creates a markdown handler of the specified type.
      *
      * @param backend - The type of the markdown processor to create.
-     * @returns A promise that resolves to a markdown handler of the specified type.
-     */
-    static async create<B extends Exclude<MarkdownBackend, 'custom'>>(
-        backend: B,
-    ): Promise<MarkdownHandler<B>>;
-
-    static async create<B extends 'custom'>(
-        backend: B,
-        {
-            processor,
-            process,
-            configure,
-            configuration,
-        }: {
-            processor?: MarkdownProcessor<'custom'>;
-            process: MarkdownProcessFn<'custom'>;
-            configure?: MarkdownConfigureFn<'custom'>;
-            configuration?: MarkdownConfiguration<'custom'>;
-        },
-    ): Promise<MarkdownHandler<B>>;
-
-    /**
-     * Creates a markdown handler of the specified type.
-     *
-     * @param backend - The type of the markdown processor to create.
-     * @returns A promise that resolves to a markdown handler of the specified type.
+     * @returns A promise that resolves to a markdown handler of the specified
+     * type.
      */
     static async create<B extends MarkdownBackend>(
         backend: B,
-        custom?: B extends 'custom'
-            ? {
-                  processor?: MarkdownProcessor<'custom'>;
-                  process: MarkdownProcessFn<'custom'>;
-                  configure?: MarkdownConfigureFn<'custom'>;
-                  configuration?: MarkdownConfiguration<'custom'>;
-              }
-            : never,
-    ) {
-        switch (backend) {
-            case 'custom':
-                if (custom === undefined) {
-                    throw new Error(
-                        'Called MarkdownHandler.create("custom", custom) without a second parameter.',
-                    );
-                }
-                return new MarkdownHandler({
-                    backend: 'custom',
-                    processor: custom.processor ?? {},
-                    process: custom.process,
-                    configure: custom.configure ?? (() => undefined),
-                    configuration: mergeConfigs(
-                        getDefaultMarkdownConfig('custom'),
-                        custom.configuration ?? {},
-                    ),
+        userConfig?: MarkdownConfiguration<B>,
+    ): Promise<MarkdownHandler<B>> {
+        if (backend === 'custom') {
+            const configuration = mergeConfigs(
+                getDefaultMarkdownConfig('custom'),
+                userConfig ?? {},
+            );
+            return new MarkdownHandler({
+                backend,
+                process: configuration.process,
+                configuration,
+            }) as unknown as MarkdownHandler<B>;
+        } else if (backend === 'marked') {
+            // If `backend === 'marked'`, then we know that `userConfig`, if
+            // defined, must be of type `MarkdownConfiguration<'marked'>`.
+            typeAssert(
+                is<MarkdownConfiguration<'marked'> | undefined>(userConfig),
+            );
+
+            // Import `marked`, and throw an error if it's not available.
+            let marked;
+            try {
+                marked = await import('marked');
+            } catch (error) {
+                // If the import fails, add 'marked' to the list of missing
+                // dependencies and rethrow the error.
+                missingDeps.push('marked');
+                throw error;
+            }
+
+            // Merge user-provided configuration into the default configuration.
+            const configuration = mergeConfigs(
+                getDefaultMarkdownConfig('marked'),
+                userConfig ?? {},
+            );
+
+            // Create a MarkdownProcessor object that will be used by the
+            // `process` function to process markdown content.
+            const processor: MarkdownProcessor<'marked'> = new marked.Marked({
+                tokenizer: {
+                    // Disable autolinks
+                    autolink: () => undefined,
+                    // Disable indented code blocks (NB: fenced code blocks have
+                    // a separate tokenizer, named "fences").
+                    code: () => undefined,
+                },
+            });
+
+            // Configure the processor in accordance with the merged
+            // configuration.
+            processor.setOptions(configuration.options);
+            processor.use(...configuration.extensions);
+
+            const process: MarkdownProcessFn<'marked'> = async (
+                markdown: string,
+            ) => {
+                return await processor.parse(markdown);
+            };
+
+            // Return a `MarkdownHandler` object.
+            return new MarkdownHandler<'marked'>({
+                backend,
+                process,
+                configuration,
+            }) as unknown as MarkdownHandler<B>;
+        } else if (backend === 'micromark') {
+            // If `backend === 'micromark'`, then we know that `userConfig`, if
+            // defined, must be of type `MarkdownConfiguration<'micromark'>`.
+            typeAssert(
+                is<MarkdownConfiguration<'micromark'> | undefined>(userConfig),
+            );
+
+            // Import `micromark`, and throw an error if it's not available.
+            let micromark;
+            try {
+                micromark = await import('micromark');
+            } catch (error) {
+                // If the import fails, add 'micromark' to the list of missing
+                // dependencies and rethrow the error.
+                missingDeps.push('micromark');
+                throw error;
+            }
+
+            // Merge user-provided configuration into the default configuration.
+            const configuration = mergeConfigs(
+                getDefaultMarkdownConfig('micromark'),
+                userConfig ?? {},
+            );
+
+            // Define the function that will be used to process markdown
+            // content.
+            const process: MarkdownProcessFn<'micromark'> = (
+                markdown: string,
+            ) => {
+                return micromark.micromark(markdown, {
+                    ...configuration.options,
+                    extensions: [
+                        micromarkDisableIndentedCodeAndAutolinks,
+                        ...(configuration.options.extensions ?? []),
+                    ],
                 });
+            };
 
-            case 'marked':
-                try {
-                    type Backend = 'marked';
-                    type Processor = MarkdownProcessor<Backend>;
-                    type Configuration = MarkdownConfiguration<Backend>;
-                    const marked = await import('marked');
+            // Return the MarkdownHandler object.
+            return new MarkdownHandler<'micromark'>({
+                backend,
+                process,
+                configuration,
+            }) as unknown as MarkdownHandler<B>;
+        } else if (backend === 'markdown-it') {
+            // If `backend === 'markdown-it'`, then we know that `userConfig`,
+            // if defined, must be of type
+            // `MarkdownConfiguration<'markdown-it'>`.
+            typeAssert(is<MarkdownConfiguration<'markdown-it'>>(userConfig));
 
-                    const processor: Processor = new marked.Marked({
-                        tokenizer: {
-                            // Disable autolinks
-                            autolink: () => undefined,
-                            // Disable indented code blocks (NB: fenced code
-                            // blocks have a separate tokenizer, named
-                            // "fences").
-                            code: () => undefined,
-                        },
-                    });
-                    const configure: MarkdownConfigureFn<Backend> = (
-                        config: Configuration,
-                        markdownHandler: MarkdownHandler<Backend>,
-                    ) => {
-                        if (config.options) {
-                            markdownHandler.processor.setOptions(
-                                config.options,
-                            );
-                        }
-                        if (config.extensions) {
-                            markdownHandler.processor.use(...config.extensions);
-                        }
-                    };
-                    const process: MarkdownProcessFn<Backend> = async (
-                        markdown: string,
-                        _options: MarkdownProcessOptions | undefined,
-                        markdownHandler: MarkdownHandler<Backend>,
-                    ) => {
-                        return await markdownHandler.processor.parse(markdown);
-                    };
-                    return new MarkdownHandler<Backend>({
-                        backend: 'marked',
-                        processor,
-                        process,
-                        configure,
-                        configuration: getDefaultMarkdownConfig('marked'),
-                    });
-                } catch (error) {
-                    missingDeps.push('marked');
-                    throw error;
-                }
+            // Import `markdown-it`, and throw an error if it's not available.
+            let MarkdownIt;
+            try {
+                MarkdownIt = (await import('markdown-it')).default;
+            } catch (error) {
+                // If the import fails, add 'markdown-it' to the list of missing
+                // dependencies and rethrow the error.
+                missingDeps.push('markdown-it');
+                throw error;
+            }
 
-            case 'micromark':
-                try {
-                    type Backend = 'micromark';
-                    const micromark = await import('micromark');
-                    const processor = {};
-                    const process: MarkdownProcessFn<Backend> = (
-                        markdown: string,
-                        _inline: MarkdownProcessOptions | undefined,
-                        markdownHandler: MarkdownHandler<Backend>,
-                    ) => {
-                        return micromark.micromark(markdown, {
-                            ...markdownHandler._configuration.options,
-                            extensions: [
-                                micromarkDisableIndentedCodeAndAutolinks,
-                                ...(markdownHandler._configuration.options
-                                    .extensions ?? []),
-                            ],
-                        });
-                    };
-                    return new MarkdownHandler<Backend>({
-                        backend: 'micromark',
-                        processor,
-                        process,
-                        configuration: getDefaultMarkdownConfig('micromark'),
-                    });
-                } catch (error) {
-                    missingDeps.push('micromark');
-                    throw error;
-                }
+            // Create a processor object that will be used by the `process`
+            // function to process markdown content.
+            const processor = new MarkdownIt({
+                // Allow HTML in markdown
+                html: true,
+            });
 
-            case 'markdown-it': {
-                let processor;
-                type Backend = 'markdown-it';
-                try {
-                    const MarkdownIt = (await import('markdown-it')).default;
-                    processor = new MarkdownIt({ html: true });
-                } catch (error) {
-                    missingDeps.push('markdown-it');
-                    throw error;
-                }
-                // Disable indented code blocks and autolinks
-                processor.disable(['code', 'autolink']);
-                const configure: MarkdownConfigureFn<'markdown-it'> = (
-                    config,
-                    markdownHandler,
-                ) => {
-                    if (config.options) {
-                        markdownHandler.processor.set(config.options);
+            // Disable indented code blocks and autolinks
+            processor.disable(['code', 'autolink']);
+
+            // Merge user-provided configuration into the default configuration.
+            const configuration = mergeConfigs(
+                getDefaultMarkdownConfig('markdown-it'),
+                userConfig,
+            );
+
+            // Configure the processor in accordance with the merged
+            // configuration.
+            if (configuration.options) {
+                processor.set(configuration.options);
+            }
+            if (configuration.extensions) {
+                configuration.extensions.forEach((extension) => {
+                    if (Array.isArray(extension)) {
+                        processor.use(extension[0], ...extension.slice(1));
+                    } else {
+                        processor.use(extension);
                     }
-                    if (config.extensions) {
-                        config.extensions.forEach((extension) => {
-                            if (Array.isArray(extension)) {
-                                markdownHandler.processor.use(
-                                    extension[0],
-                                    ...extension.slice(1),
-                                );
-                            } else {
-                                markdownHandler.processor.use(extension);
-                            }
-                        });
-                    }
-                };
-                const process: MarkdownProcessFn<Backend> = (
-                    markdown: string,
-                    _options: MarkdownProcessOptions | undefined,
-                    markdownHandler: MarkdownHandler<Backend>,
-                ) => {
-                    return markdownHandler.processor.render(markdown);
-                };
-                return new MarkdownHandler<Backend>({
-                    backend,
-                    processor,
-                    process,
-                    configure,
-                    configuration: getDefaultMarkdownConfig('markdown-it'),
                 });
             }
 
-            case 'unified':
-                try {
-                    type Backend = 'unified';
-                    type Processor = MarkdownProcessor<'unified'>;
+            // Define the function that will be used to process markdown
+            // content.
+            const process: MarkdownProcessFn<'markdown-it'> = (
+                markdown: string,
+            ) => {
+                return processor.render(markdown);
+            };
 
-                    const unified = (await import('unified')).unified;
+            // Return the MarkdownHandler object.
+            return new MarkdownHandler<'markdown-it'>({
+                backend,
+                process,
+                configuration,
+            }) as unknown as MarkdownHandler<B>;
+        } else if (backend === 'unified') {
+            // If `backend === 'unified'`, then we know that `userConfig`, if
+            // defined, must be of type `MarkdownConfiguration<'unified'>`.
+            typeAssert(
+                is<MarkdownConfiguration<'unified'> | undefined>(userConfig),
+            );
+            type Backend = 'unified';
 
-                    const remarkParse = (await import('remark-parse')).default;
-                    const remarkRehype = (await import('remark-rehype'))
-                        .default;
-                    const rehypeStringify = (await import('rehype-stringify'))
-                        .default;
-                    const configuration: FullMarkdownConfiguration<'unified'> =
-                        getDefaultMarkdownConfig('unified');
-                    // remarkParse
-                    const processor: Processor = unified()
-                        .use(remarkParse)
-                        .use(remarkDisableIndentedCodeBlocks)
-                        .use(remarkRehype, {
-                            allowDangerousHtml: true,
-                            // passThrough: ['html', 'blockquote'],
-                        })
-                        .use(rehypeStringify, { allowDangerousHtml: true });
-                    const configure: MarkdownConfigureFn<'unified'> = (
-                        _config: MarkdownConfiguration<'unified'>,
-                        markdownHandler: MarkdownHandler<Backend>,
-                    ) => {
-                        markdownHandler.processor = unified()
-                            .use(remarkParse)
-                            .use(remarkDisableIndentedCodeBlocks)
-                            .use(markdownHandler.configuration.remarkPlugins)
-                            .use(remarkRehype, { allowDangerousHtml: true })
-                            .use(markdownHandler.configuration.rehypePlugins)
-                            .use(rehypeStringify, {
-                                allowDangerousHtml: true,
-                            });
-                    };
-                    const process: MarkdownProcessFn<Backend> = async (
-                        markdown: string,
-                        _options: MarkdownProcessOptions | undefined,
-                        markdownHandler: MarkdownHandler<Backend>,
-                    ) => {
-                        const res = (
-                            await markdownHandler.processor.process(markdown)
-                        ).toString();
-                        return res;
-                    };
-                    return new MarkdownHandler<Backend>({
-                        backend: 'unified',
-                        processor,
-                        process,
-                        configure,
-                        configuration,
-                    });
-                } catch (error) {
-                    missingDeps.push(
-                        'unified',
-                        'remark-parse',
-                        'remark-rehype',
-                        'rehype-stringify',
-                        '@types/mdast',
-                    );
-                    throw error;
-                }
-
-            case 'none':
-                return new MarkdownHandler<'none'>({
-                    backend: 'none',
-                    process: (markdown: string) => markdown,
-                    configure: () => {
-                        return;
-                    },
-                    processor: {},
-                    configuration: getDefaultMarkdownConfig('none'),
-                });
-
-            default:
-                throw new Error(`Unsupported markdown backend "${backend}".`);
+            // Import required modules, and throw an error if any of them are
+            // not available.
+            let unified,
+                remarkParse,
+                remarkRehype,
+                // rehypeRetext,
+                rehypeStringify;
+            try {
+                unified = (await import('unified')).unified;
+                remarkParse = (await import('remark-parse')).default;
+                remarkRehype = (await import('remark-rehype')).default;
+                // rehypeRetext = (await import('rehype-retext')).default;
+                rehypeStringify = (await import('rehype-stringify')).default;
+            } catch (error) {
+                // If the import fails, add the missing dependencies to the list
+                // of missing dependencies and rethrow the error.
+                missingDeps.push(
+                    'unified',
+                    'remark-parse',
+                    'remark-rehype',
+                    // 'rehype-retext',
+                    'rehype-stringify',
+                    '@types/mdast',
+                );
+                throw error;
+            }
+            const configuration = mergeConfigs(
+                getDefaultMarkdownConfig('unified'),
+                userConfig ?? {},
+            );
+            // remarkParse
+            const processor: MarkdownProcessor<'unified'> = unified()
+                .use(remarkParse)
+                .use(remarkDisableIndentedCodeBlocksAndAutolinks)
+                .use(configuration.remarkPlugins)
+                .use(remarkRehype, { allowDangerousHtml: true })
+                .use(configuration.rehypePlugins)
+                // .use(rehypeRetext, unified().use(configuration.retextPlugins))
+                .use(rehypeStringify, { allowDangerousHtml: true });
+            const process: MarkdownProcessFn<Backend> = async (
+                markdown: string,
+            ) => {
+                const res = (await processor.process(markdown)).toString();
+                return res;
+            };
+            return new MarkdownHandler<Backend>({
+                backend,
+                process,
+                configuration,
+            }) as unknown as MarkdownHandler<B>;
         }
+        const mergedConfiguration = mergeConfigs(
+            getDefaultMarkdownConfig('none'),
+            userConfig ?? {},
+        );
+        return new MarkdownHandler<'none'>({
+            backend: 'none',
+            process: (markdown: string) => markdown,
+            configuration: mergedConfiguration,
+        }) as unknown as MarkdownHandler<B>;
     }
 }
 
@@ -365,8 +344,8 @@ function adjustHtmlSpacing(
      */
     const id = uuid().replaceAll('-', '');
 
-    // Escape the aforementioned tags, so that all tags are treated equally.
-    // For example: `<p>...</p>` becomes `<p${id}>...</p${id}>`.
+    // Escape the aforementioned tags, so that all tags are treated equally. For
+    // example: `<p>...</p>` becomes `<p${id}>...</p${id}>`.
     content = XRegExp.replace(
         content,
         regexSpecials,

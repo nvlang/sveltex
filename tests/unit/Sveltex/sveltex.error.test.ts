@@ -1,90 +1,116 @@
 import { missingDeps } from '$utils/env.js';
 import { sveltex } from '$Sveltex.js';
-import { consoles } from '$utils/debug.js';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+    afterAll,
+    beforeAll,
+    describe,
+    expect,
+    it,
+    test,
+    vi,
+    type MockInstance,
+} from 'vitest';
 import { spy } from '$tests/unit/fixtures.js';
+import { cartesianProduct } from '$tests/unit/utils.js';
 
-describe('sveltex error handling', () => {
+describe('Sveltex.markup()', () => {
+    let log: MockInstance;
     beforeAll(async () => {
-        await spy(['writeFile', 'log', 'mkdir'], true);
+        const mocks = await spy(['writeFile', 'log', 'mkdir'], true);
+        log = mocks.log;
     });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    it('catches errors', async () => {
-        vi.mock(
+    it('catches processor errors', async () => {
+        vi.doMock(
             'micromark',
             async (orig: () => Promise<typeof import('micromark')>) => {
                 return {
                     ...(await orig()),
                     micromark: () => {
-                        throw new Error('test error');
+                        throw new Error('example error');
                     },
                 };
             },
         );
-        const consoleErrorMock = vi
-            .spyOn(consoles, 'error')
-            .mockImplementation(() => undefined);
-
         const preprocessor = await sveltex({ markdownBackend: 'micromark' });
-        const preprocess = async (
-            input: string,
-            filename: string = 'test.sveltex',
-        ) => {
-            return (await preprocessor.markup({ content: input, filename }))
-                ?.code;
-        };
-        expect(await preprocess('*something*', 'test.sveltex')).toBeUndefined();
-        // const consoleSpy = vi.spyOn(console, 'error');
-
-        // await preprocess('*something*', 'test.sveltex');
-        // expect(consoleErrorMock).toHaveBeenCalled();
-        // expect((consoleErrorMock.mock.calls[0] ?? [])[0]).toBeInstanceOf(Error);
-        // expect(
-        //     ((consoleErrorMock.mock.calls[0] ?? [])[0] as Error).message,
-        // ).toBe('test error');
-        // https://prismjs.com/
-        consoleErrorMock.mockRestore();
-        // vi.unmock('svelte/compiler');
+        expect(
+            (
+                await preprocessor.markup({
+                    content: '*something*',
+                    filename: 'test.sveltex',
+                })
+            )?.code,
+        ).toBeUndefined();
+        expect(log).toHaveBeenCalledTimes(1);
+        expect(log.mock.calls[0]?.[0]).toEqual('error');
+        vi.restoreAllMocks();
     });
 });
 
 describe('Sveltex.create()', () => {
-    vi.doMock('unified', () => {
-        throw new Error('unified not found');
+    describe('logs error about missing dependencies', () => {
+        test.each(
+            cartesianProduct(
+                ['unified', 'markdown-it', 'micromark', 'marked'] as const,
+                ['shiki', 'starry-night', 'highlight.js'] as const,
+                ['katex', 'mathjax'] as const,
+            ),
+        )('%s + %s + %s', async (markdownBackend, codeBackend, mathBackend) => {
+            [
+                // Markdown processors
+                'unified',
+                'markdown-it',
+                'micromark',
+                'marked',
+                // Code processors
+                'shiki',
+                'highlight.js',
+                '@wooorm/starry-night',
+                // Math processors,
+                'mathjax-full/js/mathjax.js',
+                'katex',
+            ].forEach((dep) => {
+                vi.doMock(dep, () => {
+                    throw new Error(`${dep} not found`);
+                });
+            });
+            await expect(
+                async () =>
+                    await sveltex({
+                        mathBackend,
+                        markdownBackend,
+                        codeBackend,
+                    }),
+            ).rejects.toThrowError(
+                /Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:/,
+            );
+            expect(missingDeps).toContain(markdownBackend);
+            expect(missingDeps).toContain(
+                codeBackend === 'starry-night'
+                    ? '@wooorm/starry-night'
+                    : codeBackend,
+            );
+            expect(missingDeps).toContain(
+                mathBackend === 'mathjax' ? 'mathjax-full' : mathBackend,
+            );
+            [
+                // Markdown processors
+                'unified',
+                'markdown-it',
+                'micromark',
+                'marked',
+                // Code processors
+                'shiki',
+                'highlight.js',
+                '@wooorm/starry-night',
+                // Math processors,
+                'mathjax-full/js/mathjax.js',
+                'katex',
+            ].forEach((dep) => {
+                vi.doUnmock(dep);
+            });
+        });
     });
-    vi.doMock('@wooorm/starry-night', () => {
-        throw new Error('starry-night not found');
-    });
-    vi.doMock('mathjax-full/js/mathjax.js', () => {
-        throw new Error('mathjax-full not found');
-    });
-    it('should complain any dependencies are missing', async () => {
-        await expect(
-            async () =>
-                await sveltex({
-                    markdownBackend: 'unified',
-                    codeBackend: 'starry-night',
-                    mathBackend: 'mathjax',
-                }),
-        ).rejects.toThrowError(
-            'Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:\n\npnpm add -D unified remark-parse remark-rehype rehype-stringify @types/mdast @wooorm/starry-night hast-util-find-and-replace hast-util-to-html mathjax',
-        );
-        expect(missingDeps).toEqual([
-            'unified',
-            'remark-parse',
-            'remark-rehype',
-            'rehype-stringify',
-            '@types/mdast',
-            '@wooorm/starry-night',
-            'hast-util-find-and-replace',
-            'hast-util-to-html',
-            'mathjax-full',
-        ]);
-    });
-    vi.unmock('unified');
-    vi.unmock('@wooorm/starry-night');
-    vi.unmock('mathjax-full/js/mathjax.js');
-    vi.restoreAllMocks();
 });

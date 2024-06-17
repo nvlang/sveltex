@@ -1,10 +1,8 @@
 import type { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import type { ProcessFn, Transformers } from '$types/handlers/Handler.js';
+import type { DirectiveEscapeSettings } from '$types/utils/Escape.js';
 import type { Frontmatter } from '$types/utils/Frontmatter.js';
-import type {
-    RequiredNotNullOrUndefined,
-    RequiredNotUndefined,
-} from '$types/utils/utility-types.js';
+import type { RequiredNotUndefined } from '$types/utils/utility-types.js';
 
 /**
  * Supported markdown processors.
@@ -142,8 +140,23 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      * @see https://unifiedjs.com/explore/keyword/rehype/
                      */
                     rehypePlugins?: import('unified').PluggableList | undefined;
+
+                    /**
+                     * [`retext`](https://www.npmjs.com/package/retext) plugins
+                     * to use with
+                     * [`rehype-retext`](https://www.npmjs.com/package/rehype-retext)
+                     * to check the Latin-script natural language content of the
+                     * markup. Note that these plugins will not be able to
+                     * transform the content in any way, but rather just check
+                     * it and possibly log warnings.
+                     */
+                    retextPlugins?: import('unified').PluggableList | undefined;
                 }
-              : MarkdownCommonConfiguration & Record<string, unknown>;
+              : B extends 'custom'
+                ? MarkdownCommonConfiguration & {
+                      process: MarkdownProcessFn<'custom'>;
+                  }
+                : MarkdownCommonConfiguration & Record<string, unknown>;
 
 interface MarkdownCommonConfiguration {
     /**
@@ -186,10 +199,15 @@ interface MarkdownCommonConfiguration {
      * ```
      */
     prefersInline?: ((tag: string) => boolean) | undefined;
+
+    /**
+     * Settings related to markdown directives.
+     */
+    directives?: DirectiveEscapeSettings | undefined;
 }
 
 type FullMarkdownCommonConfiguration = {
-    transformers: RequiredNotNullOrUndefined<Transformers<Frontmatter>>;
+    transformers: RequiredNotUndefined<Transformers<Frontmatter>>;
 } & RequiredNotUndefined<MarkdownCommonConfiguration>;
 
 export type FullMarkdownConfiguration<B extends MarkdownBackend> =
@@ -225,8 +243,13 @@ export type FullMarkdownConfiguration<B extends MarkdownBackend> =
               ? FullMarkdownCommonConfiguration & {
                     remarkPlugins: import('unified').PluggableList;
                     rehypePlugins: import('unified').PluggableList;
+                    retextPlugins: import('unified').PluggableList;
                 }
-              : FullMarkdownCommonConfiguration & Record<string, unknown>;
+              : B extends 'custom'
+                ? FullMarkdownCommonConfiguration & {
+                      process: MarkdownProcessFn<'custom'>;
+                  }
+                : FullMarkdownCommonConfiguration & Record<string, unknown>;
 
 /**
  * Type of the function that processes a markdown string.

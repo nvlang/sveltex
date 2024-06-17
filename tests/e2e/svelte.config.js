@@ -10,7 +10,7 @@ const config = {
 
     extensions: [
         '.svelte',
-        ...preprocessors.flatMap((p) => p.configuration.general.extensions),
+        ...preprocessors.flatMap((p) => p.configuration.extensions),
     ],
 
     kit: {

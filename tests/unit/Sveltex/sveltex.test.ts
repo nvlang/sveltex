@@ -1,17 +1,17 @@
 /* eslint-disable vitest/no-commented-out-tests */
-/* eslint-disable @typescript-eslint/no-floating-promises */
 
 import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { MathBackend } from '$types/handlers/Math.js';
 
-import { sveltex, type Sveltex } from '$Sveltex.js';
+import { sveltex, Sveltex } from '$Sveltex.js';
 
-import { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import { MathHandler } from '$handlers/MathHandler.js';
 import { removeEmptyLines, spy } from '$tests/unit/fixtures.js';
 import { range } from '$tests/unit/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { SveltexConfiguration } from '$mod.js';
+import { isRegExp } from '$deps.js';
+import { isArray, isDefined } from '$typeGuards/utils.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -47,47 +47,55 @@ describe.concurrent('Sveltex', () => {
         });
     });
 
-    describe('handler setters', () => {
-        it('should work if corresponding backend is custom', async () => {
-            const preprocessor = await sveltex({
-                markdownBackend: 'custom',
-                mathBackend: 'custom',
-            });
-            preprocessor.markdownHandler = await MarkdownHandler.create(
-                'custom',
-                {
-                    process: () => 'custom output markdown',
+    describe('configuration getter', () => {
+        it('returns copy of configuration, not reference', async () => {
+            const config = {
+                markdown: {
+                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
                 },
+                code: {
+                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                },
+                math: {
+                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                },
+                tex: {},
+                verbatim: {
+                    Example: {
+                        type: 'code',
+                        transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                    },
+                    Example2: {
+                        type: 'tex',
+                        transformers: { pre: null, post: null },
+                    },
+                },
+            } as const;
+            const sp = await sveltex(
+                {},
+                config as unknown as SveltexConfiguration<
+                    'none',
+                    'none',
+                    'none'
+                >,
             );
-            preprocessor.mathHandler = await MathHandler.create('custom', {
-                process: () => 'custom output tex',
-            });
-            expect(
-                (await preprocessor.markdownHandler.process('', {})).processed,
-            ).toEqual('custom output markdown');
-            expect(
-                (await preprocessor.mathHandler.process('')).processed,
-            ).toEqual('custom output tex');
-        });
-        it('should throw error if corresponding backend is not custom', async () => {
-            const preprocessor = await sveltex({
-                markdownBackend: 'none',
-                codeBackend: 'none',
-                mathBackend: 'none',
-            });
-            await expect(
-                async () =>
-                    (preprocessor.markdownHandler =
-                        await MarkdownHandler.create('none')),
-            ).rejects.toThrowError(
-                'markdownHandler setter can only be invoked if markdown backend is "custom" (got "none" instead).',
+            const configCopy = sp.configuration;
+            expect(configCopy).toMatchObject(config);
+            expect(configCopy.verbatim['Example']?.transformers.pre).toEqual(
+                config.verbatim.Example.transformers.pre,
             );
-            await expect(
-                async () =>
-                    (preprocessor.mathHandler =
-                        await MathHandler.create('none')),
-            ).rejects.toThrowError(
-                'mathHandler setter can only be invoked if TeX backend is "custom" (got "none" instead).',
+            const regexp = config.verbatim.Example.transformers.pre[0];
+            if (isRegExp(regexp)) {
+                const pre = configCopy.verbatim['Example']?.transformers.pre;
+                expect(isArray(pre) && isDefined(pre)).toBe(true);
+                const regexpCopy = (pre as [RegExp, string])[0];
+                expect(isRegExp(regexpCopy)).toEqual(true);
+                expect(regexp.source).toEqual(regexpCopy.source);
+                // Different references
+                expect(regexpCopy).not.toBe(regexp);
+            }
+            expect(configCopy.verbatim['Example']?.transformers.post).toBe(
+                config.verbatim.Example.transformers.post,
             );
         });
     });
@@ -132,11 +140,18 @@ describe.concurrent('Sveltex', () => {
     // });
 });
 
-const preprocessor = await sveltex({
-    markdownBackend: 'marked',
-    codeBackend: 'escape',
-    mathBackend: 'none',
-});
+const preprocessor = await sveltex(
+    {
+        markdownBackend: 'marked',
+        codeBackend: 'escape',
+        mathBackend: 'none',
+    },
+    {
+        verbatim: {
+            Verbatim: { type: 'escape' },
+        },
+    },
+);
 
 function preprocessFn<
     M extends MarkdownBackend,
@@ -149,11 +164,6 @@ function preprocessFn<
 }
 
 const preprocess = preprocessFn(preprocessor);
-preprocessor.configure({
-    verbatim: {
-        Verbatim: { type: 'escape' },
-    },
-});
 
 // suite.skip.each([
 //     [
@@ -306,20 +316,22 @@ preprocessor.configure({
 describe('edge cases', () => {
     let s: Sveltex<'marked', 'starry-night'>;
     beforeAll(async () => {
-        s = await sveltex({
-            markdownBackend: 'marked',
-            codeBackend: 'starry-night',
-        });
-        await s.configure({
-            verbatim: {
-                Verbatim: { type: 'escape' },
-                Verb: { type: 'escape' },
-                TeX: { type: 'tex' },
+        s = await sveltex(
+            {
+                markdownBackend: 'marked',
+                codeBackend: 'starry-night',
             },
-            code: {
-                languages: 'common',
+            {
+                verbatim: {
+                    Verbatim: { type: 'escape' },
+                    Verb: { type: 'escape' },
+                    TeX: { type: 'tex' },
+                },
+                code: {
+                    languages: 'common',
+                },
             },
-        });
+        );
     });
     async function markup(content: string, filename: string = 'test.sveltex') {
         return (await s.markup({ content, filename }))?.code;
@@ -600,19 +612,22 @@ describe('Sveltex.markup()', () => {
 
     describe('works with code blocks', () => {
         it('starry night should work with this', async () => {
-            const preprocessor = await sveltex({
-                markdownBackend: 'marked',
-                codeBackend: 'starry-night',
-                mathBackend: 'none',
-            });
-            await preprocessor.configure({ code: { languages: 'common' } });
+            const preprocessor = await sveltex(
+                {
+                    markdownBackend: 'marked',
+                    codeBackend: 'starry-night',
+                    mathBackend: 'none',
+                },
+                { code: { languages: 'common' } },
+            );
             expect(
                 (
-                    await preprocessor.codeHandler.process('() => {let a}', {
-                        lang: 'typescript',
+                    await preprocessor.markup({
+                        filename: 'test.sveltex',
+                        content: '```typescript\n() => {let a}\n```',
                     })
-                ).processed,
-            ).toEqual(
+                )?.code,
+            ).toContain(
                 '<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
             );
         });
@@ -631,12 +646,14 @@ describe('Sveltex.markup()', () => {
                     '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>\n',
             },
         ])('$label', async (test) => {
-            const preprocessor = await sveltex({
-                markdownBackend: 'marked',
-                codeBackend: 'starry-night',
-                mathBackend: 'none',
-            });
-            await preprocessor.configure({ code: { languages: 'common' } });
+            const preprocessor = await sveltex(
+                {
+                    markdownBackend: 'marked',
+                    codeBackend: 'starry-night',
+                    mathBackend: 'none',
+                },
+                { code: { languages: 'common' } },
+            );
             const preprocess = async (
                 input: string,
                 filename: string = 'test.sveltex',
@@ -690,23 +707,25 @@ describe('Sveltex.markup()', () => {
             filename?: string,
         ) => Promise<string | undefined>;
         beforeAll(async () => {
-            const preprocessorVerbatim = await sveltex({
-                codeBackend: 'highlight.js',
-            });
-            await preprocessorVerbatim.configure({
-                verbatim: {
-                    Verbatim: {
-                        type: 'escape',
-                        escape: {
-                            braces: true,
-                            html: true,
+            const preprocessorVerbatim = await sveltex(
+                {
+                    codeBackend: 'highlight.js',
+                },
+                {
+                    verbatim: {
+                        Verbatim: {
+                            type: 'escape',
+                            escape: {
+                                braces: true,
+                                html: true,
+                            },
+                        },
+                        Code: {
+                            type: 'code',
                         },
                     },
-                    Code: {
-                        type: 'code',
-                    },
                 },
-            });
+            );
             preprocessVerbatim = preprocessFn(preprocessorVerbatim);
         });
 
@@ -733,22 +752,20 @@ describe('Sveltex.markup()', () => {
         });
 
         it('should work with TeX verbatim environments', async () => {
-            const preprocessor = await sveltex({
-                markdownBackend: 'none',
-                codeBackend: 'none',
-                mathBackend: 'none',
-            });
-            await preprocessor.configure({
-                verbatim: {
-                    Verbatim: {
-                        type: 'escape',
-                        escape: {
-                            braces: true,
-                            html: true,
+            const preprocessor = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        Verbatim: {
+                            type: 'escape',
+                            escape: {
+                                braces: true,
+                                html: true,
+                            },
                         },
                     },
                 },
-            });
+            );
             const preprocess = preprocessFn(preprocessor);
             expect(await preprocess('$x$')).toEqual('<script>\n</script>\n$x$');
         });
@@ -783,21 +800,27 @@ describe('Sveltex.markup()', () => {
             filename?: string,
         ) => Promise<string | undefined>;
         beforeAll(async () => {
-            const preprocessorMisc = await sveltex({
-                markdownBackend: 'none',
-                codeBackend: 'escape',
-                mathBackend: 'none',
-            });
-            await preprocessorMisc.configure({
-                general: {
-                    extensions: undefined,
-                },
-            });
+            const preprocessorMisc = await sveltex(
+                { codeBackend: 'escape' },
+                { extensions: undefined },
+            );
             preprocessMisc = preprocessFn(preprocessorMisc);
         });
         it('`{}`', async () => {
             expect(await preprocessMisc('`{}`')).toContain(
                 '<code>&lbrace;&rbrace;</code>',
+            );
+        });
+        it('sveltex(undefined, {})', async () => {
+            expect(async () => await sveltex(undefined, {})).not.toThrow();
+            expect(await sveltex(undefined, {})).toBeInstanceOf(Sveltex);
+        });
+        it("sveltex({ markdownBackend: 'custom' })", async () => {
+            expect(
+                async () => await sveltex({ markdownBackend: 'custom' }),
+            ).not.toThrow();
+            expect(await sveltex({ markdownBackend: 'custom' })).toBeInstanceOf(
+                Sveltex,
             );
         });
     });
