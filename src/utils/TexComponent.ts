@@ -1456,39 +1456,63 @@ const errorRegExp1 = re`
  *     control sequence in question.
  */
 const errorRegExp = re`
-    ^                       # (start of line)
-    ! [\ ]                  # ("! ")
-    (                       # 1: Message
-        .+?                 # (any character (excl. newline), ≥1, lazy)
+    ^                               # (start of line)
+    ! [\ ]                          # ("! ")
+    (                               # 1: Message
+        .+?                         # (any character (excl. newline), ≥1, lazy)
     )
-    (?: \r\n? | \n )        # (cross-platform newline character)
-    (?:                     # -: more lines, ≥0, lazy
-        (?<! ! [\ ] )       # (negative lookbehind for "! ")
-        .*?                 # (any character (excl. newline), ≥0, lazy)
-        (?: \r\n? | \n )    # (cross-platform newline character)
-    )*?
-    (?:                     # -: "l.<n> " (optional)
-        l \.? [\ ]?
-        (                   # 2: Line number
-            \d+             # (digit, ≥1, greedy)
+    (?: \r\n? | \n )                # (cross-platform newline character)
+    (?:
+        (?:
+            (?:                     # -: more lines, ≥0, lazy
+                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
+                .*?                 # (any character (excl. newline), ≥0, lazy)
+                (?: \r\n? | \n )    # (cross-platform newline character)
+            )*?
+            (?:                     # -: "l.<n> " (optional)
+                l \.? [\ ]?
+                (                   # 2: Line number
+                    \d+             # (digit, ≥1, greedy)
+                )
+            )
+            (?:                     # -: if "undefined control sequence",
+                                    #    this is the 1st extra line, containing
+                                    #    the control sequence in question.
+                                    #    Otherwise, this should usually not be
+                                    #    matched.
+                .*?                 # (any (excl. newline), ≥0, lazy)
+                (                   # 3: Control sequence
+                    \\              # (backslash)
+                    [\w@]+          # (alphanumeric or _ or @, ≥1, greedy)
+                )
+                (?: \r\n? | \n )    # (cross-platform newline)
+            )?
         )
-    )?
-    (?:                     # -: if "undefined control sequence", this is the
-                            #    1st extra line, containing the control sequence
-                            #    in question. Otherwise, this should usually not
-                            #    be matched.
-        .*?                 # (any character (excl. newline), ≥0, lazy)
-        (                   # 3: Control sequence
-            \\              # (backslash)
-            [\w@]+          # (alphanumeric character or _ or @, ≥1, greedy)
+      | (?:
+            (?:                     # -: more lines, ≥0, lazy
+                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
+                .*?                 # (any (excl. newline), ≥0, lazy)
+                (?: \r\n? | \n )    # (cross-platform newline)
+            )*
+            (?:                     # -: "l.<n> " (optional)
+                l \.? [\ ]?
+                (                   # 4: Line number
+                    \d+             # (digit, ≥1, greedy)
+                )
+            )
         )
-       (?: \r\n? | \n )     # (cross-platform newline character)
-    )?
-
+      | (?:
+            (?:                     # -: more lines, ≥0, lazy
+                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
+                .*?                 # (any (excl. newline), ≥0, lazy)
+                (?: \r\n? | \n )    # (cross-platform newline)
+            )*?
+        )?
+    )
     # FLAGS
-    ${'gmu'}                # g = Global (find all matches)
-                            # m = Multi-line (^/$ match start/end of line)
-                            # u = Unicode support
+    ${'gmu'}                        # g = Global (find all matches)
+                                    # m = Multi-line (^/$ match start/end of line)
+                                    # u = Unicode support
 `;
 
 // const fds =
@@ -1514,7 +1538,7 @@ const boxRegExp = re`
             [\ ]            # (space)
             \(              # (opening parenthesis)
             (?:             # -: e.g., '12.34pt too wide' or 'badness 10000'
-                [^)]+?      # (any character except closing parenthesis, ≥1, lazy)
+                [^)]+?      # (any except closing parenthesis, ≥1, lazy)
             )
             \)              # (closing parenthesis)
         )
@@ -1578,52 +1602,52 @@ const boxRegExp = re`
  * 4.  `'Error'`, `'Warning'`, `'Info'`, or `'Missing'`
  */
 const errmessageRegExp = re`
-    ^                   # (start of line)
-    [^:\r\n]+?          # (any character (excl. newlines and colons), ≥1, lazy)
-    \.tex:              # (".tex:")
-    (                   # 1: Line number
-        \d+             # (digit, ≥1, greedy)
+    ^                       # (start of line)
+    [^:\r\n]+?              # (any (excl. newlines and colons), ≥1, lazy)
+    \.tex:                  # (".tex:")
+    (                       # 1: Line number
+        \d+                 # (digit, ≥1, greedy)
     )
-    :[\ ]               # (": ")
-    (                   # 2: Message
-        (?:             # -:
-            (?:         # -:
+    :[\ ]                   # (": ")
+    (                       # 2: Message
+        (?:                 # -:
+            (?:             # -:
                 Package
               | Class
               | Module
             )
-            [\ ]        # (space)
-            (           # 3: Class/package/module name
-                \S+     # (non-whitespace characters, ≥1, greedy
+            [\ ]            # (space)
+            (               # 3: Class/package/module name
+                \S+         # (non-whitespaces, ≥1, greedy
             )
-            [\ ]        # (space)
+            [\ ]            # (space)
         )?
-        .*?             # (any character (incl. newline), ≥0, lazy)
-        (               # 4: Severity, or "Missing"
+        .*?                 # (any (incl. newline), ≥0, lazy)
+        (                   # 4: Severity, or "Missing"
             Error
             | Warning
             | Info
             | Missing
         )
-        .*              # (any character (incl. newline), ≥0, greedy)
-        (?:             # -: Extra lines, ≥0, greedy
-            (?:         # -: cross-platform newline character
-                \r\n?   # (CR or CRLF)
-              | \n      # (LF)
+        .*                  # (any (incl. newline), ≥0, greedy)
+        (?:                 # -: Extra lines, ≥0, greedy
+            (?:             # -: cross-platform newline
+                \r\n?       # (CR or CRLF)
+              | \n          # (LF)
             )
-            \(          # (opening parenthesis)
-            \3          # (backreference to match group 3)
-            \)          # (closing parenthesis)
-            .+?         # (any character (excl. newline), ≥1, lazy)
+            \(              # (opening parenthesis)
+            \3              # (backreference to match group 3)
+            \)              # (closing parenthesis)
+            .+?             # (any (excl. newline), ≥1, lazy)
         )*
     )
-    $                   # (end of line)
+    $                       # (end of line)
 
     # FLAGS
-    ${'gimu'}           # g = Global (find all matches)
-                        # i = Case-insensitive
-                        # m = Multi-line ('^'/'$' match start/end of line)
-                        # u = Unicode support
+    ${'gimu'}               # g = Global (find all matches)
+                            # i = Case-insensitive
+                            # m = Multi-line ('^'/'$' match start/end of line)
+                            # u = Unicode support
 `;
 
 const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
@@ -1715,7 +1739,8 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
             //                                                   {a}$};
 
             // Determine line number
-            let line = match[2] ? parseInt(match[2]) : 1;
+            const lineMaybe = match[2] ?? match[4];
+            let line = lineMaybe ? parseInt(lineMaybe) : 1;
             /* v8 ignore next 1 (unreachable code, due to regex format) */
             if (Number.isNaN(line)) line = 1;
 

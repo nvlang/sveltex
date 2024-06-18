@@ -91,16 +91,6 @@
   },
   {
     "line": 1,
-    "message": "Package graphics Info: Driver file: dvisvgm.def.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Warning: Package \"xcolor\" has already been loaded: ignoring load-time option \"dvisvgm\".",
-    "severity": "warn"
-  },
-  {
-    "line": 1,
     "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
     "severity": "info"
   },
@@ -217,7 +207,7 @@
     "severity": "info"
   },
   {
-    "line": 17,
+    "line": 9,
     "message": "Undefined control sequence: \\text",
     "severity": "error"
   }

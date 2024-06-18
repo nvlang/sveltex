@@ -9,7 +9,7 @@
     "url": "https://nvlang.dev/"
   },
   "license": "MIT",
-  "packageManager": "pnpm@9.1.2",
+  "packageManager": "pnpm@9.4.0",
   "module": "./dist/src/mod.js",
   "main": "./dist/src/mod.js",
   "types": "./dist/src/mod.d.ts",

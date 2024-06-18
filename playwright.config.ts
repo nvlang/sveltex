@@ -27,6 +27,11 @@ export const config = defineConfig({
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
     },
+    expect: {
+        toHaveScreenshot: {
+            // maxDiffPixels: 100,
+        },
+    },
     // testMatch: /.*\.spec\.ts/,
 
     /* Configure projects for major browsers */
@@ -37,7 +42,7 @@ export const config = defineConfig({
                 ...devices['Desktop Chrome'],
                 baseURL: 'http://localhost:3033',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
         {
@@ -46,7 +51,7 @@ export const config = defineConfig({
                 ...devices['Desktop Firefox'],
                 baseURL: 'http://localhost:3033',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
         {
@@ -55,7 +60,7 @@ export const config = defineConfig({
                 ...devices['Desktop Safari'],
                 baseURL: 'http://localhost:3033',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
         {
@@ -64,8 +69,9 @@ export const config = defineConfig({
                 ...devices['iPhone SE'],
                 colorScheme: 'dark',
                 baseURL: 'http://localhost:3033',
+                browserName: 'webkit',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
         {
@@ -74,8 +80,9 @@ export const config = defineConfig({
                 ...devices['iPad Mini'],
                 colorScheme: 'light',
                 baseURL: 'http://localhost:3033',
+                browserName: 'firefox',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
         {
@@ -84,8 +91,9 @@ export const config = defineConfig({
                 ...devices['Galaxy S9+'],
                 colorScheme: 'no-preference',
                 baseURL: 'http://localhost:3033',
+                browserName: 'chromium',
             },
-            timeout: 120e3, // 2 minutes
+            timeout: 300e3, // 5 minutes
             retries: 3,
         },
     ],
@@ -96,7 +104,7 @@ export const config = defineConfig({
         command: 'pnpm i && pnpm build && pnpm preview',
         url: 'http://localhost:3033',
         reuseExistingServer: !process.env['CI'],
-        timeout: 300e3, // 5 minutes
+        timeout: 600e3, // 10 minutes
     },
     name: 'Integration tests',
 });

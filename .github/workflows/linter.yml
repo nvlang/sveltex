@@ -5,12 +5,25 @@ name: Lint code base
 # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
 
 on:
-  push:
-    branches: [main, develop]
+  # push:
+  #   branches: [main, develop]
   pull_request:
     branches: [main]
 
-permissions: {}
+permissions:
+  actions: write
+  checks: write
+  contents: none
+  deployments: none
+  id-token: none
+  issues: none
+  discussions: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
 
 jobs:
   build:

@@ -185,49 +185,43 @@ describe('compile(): catches errors', () => {
 
     // TODO: figure out why this test has to be the first one in this describe
     // block.
-    it(
-        'DVI/PDF → SVG (poppler) (unknown error)',
-        { timeout: 1e9 },
-        async () => {
-            vi.restoreAllMocks();
-            vi.doMock(
-                'node-poppler',
-                async (orig: () => Promise<typeof import('node-poppler')>) => {
-                    return {
-                        ...(await orig()),
-                        Poppler: vi.fn().mockImplementation(() => {
-                            throw new Error(
-                                '031bbd43-4445-4976-bd3a-e46147f5bb3d',
-                            );
-                        }),
-                    };
-                },
-            );
-            const { log } = await spy(['log']);
-            const id = uuid();
-            const ref = 'ref';
-            const texHandler = await TexHandler.create({
-                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
-                conversion: { outputDirectory: `tmp/tests/${id}/output` },
-                debug: { verbosity: 'all' },
-            });
-            await texHandler.process('$x$', {
-                attributes: { ref },
-                filename: `file-${ref}.sveltex`,
-                selfClosing: false,
-                tag: 'tex',
-                config: mergeConfigs(defaultConfig, {
-                    overrides: { conversion: { converter: 'poppler' } },
-                }),
-            });
-            expect(log).toHaveBeenCalled();
-            expect(log).toHaveBeenLastCalledWith(
-                { severity: 'error', style: 'dim' },
-                expect.stringContaining('031bbd43-4445-4976-bd3a-e46147f5bb3d'),
-            );
-            vi.doUnmock('node-poppler');
-        },
-    );
+    it('DVI/PDF → SVG (poppler) (unknown error)', async () => {
+        vi.restoreAllMocks();
+        vi.doMock(
+            'node-poppler',
+            async (orig: () => Promise<typeof import('node-poppler')>) => {
+                return {
+                    ...(await orig()),
+                    Poppler: vi.fn().mockImplementation(() => {
+                        throw new Error('031bbd43-4445-4976-bd3a-e46147f5bb3d');
+                    }),
+                };
+            },
+        );
+        const { log } = await spy(['log']);
+        const id = uuid();
+        const ref = 'ref';
+        const texHandler = await TexHandler.create({
+            caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+            conversion: { outputDirectory: `tmp/tests/${id}/output` },
+            debug: { verbosity: 'all' },
+        });
+        await texHandler.process('$x$', {
+            attributes: { ref },
+            filename: `file-${ref}.sveltex`,
+            selfClosing: false,
+            tag: 'tex',
+            config: mergeConfigs(defaultConfig, {
+                overrides: { conversion: { converter: 'poppler' } },
+            }),
+        });
+        expect(log).toHaveBeenCalled();
+        expect(log).toHaveBeenLastCalledWith(
+            { severity: 'error', style: 'dim' },
+            expect.stringContaining('031bbd43-4445-4976-bd3a-e46147f5bb3d'),
+        );
+        vi.doUnmock('node-poppler');
+    });
 
     it.each([
         [''],
@@ -805,6 +799,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
+                { timeout: 10e3 },
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
@@ -873,6 +868,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
+                { timeout: 10e3 },
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
@@ -930,7 +926,7 @@ describe.concurrent('compile()', () => {
     describe.sequential(
         // eslint-disable-next-line vitest/valid-describe-callback
         'caching',
-        { timeout: 10e6, sequential: true, retry: 2 },
+        { timeout: 300e3, sequential: true, retry: 2 },
         () => {
             fixture();
             it.each([
@@ -946,7 +942,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
-                { retry: 2, timeout: 10e6 },
+                { retry: 2 },
                 async (engine, intermediateFiletype, converter) => {
                     const { writeFile, spawnCliInstruction, log } = await spy(
                         ['writeFile', 'spawnCliInstruction', 'log'],
