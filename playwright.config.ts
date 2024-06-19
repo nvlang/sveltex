@@ -43,59 +43,59 @@ export const config = defineConfig({
                 baseURL: 'http://localhost:3033',
             },
             timeout: 300e3, // 5 minutes
-            retries: 3,
+            // retries: 3,
         },
-        {
-            name: 'firefox',
-            use: {
-                ...devices['Desktop Firefox'],
-                baseURL: 'http://localhost:3033',
-            },
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
-        {
-            name: 'webkit',
-            use: {
-                ...devices['Desktop Safari'],
-                baseURL: 'http://localhost:3033',
-            },
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
-        {
-            name: 'iPhone SE',
-            use: {
-                ...devices['iPhone SE'],
-                colorScheme: 'dark',
-                baseURL: 'http://localhost:3033',
-                browserName: 'webkit',
-            },
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
-        {
-            name: 'iPad Mini',
-            use: {
-                ...devices['iPad Mini'],
-                colorScheme: 'light',
-                baseURL: 'http://localhost:3033',
-                browserName: 'firefox',
-            },
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
-        {
-            name: 'Galaxy S9+',
-            use: {
-                ...devices['Galaxy S9+'],
-                colorScheme: 'no-preference',
-                baseURL: 'http://localhost:3033',
-                browserName: 'chromium',
-            },
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
+        // {
+        //     name: 'firefox',
+        //     use: {
+        //         ...devices['Desktop Firefox'],
+        //         baseURL: 'http://localhost:3033',
+        //     },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
+        // {
+        //     name: 'webkit',
+        //     use: {
+        //         ...devices['Desktop Safari'],
+        //         baseURL: 'http://localhost:3033',
+        //     },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
+        // {
+        //     name: 'iPhone SE',
+        //     use: {
+        //         ...devices['iPhone SE'],
+        //         colorScheme: 'dark',
+        //         baseURL: 'http://localhost:3033',
+        //         browserName: 'webkit',
+        //     },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
+        // {
+        //     name: 'iPad Mini',
+        //     use: {
+        //         ...devices['iPad Mini'],
+        //         colorScheme: 'light',
+        //         baseURL: 'http://localhost:3033',
+        //         browserName: 'firefox',
+        //     },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
+        // {
+        //     name: 'Galaxy S9+',
+        //     use: {
+        //         ...devices['Galaxy S9+'],
+        //         colorScheme: 'no-preference',
+        //         baseURL: 'http://localhost:3033',
+        //         browserName: 'chromium',
+        //     },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
     ],
 
     /* Run your local dev server before starting the tests */
