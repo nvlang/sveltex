@@ -21,40 +21,24 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 10
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.docker-cache
-          key: ${{ runner.os }}-docker-${{ hashFiles('docker/Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-docker-
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        id: build-docker-image
         run: |
-          docker build --cache-from=type=local,src=/tmp/.docker-cache \
-                       --cache-to=type=local,dest=/tmp/.docker-cache-new \
-                       -t sveltex/test-environment:latest \
-                       -f ./docker/Dockerfile .
-
-      - name: Save Docker cache
-        if: steps.build-docker-image.outputs.cache-hit != 'true'
-        run: |
-          rm -rf /tmp/.docker-cache
-          mv /tmp/.docker-cache-new /tmp/.docker-cache
+          docker build -t sveltex/test-environment:latest -f ./docker/Dockerfile .
 
       - name: Install Node.js dependencies
-        run: pnpm install
+        run: |
+          npm install -g pnpm
+          pnpm install
 
       - name: Run Unit Tests in Docker container
         run: |
