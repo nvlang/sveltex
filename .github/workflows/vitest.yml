@@ -25,24 +25,30 @@ jobs:
     timeout-minutes: 5
     runs-on: ubuntu-latest
 
+    container:
+      image: texlive/texlive:latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create Artifact Directory
-        run: mkdir -p vitest-report
-
-      - name: Run Unit Tests in Docker
-        uses: addnab/docker-run-action@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          image: texlive/texlive:latest
-          options: --volume ${{ github.workspace }}/vitest-report:/vitest-report
-          run: |
-            apt-get update
-            apt-get install -y nodejs poppler-data poppler-utils
-            node -v
-            npm install -g pnpm
-            pnpm install
-            pnpm test
+          node-version: lts/*
+
+      - name: Install Poppler
+        run: |
+          sudo apt-get install -y poppler-data && \
+          sudo apt-get install -y poppler-utils
+
+      - name: Install PNPM
+        run: npm install -g pnpm
+
+      - name: Install Node.js dependencies
+        run: pnpm install
+
+      - name: Run Unit Tests
+        run: pnpm test
 
       - uses: actions/upload-artifact@v4
         if: always()
