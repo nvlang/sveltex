@@ -1,8 +1,13 @@
+---
 name: Publish to JSR
 
 on:
   release:
     types: [published]
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   publish:

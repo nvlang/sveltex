@@ -11,8 +11,9 @@ on:
     branches: [main]
 
 permissions:
-  actions: write
-  checks: write
+  contents: read
+  packages: read
+  statuses: write
 
 jobs:
   build:
@@ -37,6 +38,7 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_TYPESCRIPT_STANDARD: false
+          VALIDATE_JSCPD: false
           JAVASCRIPT_ES_CONFIG_FILE: eslint.config.js
           JAVASCRIPT_DEFAULT_STYLE: prettier
           EDITORCONFIG_FILE_NAME: .github/linters/.ecrc
