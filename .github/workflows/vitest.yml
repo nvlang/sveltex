@@ -1,4 +1,3 @@
----
 name: Unit Tests (Vitest)
 on:
   push:
@@ -22,33 +21,44 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 5
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
-    container:
-      image: texlive/texlive:latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Cache Docker layers
+        uses: actions/cache@v3
         with:
-          node-version: lts/*
+          path: /tmp/.docker-cache
+          key: ${{ runner.os }}-docker-${{ hashFiles('docker/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
 
-      - name: Install Poppler
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        id: build-docker-image
         run: |
-          sudo apt-get install -y poppler-data && \
-          sudo apt-get install -y poppler-utils
+          docker build --cache-from=type=local,src=/tmp/.docker-cache \
+                       --cache-to=type=local,dest=/tmp/.docker-cache-new \
+                       -t sveltex/test-environment:latest \
+                       -f ./docker/Dockerfile .
 
-      - name: Install PNPM
-        run: npm install -g pnpm
+      - name: Save Docker cache
+        if: steps.build-docker-image.outputs.cache-hit != 'true'
+        run: |
+          rm -rf /tmp/.docker-cache
+          mv /tmp/.docker-cache-new /tmp/.docker-cache
 
       - name: Install Node.js dependencies
         run: pnpm install
 
-      - name: Run Unit Tests
-        run: pnpm test
+      - name: Run Unit Tests in Docker container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/app -w /app sveltex/test-environment:latest pnpm test
 
       - uses: actions/upload-artifact@v4
         if: always()
