@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 5
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
@@ -31,20 +31,65 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: |
-          docker build -t sveltex/test-environment:latest -f ./docker/Dockerfile .
+      - name: Cache Docker image
+        id: cache-docker-image
+        uses: actions/cache@v4
+        with:
+          path: docker_cache
+          key: ${{ runner.os }}-docker-texlive-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-texlive-
 
-      - name: Install Node.js dependencies
+      - name: Load Docker image from cache
         run: |
-          npm install -g pnpm
-          pnpm install
+          mkdir -p docker_cache
+          if [ -f docker_cache/texlive_image.tar ]; then
+            docker load -i docker_cache/texlive_image.tar
+          else
+            echo "No cache found, pulling image"
+            docker pull texlive/texlive:latest
+            docker save texlive/texlive:latest -o docker_cache/texlive_image.tar
+          fi
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9.4.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        run: |
+          echo "STORE_PATH=$HOME/.pnpm-store" >> $GITHUB_ENV
+          pnpm config set store-dir $HOME/.pnpm-store
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Run Unit Tests in Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/app -w /app sveltex/test-environment:latest pnpm test
+          docker run --rm \
+            -v ${{ github.workspace }}:/app \
+            -v $HOME/.pnpm-store:$HOME/.pnpm-store \
+            -v /usr/local/lib/node_modules:/usr/local/lib/node_modules \
+            -v /usr/local/bin:/usr/local/bin \
+            -w /app texlive/texlive:latest \
+            bash -c "pnpm test"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: vitest-report
