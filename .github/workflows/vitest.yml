@@ -28,18 +28,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
+      - name: Create Artifact Directory
+        run: mkdir -p vitest-report
 
       - name: Run Unit Tests in Docker
         uses: addnab/docker-run-action@v3
         with:
           image: texlive/texlive:latest
+          options: --volume ${{ github.workspace }}/vitest-report:/vitest-report
           run: |
             apt-get update
-            apt-get install -y poppler-data poppler-utils
+            apt-get install -y nodejs poppler-data poppler-utils
             node -v
             npm install -g pnpm
             pnpm install
