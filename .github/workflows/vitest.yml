@@ -79,9 +79,9 @@ jobs:
 
       - name: Prepare environment for Docker container
         run: |
-          mkdir -p docker_workspace && \
-          cp -r ${{ github.workspace }}/* docker_workspace/ && \
-          cp -r ${{ env.STORE_PATH }} docker_workspace/.pnpm-store
+          mkdir -p ${{ runner.temp }}/docker_workspace && \
+          rsync -a ${{ github.workspace }}/ ${{ runner.temp }}/docker_workspace/ && \
+          rsync -a ${{ env.STORE_PATH }} ${{ runner.temp }}/docker_workspace/.pnpm-store
 
       - name: Run Unit Tests in Docker container
         run: |
