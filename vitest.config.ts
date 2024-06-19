@@ -6,7 +6,10 @@ export default defineConfig({
     plugins: [tsconfigPaths()],
     test: {
         include: ['./tests/unit/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
-        exclude: ['./tests/e2e/**/*', './tests/unit/utils'],
+        exclude: [
+            './tests/e2e/**/*',
+            './tests/unit/utils/TexComponent.test.ts',
+        ],
         typecheck: {
             tsconfig: './tests/unit/tsconfig.json',
             enabled: true,
