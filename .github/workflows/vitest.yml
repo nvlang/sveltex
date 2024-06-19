@@ -80,11 +80,11 @@ jobs:
       - name: Run Unit Tests in Docker container
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/app \
-            -v $HOME/.pnpm-store:/root/.pnpm-store \
+            -v ${{ github.workspace }}:/workspace \
+            -v $HOME/.pnpm-store:$HOME/.pnpm-store \
             -v /usr/local/lib/node_modules:/usr/local/lib/node_modules \
             -v /usr/local/bin:/usr/local/bin \
-            -w /app texlive/texlive:latest \
+            -w /workspace texlive/texlive:latest \
             pnpm test
 
       - name: Upload test artifacts
