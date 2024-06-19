@@ -64,8 +64,7 @@ jobs:
 
       - name: Get pnpm store directory
         run: |
-          echo "STORE_PATH=$HOME/.pnpm-store" >> $GITHUB_ENV
-          pnpm config set store-dir $HOME/.pnpm-store
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - uses: actions/cache@v4
         name: Setup pnpm cache
@@ -82,11 +81,11 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
-            -v $HOME/.pnpm-store:$HOME/.pnpm-store \
+            -v $HOME/.pnpm-store:/root/.pnpm-store \
             -v /usr/local/lib/node_modules:/usr/local/lib/node_modules \
             -v /usr/local/bin:/usr/local/bin \
             -w /app texlive/texlive:latest \
-            bash -c "pnpm test"
+            pnpm test
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
