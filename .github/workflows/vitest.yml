@@ -77,15 +77,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Prepare environment for Docker container
+        run: |
+          mkdir -p docker_workspace && \
+          cp -r ${{ github.workspace }}/* docker_workspace/ && \
+          cp -r ${{ env.STORE_PATH }} docker_workspace/.pnpm-store
+
       - name: Run Unit Tests in Docker container
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -v $HOME/.pnpm-store:$HOME/.pnpm-store \
-            -v /usr/local/lib/node_modules:/usr/local/lib/node_modules \
-            -v /usr/local/bin:/usr/local/bin \
+            -v ${{ runner.temp }}/docker_workspace:/workspace \
             -w /workspace texlive/texlive:latest \
-            pnpm test
+            /bin/bash -c "apt-get update && apt-get install -y curl gnupg && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && npm install -g pnpm && pnpm install --store=/workspace/.pnpm-store && pnpm test"
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
