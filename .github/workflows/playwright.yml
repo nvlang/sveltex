@@ -1,8 +1,8 @@
 ---
 name: Integration Tests (Playwright)
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -34,6 +34,8 @@ jobs:
           packages: |
             scheme-basic
             luatex
+            xetex
+            latexmk
             dvisvgm
             standalone
             pgf
@@ -49,9 +51,10 @@ jobs:
           node-version: lts/*
 
       - name: Install Poppler
-        run: |
-          sudo apt-get install -y poppler-data && \
-          sudo apt-get install -y poppler-utils
+        run: sudo apt-get install -y poppler-data poppler-utils
+
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
 
       - name: Install PNPM
         run: npm install -g pnpm

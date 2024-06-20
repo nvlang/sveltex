@@ -1,3 +1,4 @@
+---
 name: Unit Tests (Vitest)
 on:
   # push:
@@ -21,88 +22,52 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 20
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clear up disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      - uses: actions/checkout@v4
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Get current year and month
-        id: date
-        run: echo "YEAR_MONTH=$(date +'%Y-%m')" >> $GITHUB_ENV
-
-      - name: Cache Docker image
-        id: cache-docker-image
-        uses: actions/cache@v4
+      - name: Set up TeX Live
+        uses: teatimeguest/setup-texlive-action@v3
         with:
-          path: docker_cache
-          key: ${{ runner.os }}-docker-texlive-${{ env.YEAR_MONTH }}
-          restore-keys: |
-            ${{ runner.os }}-docker-texlive-
+          packages: |
+            scheme-basic
+            luatex
+            xetex
+            latexmk
+            dvisvgm
+            standalone
+            pgf
+            microtype
+            mathtools
+            luatex85
+            lipsum
+            xcolor
 
-      - name: Load Docker image from cache
-        run: |
-          mkdir -p docker_cache
-          if [ -f docker_cache/texlive_image.tar ]; then
-            docker load -i docker_cache/texlive_image.tar
-          else
-            echo "No cache found, pulling image"
-            docker pull texlive/texlive:latest
-            docker save texlive/texlive:latest -o docker_cache/texlive_image.tar
-          fi
-
-      - name: Install Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: lts/*
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          version: 9.4.0
-          run_install: false
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
 
-      - name: Get pnpm store directory
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
 
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      - name: Install PNPM
+        run: npm install -g pnpm
 
-      - name: Install dependencies
-        run: pnpm install && pnpm exec playwright install --with-deps
+      - name: Install Node.js dependencies
+        run: pnpm install
 
-      - name: Prepare environment for Docker container
-        run: |
-          mkdir -p ${{ runner.temp }}/docker_workspace && \
-          rsync -a ${{ github.workspace }}/ ${{ runner.temp }}/docker_workspace/ && \
-          rsync -a ${{ env.STORE_PATH }} ${{ runner.temp }}/docker_workspace/.pnpm-store
+      - name: Run Vitest tests
+        run: pnpm test
 
-      - name: Run Unit Tests in Docker container
-        run: |
-          docker run --rm \
-            -v ${{ runner.temp }}/docker_workspace:/workspace \
-            -w /workspace texlive/texlive:latest \
-            /bin/bash -c "apt-get update && apt-get install -y curl gnupg gnupg poppler-data poppler-utils && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && npm install -g pnpm && pnpm install --store=/workspace/.pnpm-store && pnpm test"
-
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vitest-report
+          name: vitest-report-2
           path: html/
           retention-days: 30
