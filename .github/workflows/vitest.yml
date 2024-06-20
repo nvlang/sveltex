@@ -104,5 +104,5 @@ jobs:
         if: always()
         with:
           name: vitest-report
-          path: vitest-report/
+          path: html/
           retention-days: 30

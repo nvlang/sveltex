@@ -8,7 +8,10 @@
 ## Installation
 
 ```sh
-<npm|pnpm|yarn|bun> add -D @nvl/sveltex
+pnpm add -D @nvl/sveltex # If using PNPM
+bun  add -D @nvl/sveltex # If using Bun
+npm  add -D @nvl/sveltex # If using NPM
+yarn add -D @nvl/sveltex # If using Yarn
 ```
 
 ## Documentation
