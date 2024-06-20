@@ -25,13 +25,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Clear up disk space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -55,6 +55,13 @@ jobs:
             docker pull texlive/texlive:latest
             docker save texlive/texlive:latest -o docker_cache/texlive_image.tar
           fi
+
+      - name: Debug PATH
+        run: |
+          docker run --rm \
+            -v ${{ runner.temp }}/docker_workspace:/workspace \
+            -w /workspace texlive/texlive:latest \
+            /bin/bash -c "echo \$PATH && which pdfinfo && which pdftocairo"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
