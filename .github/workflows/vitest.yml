@@ -36,12 +36,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Get current year and month
+        id: date
+        run: echo "YEAR_MONTH=$(date +'%Y-%m')" >> $GITHUB_ENV
+
       - name: Cache Docker image
         id: cache-docker-image
         uses: actions/cache@v4
         with:
           path: docker_cache
-          key: ${{ runner.os }}-docker-texlive-${{ hashFiles('Dockerfile') }}
+          key: ${{ runner.os }}-docker-texlive-${{ env.YEAR_MONTH }}
           restore-keys: |
             ${{ runner.os }}-docker-texlive-
 
@@ -55,13 +59,6 @@ jobs:
             docker pull texlive/texlive:latest
             docker save texlive/texlive:latest -o docker_cache/texlive_image.tar
           fi
-
-      - name: Debug PATH
-        run: |
-          docker run --rm \
-            -v ${{ runner.temp }}/docker_workspace:/workspace \
-            -w /workspace texlive/texlive:latest \
-            /bin/bash -c "echo \$PATH && which pdfinfo && which pdftocairo"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
