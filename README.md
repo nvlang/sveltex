@@ -1,4 +1,4 @@
-# Sveltex = Svelte + $\mathrm{\TeX}$
+# SvelTeX
 
 [![JSR](https://jsr.io/badges/@nvl/sveltex?style=flat-square&labelColor=1A3644)](https://jsr.io/@nvl/sveltex)
 [![NPM Version](https://img.shields.io/npm/v/@nvl/sveltex?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B)](https://npmjs.com/@nvl/sveltex)
