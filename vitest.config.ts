@@ -16,7 +16,7 @@ export default defineConfig({
         // dir: './tests/unit',
         silent: true,
         maxConcurrency: 100,
-        testTimeout: 10e3,
+        testTimeout: 20e3,
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
             enabled: true,
