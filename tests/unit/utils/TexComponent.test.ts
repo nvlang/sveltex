@@ -1028,7 +1028,7 @@ describe.concurrent('compile()', () => {
                         expect.stringContaining('<svg'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenCalledWith(
+                    expect(writeFile).toHaveBeenNthCalledWith(
                         4,
                         `tmp/tests/${id}/cache/cache.json`,
                         expect.stringMatching(
