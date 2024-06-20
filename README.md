@@ -31,12 +31,6 @@ import { sveltex } from '@nvl/sveltex';
 
 In alphabetical order:
 
-- [ ] Add contribution guidelines.
-- [ ] Improve CI pipeline.
-- [ ] Improve documentation.
-- [ ] Improve integration tests.
-- [ ] Improve source map support.
-- [x] Support preprocessing LaTeX content before passing it to MathJax/KaTeX.
 - [ ] VSCode extension for proper syntax highlighting of `.sveltex` files.
 - [ ] Yeoman generator for scaffolding new Sveltex projects.
 
