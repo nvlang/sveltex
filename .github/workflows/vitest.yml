@@ -77,9 +77,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Install rsync
-        run: sudo apt-get update && sudo apt-get install -y rsync
-
       - name: Prepare environment for Docker container
         run: |
           mkdir -p ${{ runner.temp }}/docker_workspace && \
