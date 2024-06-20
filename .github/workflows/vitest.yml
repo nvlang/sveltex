@@ -100,7 +100,7 @@ jobs:
           docker run --rm \
             -v ${{ runner.temp }}/docker_workspace:/workspace \
             -w /workspace texlive/texlive:latest \
-            /bin/bash -c "apt-get update && apt-get install -y curl gnupg && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && npm install -g pnpm && pnpm install --store=/workspace/.pnpm-store && pnpm test"
+            /bin/bash -c "apt-get update && apt-get install -y curl gnupg gnupg poppler-data poppler-utils && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && npm install -g pnpm && pnpm install --store=/workspace/.pnpm-store && pnpm test"
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4

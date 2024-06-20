@@ -10,4 +10,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/texlive/2024/bin/x86_64-linux:/usr/local/texlive/2024/bin/custom:/usr/local/texlive/2024/bin:/usr/bin/poppler"
+# Verify installation and set PATH
+RUN which pdfinfo && which pdftocairo
+
+# Set environment variable for Poppler path
+ENV PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/texlive/2024/bin/x86_64-linux:/usr/local/texlive/2024/bin/custom:/usr/local/texlive/2024/bin"
