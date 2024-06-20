@@ -94,7 +94,7 @@ Handles code blocks and code spans. This may involve:
 ### `MarkdownHandler`
 
 Handles markdown content. It uses external dependencies (as specified by the
-user), e.g. [uified](https://unifiedjs.com), to parse markdown content and
+user), e.g. [unified](https://unifiedjs.com), to parse markdown content and
 convert it to HTML.
 
 ### `MathHandler`

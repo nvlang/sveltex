@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,8 @@ jobs:
           packages: |
             scheme-basic
             luatex
+            xetex
+            latexmk
             dvisvgm
             standalone
             pgf
@@ -58,9 +60,6 @@ jobs:
 
       - name: Install Node.js dependencies
         run: pnpm install
-
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
 
       - name: Run Vitest tests
         run: pnpm test

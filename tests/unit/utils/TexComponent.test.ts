@@ -926,7 +926,7 @@ describe.concurrent('compile()', () => {
     describe.sequential(
         // eslint-disable-next-line vitest/valid-describe-callback
         'caching',
-        { timeout: 300e3, sequential: true, retry: 2 },
+        { timeout: 15e3, sequential: true, retry: 2 },
         () => {
             fixture();
             it.each([
