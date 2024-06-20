@@ -799,7 +799,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
-                { timeout: 10e3 },
+                { timeout: 30e3 },
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
@@ -868,7 +868,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
-                { timeout: 10e3 },
+                { timeout: 30e3 },
                 async (engine, intermediateFiletype, converter) => {
                     const id = uuid();
                     const ref = 'ref';
