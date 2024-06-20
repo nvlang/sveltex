@@ -1022,14 +1022,12 @@ describe.concurrent('compile()', () => {
                         expect.stringContaining('\\documentclass'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
-                        3,
+                    expect(writeFile).toHaveBeenCalledWith(
                         `tmp/tests/${id}/output/tex/${ref}.svg`,
                         expect.stringContaining('<svg'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
-                        4,
+                    expect(writeFile).toHaveBeenCalledWith(
                         `tmp/tests/${id}/cache/cache.json`,
                         expect.stringMatching(
                             new RegExp(
