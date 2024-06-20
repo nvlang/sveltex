@@ -942,7 +942,7 @@ describe.concurrent('compile()', () => {
                 ),
             ])(
                 '%s (%s) + %s',
-                { retry: 2 },
+                { timeout: 300e3, retry: 2, sequential: true },
                 async (engine, intermediateFiletype, converter) => {
                     const { writeFile, spawnCliInstruction, log } = await spy(
                         ['writeFile', 'spawnCliInstruction', 'log'],
@@ -1010,6 +1010,7 @@ describe.concurrent('compile()', () => {
                     //     2. 3rd `writeFile`, for `.svg` file.
                     //     3. Rename file via `node:fs`.
                     // 6. 4th `writeFile`, to write cache to `cache.json`.
+                    //
                     expect(writeFile).toHaveBeenCalledTimes(4);
                     expect(writeFile).toHaveBeenNthCalledWith(
                         1,
