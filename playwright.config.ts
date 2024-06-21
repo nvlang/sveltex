@@ -60,6 +60,7 @@ export const config = defineConfig({
                 ...devices['Desktop Safari'],
                 baseURL: 'http://localhost:3033',
             },
+
             timeout: 300e3, // 5 minutes
             retries: 3,
         },
