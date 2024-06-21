@@ -160,19 +160,21 @@ export function ensureStartsWith<Prefix extends string>(
 }
 
 /**
- * Ensures that the given path doesn't start with a slash.
+ * Ensures that the given path doesn't start with a given string.
  *
- * @param path - The path to ensure doesn't start with a slash.
- * @returns The path, with the leading slash removed if it started with one.
+ * @param path - The path to ensure doesn't start with `str`.
+ * @param str - The string to ensure the path doesn't start with.
+ * @returns The path, with the leading `str` removed if it started with one.
  *
  * @example
  * ```ts
- * ensureDoesNotStartWithSlash('path/to/file'); // 'path/to/file'
- * ensureDoesNotStartWithSlash('/path/to/file'); // 'path/to/file'
+ * ensureDoesNotStartWith('path/to/file'); // 'path/to/file'
+ * ensureDoesNotStartWith('/path/to/file'); // 'path/to/file'
  * ```
  */
-export function ensureDoesNotStartWithSlash(path: string): string {
-    return path.startsWith('/') ? path.slice(1) : path;
+export function ensureDoesNotStartWith(path: string, str: string): string {
+    while (path.startsWith(str)) path = path.slice(str.length);
+    return path;
 }
 
 /**

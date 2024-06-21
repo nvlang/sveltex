@@ -1,5 +1,5 @@
 import {
-    ensureDoesNotStartWithSlash,
+    ensureDoesNotStartWith,
     ensureWithinRange,
     re,
     sha256,
@@ -122,14 +122,14 @@ describe.concurrent('utils/misc', () => {
         });
     });
 
-    describe('ensureDoesNotStartWithSlash', () => {
+    describe('ensureDoesNotStartWith', () => {
         it('should remove leading slash', () => {
-            expect(ensureDoesNotStartWithSlash('/abc')).toEqual('abc');
-            expect(ensureDoesNotStartWithSlash('//abc')).toEqual('/abc');
+            expect(ensureDoesNotStartWith('/abc', '/')).toEqual('abc');
+            expect(ensureDoesNotStartWith('//abc', '/')).toEqual('/abc');
         });
         it('should return strings without leading slashes as-is', () => {
-            expect(ensureDoesNotStartWithSlash('abc')).toEqual('abc');
-            expect(ensureDoesNotStartWithSlash('abc/')).toEqual('abc/');
+            expect(ensureDoesNotStartWith('abc', '/')).toEqual('abc');
+            expect(ensureDoesNotStartWith('abc/', '/')).toEqual('abc/');
         });
     });
 
