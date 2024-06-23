@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "$deps.js": "./src/deps.ts",
+    "$dev_deps.js": "./src/dev_deps.ts",
+    "$mod.js": "./src/mod.ts",
+    "$Sveltex.js": "./src/Sveltex.ts",
+    "$config/": "./src/config/",
+    "$data/": "./src/data/",
+    "$handlers/": "./src/handlers/",
+    "$typeGuards/": "./src/typeGuards/",
+    "$types/": "./src/types/",
+    "$utils/": "./src/utils/",
+    "$tests/": "./tests/"
+  }
+}

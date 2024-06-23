@@ -1,7 +1,7 @@
-import { MakePropertiesNotNullOrUndefined } from '$types/utils/utility-types.js';
+import { PropertiesDefinedNotNull } from '$types/utils/utility-types.js';
 
 export type CleanPopplerSvgOptions =
-    MakePropertiesNotNullOrUndefined<ExtendedPopplerSvgOptions>;
+    PropertiesDefinedNotNull<ExtendedPopplerSvgOptions>;
 
 export interface ExtendedPopplerSvgOptions extends PopplerSvgOptions {
     svgFile: true;

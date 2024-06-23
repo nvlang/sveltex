@@ -1,6 +1,5 @@
 // Types
 import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
-import type { FullTexConfiguration } from '$types/handlers/Tex.js';
 import type {
     CodeBackend,
     FullCodeConfiguration,
@@ -14,22 +13,30 @@ import type {
     MathBackend,
     MathJaxFullCssConfiguration,
 } from '$types/handlers/Math.js';
+import type { FullTexConfiguration } from '$types/handlers/Tex.js';
 import type {
-    FullVerbEnvConfigTex,
     FullVerbEnvConfigBase,
     FullVerbEnvConfigCode,
     FullVerbEnvConfigEscape,
+    FullVerbEnvConfigTex,
     Preset,
     PresetName,
     VerbatimType,
 } from '$types/handlers/Verbatim.js';
 
 // Internal dependencies
+import { sveltexHtmlAttributes } from '$data/keys.js';
 import {
     isNonNullObject,
     isPresentAndDefined,
     isString,
 } from '$typeGuards/utils.js';
+import {
+    CleanPopplerSvgOptions,
+    PopplerSvgOptions,
+} from '$types/utils/PopplerOptions.js';
+import { PropertiesDefined } from '$types/utils/utility-types.js';
+import { interpretAttributes } from '$utils/parseComponent.js';
 
 // External dependencies
 import {
@@ -40,14 +47,8 @@ import {
     relative,
     resolve,
     setProperty,
+    process,
 } from '$deps.js';
-import { interpretAttributes } from '$utils/parseComponent.js';
-import {
-    CleanPopplerSvgOptions,
-    PopplerSvgOptions,
-} from '$types/utils/PopplerOptions.js';
-import { MakePropertiesNotUndefined } from '$types/utils/utility-types.js';
-import { sveltexHtmlAttributes } from '$data/keys.js';
 
 // if (getDefaultMathConfiguration('custom').delims) {
 //     console.log('getDefaultMathConfiguration works');
@@ -599,7 +600,6 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
             return {
                 ...common,
                 attributeForwardingBlocklist: ['lang', 'inline', 'metaString'],
-                wrap: true,
             } as DefaultVerbEnvConfig<'code'> as DefaultVerbEnvConfig<T>;
         case 'tex':
             return {
@@ -764,7 +764,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
 }
 
 export function sanitizePopplerSvgOptions(
-    options: MakePropertiesNotUndefined<PopplerSvgOptions>,
+    options: PropertiesDefined<PopplerSvgOptions>,
 ): CleanPopplerSvgOptions & {
     svgFile: true;
 } {

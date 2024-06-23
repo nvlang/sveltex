@@ -38,7 +38,7 @@ import {
     CleanPopplerSvgOptions,
     PopplerSvgOptions,
 } from '$types/utils/PopplerOptions.js';
-import { MakePropertiesNotUndefined } from '$types/utils/utility-types.js';
+import { PropertiesDefined } from '$types/utils/utility-types.js';
 import { fc, fuzzyTest } from '$dev_deps.js';
 import { TexComponent } from '$utils/TexComponent.js';
 
@@ -438,7 +438,7 @@ describe.concurrent('config/defaults', () => {
             [{ antialias: 'default' }, { antialias: 'default', svgFile: true }],
             [{ antialias: 'best' }, { antialias: 'best', svgFile: true }],
         ] as [
-            MakePropertiesNotUndefined<PopplerSvgOptions>,
+            PropertiesDefined<PopplerSvgOptions>,
             CleanPopplerSvgOptions & {
                 svgFile: true;
             },

@@ -223,9 +223,9 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 if (config.escape.html) {
                     processed = escapeHtml(processed);
                 }
-                // NB: It's important to escape braces _after_ escaping HTML, since
-                // escaping braces will introduce ampersands which escapeHtml would
-                // escape
+                // NB: It's important to escape braces _after_ escaping HTML,
+                // since escaping braces will introduce ampersands which
+                // escapeHtml would escape
                 if (config.escape.braces) {
                     processed = escapeBraces(processed);
                 }

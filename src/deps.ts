@@ -14,6 +14,7 @@ export {
     relative,
     resolve,
 } from 'node:path';
+export { default as process } from 'node:process';
 export { inspect } from 'node:util';
 export { isRegExp } from 'node:util/types';
 
@@ -38,8 +39,8 @@ export {
     markdownLineEnding as micromarkMarkdownLineEnding,
     markdownLineEndingOrSpace as micromarkMarkdownLineEndingOrSpace,
 } from 'micromark-util-character';
-export { codes as asciiCodes } from 'micromark-util-symbol';
 export { htmlRawNames } from 'micromark-util-html-tag-name';
+export { codes as asciiCodes } from 'micromark-util-symbol';
 
 /**
  * MDAST types for better type-safety.
@@ -89,6 +90,7 @@ export {
 /**
  *
  */
+export { directiveFromMarkdown } from 'mdast-util-directive';
 export {
     frontmatterFromMarkdown as mdastFrontmatterFromMarkdown,
     frontmatterToMarkdown as mdastFrontmatterToMarkdown,
@@ -98,9 +100,8 @@ export {
     type MdxFlowExpression as MdastMdxFlowExpressionNode,
     type MdxTextExpression as MdastMdxTextExpressionNode,
 } from 'mdast-util-mdx-expression';
-export { directiveFromMarkdown } from 'mdast-util-directive';
-export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
 export { directive as micromarkDirective } from 'micromark-extension-directive';
+export { frontmatter as micromarkFrontmatter } from 'micromark-extension-frontmatter';
 export {
     math as micromarkMath,
     type Options as MicromarkMathOptions,

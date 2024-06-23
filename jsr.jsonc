@@ -6,11 +6,20 @@
     ".": "./src/mod.ts"
   },
   "publish": {
+    "include": [
+      // Source files
+      "src/**",
+      "package.json",
+      "README.md",
+      "LICENSE",
+      "CHANGELOG.md",
+      "CODE_OF_CONDUCT.md",
+      "CONTRIBUTING.md",
+      "tsconfig.json",
+      "jsr.jsonc"
+    ],
     "exclude": [
-      // End-to-end tests
-      "**/e2e/**",
-
-      // Unit tests
+      // Unit and E2E tests
       "**/tests/**",
 
       // JS distribution files (NPM uses these, but JSR doesn't need them)
@@ -19,7 +28,7 @@
       // Node modules
       "**/node_modules/**",
 
-      // Documentation deployed with Mintlify
+      // Documentation deployed with VitePress
       "**/docs/**",
 
       // GitHub Actions workflows

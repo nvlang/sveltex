@@ -56,7 +56,8 @@
     "test:e2e:golden": "pnpm test:e2e:prepare && playwright test --update-snapshots",
     "format": "prettier --write .",
     "test:watch": "vitest --watch",
-    "prepare": "husky"
+    "prepare": "husky",
+    "knip": "knip"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^19.2.2",
@@ -94,6 +95,7 @@
     "highlight.js": "^11.9.0",
     "husky": "^9.0.11",
     "katex": "^0.16.10",
+    "knip": "^5.22.2",
     "markdown-it": "^14.1.0",
     "markdown-it-ins": "^4.0.0",
     "markdown-it-multimd-table": "^4.2.3",
@@ -141,9 +143,7 @@
     "mdast-util-from-markdown": "^2.0.1",
     "mdast-util-frontmatter": "^2.0.1",
     "mdast-util-math": "^3.0.0",
-    "mdast-util-mdx": "^3.0.0",
     "mdast-util-mdx-expression": "^2.0.0",
-    "micromark-core-commonmark": "^2.0.1",
     "micromark-extension-directive": "^3.0.0",
     "micromark-extension-frontmatter": "^2.0.0",
     "micromark-extension-math": "^3.0.0",
@@ -168,8 +168,7 @@
     "svgo": "^3.3.2",
     "tsafe": "^1.7.2",
     "uuid": "^10.0.0",
-    "xregexp": "^5.1.1",
-    "yaml": "^2.4.5"
+    "xregexp": "^5.1.1"
   },
   "peerDependencies": {
     "@wooorm/starry-night": ">=3.3.0",

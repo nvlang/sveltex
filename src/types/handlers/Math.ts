@@ -13,10 +13,9 @@ import type {
     MathjaxConversionOptions,
 } from '$types/utils/MathjaxOptions.js';
 import type {
-    ExcludeUndefined,
-    FirstTwoLevelsRequiredNotNullOrUndefined,
-    RequiredNotNullOrUndefined,
-    RequiredNotUndefined,
+    FirstTwoLevelsRequiredDefinedNotNull,
+    RequiredDefinedNotNull,
+    RequiredDefined,
 } from '$types/utils/utility-types.js';
 
 /**
@@ -348,14 +347,14 @@ interface WithTransformers<T extends MathBackend> {
 }
 
 interface WithFullTransformers<T extends MathBackend> {
-    transformers: RequiredNotUndefined<
+    transformers: RequiredDefined<
         Transformers<MathProcessOptionsWithoutTransformers<T>>
     >;
 }
 
 export interface WithFullDelims {
-    delims: FirstTwoLevelsRequiredNotNullOrUndefined<
-        ExcludeUndefined<WithDelims['delims']>
+    delims: FirstTwoLevelsRequiredDefinedNotNull<
+        Exclude<WithDelims['delims'], undefined>
     >;
 }
 
@@ -377,7 +376,7 @@ export type FullMathConfiguration<B extends MathBackend> = B extends
     ? WithFullDelims &
           WithFullCssConfiguration<B> &
           WithFullTransformers<B> &
-          RequiredNotNullOrUndefined<
+          RequiredDefinedNotNull<
               Omit<MathConfiguration<B>, 'transformers' | 'css' | 'delims'>
           >
     : WithFullDelims &

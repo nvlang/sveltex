@@ -79,6 +79,14 @@ export interface CliInstruction
 }
 
 /* eslint-disable tsdoc/syntax */
+/**
+ * Instructions to convert a DVI/PDF/XDV file to an SVG file.
+ *
+ * @param opts - An object describing the location of the DVI/PDF/XDV file and
+ * the location at which the output file should be placed.
+ * @returns A {@link CliInstruction | `CliInstruction`} object that will be used
+ * to convert the DVI/PDF/XDV file to SVG.
+ */
 export type ConversionCliInstruction = (opts: {
     input: {
         /**
@@ -126,6 +134,14 @@ export type ConversionCliInstruction = (opts: {
     };
 }) => CliInstruction;
 
+/**
+ * Instructions to convert a TeX file to a DVI/PDF/XDV file.
+ *
+ * @param opts - An object describing the location of the TeX code and the
+ * location at which the output file should be placed.
+ * @returns A {@link CliInstruction | `CliInstruction`} object that will be used
+ * to compile the TeX code.
+ */
 export type CompilationCliInstruction = (opts: {
     input: {
         /**

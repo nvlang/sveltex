@@ -9,16 +9,14 @@ import type {
     VerbatimProcessOptions,
 } from '$types/handlers/Verbatim.js';
 import type {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    CliInstruction,
     CompilationCliInstruction,
     ConversionCliInstruction,
 } from '$types/utils/CliInstruction.js';
 import type { DvisvgmOptions } from '$types/utils/DvisvgmOptions.js';
 import type { PopplerSvgOptions } from '$types/utils/PopplerOptions.js';
 import type {
-    DeepRequiredNotUndefined,
-    FirstTwoLevelsRequiredNotUndefined,
+    DeepRequiredDefined,
+    FirstTwoLevelsRequiredDefined,
 } from '$types/utils/utility-types.js';
 import type { TexComponent } from '$utils/TexComponent.js';
 
@@ -33,8 +31,14 @@ import type { TexLogSeverity } from '$data/tex.js';
  */
 export type TexBackend = 'local';
 
+/**
+ * DVI/PDF/XDV to SVG conversion library.
+ */
 export type Converter = 'dvisvgm' | 'poppler';
 
+/**
+ * Options to control the DVI/PDF/XDV to SVG conversion.
+ */
 export interface ConversionOptions {
     /**
      * Library to use to convert PDF or DVI files to SVG.
@@ -156,7 +160,10 @@ export interface ConversionOptions {
      * `src`, or at least a directory from which Svelte components can be
      * imported via `import Example from 'outputDirectory/example.svelte'`.
      *
-     * @defaultValue `'src/sveltex'`
+     * @defaultValue
+     * ```ts
+     * 'src/sveltex'
+     * ```
      *
      * @remarks
      * Each SVG component will be written to
@@ -172,9 +179,12 @@ export interface ConversionOptions {
     outputDirectory?: string | undefined;
 
     /**
-     * Override the PDF/DVI to SVG conversion command for this component.
+     * Override the DVI/PDF/XDV to SVG conversion command for this component.
      *
-     * @defaultValue `null`
+     * @defaultValue
+     * ```ts
+     * null
+     * ```
      *
      * @remarks
      * ⚠ **Warning**: Make sure that the command generates an SVG file at
@@ -183,26 +193,21 @@ export interface ConversionOptions {
      * @remarks
      * ⚠ **Warning**: The following properties will be useless if
      * `overrideConversion` is set:
-     * - {@link dvisvgm | `dvisvgm`}
-     * - {@link poppler | `poppler`}
-     * - {@link converter | `converter`}
-     *
-     * ---
-     * #### FUNCTION PARAMETERS
-     *
-     * @param opts - An object describing the location of the PDF/DVI file and the
-     * location at which the output file should be placed.
-     * @returns A {@link CliInstruction | `CliInstruction`} object that will be
-     * used to convert the PDF/DVI file to SVG.
+     * -   {@link dvisvgm | `dvisvgm`};
+     * -   {@link poppler | `poppler`};
+     * -   {@link converter | `converter`}.
      */
     overrideConversion?: ConversionCliInstruction | null | undefined;
 }
 
+/**
+ * Options to control the compilation of TeX content.
+ */
 export interface CompilationOptions {
     /**
-     * TeX engine to use to render TeX code. Possible values,
-     * alongside with the commands they use to compile the TeX code (depending
-     * on {@link intermediateFiletype | `intermediateFiletype`}):
+     * TeX engine to use to render TeX code. Possible values, alongside with the
+     * commands they use to compile the TeX code (depending on
+     * {@link intermediateFiletype | `intermediateFiletype`}):
      *
      * - `'pdflatexmk'`: Uses [LaTeXmk](https://ctan.org/pkg/latexmk), a Perl
      *   script which aims to simplify the compilation of complex LaTeX files
@@ -242,7 +247,9 @@ export interface CompilationOptions {
      * **Disclaimer**: my testing was very limited; in particular, I tested the
      * different compilation commands on just four different TeX files, each of
      * which were single-page documents (this is because single-page documents
-     * is the main use-case for Sveltex).
+     * is the main use-case for Sveltex). See the
+     * [benchmarks](https://sveltex.dev/docs/implementation/tex/benchmarks)
+     * section of the SvelTeX docs for more info.
      */
     engine?: SupportedTexEngine | undefined;
 
@@ -273,10 +280,10 @@ export interface CompilationOptions {
      *
      * @remarks
      * Not all TeX engines and conversion libraries support all intermediate
-     * filetypes. All of the supported engines support PDF and DVI, or, in the
-     * case of XeTeX-based engines, PDF and XDV. The conversion library dvisvgm
-     * can handle PDF, DVI, and XDV, while Poppler can only handle PDF of these
-     * formats. In a table:
+     * filetypes. All of the currently supported engines support PDF and DVI
+     * (or, in the case of XeTeX-based engines, PDF and XDV). The conversion
+     * library `dvisvgm` can handle PDF, DVI, and XDV, while Poppler can, of
+     * these formats, only handle PDF. In a table:
      *
      * | TeX Engine   |  `dvisvgm`  | `poppler` |
      * |:-------------|:-----------:|:---------:|
@@ -310,33 +317,34 @@ export interface CompilationOptions {
      * @remarks
      * ⚠ **Warning**: The following properties will be useless if this property
      * is set:
-     * - {@link engine | `engine`}.
-     * - {@link shellEscape | `shellEscape`}.
-     * - {@link saferLua | `saferLua`}.
+     *
+     * -   {@link engine | `engine`}.
+     * -   {@link shellEscape | `shellEscape`}.
+     * -   {@link saferLua | `saferLua`}.
      *
      * **Note**: The {@link intermediateFiletype | `intermediateFiletype`}
      * property will still be relevant, as it will help Sveltex determine how to
      * convert the intermediate file to SVG. In particular, you should make sure
      * that the command you set here generates a file of the type specified by
      * the `intermediateFiletype` property.
-     *
-     * ---
-     * #### FUNCTION PARAMETERS
-     *
-     * @param opts - An object describing the location of the TeX code and the
-     * location at which the output file should be placed.
-     * @returns A {@link CliInstruction | `CliInstruction`} object that will be
-     * used to compile the TeX code.
      */
     overrideCompilation?: CompilationCliInstruction | null | undefined;
 
     /**
+     * **Note:** This setting is only relevant if the
+     * {@link engine | `engine`} property is set to `'lualatex'` or
+     * `'lualatexmk'`. Otherwise, it has no effect.
+     *
      * If `true`, some easily exploitable Lua functions will be disabled.
      *
      * ⚠ **Warning**: [`luaotfload`](https://github.com/latex3/luaotfload) won't
-     * work if this setting is set to `true`.
+     * work if this setting is set to `true`, meaning that OTF font support may
+     * be limited.
      *
-     * @defaultValue `false`
+     * @defaultValue
+     * ```ts
+     * false
+     * ```
      */
     saferLua?: boolean | undefined;
 
@@ -352,7 +360,10 @@ export interface CompilationOptions {
      * If `true`, shell escape is enabled without restrictions. Use this option
      * with caution, and only if you trust the TeX code you are compiling.
      *
-     * @defaultValue `false`
+     * @defaultValue
+     * ```ts
+     * false
+     * ```
      */
     shellEscape?: 'restricted' | boolean | undefined;
 }
@@ -593,10 +604,10 @@ export interface TexConfiguration {
     optimization?: OptimizationOptions | undefined;
 }
 
-export type FullTexConfiguration = DeepRequiredNotUndefined<
+export type FullTexConfiguration = DeepRequiredDefined<
     Omit<TexConfiguration, 'optimization'>
 > &
-    FirstTwoLevelsRequiredNotUndefined<Pick<TexConfiguration, 'optimization'>>;
+    FirstTwoLevelsRequiredDefined<Pick<TexConfiguration, 'optimization'>>;
 
 /**
  * Type of the function that processes a TeX string.

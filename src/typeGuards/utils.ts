@@ -1,13 +1,10 @@
 // Types
-import type {
-    NotUndefined,
-    UnknownFunction,
-} from '$types/utils/utility-types.js';
+import type { Defined, UnknownFunction } from '$types/utils/utility-types.js';
 
 /**
  * Type guard to check that an input is defined (i.e., not `undefined`).
  */
-export function isDefined(input: unknown): input is NotUndefined {
+export function isDefined(input: unknown): input is Defined {
     return input !== undefined;
 }
 
@@ -16,7 +13,7 @@ export function isDefined(input: unknown): input is NotUndefined {
  *
  * Alias of {@link isDefined | `isDefined`}.
  */
-export function isNotUndefined(input: unknown): input is NotUndefined {
+export function isNotUndefined(input: unknown): input is Defined {
     return isDefined(input);
 }
 
@@ -256,7 +253,7 @@ export function isPresent<T extends PropertyKey>(
 export function isPresentAndDefined<T extends PropertyKey>(
     obj: object,
     prop: T,
-): obj is { [key in T]: NotUndefined } {
+): obj is { [key in T]: Defined } {
     return isPresent(obj, prop) && isDefined(obj[prop]);
 }
 

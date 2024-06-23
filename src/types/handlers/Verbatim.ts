@@ -6,8 +6,8 @@ import type {
     InterpretedAttributes,
 } from '$types/utils/Escape.js';
 import type {
-    FirstTwoLevelsRequiredNotUndefined,
-    RequiredNotNullOrUndefined,
+    FirstTwoLevelsRequiredDefined,
+    RequiredDefinedNotNull,
 } from '$types/utils/utility-types.js';
 import type { TexComponent } from '$utils/TexComponent.js';
 
@@ -132,20 +132,17 @@ export type VerbEnvConfig =
     | VerbEnvConfigNoop
     | VerbEnvConfigTex;
 
-export type FullVerbEnvConfigCode =
-    RequiredNotNullOrUndefined<VerbEnvConfigCode> & FullVerbEnvConfigBase;
+export type FullVerbEnvConfigCode = RequiredDefinedNotNull<VerbEnvConfigCode> &
+    FullVerbEnvConfigBase;
 export type FullVerbEnvConfigEscape =
-    RequiredNotNullOrUndefined<VerbEnvConfigEscape> & FullVerbEnvConfigBase;
-export type FullVerbEnvConfigNoop =
-    RequiredNotNullOrUndefined<VerbEnvConfigNoop> & FullVerbEnvConfigBase;
-export type FullVerbEnvConfigTex =
-    RequiredNotNullOrUndefined<VerbEnvConfigTex> & FullVerbEnvConfigBase;
+    RequiredDefinedNotNull<VerbEnvConfigEscape> & FullVerbEnvConfigBase;
+export type FullVerbEnvConfigNoop = RequiredDefinedNotNull<VerbEnvConfigNoop> &
+    FullVerbEnvConfigBase;
+export type FullVerbEnvConfigTex = RequiredDefinedNotNull<VerbEnvConfigTex> &
+    FullVerbEnvConfigBase;
 
-export type FullVerbEnvConfigBase =
-    RequiredNotNullOrUndefined<VerbEnvConfigBase> &
-        FirstTwoLevelsRequiredNotUndefined<
-            Pick<VerbEnvConfigBase, 'transformers'>
-        >;
+export type FullVerbEnvConfigBase = RequiredDefinedNotNull<VerbEnvConfigBase> &
+    FirstTwoLevelsRequiredDefined<Pick<VerbEnvConfigBase, 'transformers'>>;
 
 export type Preset = TikzPreset;
 
@@ -1191,50 +1188,6 @@ export interface VerbEnvConfigNoop extends VerbEnvConfigBase {
 
 export interface VerbEnvConfigCode extends VerbEnvConfigBase {
     type: 'code';
-
-    /**
-     * **Note: For `type === 'code'` only.**
-     *
-     * Whether to wrap the "inner output" in a `<code>` tag (or `<pre><code>`,
-     * depending on whether the `inline` attribute is `true`.
-     *
-     * @defaultValue `true`
-     *
-     * @example
-     * ```ts
-     * Example: {
-     *     type: 'code',
-     *     wrap: true,
-     * }
-     * ```
-     *
-     * Now, the following code block...
-     *
-     * ```html
-     * <Example lang="js">
-     * let a
-     * </Example>
-     * ```
-     *
-     * ...would be transformed into...
-     *
-     * ```html
-     * <Example lang="js">
-     * <pre><code class="language-js">
-     * <span class="hljs-keyword">let</span> a
-     * </code></pre>
-     * </Example>
-     * ```
-     *
-     * Meanwhile, if `wrap` had been set to `false`, the output would've been:
-     *
-     * ```html
-     * <Example lang="js">
-     * <span class="hljs-keyword">let</span> a
-     * </Example>
-     * ```
-     */
-    wrap?: boolean | undefined;
 }
 
 export interface VerbEnvConfigEscape extends VerbEnvConfigBase {
@@ -1308,8 +1261,8 @@ export interface VerbEnvConfigBase {
      * Attributes that should not be forwarded to the output.
      *
      * @defaultValue Depends on the value of {@link type | `type`}:
-     * - `'tex'`: `[]`
-     * - _Otherwise:_ `['lang', 'inline', 'metaString']`
+     * - `'code'`: `['lang', 'inline', 'metaString']`
+     * - _Otherwise:_ `[]`
      * @see
      * {@link attributeForwardingAllowlist | `attributeForwardingAllowlist`}
      */
@@ -1319,7 +1272,7 @@ export interface VerbEnvConfigBase {
      * HTML tags that should be treated as aliases for this component.
      *
      * @defaultValue
-     * ```
+     * ```ts
      * []
      * ```
      *
@@ -1338,26 +1291,28 @@ export interface VerbEnvConfigBase {
      *   `verbatim` prop is used.
      *
      * @example
+     * Suppose we have the following verbatim environment:
+     *
      * ```ts
      * Example: {
      *     component: 'Code',
-     *     type: 'code',
+     *     type: 'escape',
      * }
      * ```
      *
-     * Now, the following code block:
+     * Now, the following code block...
      *
      * ```html
-     * <Example lang="js">
-     * let a
+     * <Example attr="...">
+     * let a = {}
      * </Example>
      * ```
      *
-     * ...would be processed the same way as this one:
+     * ...would be transformed into:
      *
      * ```html
-     * <Code lang="js">
-     * <span class="hljs-keyword">let</span> a
+     * <Code attr="...">
+     * let a = &lbrace;&rbrace;
      * </Code>
      * ```
      */
@@ -1399,11 +1354,11 @@ export interface VerbEnvConfigBase {
     respectSelfClosing?: boolean | undefined;
 
     /**
-     * Transformers to apply to
-     * - the inner content of the input which `VerbatimHandler` will receive for
-     *   processing, or to
-     * - the inner content of the output produced by the `VerbatimHandler` (or
-     *   by whatever handler it forwards the content to).
+     * Transformers to apply to:
+     * -   The inner content of the input which `VerbatimHandler` will receive
+     *     for processing;
+     * -   The inner content of the output produced by the `VerbatimHandler` (or
+     *     by whatever handler it forwards the content to).
      */
     transformers?: Transformers<VerbatimProcessOptions> | undefined;
 
@@ -1417,8 +1372,13 @@ export interface VerbEnvConfigBase {
      *   tags.
      * - `'auto'`: Add a space iff the user did so in the input.
      *
-     * @defaultValue `'auto'`
+     * @defaultValue
+     * ```ts
+     * 'auto'
+     * ```
+     *
      * @see {@link respectSelfClosing | `respectSelfClosing`}
+     *
      * @example
      * Suppose a verbatim environment is defined as follows:
      *

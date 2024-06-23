@@ -10,8 +10,8 @@ import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
 import type { CssConfiguration } from '$types/handlers/Css.js';
 import type {
-    DeepRequiredNotUndefined,
-    RequiredNotNullOrUndefined,
+    DeepRequiredDefined,
+    RequiredDefinedNotNull,
     StringLiteralUnion,
 } from '$types/utils/utility-types.js';
 import { Transformers } from '$types/handlers/Handler.js';
@@ -411,7 +411,7 @@ export type CodeConfiguration<B extends CodeBackend> = CommonCodeConfiguration &
  * @typeParam B - Code backend.
  */
 export type FullCodeConfiguration<B extends CodeBackend> =
-    DeepRequiredNotUndefined<CommonCodeConfiguration> &
+    DeepRequiredDefined<CommonCodeConfiguration> &
         (B extends CodeBackendWithCss
             ? Omit<SpecificCodeConfiguration<B>, 'theme'> & {
                   theme: FullCodeTheme<B>;
@@ -445,7 +445,7 @@ export type FullCodeConfiguration<B extends CodeBackend> =
                         >;
                 }
               : B extends 'escape'
-                ? DeepRequiredNotUndefined<SpecificCodeConfiguration<B>>
+                ? DeepRequiredDefined<SpecificCodeConfiguration<B>>
                 : SpecificCodeConfiguration<B>);
 /**
  * Type of the {@link CodeHandler | `CodeHandler`}'s `process` function.
@@ -521,7 +521,7 @@ export type CodeConfigureFn<B extends CodeBackend> = (
 export type FullCodeTheme<
     B extends CodeBackendWithCss,
     T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
-> = RequiredNotNullOrUndefined<CodeTheme<B, T>>;
+> = RequiredDefinedNotNull<CodeTheme<B, T>>;
 
 export type CodeTheme<
     B extends CodeBackendWithCss,

@@ -1,5 +1,5 @@
 import type { SupportedCdn } from '$data/cdn.js';
-import type { RequiredNotNullOrUndefined } from '$types/utils/utility-types.js';
+import type { RequiredDefinedNotNull } from '$types/utils/utility-types.js';
 
 export type { SupportedCdn } from '$data/cdn.js';
 
@@ -90,7 +90,7 @@ interface HasDir {
 }
 
 export type FullCssConfiguration<T extends CssApproach = CssApproach> =
-    RequiredNotNullOrUndefined<CssConfiguration<T>>;
+    RequiredDefinedNotNull<CssConfiguration<T>>;
 
 export type CssConfiguration<T extends CssApproach = CssApproach> = {
     /**
@@ -121,7 +121,7 @@ export type MathjaxCssConfiguration<
 
 export type FullMathjaxCssConfiguration<
     T extends 'hybrid' | 'none' = 'hybrid' | 'none',
-> = RequiredNotNullOrUndefined<MathjaxCssConfiguration<T>>;
+> = RequiredDefinedNotNull<MathjaxCssConfiguration<T>>;
 
 export type KatexCssConfiguration<
     T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
@@ -129,4 +129,4 @@ export type KatexCssConfiguration<
 
 export type FullKatexCssConfiguration<
     T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
-> = RequiredNotNullOrUndefined<KatexCssConfiguration<T>>;
+> = RequiredDefinedNotNull<KatexCssConfiguration<T>>;

@@ -61,7 +61,7 @@ function isPicocolorStyle(input: unknown): input is PicocolorStyle {
     return isString(input) && input in pc && input !== 'isColorSupported';
 }
 
-export function applyPcStyles(input: string, styles: PicocolorStyle[]): string {
+function applyPcStyles(input: string, styles: PicocolorStyle[]): string {
     let output = input;
     const stylesReverse = styles.reverse();
     for (const style of stylesReverse) {

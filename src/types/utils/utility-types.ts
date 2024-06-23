@@ -1,25 +1,78 @@
-export type FirstTwoLevelsRequired<T> = {
-    [K in keyof T]-?: Required<T[K]>;
+/**
+ * Make properties required, and remove `undefined` from their types, if
+ * present. This utility type applies to the first two levels of the object
+ * only.
+ *
+ * @example
+ * ```ts
+ * FirstTwoLevelsRequiredDefinedNotNull<{
+ *     a?: string | null | undefined;
+ *     b?: {
+ *         c?: string | null | undefined;
+ *         d?: { e?: string | null | undefined } | null | undefined;
+ *     } | null | undefined;
+ * }>
+ * // {
+ * //     a: string | null;
+ * //     b: {
+ * //         c: string | null;
+ * //         d: { e?: string | null | undefined } | null;
+ * //     } | null;
+ * // }
+ * ```
+ */
+
+export type FirstTwoLevelsRequiredDefined<T> = {
+    [K in keyof T]-?: Exclude<RequiredDefined<T[K]>, undefined>;
 };
 
-export type FirstTwoLevelsRequiredNotUndefined<T> = {
-    [K in keyof T]-?: ExcludeUndefined<RequiredNotUndefined<T[K]>>;
+/**
+ * Make properties required, and remove `undefined` and `null` from their types,
+ * if present. This utility type applies to the first two levels of the object
+ * only.
+ *
+ * @example
+ * ```ts
+ * FirstTwoLevelsRequiredDefinedNotNull<{
+ *     a?: string | undefined;
+ *     b?: {
+ *         c?: string | undefined;
+ *         d?: { e?: string | undefined } | undefined;
+ *     } | undefined;
+ * }>
+ * // {
+ * //     a: string;
+ * //     b: {
+ * //         c: string;
+ * //         d: { e?: string | undefined };
+ * //     };
+ * // }
+ * ```
+ */
+export type FirstTwoLevelsRequiredDefinedNotNull<T> = {
+    [K in keyof T]-?: Exclude<RequiredDefinedNotNull<T[K]>, null | undefined>;
 };
 
-export type FirstTwoLevelsRequiredNotNullOrUndefined<T> = {
-    [K in keyof T]-?: NotNullOrUndefined<RequiredNotNullOrUndefined<T[K]>>;
-};
-
-export type RequiredNotUndefined<T> = {
+/**
+ * Make properties required, and remove `undefined` from their types, if
+ * present.
+ *
+ * @example
+ * ```ts
+ * RequiredDefined<{
+ *     a?: string | null | undefined;
+ *     b?: { c?: string | null | undefined } | null | undefined;
+ * }>
+ * // { a: string | null, b: { c?: string | null | undefined } | null }
+ * ```
+ */
+export type RequiredDefined<T> = {
     [K in keyof T]-?: Exclude<T[K], undefined>;
 };
 
-export type ExcludeUndefined<T> = Exclude<T, undefined>;
-
-export type ExcludeNull<T> = Exclude<T, null>;
-
-export type NotNullOrUndefined<T> = Exclude<T, null | undefined>;
-
+/**
+ * A union type meant to encompass all possible TypeScript types.
+ */
 export type PrimitiveTypeOrNull =
     | string
     | number
@@ -34,7 +87,7 @@ export type PrimitiveTypeOrNull =
 /**
  * Any type other than `undefined`.
  */
-export type NotUndefined = Exclude<PrimitiveTypeOrNull, undefined>;
+export type Defined = Exclude<PrimitiveTypeOrNull, undefined>;
 
 /**
  * A type representing any function that takes any number of arguments and
@@ -42,68 +95,74 @@ export type NotUndefined = Exclude<PrimitiveTypeOrNull, undefined>;
  */
 export type UnknownFunction = (...args: unknown[]) => unknown;
 
-export type DeepRequiredNotUndefined<T> = RequiredNotUndefined<{
-    [K in keyof T]: T[K] extends RequiredNotUndefined<T[K]>
+/**
+ * Make properties required, and remove `undefined` from their types, if
+ * present. This utility type applies deeply, meaning that it will also make
+ * nested properties required (and remove `undefined` from their types as well,
+ * if present).
+ *
+ * @example
+ * ```ts
+ * DeepRequiredDefined<{
+ *     a?: string | null | undefined;
+ *     b?: {
+ *         c?: string | null | undefined;
+ *     } | null | undefined;
+ * }>
+ * // { a: string | null, b: { c: string | null } | null }
+ * ```
+ */
+export type DeepRequiredDefined<T> = RequiredDefined<{
+    [K in keyof T]: T[K] extends RequiredDefined<T[K]>
         ? T[K]
-        : DeepRequiredNotUndefined<T[K]>;
+        : DeepRequiredDefined<T[K]>;
 }>;
 
 /**
- * NB: Properties may still be optional; in other words,
+ * @remarks
+ * Properties may still be optional; in other words:
  *
  * ```ts
- * MakePropertiesNotNullOrUndefined<{
+ * PropertiesDefinedNotNull<{
  *     a?: string | null | undefined;
  * }>
  * // ...is equivalent to...
  * { a?: string }
  * ```
  */
-export type MakePropertiesNotNullOrUndefined<T> = {
-    [P in keyof T]: NotNullOrUndefined<T[P]>;
+export type PropertiesDefinedNotNull<T> = {
+    [P in keyof T]: Exclude<T[P], null | undefined>;
 };
 
-export type MakePropertiesNotUndefined<T> = {
-    [P in keyof T]: ExcludeUndefined<T[P]>;
+/**
+ * @remarks
+ * Properties may still be optional; in other words:
+ *
+ * ```ts
+ * PropertiesDefined<{
+ *     a?: string | null | undefined;
+ * }>
+ * // ...is equivalent to...
+ * { a?: string | null }
+ * ```
+ */
+export type PropertiesDefined<T> = {
+    [P in keyof T]: Exclude<T[P], undefined>;
 };
 
-export type MakePropertiesNotNull<T> = {
-    [P in keyof T]: ExcludeNull<T[P]>;
-};
-
-export type RequiredNotNullOrUndefined<T> = Required<
-    MakePropertiesNotNullOrUndefined<T>
->;
-
-export type RequiredNonNullOrUndefinedExcept<T, K extends keyof T> = Required<
-    MakePropertiesNotNullOrUndefined<Omit<T, K>>
-> &
-    Pick<T, K>;
-
-export type MarkRequiredNotNullOrUndefined<T, K extends keyof T> = T &
-    Required<MakePropertiesNotNullOrUndefined<Pick<T, K>>>;
-
-type Nullable<T> = T | null | undefined;
-
-export type MakePropertiesNullable<T> = {
-    [P in keyof T]: Nullable<T[P]>;
-};
-
-export type PartialNullable<T> = Partial<MakePropertiesNullable<T>>;
-
-export type MarkPartialNullable<T, K extends keyof T> = T &
-    Partial<MakePropertiesNullable<Pick<T, K>>>;
-
-type Undefinable<T> = T | undefined;
-
-export type MakePropertiesUndefinable<T> = {
-    [P in keyof T]: Undefinable<T[P]>;
-};
-
-export type PartialUndefinable<T> = Partial<MakePropertiesUndefinable<T>>;
-
-export type MarkPartialUndefinable<T, K extends keyof T> = T &
-    Partial<MakePropertiesUndefinable<Pick<T, K>>>;
+/**
+ * Make properties required, and remove `null` and `undefined` from their types,
+ * if present.
+ *
+ * @example
+ * ```ts
+ * RequiredDefinedNotNull<{
+ *    a?: string | null | undefined;
+ * }>
+ * // { a: string }
+ * ```
+ */
+export type RequiredDefinedNotNull<T> = Required<PropertiesDefinedNotNull<T>>;
 
 /**
  * Taken from Shiki's definition of the same type.
