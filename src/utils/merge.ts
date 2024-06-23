@@ -32,7 +32,7 @@ export function mergeConfigs<T extends NonNullable<object>>(
     return mergeCustom(config, ...configs) as unknown as T;
 }
 
-export const mergeCustom = deepmergeCustom({
+const mergeCustom = deepmergeCustom({
     // Don't merge arrays; override them instead. For example, we want:
     //     mergeCustom({ a: [1] }, { a: [2] }) => { a: [2] }
     // In this case, `values` would be [[1], [2]] and we want to return [2].

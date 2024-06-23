@@ -1,6 +1,5 @@
 import { isArray, isString } from '$typeGuards/utils.js';
-import { mockFs } from '$dev_deps.js';
-import { type MockInstance, vi, beforeEach, afterAll, expect } from 'vitest';
+import { type MockInstance, vi } from 'vitest';
 
 type Mockable = (typeof mockableFunctions)[number];
 
@@ -102,33 +101,11 @@ export async function spy(
     return spyFn;
 }
 
-export function fixture1(
-    spawnCliInstructionMock: MockInstance,
-    logMock: MockInstance,
-) {
-    beforeEach(async () => {
-        vi.clearAllMocks();
-        spawnCliInstructionMock = await spy('spawnCliInstruction');
-        logMock = await spy('log');
-        mockFs({});
-        spawnCliInstructionMock.mockClear();
-        logMock.mockClear();
-    });
-    afterAll(() => {
-        mockFs.restore();
-        vi.restoreAllMocks();
-    });
-}
-
 export function removeEmptyLines(input: string = '') {
     return input
         .split('\n')
         .filter((line) => line.trim().length > 0)
         .join('\n');
-}
-
-export function equalUpToNewlines(a: string = '', b: string = '') {
-    expect(removeEmptyLines(a)).toEqual(removeEmptyLines(b));
 }
 
 // export async function mockNodeFs() {

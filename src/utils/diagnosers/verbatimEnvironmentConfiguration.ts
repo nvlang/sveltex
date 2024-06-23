@@ -117,7 +117,6 @@ export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
         (v) => (type === 'tex' ? v === false : isBoolean(v)),
         'boolean',
     );
-    if (type === 'code') d.ifPresent('wrap', 'a boolean', isBoolean, 'boolean');
     if (type === 'escape') {
         d.ifPresent(
             'escapeInstructions',

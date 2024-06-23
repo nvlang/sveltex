@@ -298,7 +298,7 @@ export const hexOfNamedColor = {
  * Note: The entries are 6 lowercase hex characters each, _without_ a leading
  * `#`.
  */
-export const reservedHexColors = Object.keys(
+const reservedHexColors = Object.keys(
     nameOfHexColor,
 ) as ReservedHexColor[];
 
@@ -306,7 +306,7 @@ export const reservedHexColors = Object.keys(
  * Note: The entries are 6 lowercase hex characters each, _without_ a leading
  * `#`.
  */
-export const namedColors = Object.keys(hexOfNamedColor) as NamedColor[];
+const namedColors = Object.keys(hexOfNamedColor) as NamedColor[];
 
 export function isReservedHexColor(color: string): color is ReservedHexColor {
     return reservedHexColors.includes(color as ReservedHexColor);

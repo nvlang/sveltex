@@ -16,7 +16,7 @@ import { inspect, ora, pc } from '$deps.js';
 
 export type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
-export const escapedSpecialWhitespaceCharacters: Record<
+const escapedSpecialWhitespaceCharacters: Record<
     SpecialWhitespaceCharacter,
     string
 > = {
@@ -183,7 +183,7 @@ export function log(...args: unknown[]) {
     );
 }
 
-export function prettifyStackTrace(stack: string): string {
+function prettifyStackTrace(stack: string): string {
     return pc.red(
         stack
             .split('\n')

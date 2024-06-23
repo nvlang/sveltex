@@ -3,7 +3,7 @@
  */
 export type SupportedTexEngine = (typeof texEngines)[number];
 
-export const texEngines = [
+const texEngines = [
     'pdflatexmk',
     'lualatex',
     'lualatexmk',

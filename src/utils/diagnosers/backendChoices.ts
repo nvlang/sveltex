@@ -30,7 +30,7 @@ export const codeBackends = [
     'none',
 ] as const;
 export const mathBackends = ['mathjax', 'katex', 'none', 'custom'] as const;
-export const texBackends = ['local'] as const;
+const texBackends = ['local'] as const;
 const backendChoices = [
     ['markdownBackend', markdownBackends],
     ['codeBackend', codeBackends],

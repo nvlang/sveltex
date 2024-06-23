@@ -23,7 +23,7 @@ export function isTexDimUnitless(value: unknown): value is TexDimUnitless {
     return isNumber(value);
 }
 
-export function isTexDimWithUnit(value: unknown): value is TexDimWithUnit {
+function isTexDimWithUnit(value: unknown): value is TexDimWithUnit {
     return (
         isArray(value) &&
         value.length === 2 &&
@@ -32,7 +32,7 @@ export function isTexDimWithUnit(value: unknown): value is TexDimWithUnit {
     );
 }
 
-export function isTexDimUnit(value: unknown): value is TexDimUnit {
+function isTexDimUnit(value: unknown): value is TexDimUnit {
     return (
         isString(value) &&
         ['pt', 'mm', 'cm', 'in', 'bp', 'pc', 'dd', 'cc', 'sp'].includes(value)
@@ -43,7 +43,7 @@ export function isTexDim(value: unknown): value is TexDim {
     return isTexDimUnitless(value) || isTexDimWithUnit(value);
 }
 
-export function isCoordinate(value: unknown): value is Coordinate {
+function isCoordinate(value: unknown): value is Coordinate {
     return (
         isNonNullObject(value) &&
         'x' in value &&
@@ -63,11 +63,11 @@ export function isBoundingBox(value: unknown): value is BoundingBox {
     );
 }
 
-export function isDinIsoPaperSize(value: unknown): value is DinIsoPaperSize {
+function isDinIsoPaperSize(value: unknown): value is DinIsoPaperSize {
     return isString(value) && /^[A-D](\d|10)$/.test(value);
 }
 
-export function isNorthAmericanPaperSize(
+function isNorthAmericanPaperSize(
     value: unknown,
 ): value is NorthAmericanPaperSize {
     return (

@@ -65,7 +65,7 @@ export function bboxToFlagValue(bbox: BBox): string {
  *
  * @internal
  */
-export function boundingBoxToString(bbox: BoundingBox): string {
+function boundingBoxToString(bbox: BoundingBox): string {
     return [
         bbox.topLeft.x,
         bbox.topLeft.y,
@@ -82,7 +82,7 @@ export function boundingBoxToString(bbox: BoundingBox): string {
  *
  * @internal
  */
-export function texDimToString(texDim: TexDim): string {
+function texDimToString(texDim: TexDim): string {
     if (isTexDimUnitless(texDim)) {
         return String(texDim);
     }

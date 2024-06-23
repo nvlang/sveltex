@@ -138,7 +138,7 @@ export function parseComponent(html: string): ParsedComponent {
  *
  * @see {@link parseComponent | `parseComponent`}
  */
-export const attributesRegExp = re`
+const attributesRegExp = re`
     (                           # 1: attribute name
         [                       # (first character)
             a-zA-Z

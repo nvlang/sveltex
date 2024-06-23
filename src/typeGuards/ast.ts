@@ -17,7 +17,7 @@ import type {
  * Checks that the given object has `start` and `end` properties, no matter
  * their types.
  */
-export function hasStartEndUnknown(
+function hasStartEndUnknown(
     obj: unknown,
 ): obj is { start: unknown; end: unknown } {
     return (
@@ -50,7 +50,7 @@ export function hasStartEnd_Offset(node: unknown): node is StartEnd_Offset {
 /**
  * Type guard for {@link LineColumn | `LineColumn`}.
  */
-export function isLineColumn(obj: unknown): obj is LineColumn {
+function isLineColumn(obj: unknown): obj is LineColumn {
     return (
         typeof obj === 'object' &&
         obj !== null &&

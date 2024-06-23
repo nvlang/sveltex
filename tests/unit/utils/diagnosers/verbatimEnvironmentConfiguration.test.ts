@@ -73,14 +73,13 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
         [
             {
                 type: 'noop',
-                wrap: null,
                 respectSelfClosing: null,
                 selfCloseOutputWith: 'something',
                 a: 1,
                 b: 2,
             },
             2,
-            3,
+            2,
         ],
         [
             {

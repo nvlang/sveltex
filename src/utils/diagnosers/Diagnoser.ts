@@ -192,7 +192,7 @@ export type NameOfPrimitiveTypeOrNull =
     | 'function'
     | 'null';
 
-export function getType(x: unknown): NameOfPrimitiveTypeOrNull {
+function getType(x: unknown): NameOfPrimitiveTypeOrNull {
     return x === null ? 'null' : typeof x;
 }
 

@@ -5,7 +5,7 @@ export const backendConfigs = cartesianProduct(
   ["shiki", "starry-night", "highlight.js", "escape"],
   ["mathjax-svg", "mathjax-chtml", "katex"]
 );
-export const preprocessors = await Promise.all(
+const preprocessors = await Promise.all(
   backendConfigs.map(async ([markdownBackend, codeBackend, mathBackend]) => {
     return await sveltex(
       {
@@ -46,6 +46,6 @@ export const preprocessors = await Promise.all(
     );
   })
 );
-export function cartesianProduct(...a) {
+function cartesianProduct(...a) {
   return a.reduce((a2, b) => a2.flatMap((d) => b.map((e) => [d, e].flat())));
 }

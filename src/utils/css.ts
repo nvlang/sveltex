@@ -52,7 +52,7 @@ function isCssVar(str: string): str is CssVar {
  * ```
  *
  */
-export function texDefineHexColors(cssColorVars: Map<CssVar, string>): string {
+function texDefineHexColors(cssColorVars: Map<CssVar, string>): string {
     return cssColorVars.size === 0
         ? ''
         : [...cssColorVars.values()]

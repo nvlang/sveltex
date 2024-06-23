@@ -363,7 +363,6 @@ describe('VerbatimHandler', () => {
                             defaultAttributes: 'something' as any,
                             respectSelfClosing: 'something' as any,
                             selfCloseOutputWith: 'something' as any,
-                            wrap: 'something' as any,
                             /* eslint-enable */
                         },
                         Okay: { type: 'escape' },

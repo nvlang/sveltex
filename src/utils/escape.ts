@@ -826,7 +826,7 @@ export function escapeSnippets(
  * @param document - The document in which to escape the colons.
  * @returns The document with the colons escaped.
  */
-export function escapeColons(document: string): string {
+function escapeColons(document: string): string {
     const snippets = getColonES(document);
     const s = new MagicString(document);
     snippets.forEach((snippet) => {
