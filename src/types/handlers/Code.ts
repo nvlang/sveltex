@@ -6,7 +6,6 @@ import type {
     StarryNightLanguage,
     StarryNightThemeName,
 } from '$data/code.js';
-import type { CodeHandler } from '$handlers/CodeHandler.js';
 import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
 import type { CssConfiguration } from '$types/handlers/Css.js';
 import type {
@@ -14,7 +13,7 @@ import type {
     RequiredDefinedNotNull,
     StringLiteralUnion,
 } from '$types/utils/utility-types.js';
-import { Transformers } from '$types/handlers/Handler.js';
+import type { Transformers } from '$types/handlers/Handler.js';
 
 /**
  * Union type of supported code backends.
@@ -26,35 +25,7 @@ export type CodeBackend =
     | 'escape'
     | 'none';
 
-/**
- * Type of the processor used to parse code.
- *
- * @typeParam B - Syntax highlighting backend.
- * @returns Depending on `B`:
- * - `highlight.js`: The module's `HLJSApi` type.
- * - `starry-night`: Awaited return type of the module's `createStarryNight`
- *   function.
- * - `shiki`: `object` (no processor).
- * - `escape`: `object` (no processor).
- * - `none`: `object` (no processor).
- *
- * @remarks This is the type of the `processor` property of the code handler.
- */
-export type CodeProcessor<B extends CodeBackend> = B extends 'highlight.js'
-    ? import('highlight.js').HLJSApi
-    : B extends 'starry-night'
-      ? Awaited<
-            ReturnType<typeof import('@wooorm/starry-night').createStarryNight>
-        >
-      : B extends 'shiki'
-        ? object
-        : B extends 'escape'
-          ? object
-          : B extends 'none'
-            ? object
-            : never;
-
-export interface CommonCodeConfiguration {
+interface CommonCodeConfiguration {
     /**
      * Whether to add a class to the `<code>` tag with the name of the language
      * of the code it contains. If a string is provided, a class will be added
@@ -187,22 +158,21 @@ export interface CommonCodeConfiguration {
  * @remarks This is the type of the argument passed to the code handler's
  * `configure` function, together with {@link CommonCodeConfiguration | `GeneralCodeConfiguration`}.
  */
-export type SpecificCodeConfiguration<B extends CodeBackend> =
-    B extends 'highlight.js'
-        ? HighlightJsConfig
-        : B extends 'starry-night'
-          ? StarryNightConfig
-          : B extends 'shiki'
-            ? ShikiConfig
-            : B extends 'escape'
-              ? {
-                    escape?: SimpleEscapeInstruction | undefined;
-                }
-              : B extends 'none'
-                ? object
-                : never;
+type SpecificCodeConfiguration<B extends CodeBackend> = B extends 'highlight.js'
+    ? HighlightJsConfig
+    : B extends 'starry-night'
+      ? StarryNightConfig
+      : B extends 'shiki'
+        ? ShikiConfig
+        : B extends 'escape'
+          ? {
+                escape?: SimpleEscapeInstruction | undefined;
+            }
+          : B extends 'none'
+            ? object
+            : never;
 
-export interface HighlightJsConfig {
+interface HighlightJsConfig {
     /**
      * Configure the theme to use for syntax highlighting.
      */
@@ -236,7 +206,7 @@ export interface HighlightJsConfig {
         | undefined;
 }
 
-export interface StarryNightConfig {
+interface StarryNightConfig {
     /**
      * Configure the theme to use for syntax highlighting.
      */
@@ -296,7 +266,7 @@ export interface StarryNightConfig {
         | undefined;
 }
 
-export interface ShikiConfig {
+interface ShikiConfig {
     /**
      * Default options for Shiki's highlighter.
      */
@@ -490,40 +460,12 @@ export interface CodeProcessOptionsBase {
     metaString?: string | undefined;
 }
 
-// export type CodeProcessOptions<B extends CodeBackend> = CodeProcessOptionsBase &
-// CodeConfiguration<B>;
-
-/**
- *
- */
-// export type FullCodeProcessOptions<B extends CodeBackend> = {
-//     inline: boolean;
-// } & CodeProcessOptionsBase &
-//     FullCodeConfiguration<B>;
-
-export interface FullCodeProcessOptions<B extends CodeBackend>
-    extends CodeProcessOptionsBase {
-    inline: boolean;
-    configuration: FullCodeConfiguration<B>;
-}
-
-/**
- * Type of the function that configures a code processor of the specified
- * type.
- *
- * @typeParam B - Code backend.
- */
-export type CodeConfigureFn<B extends CodeBackend> = (
-    config: CodeConfiguration<B>,
-    codeHandler: CodeHandler<B>,
-) => void | Promise<void>;
-
 export type FullCodeTheme<
     B extends CodeBackendWithCss,
     T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
 > = RequiredDefinedNotNull<CodeTheme<B, T>>;
 
-export type CodeTheme<
+type CodeTheme<
     B extends CodeBackendWithCss,
     T extends 'cdn' | 'self-hosted' | 'none' = 'cdn' | 'self-hosted' | 'none',
 > = {
@@ -548,7 +490,7 @@ export type CodeTheme<
         ? CodeThemeConfigStarryNight
         : CodeThemeConfigHighlightJs);
 
-export interface CodeThemeConfigStarryNight {
+interface CodeThemeConfigStarryNight {
     /**
      * Name of the theme to use.
      *
@@ -568,7 +510,7 @@ export interface CodeThemeConfigStarryNight {
     mode?: 'light' | 'dark' | 'both' | undefined;
 }
 
-export interface CodeThemeConfigHighlightJs {
+interface CodeThemeConfigHighlightJs {
     /**
      * Name of the theme to use.
      *

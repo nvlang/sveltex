@@ -3,7 +3,7 @@
 import type { SvgoOptions } from '$deps.js';
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
-import type { ConfigureFn, ProcessFn } from '$types/handlers/Handler.js';
+import type { ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbEnvConfigTex,
     VerbatimProcessOptions,
@@ -34,12 +34,12 @@ export type TexBackend = 'local';
 /**
  * DVI/PDF/XDV to SVG conversion library.
  */
-export type Converter = 'dvisvgm' | 'poppler';
+type Converter = 'dvisvgm' | 'poppler';
 
 /**
  * Options to control the DVI/PDF/XDV to SVG conversion.
  */
-export interface ConversionOptions {
+interface ConversionOptions {
     /**
      * Library to use to convert PDF or DVI files to SVG.
      *
@@ -368,7 +368,7 @@ export interface CompilationOptions {
     shellEscape?: 'restricted' | boolean | undefined;
 }
 
-export interface CachingOptions {
+interface CachingOptions {
     /**
      * If `true`, auxiliary files of *named* TeX blocks won't be removed from
      * the cache directory after compilation. Auxiliary files of *unnamed* TeX
@@ -405,7 +405,7 @@ export interface CachingOptions {
     cacheDirectory?: string | undefined;
 }
 
-export interface OptimizationOptions {
+interface OptimizationOptions {
     /**
      * Try to make the SVG use `currentColor` as its default color by replacing
      * all occurrences of the given color in the SVG code with `'currentColor'`.
@@ -471,7 +471,7 @@ export interface OptimizationOptions {
     svgo?: Omit<SvgoOptions, 'path'> | undefined;
 }
 
-export interface DebugOptions {
+interface DebugOptions {
     /**
      * Log messages to ignore.
      *
@@ -616,21 +616,13 @@ export type FullTexConfiguration = DeepRequiredDefined<
  */
 export type TexProcessFn = ProcessFn<TexProcessOptions, TexHandler>;
 
-/**
- * Type of the function that configures a TeX processor of the specified type.
- *
- * @typeParam B - TeX backend.
- */
-export type TexConfigureFn = ConfigureFn<TexConfiguration, TexHandler>;
-
-export type TexProcessor = object;
-
 export interface TexProcessOptions extends VerbatimProcessOptions {
     config: FullVerbEnvConfigTex;
 }
 
 /**
- *
+ * Interface providing the necessary information to import a the Svelte SVG
+ * component output of a TeX component.
  */
 export interface TexComponentImportInfo {
     /**

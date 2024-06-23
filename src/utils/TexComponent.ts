@@ -1,3 +1,8 @@
+// File description: Intermediary class with `compile` method used by
+// `TexHandler` to render TeX content. Because of the nature of how and when
+// preprocessors run, any instance of this class is gets its `compile` method
+// called exactly once.
+
 // Types
 import type { TexHandler } from '$handlers/TexHandler.js';
 import type {

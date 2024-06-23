@@ -19,5 +19,6 @@
     "**/.svelte-kit": true,
     "**/node_modules": true,
     "**/dist": true
-  }
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

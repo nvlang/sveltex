@@ -56,5 +56,12 @@
   // "ts-node": {
   //   // "swc": true
   // },
-  "include": ["*.config.js", "*.config.ts", "package.json", "src"]
+  "include": [
+    "*.config.js",
+    "*.config.ts",
+    "package.json",
+    "src",
+    "tests",
+    "scripts"
+  ]
 }

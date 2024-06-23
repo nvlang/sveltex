@@ -24,32 +24,6 @@ import type {
 export type MathBackend = 'katex' | 'mathjax' | 'custom' | 'none';
 
 /**
- * Type of the processor used to parse math.
- *
- * @typeParam T - The type of the math processor.
- * @returns Depending on `T`:
- * - `katex`: `null`.
- * - `mathjax`: `null`.
- * - `custom`: `unknown`.
- * - `none`: `null`.
- *
- * @remarks This is the type of the `processor` property of the math handler.
- */
-export type MathProcessor<B extends MathBackend> = B extends 'katex'
-    ? object
-    : B extends 'mathjax'
-      ? import('mathjax-full/js/core/MathDocument.js').MathDocument<
-            unknown,
-            unknown,
-            unknown
-        >
-      : B extends 'custom'
-        ? object
-        : B extends 'none'
-          ? object
-          : never;
-
-/**
  * Type of the configuration object used to configure the math processor.
  *
  * @typeParam T - The type of the math processor.
@@ -407,25 +381,6 @@ export type MathProcessFn<B extends MathBackend> =
         options: MathProcessOptions<B>,
         mathHandler: MathHandler<B>,
     ) => string | Promise<string>;
-
-/**
- * Type of the function that configures a {@link MathHandler | `MathHandler`}
- * instance with backend {@link B | `B`} .
- *
- * @typeParam B - Math backend.
- */
-export type MathConfigureFn<B extends MathBackend> =
-    /**
-     * Function to configure a {@link MathHandler | `MathHandler`} instance.
-     *
-     * @param opts - The configuration options to apply to the math handler.
-     * @param mathHandler - The math handler to configure.
-     * @returns `void`, or a promise resolving to it.
-     */
-    (
-        opts: MathConfiguration<B>,
-        mathHandler: MathHandler<B>,
-    ) => void | Promise<void>;
 
 export type MathProcessOptions<B extends MathBackend> = B extends 'mathjax'
     ? {

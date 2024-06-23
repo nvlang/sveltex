@@ -102,14 +102,14 @@ export class TexHandler extends Handler<
             this.texComponents[filename] !== undefined
         ) {
             if (
-                !this.texComponents[filename]?.includes(tc) &&
-                !this.texComponents[filename]?.find(
+                !this.texComponents[filename].includes(tc) &&
+                !this.texComponents[filename].find(
                     (c) => c.id === tc.id || c.path === tc.path,
                 )
             ) {
                 // Add tex component to existing entry for file if it isn't
                 // already there.
-                this.texComponents[filename]?.push(tc);
+                this.texComponents[filename].push(tc);
             }
         } else {
             // Create new entry for file if it doesn't already exist

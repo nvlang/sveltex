@@ -181,7 +181,7 @@ export class Diagnoser {
     }
 }
 
-export type NameOfPrimitiveTypeOrNull =
+type NameOfPrimitiveTypeOrNull =
     | 'object'
     | 'string'
     | 'number'

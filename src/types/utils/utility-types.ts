@@ -73,7 +73,7 @@ export type RequiredDefined<T> = {
 /**
  * A union type meant to encompass all possible TypeScript types.
  */
-export type PrimitiveTypeOrNull =
+type PrimitiveTypeOrNull =
     | string
     | number
     | bigint

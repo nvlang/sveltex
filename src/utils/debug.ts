@@ -14,7 +14,7 @@ import {
 // External dependencies
 import { inspect, ora, pc } from '$deps.js';
 
-export type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
+type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
 const escapedSpecialWhitespaceCharacters: Record<
     SpecialWhitespaceCharacter,

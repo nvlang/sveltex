@@ -1,5 +1,5 @@
-export type ReservedHexColor = keyof typeof nameOfHexColor;
-export type NamedColor = (typeof nameOfHexColor)[ReservedHexColor][number];
+type ReservedHexColor = keyof typeof nameOfHexColor;
+type NamedColor = (typeof nameOfHexColor)[ReservedHexColor][number];
 
 export const nameOfHexColor = {
     '000000': ['black'],

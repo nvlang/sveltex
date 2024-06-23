@@ -53,15 +53,6 @@ export type MarkdownProcessor<B> = B extends 'markdown-it'
  * Type of the configuration object used to configure the markdown processor.
  *
  * @typeParam B - The type of the markdown processor.
- * @returns Depending on `B`:
- * - `'markdown-it'`: The module's `Options` type.
- * - `'marked'`: Type with an `options` property of type `MarkedOptions` and an
- *   `extensions` property of type `MarkedExtension[]`.
- * - `'micromark'`: The module's `Options` type.
- * - `'unified'`: Type with a `remarkPlugins` property of type `PluggableList` and
- *   a `rehypePlugins` property of type `PluggableList`.
- * - `'custom'`: `Record<string, unknown>`
- * - `'none'`: `Record<string, unknown>`
  *
  * @remarks This is the type of the argument passed to the markdown handler's
  * `configure` function.
@@ -92,10 +83,6 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                     ]
                   | [import('markdown-it').PluginWithParams, ...unknown[]]
               )[];
-              // I don't understand why these `unknown` types are necessary,
-              // but it seems they are.
-              // | [unknown, ...unknown[]]
-              // | [unknown, Record<string, unknown>]
           }
         : B extends 'marked'
           ? MarkdownCommonConfiguration & {
@@ -128,6 +115,11 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      * `remark-rehype`.
                      *
                      * @see https://unifiedjs.com/explore/keyword/remark/
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * []
+                     * ```
                      */
                     remarkPlugins?: import('unified').PluggableList | undefined;
 
@@ -138,17 +130,29 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      * `rehype-stringify`.
                      *
                      * @see https://unifiedjs.com/explore/keyword/rehype/
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * []
+                     * ```
                      */
                     rehypePlugins?: import('unified').PluggableList | undefined;
 
                     /**
                      * [`retext`](https://www.npmjs.com/package/retext) plugins
                      * to use with
-                     * [`rehype-retext`](https://www.npmjs.com/package/rehype-retext)
+                     * [`remark-retext`](https://www.npmjs.com/package/remark-retext)
                      * to check the Latin-script natural language content of the
                      * markup. Note that these plugins will not be able to
                      * transform the content in any way, but rather just check
                      * it and possibly log warnings.
+                     *
+                     * @see https://unifiedjs.com/explore/keyword/retext/
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * []
+                     * ```
                      */
                     retextPlugins?: import('unified').PluggableList | undefined;
                 }
@@ -262,14 +266,3 @@ export type MarkdownProcessFn<B extends MarkdownBackend> = ProcessFn<
 >;
 
 export type MarkdownProcessOptions = object;
-
-/**
- * Type of the function that configures a markdown processor of the specified
- * type.
- *
- * @typeParam B - Markdown backend.
- */
-export type MarkdownConfigureFn<B extends MarkdownBackend> = (
-    opts: MarkdownConfiguration<B>,
-    markdownHandler: MarkdownHandler<B>,
-) => void | Promise<void>;

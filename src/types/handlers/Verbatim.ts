@@ -126,7 +126,7 @@ export type FullVerbEnvConfig =
     | FullVerbEnvConfigNoop
     | FullVerbEnvConfigTex;
 
-export type VerbEnvConfig =
+type VerbEnvConfig =
     | VerbEnvConfigCode
     | VerbEnvConfigEscape
     | VerbEnvConfigNoop
@@ -148,7 +148,7 @@ export type Preset = TikzPreset;
 
 export type PresetName = TikzPreset['name'];
 
-export interface TikzPreset {
+interface TikzPreset {
     name: 'tikz';
 
     /**
@@ -1182,15 +1182,15 @@ export interface VerbEnvConfigTex extends VerbEnvConfigBase {
     postprocess?: (svgComponent: string, tc: TexComponent) => string;
 }
 
-export interface VerbEnvConfigNoop extends VerbEnvConfigBase {
+interface VerbEnvConfigNoop extends VerbEnvConfigBase {
     type: 'noop';
 }
 
-export interface VerbEnvConfigCode extends VerbEnvConfigBase {
+interface VerbEnvConfigCode extends VerbEnvConfigBase {
     type: 'code';
 }
 
-export interface VerbEnvConfigEscape extends VerbEnvConfigBase {
+interface VerbEnvConfigEscape extends VerbEnvConfigBase {
     type: 'escape';
     escape?: SimpleEscapeInstruction | undefined;
 }

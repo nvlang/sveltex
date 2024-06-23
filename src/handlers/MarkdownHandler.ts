@@ -268,13 +268,13 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
             let unified,
                 remarkParse,
                 remarkRehype,
-                // rehypeRetext,
+                remarkRetext,
                 rehypeStringify;
             try {
                 unified = (await import('unified')).unified;
                 remarkParse = (await import('remark-parse')).default;
                 remarkRehype = (await import('remark-rehype')).default;
-                // rehypeRetext = (await import('rehype-retext')).default;
+                remarkRetext = (await import('remark-retext')).default;
                 rehypeStringify = (await import('rehype-stringify')).default;
             } catch (error) {
                 // If the import fails, add the missing dependencies to the list
@@ -282,8 +282,8 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 missingDeps.push(
                     'unified',
                     'remark-parse',
+                    'remark-retext',
                     'remark-rehype',
-                    // 'rehype-retext',
                     'rehype-stringify',
                     '@types/mdast',
                 );
@@ -293,14 +293,14 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 getDefaultMarkdownConfig('unified'),
                 userConfig ?? {},
             );
-            // remarkParse
             const processor: MarkdownProcessor<'unified'> = unified()
                 .use(remarkParse)
                 .use(remarkDisableIndentedCodeBlocksAndAutolinks)
                 .use(configuration.remarkPlugins)
+                // @ts-expect-error https://github.com/remarkjs/remark-retext/issues/17#issuecomment-2170802405
+                .use(remarkRetext, unified().use(configuration.retextPlugins))
                 .use(remarkRehype, { allowDangerousHtml: true })
                 .use(configuration.rehypePlugins)
-                // .use(rehypeRetext, unified().use(configuration.retextPlugins))
                 .use(rehypeStringify, { allowDangerousHtml: true });
             const process: MarkdownProcessFn<Backend> = async (
                 markdown: string,

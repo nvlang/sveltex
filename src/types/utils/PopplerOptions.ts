@@ -3,7 +3,7 @@ import { PropertiesDefinedNotNull } from '$types/utils/utility-types.js';
 export type CleanPopplerSvgOptions =
     PropertiesDefinedNotNull<ExtendedPopplerSvgOptions>;
 
-export interface ExtendedPopplerSvgOptions extends PopplerSvgOptions {
+interface ExtendedPopplerSvgOptions extends PopplerSvgOptions {
     svgFile: true;
 }
 

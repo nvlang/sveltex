@@ -1,7 +1,7 @@
 /**
  * Supported TeX engines.
  */
-export type SupportedTexEngine = (typeof texEngines)[number];
+type SupportedTexEngine = (typeof texEngines)[number];
 
 const texEngines = [
     'pdflatexmk',

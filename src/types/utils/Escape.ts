@@ -95,7 +95,7 @@ export interface UnescapeOptions {
 /**
  * Description of a "snippet" in the original document.
  */
-export interface OriginalSnippet<T extends SnippetType> {
+interface OriginalSnippet<T extends SnippetType> {
     /**
      * The location of the snippet in the original document.
      * - `start` is the index of the first character of the snippet.
@@ -114,7 +114,7 @@ export interface OriginalSnippet<T extends SnippetType> {
         : string | undefined;
 }
 
-export type SnippetType =
+type SnippetType =
     | 'math'
     | 'code'
     | 'svelte'
@@ -138,11 +138,7 @@ export interface EscapedSnippet<T extends SnippetType = SnippetType>
     unescapeOptions?: UnescapeOptions | undefined;
 }
 
-export type ProcessableSnippetType =
-    | 'code'
-    | 'math'
-    | 'verbatim'
-    | 'frontmatter';
+type ProcessableSnippetType = 'code' | 'math' | 'verbatim' | 'frontmatter';
 
 /**
  * A small segment (or fragment, part, excerpt... or, indeed, snippet) of a

@@ -22,3 +22,5 @@ export {
 
 export { visit as unistVisit } from 'unist-util-visit';
 export { h as hastscriptH } from 'hastscript';
+
+export { glob } from 'glob';

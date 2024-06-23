@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export interface MathjaxConfiguration {
     /**
      * Document options.
@@ -26,7 +27,7 @@ export interface MathjaxConfiguration {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface MathjaxOptions extends MathjaxDocumentOptions {}
+interface MathjaxOptions extends MathjaxDocumentOptions {}
 
 /**
  * Options that can be passed to `tex2chtml`, `tex2svg`, and related functions.
@@ -93,7 +94,7 @@ export interface MathjaxConversionOptions {
  * options.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface MathjaxCommonInputProcessorOptions {}
+interface MathjaxCommonInputProcessorOptions {}
 
 /**
  * These options control the operation of the [AsciiMath input
@@ -105,7 +106,9 @@ export interface MathjaxCommonInputProcessorOptions {}
  * listed with their default values. To set any of these options, include an
  * `asciimath` section in your `MathJax` global object.
  */
-export interface MathjaxAsciimathInputProcessorOptions
+// @ts-expect-error We include this interface for the sake of completeness, even
+// if it's unused.
+interface MathjaxAsciimathInputProcessorOptions
     extends MathjaxCommonInputProcessorOptions {
     /**
      * Specifies whether to use TeX mapping or unicode mapping for the `fixphi`
@@ -177,7 +180,7 @@ export interface MathjaxAsciimathInputProcessorOptions
 /**
  * Options for the MathML input processor.
  */
-export interface MathjaxMathmlInputProcessorOptions
+interface MathjaxMathmlInputProcessorOptions
     extends MathjaxCommonInputProcessorOptions {
     /**
      * Specifies how to parse the MathML input.
@@ -354,7 +357,7 @@ export interface MathjaxMathmlInputProcessorOptions
  * input jax. They are listed with their default values. To set any of these
  * options, include a `tex` section in your `MathJax` global object.
  */
-export interface MathjaxTexInputProcessorOptions
+interface MathjaxTexInputProcessorOptions
     extends MathjaxCommonInputProcessorOptions {
     /**
      * Extensions to use.
@@ -662,7 +665,7 @@ export interface MathjaxTexInputProcessorOptions
     FindTeX?: unknown;
 }
 
-export interface MathjaxCommonOutputProcessorOptions {
+interface MathjaxCommonOutputProcessorOptions {
     /**
      * Global scaling factor for all expressions.
      *
@@ -812,7 +815,7 @@ export interface MathjaxCommonOutputProcessorOptions {
 /**
  * SVG options.
  */
-export interface MathjaxSvgOutputProcessorOptions
+interface MathjaxSvgOutputProcessorOptions
     extends MathjaxCommonOutputProcessorOptions {
     /**
      * True for MathML spacing rules, false for TeX rules.
@@ -901,7 +904,7 @@ export interface MathjaxSvgOutputProcessorOptions
  * values. To set any of these options, include a chtml section in your MathJax
  * global object.
  */
-export interface MathjaxChtmlOutputProcessorOptions {
+interface MathjaxChtmlOutputProcessorOptions {
     /**
      * True for MathML spacing rules, false for TeX rules.
      *
@@ -967,7 +970,7 @@ export interface MathjaxChtmlOutputProcessorOptions {
     adaptiveCSS?: boolean;
 }
 
-export interface MathjaxDocumentOptions {
+interface MathjaxDocumentOptions {
     /* eslint-disable tsdoc/syntax */
     /**
      * This array lists the names of the tags whose contents should not be
@@ -1096,7 +1099,9 @@ export interface MathjaxDocumentOptions {
 /**
  *  The InputJax interface
  */
-export interface InputJax {
+// @ts-expect-error We include this interface for the sake of completeness, even
+// if it's unused.
+interface InputJax {
     /**
      * The name of the input jax subclass (e.g,. 'TeX')
      */

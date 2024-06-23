@@ -6,7 +6,6 @@ import {
     markdownBackends,
 } from '$utils/diagnosers/backendChoices.js';
 import { MarkdownBackend } from '$types/handlers/Markdown.js';
-import { CodeBackend } from '$types/handlers/Code.js';
 import { nodeAssert } from '$deps.js';
 import { commonMarkSpec } from '$tests/unit/Sveltex/commonmark.js';
 
@@ -21,11 +20,8 @@ function fixture() {
 
 const mainMarkdownBackends = markdownBackends.filter(
     (b) => b !== 'none' && b !== 'custom',
-) as Exclude<MarkdownBackend, 'none' | 'custom'>[];
-const mainCodeBackends = codeBackends.filter((b) => b !== 'none') as Exclude<
-    CodeBackend,
-    'none'
->[];
+);
+const mainCodeBackends = codeBackends.filter((b) => b !== 'none');
 const backendCombinations = cartesianProduct(
     mainMarkdownBackends,
     mainCodeBackends,

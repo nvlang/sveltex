@@ -37,7 +37,7 @@ export interface BoundingBox {
     bottomRight: Coordinate;
 }
 
-export type DinIsoPaperSizeInt =
+type DinIsoPaperSizeInt =
     | '1'
     | '2'
     | '3'
@@ -48,7 +48,7 @@ export type DinIsoPaperSizeInt =
     | '8'
     | '9'
     | '10';
-export type DinIsoPaperSizeLetter = 'A' | 'B' | 'C' | 'D';
+type DinIsoPaperSizeLetter = 'A' | 'B' | 'C' | 'D';
 export type DinIsoPaperSize = `${DinIsoPaperSizeLetter}${DinIsoPaperSizeInt}`;
 export type NorthAmericanPaperSize =
     | 'invoice'
@@ -223,7 +223,7 @@ export interface DvisvgmOptions {
 /**
  * {@inheritDoc DvisvgmOptions.processing}
  */
-export interface DvisvgmConsoleOptions {
+interface DvisvgmConsoleOptions {
     /**
      * Controls the type of messages printed during a dvisvgm run. The value is
      * a number between 0 and 15, but using binary notation may help make sense
@@ -457,7 +457,7 @@ export interface DvisvgmSvgOutputOptions {
     relative?: boolean | undefined | null;
 }
 
-export interface ProcessingOptions {
+interface ProcessingOptions {
     /**
      * Controls if and where `dvisvgm` stores font cache files.
      *
@@ -533,7 +533,7 @@ export interface ProcessingOptions {
     traceAll?: boolean | 'retrace' | undefined | null;
 }
 
-export interface SvgTransformations {
+interface SvgTransformations {
     /**
      * Rotates the page content clockwise by the given number of degrees, around
      * the page center.

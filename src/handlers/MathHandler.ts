@@ -234,7 +234,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
                 if (type === 'none') return;
 
-                // At this point, `type` is either 'cdn' or 'hybrid'
+                // If this branch is reached, we know that `type` is either
+                // 'cdn' or 'hybrid'.
 
                 const { cdn } = cssConfig;
 
@@ -260,7 +261,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     }
                 }
 
-                // At this point, `type` is 'hybrid'
+                // If this branch is reached, we know that `type` is 'hybrid'.
 
                 const { dir, staticDir } = cssConfig;
 

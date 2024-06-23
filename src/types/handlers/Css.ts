@@ -47,7 +47,7 @@ export interface HybridCssConfiguration extends HasTimeout, HasDir {
     cdn?: SupportedCdn | [SupportedCdn, ...SupportedCdn[]] | undefined;
 }
 
-export interface SelfHostedCssConfiguration extends HasTimeout, HasDir {
+interface SelfHostedCssConfiguration extends HasTimeout, HasDir {
     type: 'self-hosted';
 
     /**
@@ -114,19 +114,3 @@ export type CssConfiguration<T extends CssApproach = CssApproach> = {
 );
 
 type CssApproach = 'cdn' | 'hybrid' | 'self-hosted' | 'none';
-
-export type MathjaxCssConfiguration<
-    T extends 'hybrid' | 'none' = 'hybrid' | 'none',
-> = CssConfiguration<T>;
-
-export type FullMathjaxCssConfiguration<
-    T extends 'hybrid' | 'none' = 'hybrid' | 'none',
-> = RequiredDefinedNotNull<MathjaxCssConfiguration<T>>;
-
-export type KatexCssConfiguration<
-    T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
-> = CssConfiguration<T>;
-
-export type FullKatexCssConfiguration<
-    T extends 'cdn' | 'hybrid' | 'none' = 'cdn' | 'hybrid' | 'none',
-> = RequiredDefinedNotNull<KatexCssConfiguration<T>>;

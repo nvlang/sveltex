@@ -75,12 +75,12 @@ export interface BackendChoices<
      * - [`'unified'`](https://npmjs.com/package/unified) (with
      *   [`remark-parse`](https://npmjs.com/package/remark-parse),
      *   [`remark-rehype`](https://npmjs.com/package/remark-rehype),
-     *   [`rehype-retext`](https://www.npmjs.com/package/rehype-retext),
+     *   [`remark-retext`](https://www.npmjs.com/package/remark-retext),
      *   [`rehype-stringify`](https://npmjs.com/package/rehype-stringify), and
      *   [`@types/mdast`](https://npmjs.com/package/@types/mdast))
      *
      * ```sh
-     *       npm add -D unified remark-parse remark-rehype rehype-retext rehype-stringify "@types/mdast"
+     *       npm add -D unified remark-parse remark-rehype remark-retext rehype-stringify "@types/mdast"
      * ```
      *
      *
