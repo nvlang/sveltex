@@ -1,3 +1,5 @@
+// File description: Types related to the `Handler` class.
+
 /* eslint-disable tsdoc/syntax */
 import { ProcessedSnippet } from '$types/utils/Escape.js';
 

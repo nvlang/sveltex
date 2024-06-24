@@ -1,3 +1,5 @@
+// File description: Get CDN URLs and fetch from them.
+
 // Types
 import { SupportedCdn } from '$types/handlers/Css.js';
 

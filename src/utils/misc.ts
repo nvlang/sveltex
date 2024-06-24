@@ -1,3 +1,5 @@
+// File description: Miscellaneous utility functions.
+
 // Types
 import type { BinaryToTextEncoding } from '$deps.js';
 import type { Transformer } from '$types/handlers/Handler.js';

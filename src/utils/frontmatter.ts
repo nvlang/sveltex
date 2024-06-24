@@ -1,3 +1,5 @@
+// File description:  Parse frontmatter from a Sveltex file.
+
 // Types
 import type {
     Frontmatter,

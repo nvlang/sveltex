@@ -1,3 +1,5 @@
+// File description:
+
 // Types
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type {

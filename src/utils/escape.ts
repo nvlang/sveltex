@@ -1,3 +1,6 @@
+// File description: Escape and unescape different kinds of content in a Sveltex
+// file.
+
 // Types
 import type { Offsets } from '$types/utils/Ast.js';
 import type {

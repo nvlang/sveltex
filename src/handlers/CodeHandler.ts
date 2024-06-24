@@ -1,3 +1,5 @@
+// File description: Handles code blocks and code spans.
+
 // Types
 import type {
     CodeBackend,

@@ -1,3 +1,5 @@
+// File description:
+
 // Types
 import { Equals, typeAssert } from '$deps.js';
 import type { MetaHttpEquiv, MetaName } from '$types/utils/Frontmatter.js';

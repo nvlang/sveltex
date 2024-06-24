@@ -1,3 +1,5 @@
+// File description: Read `package.json` and parse version numbers and the package manager being used.
+
 // Internal dependencies
 import { resolve } from '$deps.js';
 import { defaultCacheDirectory } from '$config/defaults.js';

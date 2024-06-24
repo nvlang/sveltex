@@ -1,3 +1,5 @@
+// File description: Types related to SvelTeX's handling of frontmatter.
+
 import { MdastLiteral } from '$deps.js';
 
 export type MetaName =

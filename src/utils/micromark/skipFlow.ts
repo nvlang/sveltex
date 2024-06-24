@@ -1,3 +1,7 @@
+// File description: Exports the `tokenizeSkipFlowFactory` function, which,
+// given an array of tags, returns the tokenizer that forms the essence of the
+// corresponding micromark extension.
+
 /* eslint-disable @typescript-eslint/no-this-alias */
 // Types
 import type {

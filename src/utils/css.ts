@@ -1,9 +1,5 @@
-/**
- * - File: src/utils/css.ts
- * - Description: Contains utility functions for handling CSS color variables in
- *   TeX content.
- * - Used by: src/utils/TexComponent.ts
- */
+// File description: Escape CSS color variables in TeX content for compilation,
+// and unescape them in the rendered SVG afterwards.
 
 // Internal dependencies
 import {

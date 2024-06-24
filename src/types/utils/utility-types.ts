@@ -1,3 +1,5 @@
+// File description: Utility types used throughout SvelTeX.
+
 /**
  * Make properties required, and remove `undefined` from their types, if
  * present. This utility type applies to the first two levels of the object

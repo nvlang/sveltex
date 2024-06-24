@@ -1,6 +1,13 @@
-import { isRegExp } from '$deps.js';
-import { isArray, isString } from '$typeGuards/utils.js';
+// File description: Apply transformers to content.
+
+// Types
 import type { Transformer } from '$types/handlers/Handler.js';
+
+// External dependencies
+import { isRegExp } from '$deps.js';
+
+// Internal dependencies
+import { isArray, isString } from '$typeGuards/utils.js';
 
 export function applyTransformations<
     Options extends object = { inline: boolean },

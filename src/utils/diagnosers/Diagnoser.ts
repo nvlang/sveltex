@@ -1,3 +1,5 @@
+// File description: Class which diagnosers instantiate.
+
 // Internal dependencies
 import {
     isDefined,

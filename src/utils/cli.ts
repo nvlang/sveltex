@@ -1,3 +1,5 @@
+// File description: Spawn Node.js child processes.
+
 // Types
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 

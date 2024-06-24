@@ -1,3 +1,5 @@
+// File description: Diagnoser for `VerbatimEnvironmentConfiguration` type.
+
 // Internal dependencies
 import {
     ifPresentAndDefined,

@@ -1,3 +1,5 @@
+// File description:
+
 // Types
 import type { SourceMap } from '$deps.js';
 

@@ -1,3 +1,5 @@
+// File description:
+
 export const sveltexHtmlAttributes: Record<string, string> = {
     // Verbatim Environment Options
     preamble: 'preamble',

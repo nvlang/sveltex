@@ -1,3 +1,5 @@
+// File description:
+
 /**
  * Supported TeX engines.
  */

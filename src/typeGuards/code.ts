@@ -1,3 +1,6 @@
+// File description: Type guards some of the types defined in
+// [`Code.ts`](src/types/utils/Code.ts).
+
 // Types
 import type { Equals, Extends } from '$deps.js';
 

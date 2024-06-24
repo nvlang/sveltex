@@ -1,3 +1,5 @@
+// File description: Handles TeX content.
+
 // Types
 import type { Poppler } from '$deps.js';
 import type {

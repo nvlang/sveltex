@@ -1,3 +1,5 @@
+// File description:
+
 export type StarryNightThemeName = (typeof starryNightThemeNames)[number];
 export type HighlightJsThemeName = (typeof highlightJsThemeNames)[number];
 export type StarryNightLanguage = keyof typeof starryNightLanguages;

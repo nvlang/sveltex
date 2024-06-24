@@ -1,3 +1,6 @@
+// File description: contains type definitions for the,`SveltexConfig`
+// interface, which is used to configure the SvelTeX,preprocessor.
+
 /* eslint-disable tsdoc/syntax */
 /**
  * This file, `SveltexConfig.d.ts`, contains type definitions for the

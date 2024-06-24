@@ -1,3 +1,6 @@
+// File description: Types describing the options that can be passed to
+// `dvisvgm` via SvelTeX.
+
 import type { StringLiteralUnion } from '$types/utils/utility-types.js';
 
 /* eslint-disable tsdoc/syntax */

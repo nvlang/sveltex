@@ -1,10 +1,5 @@
-/**
- * WARNING: At the time of writing, Svelte ASTs are NOT part of the public API,
- * and are subject to change at any time. While the types for which these type
- * guards are written are defined locally, they're intended to generalize
- * Svelte's types. Accordingly, even minor updates to Svelte may break the
- * intended behavior of this module.
- */
+// File description: Type guards some of the types defined in
+// [`Ast.ts`](src/types/utils/Ast.ts).
 
 // Types
 import type {

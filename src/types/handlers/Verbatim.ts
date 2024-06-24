@@ -1,3 +1,5 @@
+// File description: Types related to the `VerbatimHandler` class.
+
 /* eslint-disable tsdoc/syntax */
 import type { TexConfiguration } from '$types/handlers/Tex.js';
 import type { Transformers } from '$types/handlers/Handler.js';

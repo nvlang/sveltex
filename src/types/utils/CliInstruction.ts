@@ -1,3 +1,6 @@
+// File description: Types related to SvelTeX's interaction with Node.js's
+// `child_process` module.
+
 // Types
 import type { SpawnOptionsWithoutStdio } from '$deps.js';
 

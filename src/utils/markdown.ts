@@ -1,3 +1,6 @@
+// File description: `remark` and `micromark` extensions to disable autolinks
+// and indented code blocks.
+
 /**
  * Small remark plugin to disable indented code blocks and autolinks.
  */

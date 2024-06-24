@@ -1,3 +1,5 @@
+// File description:
+
 // Types
 import type {
     BoundingBox,

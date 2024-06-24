@@ -1,3 +1,6 @@
+// File description: This class acts as an intermediary between `Sveltex` and
+// the `CodeHandler` and `TexHandler` classes.
+
 // NOTE: Some lines in this file are excluding from coverage. This is because
 // they should be technically unreachable. At the same time, I don't want to
 // remove them because I want to keep type assertions to a minimum.

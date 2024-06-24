@@ -1,3 +1,5 @@
+// File description: Types related to the `CodeHandler` class.
+
 /* eslint-disable tsdoc/syntax */
 // Types
 import type {

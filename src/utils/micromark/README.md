@@ -1,3 +1,8 @@
+<!--
+Directory description: Contains a `micromark` extension used by SvelTeX to make
+it skip HTML tags (but not their content) when parsing Markdown.
+-->
+
 # `src/utils/micromark`
 
 This directory contains a `micromark` extension that lets it skip any of a

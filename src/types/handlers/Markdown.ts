@@ -1,3 +1,5 @@
+// File description: Types related to the `MarkdownHandler` class.
+
 import type { MarkdownHandler } from '$handlers/MarkdownHandler.js';
 import type { ProcessFn, Transformers } from '$types/handlers/Handler.js';
 import type { DirectiveEscapeSettings } from '$types/utils/Escape.js';

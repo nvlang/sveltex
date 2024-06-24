@@ -1,3 +1,5 @@
+// File description: Types related to the `TexHandler` class.
+
 /* eslint-disable tsdoc/syntax */
 // Types
 import type { SvgoOptions } from '$deps.js';

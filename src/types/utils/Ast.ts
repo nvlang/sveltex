@@ -1,3 +1,6 @@
+// File description: Types related to SvelTeX's interaction with ASTs generated
+// by `micromark`.
+
 /**
  * This interface describes the location of a node in an AST. It's used by
  * SvelTeX internally, and is not trying to extend any type from the Svelte API

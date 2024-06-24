@@ -1,3 +1,5 @@
+// File description: Handles math expressions.
+
 // Types
 import type {
     FullMathConfiguration,

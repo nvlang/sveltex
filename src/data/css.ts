@@ -1,3 +1,5 @@
+// File description:
+
 type ReservedHexColor = keyof typeof nameOfHexColor;
 type NamedColor = (typeof nameOfHexColor)[ReservedHexColor][number];
 
@@ -298,9 +300,7 @@ export const hexOfNamedColor = {
  * Note: The entries are 6 lowercase hex characters each, _without_ a leading
  * `#`.
  */
-const reservedHexColors = Object.keys(
-    nameOfHexColor,
-) as ReservedHexColor[];
+const reservedHexColors = Object.keys(nameOfHexColor) as ReservedHexColor[];
 
 /**
  * Note: The entries are 6 lowercase hex characters each, _without_ a leading

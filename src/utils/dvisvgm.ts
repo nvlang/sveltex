@@ -1,3 +1,5 @@
+// File description:  Set command-line flags for `dvisvgm`.
+
 // Types
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import type {

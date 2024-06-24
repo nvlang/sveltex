@@ -1,3 +1,5 @@
+// File description: Diagnoser for `CodeConfiguration` type.
+
 // Types
 import type { CodeBackend } from '$types/handlers/Code.js';
 

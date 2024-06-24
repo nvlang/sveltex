@@ -1,3 +1,5 @@
+// File description: Base class which all other handlers extend.
+
 // Types
 import type { ProcessFn, SimplerProcessFn } from '$types/handlers/Handler.js';
 

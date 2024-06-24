@@ -1,3 +1,5 @@
+// File description: Handles markdown content.
+
 // Types
 import type {
     FullMarkdownConfiguration,

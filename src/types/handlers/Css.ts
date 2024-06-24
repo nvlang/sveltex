@@ -1,3 +1,6 @@
+// File description: Types related to CSS handling by the `MathHandler` and
+// `CssHandler` classes.
+
 import type { SupportedCdn } from '$data/cdn.js';
 import type { RequiredDefinedNotNull } from '$types/utils/utility-types.js';
 

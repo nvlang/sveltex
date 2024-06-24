@@ -1,3 +1,7 @@
+// File description: Exports the `micromarkSkip` function, which receives an
+// array of HTML tags to skip and returns a `micromark` extension that skips
+// those tags.
+
 import type { MicromarkConstruct as Construct } from '$deps.js';
 import { asciiCodes as codes } from '$deps.js';
 import { tokenizeSkipFlowFactory } from './skipFlow.js';

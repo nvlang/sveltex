@@ -1,3 +1,5 @@
+// File description:
+
 // Types
 import type { Defined, UnknownFunction } from '$types/utils/utility-types.js';
 

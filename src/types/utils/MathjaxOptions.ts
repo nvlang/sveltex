@@ -1,3 +1,6 @@
+// File description: Types describing the options that can be passed to MathJax
+// via SvelTeX.
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export interface MathjaxConfiguration {
     /**

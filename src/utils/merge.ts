@@ -1,3 +1,6 @@
+// File description: Custom deep merge function intended for merging
+// user-provided configuration with default configuration.
+
 // External dependencies
 import { deepmergeCustom } from '$deps.js';
 

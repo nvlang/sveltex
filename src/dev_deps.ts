@@ -1,3 +1,5 @@
+// File description:
+
 export { default as mockFs } from 'mock-fs';
 
 /**

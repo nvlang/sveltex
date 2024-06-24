@@ -1,3 +1,6 @@
+// File description: File system operations (re-exported from `node:fs` and
+// `node:fs/promises` for easier mocking in test files).
+
 // External dependencies
 import {
     existsSync,

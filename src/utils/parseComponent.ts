@@ -1,3 +1,6 @@
+// File description: Parse a generic HTML component into its tag name,
+// attributes, and inner content.
+
 // Internal dependencies
 import { is, typeAssert } from '$deps.js';
 import { isBoolean, isNumber, isString } from '$typeGuards/utils.js';

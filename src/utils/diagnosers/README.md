@@ -1,6 +1,6 @@
 <!--
-Directory description:
-
+Directory description: Contains "diagnosers", which verify validity of certain
+objects, and log helpful error messages if they are not valid.
 -->
 
 # `src/utils/diagnosers`

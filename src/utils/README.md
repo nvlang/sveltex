@@ -5,13 +5,13 @@ internally throughout Sveltex.
 
 | Location | Description |
 |:-------------------------------------------|:--------------|
-| [`diagnosers/`](./diagnosers)              | Contains "diagnosers", which verify validity of certain objects, and log helpful error messages if they are not valid. |
-| [`micromark/`](./micromark)                | Contains a `micromark` extension used by SvelTeX to make it skip HTML tags (but not their content) when parsing Markdown. |
+| [`diagnosers/`](./diagnosers)              |  |
+| [`micromark/`](./micromark)                |  |
 | [`ast.ts`](./ast.ts)                       | Walk MDASTs. |
 | [`cache.ts`](./cache.ts)                   | Caching mechanism for `TexHandler`. |
-| [`cdn.ts`](./cdn.ts)                       | Get CDN URLs and fetch from them. |
+| [`cdn.ts`](./cdn.ts)                       |  |
 | [`cli.ts`](./cli.ts)                       | Spawn Node.js child processes. |
-| [`css.ts`](./css.ts)                       | Escape CSS color variables in TeX content for compilation, and unescape them in the rendered SVG afterwards. |
+| [`css.ts`](./css.ts)                       |  |
 | [`debug.ts`](./debug.ts)                   | Log messages to console. |
 | [`dvisvgm.ts`](./dvisvgm.ts)               | Set command line arguments for `dvisvgm`. |
 | [`env.ts`](./env.ts)                       | Read `package.json` for version numbers and package manager used. |

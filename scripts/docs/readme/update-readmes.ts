@@ -1,7 +1,9 @@
 import { basename, join, readFile, writeFile } from '$deps.js';
-import { glob } from '$dev_deps.js';
+import { glob } from 'glob';
 
 const readmes = await glob('../../../src/**/README.md', { maxDepth: 10 });
+
+console.log(readmes);
 
 readmes.map(async (readmePath) => {
     const readme = await readFile(readmePath, 'utf-8');
@@ -27,7 +29,7 @@ readmes.map(async (readmePath) => {
         /^\|\s*Location\s*\|\s*Description\s*\|(?:(?:\r\n?|\n)\|.*\|$)*/im,
         table,
     );
-    if (!newReadme.includes(table)) newReadme += `\n\n${table}`;
+    if (!newReadme.includes(table)) newReadme += `\n\n${table}\n`;
     await writeFile(readmePath, newReadme);
 });
 
@@ -51,7 +53,8 @@ async function getFileDescription(path: string): Promise<string | undefined> {
             .match(
                 /^\s*(?:\/\/.*(?:\r\n?|\n))*\/\/ File description:[ \t]?(.*(?:\r\n?|\n)(?:\/\/.*(?:\r\n?|\n))*)/i,
             )?.[1]
-            ?.replace(/(?:(?:\r\n?|\n)\/\/[ \t]?)/gm, ' ');
+            ?.replace(/^\/\//gm, '')
+            .replace(/\s+/g, ' ');
     } catch (e) {
         return undefined;
     }

@@ -1,3 +1,5 @@
+// File description: Log messages to console.
+
 // Types
 import type { Colors, Ora } from '$deps.js';
 

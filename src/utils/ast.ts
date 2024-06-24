@@ -1,3 +1,5 @@
+// File description: Walk MDASTs.
+
 // Types
 import type { LineColumn, Offsets } from '$types/utils/Ast.js';
 import type { UnistNode } from '$deps.js';

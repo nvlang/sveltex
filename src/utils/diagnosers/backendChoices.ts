@@ -1,3 +1,5 @@
+// File description: Diagnoser for `BackendChoices` type.
+
 // Types
 import type { BackendChoices } from '$types/SveltexConfiguration.js';
 import type { TexBackend } from '$types/handlers/Tex.js';
