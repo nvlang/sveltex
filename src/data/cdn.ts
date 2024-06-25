@@ -1,4 +1,4 @@
-// File description:
+// File description: Supported CDN URL prefixes.
 
 /**
  * @remarks

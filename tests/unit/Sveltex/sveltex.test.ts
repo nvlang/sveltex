@@ -4,7 +4,7 @@ import type { CodeBackend } from '$types/handlers/Code.js';
 import type { MarkdownBackend } from '$types/handlers/Markdown.js';
 import type { MathBackend } from '$types/handlers/Math.js';
 
-import { sveltex, Sveltex } from '$Sveltex.js';
+import { sveltex, Sveltex } from '$base/Sveltex.js';
 
 import { removeEmptyLines, spy } from '$tests/unit/fixtures.js';
 import { range } from '$tests/unit/utils.js';

@@ -1,3 +1,6 @@
+// File description: Definition of the `Sveltex` class, which implements
+// Svelte's `PreprocessorGroup` interface.
+
 // Types
 import type {
     MarkupPreprocessor,
@@ -20,7 +23,7 @@ import type {
 import type { ProcessedSnippet, Snippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { getDefaultSveltexConfig } from '$config/defaults.js';
+import { getDefaultSveltexConfig } from '$base/defaults.js';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { MarkdownHandler } from '$handlers/MarkdownHandler.js';

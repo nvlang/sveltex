@@ -10,7 +10,7 @@ import {
     vi,
 } from 'vitest';
 
-import { sveltex } from '$Sveltex.js';
+import { sveltex } from '$base/Sveltex.js';
 import { spy } from '$tests/unit/fixtures.js';
 
 const sveltexPreprocessor = await sveltex(

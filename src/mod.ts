@@ -1,6 +1,8 @@
+// File description: Entry point of the module.
+
 /**
- * A flexible Svelte preprocessor with extensive LaTeX support.
  * @packageDocumentation
+ * A flexible Svelte preprocessor with extensive LaTeX support.
  */
 
 export type { TexBackend, TexConfiguration } from '$types/handlers/Tex.js';
@@ -12,9 +14,9 @@ export type {
 export type { MathBackend, MathConfiguration } from '$types/handlers/Math.js';
 export type { SveltexConfiguration } from '$types/SveltexConfiguration.js';
 
-export { sveltex } from './Sveltex.js';
+export { sveltex } from '$base/Sveltex.js';
 
-export type { Sveltex } from './Sveltex.js';
+export type { Sveltex } from '$base/Sveltex.js';
 
 export {
     getDefaultCodeConfig,
@@ -25,4 +27,4 @@ export {
     getDefaultVerbEnvConfig,
     getTexPresetDefaults,
     defaultCacheDirectory,
-} from '$config/defaults.js';
+} from '$base/defaults.js';

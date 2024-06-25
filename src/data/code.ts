@@ -1,4 +1,4 @@
-// File description:
+// File description: Names of supported code themes and languages.
 
 export type StarryNightThemeName = (typeof starryNightThemeNames)[number];
 export type HighlightJsThemeName = (typeof highlightJsThemeNames)[number];

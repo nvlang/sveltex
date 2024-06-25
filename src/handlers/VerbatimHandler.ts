@@ -21,7 +21,7 @@ import type {
 import type { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { getDefaultVerbEnvConfig } from '$config/defaults.js';
+import { getDefaultVerbEnvConfig } from '$base/defaults.js';
 import { TexHandler } from '$handlers/TexHandler.js';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';

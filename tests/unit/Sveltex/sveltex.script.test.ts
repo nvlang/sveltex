@@ -1,4 +1,4 @@
-import { Sveltex, sveltex } from '$Sveltex.js';
+import { Sveltex, sveltex } from '$base/Sveltex.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { mockFs } from '$dev_deps.js';
 import { Processed } from 'svelte/compiler';

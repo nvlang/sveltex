@@ -12,7 +12,7 @@ import type {
 } from '$types/handlers/Tex.js';
 
 // Internal dependencies
-import { getDefaultTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$base/defaults.js';
 import { TexComponent } from '$utils/TexComponent.js';
 import { SveltexCache } from '$utils/cache.js';
 import { Handler } from '$handlers/Handler.js';

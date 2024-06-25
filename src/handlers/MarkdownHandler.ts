@@ -17,7 +17,7 @@ import {
     micromarkDisableIndentedCodeAndAutolinks,
     remarkDisableIndentedCodeBlocksAndAutolinks,
 } from '$utils/markdown.js';
-import { getDefaultMarkdownConfig } from '$config/defaults.js';
+import { getDefaultMarkdownConfig } from '$base/defaults.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';

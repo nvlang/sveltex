@@ -16,7 +16,7 @@ import {
     sanitizePopplerSvgOptions,
     getTexPresetDefaults,
     getDefaultMarkdownConfig,
-} from '$config/defaults.js';
+} from '$base/defaults.js';
 import path from 'node:path';
 import os from 'node:os';
 import { TexHandler } from '$handlers/TexHandler.js';

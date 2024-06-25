@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { sveltex } from '$Sveltex.js';
+import { sveltex } from '$base/Sveltex.js';
 import type { MarkdownBackend, MarkdownConfiguration } from '$mod.js';
 import { uuid, type MdastRoot } from '$deps.js';
 import { markdownBackends } from '$utils/diagnosers/backendChoices.js';

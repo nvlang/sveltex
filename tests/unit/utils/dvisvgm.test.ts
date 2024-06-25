@@ -13,7 +13,7 @@ import {
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
 } from '$utils/dvisvgm.js';
-import { getDefaultTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$base/defaults.js';
 
 describe.concurrent('bboxToFlagValue', () => {
     it('should return the string representation of a TexDim', () => {

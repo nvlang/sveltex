@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
 interface HyperfineBenchmark {
     command: string;
@@ -175,7 +175,7 @@ function conversionResultToTableRow(
         benchmarks.filesize.find(
             (f) =>
                 f?.file === result.parameters['file'] &&
-                f.engine === engine &&
+                f?.engine === engine &&
                 (f.format === format ||
                     (f.engine.startsWith('xe') &&
                         ['xdv', 'dvi'].includes(f.format))) &&
@@ -185,7 +185,7 @@ function conversionResultToTableRow(
         benchmarks.filesizeOptimized.find(
             (f) =>
                 f?.file === result.parameters['file'] &&
-                f.engine === engine &&
+                f?.engine === engine &&
                 (f.format === format ||
                     (f.engine.startsWith('xe') &&
                         ['xdv', 'dvi'].includes(f.format))) &&

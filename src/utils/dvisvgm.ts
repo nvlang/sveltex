@@ -13,7 +13,7 @@ import type {
 } from '$types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$base/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,

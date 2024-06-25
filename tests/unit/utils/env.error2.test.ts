@@ -5,7 +5,7 @@ import { spy } from '$tests/unit/fixtures.js';
 
 describe('getVersion', () => {
     it("works even if defaultCacheDirectory doesn't contain 'node_modules'", async () => {
-        vi.mock('$config/defaults.js', () => {
+        vi.mock('$base/defaults.js', () => {
             return { defaultCacheDirectory: 'a/b/c/node_modules/d/e/f' };
         });
         const readFile = await spy('readFile');

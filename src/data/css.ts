@@ -1,4 +1,4 @@
-// File description:
+// File description: Names and hex codes of named CSS colors.
 
 type ReservedHexColor = keyof typeof nameOfHexColor;
 type NamedColor = (typeof nameOfHexColor)[ReservedHexColor][number];

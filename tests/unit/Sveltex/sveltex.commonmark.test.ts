@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sveltex } from '$Sveltex.js';
+import { sveltex } from '$base/Sveltex.js';
 import { cartesianProduct } from '$tests/unit/utils.js';
 import {
     codeBackends,

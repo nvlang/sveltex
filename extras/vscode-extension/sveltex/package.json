@@ -1,0 +1,40 @@
+{
+  "name": "sveltex",
+  "displayName": "SvelTeX",
+  "description": "SvelTeX language support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sveltex",
+        "aliases": [
+          "SvelTeX",
+          "sveltex"
+        ],
+        "extensions": [
+          ".sveltex"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sveltex",
+        "scopeName": "source.sveltex",
+        "path": "./syntaxes/sveltex.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.svelte": "svelte",
+          "source.js": "javascript",
+          "text.html.markdown": "markdown",
+          "meta.tag.svelte": "svelte"
+        }
+      }
+    ]
+  }
+}

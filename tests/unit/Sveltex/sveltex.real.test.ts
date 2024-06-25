@@ -8,7 +8,7 @@ import type {
 } from '$types/handlers/Markdown.js';
 import type { MathBackend } from '$types/handlers/Math.js';
 
-import { Sveltex, sveltex } from '$Sveltex.js';
+import { Sveltex, sveltex } from '$base/Sveltex.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { isArray, isString } from '$typeGuards/utils.js';
 import { re } from '$utils/misc.js';

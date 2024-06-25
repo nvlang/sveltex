@@ -1,4 +1,4 @@
-import { getDefaultVerbEnvConfig } from '$config/defaults.js';
+import { getDefaultVerbEnvConfig } from '$base/defaults.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { isArray } from '$typeGuards/utils.js';
 import { VerbEnvConfigBase } from '$types/handlers/Verbatim.js';

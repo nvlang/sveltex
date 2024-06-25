@@ -22,7 +22,7 @@ import {
     getTexPresetDefaults,
     getDefaultVerbEnvConfig,
     sanitizePopplerSvgOptions,
-} from '$config/defaults.js';
+} from '$base/defaults.js';
 import {
     enginePrettyName,
     logSeverities,

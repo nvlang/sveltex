@@ -10,7 +10,7 @@ import type {
 } from '$types/handlers/Math.js';
 
 // Internal dependencies
-import { getDefaultMathConfiguration } from '$config/defaults.js';
+import { getDefaultMathConfiguration } from '$base/defaults.js';
 import { Handler } from '$handlers/Handler.js';
 import { isArray } from '$typeGuards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';

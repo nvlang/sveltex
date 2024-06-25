@@ -1,4 +1,4 @@
-// File description:
+// File description: Names of TeX component keys that can be overridden ad-hoc.
 
 export const sveltexHtmlAttributes: Record<string, string> = {
     // Verbatim Environment Options

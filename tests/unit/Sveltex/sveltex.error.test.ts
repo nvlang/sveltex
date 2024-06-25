@@ -1,5 +1,5 @@
 import { missingDeps } from '$utils/env.js';
-import { sveltex } from '$Sveltex.js';
+import { sveltex } from '$base/Sveltex.js';
 import {
     afterAll,
     beforeAll,

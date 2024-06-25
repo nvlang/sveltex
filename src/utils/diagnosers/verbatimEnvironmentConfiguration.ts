@@ -20,7 +20,7 @@ import {
 import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
 import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';
-import { getDefaultVerbEnvConfig } from '$config/defaults.js';
+import { getDefaultVerbEnvConfig } from '$base/defaults.js';
 import { VerbatimType } from '$types/handlers/Verbatim.js';
 
 /**

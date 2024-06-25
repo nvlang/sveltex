@@ -1,7 +1,7 @@
 // File description: Caching mechanism for `TexHandler`.
 
 // Internal dependencies
-import { defaultCacheDirectory } from '$config/defaults.js';
+import { defaultCacheDirectory } from '$base/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
 

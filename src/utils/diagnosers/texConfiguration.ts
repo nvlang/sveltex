@@ -1,7 +1,7 @@
 // File description: Diagnoser for `TexConfiguration` type.
 
 // Internal dependencies
-import { getDefaultTexConfig } from '$config/defaults.js';
+import { getDefaultTexConfig } from '$base/defaults.js';
 import { isRegExp } from '$deps.js';
 import {
     isArray,

@@ -1,4 +1,4 @@
-// File description:
+// File description: Names of supported TeX engines and related info.
 
 /**
  * Supported TeX engines.

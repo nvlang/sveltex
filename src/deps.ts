@@ -1,3 +1,7 @@
+// File description: Exports all (regular) dependencies used by SvelTeX.
+// Inspired by
+// [Deno](https://docs.deno.com/runtime/tutorials/manage_dependencies).
+
 // Node.js
 export { default as nodeAssert } from 'node:assert';
 export { spawn, type SpawnOptionsWithoutStdio } from 'node:child_process';

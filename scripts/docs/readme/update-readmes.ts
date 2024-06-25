@@ -1,4 +1,5 @@
 import { basename, join, readFile, writeFile } from '$deps.js';
+import { ensureEndsWith } from '$utils/misc.js';
 import { glob } from 'glob';
 
 const readmes = await glob('../../../src/**/README.md', { maxDepth: 10 });
@@ -7,20 +8,37 @@ console.log(readmes);
 
 readmes.map(async (readmePath) => {
     const readme = await readFile(readmePath, 'utf-8');
-    const siblings = await glob(readmePath.replace(/README\.md$/, '*'), {
+    const siblingFiles = await glob(
+        readmePath.replace(/README\.md$/, '*.{js,ts}'),
+        {
+            maxDepth: 10,
+            nodir: true,
+        },
+    );
+    const siblingDirs = await glob(readmePath.replace(/README\.md$/, '*/'), {
         maxDepth: 10,
     });
-    const descriptions = siblings.map(async (sibling) => {
-        let description: string | undefined;
-        if (sibling.endsWith('/')) {
-            description = await getDirectoryDescription(sibling);
-        } else {
-            description = await getFileDescription(sibling);
-        }
-        let b = basename(sibling);
-        return [`[\`${b}\`](${b})`, description];
-    });
-    const data = await Promise.all(descriptions);
+    const descriptions = (
+        await Promise.all(
+            siblingFiles.map(async (sibling) => {
+                let description: string | undefined;
+                const b = basename(sibling);
+                description = await getFileDescription(sibling);
+                return [`[\`${b}\`](${b})`, description];
+            }),
+        )
+    ).sort((a, b) => a[0]?.localeCompare(b[0] ?? '') ?? 0);
+    const dirDescriptions = (
+        await Promise.all(
+            siblingDirs.map(async (sibling) => {
+                let description: string | undefined;
+                const b = ensureEndsWith(basename(sibling), '/');
+                description = await getDirectoryDescription(sibling);
+                return [`[\`${b}\`](${b})`, description];
+            }),
+        )
+    ).sort((a, b) => a[0]?.localeCompare(b[0] ?? '') ?? 0);
+    const data = [...dirDescriptions, ...descriptions];
     const tableBody = data.map(([name, description]) => {
         return `| ${name} | ${description ?? ''} |`;
     });
@@ -51,7 +69,7 @@ async function getFileDescription(path: string): Promise<string | undefined> {
         const contents = await readFile(path, 'utf-8');
         return contents
             .match(
-                /^\s*(?:\/\/.*(?:\r\n?|\n))*\/\/ File description:[ \t]?(.*(?:\r\n?|\n)(?:\/\/.*(?:\r\n?|\n))*)/i,
+                /^\s*(?:\/\/.*(?:\r\n?|\n))*\/\/ File description:[ \t]?(.*(?:(?:\r\n?|\n)\/\/.*)*)/i,
             )?.[1]
             ?.replace(/^\/\//gm, '')
             .replace(/\s+/g, ' ');

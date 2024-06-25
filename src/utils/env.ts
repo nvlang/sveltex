@@ -2,7 +2,7 @@
 
 // Internal dependencies
 import { resolve } from '$deps.js';
-import { defaultCacheDirectory } from '$config/defaults.js';
+import { defaultCacheDirectory } from '$base/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs, pathExists } from '$utils/fs.js';
 

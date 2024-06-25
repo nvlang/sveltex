@@ -12,7 +12,7 @@ import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
 import { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
-import { getDefaultCodeConfig } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$base/defaults.js';
 import { nodeAssert, uuid } from '$deps.js';
 import { isFunction, isString } from '$typeGuards/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
@@ -25,7 +25,7 @@ import {
     shikiTransformerNotationDiff,
 } from '$dev_deps.js';
 import { escapeStringForRegExp } from '$utils/escape.js';
-import { sveltex } from '$Sveltex.js';
+import { sveltex } from '$base/Sveltex.js';
 import type { SupportedCdn } from '$types/handlers/Css.js';
 import { supportedCdns } from '$typeGuards/code.js';
 import { spy } from '$tests/unit/fixtures.js';

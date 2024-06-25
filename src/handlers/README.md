@@ -1,3 +1,8 @@
+<!--
+Directory description: Handlers to which Sveltex delegates the rendering of the
+different kinds of content it encounters.
+-->
+
 <figure>
 
 
@@ -141,3 +146,14 @@ TeX content and which were configured for code, and matches and escapes all
 content it finds within such tags. It then forwards all this to the
 `VerbatimHandler` class, which then decides whether to forward the content to
 the `TexHandler` or the `CodeHandler`.
+
+## `src/handlers`
+
+| Location | Description |
+|:---|:---|
+| [`CodeHandler.ts`](CodeHandler.ts) | Handles code blocks and code spans. |
+| [`Handler.ts`](Handler.ts) | Base class which all other handlers extend. |
+| [`MarkdownHandler.ts`](MarkdownHandler.ts) | Handles markdown content. |
+| [`MathHandler.ts`](MathHandler.ts) | Handles math expressions. |
+| [`TexHandler.ts`](TexHandler.ts) | Handles TeX content. |
+| [`VerbatimHandler.ts`](VerbatimHandler.ts) | This class acts as an intermediary between `Sveltex` and the `CodeHandler` and `TexHandler` classes. |

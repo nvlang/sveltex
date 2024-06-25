@@ -13,7 +13,7 @@ import type {
 import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { getDefaultCodeConfig } from '$config/defaults.js';
+import { getDefaultCodeConfig } from '$base/defaults.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import { isCodeBackendWithCss } from '$typeGuards/code.js';
 import { isArray, isObject, isString } from '$typeGuards/utils.js';

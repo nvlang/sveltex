@@ -1,7 +1,7 @@
 import {
     getDefaultTexConfig,
     getDefaultVerbEnvConfig,
-} from '$config/defaults.js';
+} from '$base/defaults.js';
 import { texBaseCommand, type TexLogSeverity } from '$data/tex.js';
 import {
     readFile as nodeReadFile,
