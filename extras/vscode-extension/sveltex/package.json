@@ -9,6 +9,9 @@
   "categories": [
     "Programming Languages"
   ],
+  "scripts": {
+    "build": "tsx scripts/build.ts"
+  },
   "contributes": {
     "languages": [
       {
@@ -30,9 +33,8 @@
         "path": "./syntaxes/sveltex.tmLanguage.json",
         "embeddedLanguages": {
           "source.svelte": "svelte",
-          "source.js": "javascript",
-          "text.html.markdown": "markdown",
-          "meta.tag.svelte": "svelte"
+          "text.html.markdown": "svelte",
+          "text.tex.latex": "latex"
         }
       }
     ]
