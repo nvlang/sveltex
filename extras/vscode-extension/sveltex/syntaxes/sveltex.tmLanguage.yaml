@@ -1,54 +1,17 @@
----
-'$schema': https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
 name: SvelTeX
 scopeName: source.sveltex
 fileTypes:
   - sveltex
-uuid: f16d1b93-9cbc-4c6a-b8cf-65628bf1c8d7
+uuid: 7c89efc7-b9ba-41fb-ac65-2aea8b54de22
 patterns:
   - include: '#base'
 injections:
-  ? 'R:source.sveltex - (source.svelte, source.ts, meta.embedded,
+  ? 'R:source.sveltex - (source.svelte, source.ts, meta.embedded, meta.math,
     text.tex.latex, comment, markup.inline.raw, markup.fenced_code)'
   : patterns:
-      - include: 'text.html.markdown#inline'
+      - include: text.html.markdown#inline
       - include: '#injectionPatterns'
-  # ? 'L:(text.svelte, source.sveltex) - (source.svelte, source.ts, meta.embedded,
-  #   text.tex.latex, comment, markup.inline.raw, markup.fenced_code)'
-  # : patterns:
-  #     - match: |
-  #         (?x)
-  #         ^
-  #         (                       # 1: leading text
-  #           (?:
-  #             (?! <!-- )
-  #             .
-  #           )*?
-  #           # (?: ^ | [^ \\ ` ]*? ) # (code span mustn't be preceded by '\')
-  #           (?: \\\\{2} )*        # (it may be, however, preceded by '\\'s)
-  #         )
-  #         (                       # 2: code span incl. backticks
-  #           ( `+ )                # 3: opening backticks
-  #           (                     # 4: code
-  #             [^`]                # (code can be a single non-backtick char)
-  #             | [^`] .*? [^`]     # (code mustn't start or end with backticks)
-  #           )
-  #           (?: \3 )              # -: closing backticks (backref to $3)
-  #         )
-  #         (.*)                    # 5: rest of the line
-  #         $
-  #       captures:
-  #         '1':
-  #           patterns:
-  #             - include: 'text.html.markdown#inline'
-  #             - include: '#injectionPatterns'
-  #         '2':
-  #           patterns:
-  #             - include: '#markdown'
-  #         '5':
-  #           patterns:
-  #             - include: 'text.html.markdown#inline'
-  #             - include: '#injectionPatterns'
 repository:
   base:
     patterns:
@@ -58,11 +21,11 @@ repository:
     patterns:
       - include: '#verbatim'
       - include: '#math'
-      # - include: '#svelte-tags'
-      - include: 'source.svelte#comments'
-      - include: 'source.svelte#special-tags'
-      # - include: 'source.svelte#tags'
-      - include: 'source.svelte#interpolation'
+      - include: '#script-style'
+      # - include: source.svelte#comments
+      # - include: source.svelte#special-tags
+      # - include: source.svelte#tags
+      # - include: source.svelte#interpolation
   frontmatter:
     patterns:
       - include: '#frontmatter-yaml'
@@ -70,8 +33,8 @@ repository:
       - include: '#frontmatter-json'
     repository:
       frontmatter-yaml:
-        begin: "\\A(---)(yaml)?\\s*$"
-        end: "^(---)\\s*$"
+        begin: \A(---)(yaml)?\s*$
+        end: ^(---)\s*$
         contentName: meta.embedded.block.frontmatter.yaml
         patterns:
           - include: source.yaml
@@ -85,8 +48,8 @@ repository:
             name: punctuation.definition.markdown comment
       frontmatter-toml:
         patterns:
-          - begin: "\\A(---)(toml)\\s*$"
-            end: "^(---)\\s*$"
+          - begin: \A(---)(toml)\s*$
+            end: ^(---)\s*$
             contentName: meta.embedded.block.frontmatter.toml
             patterns:
               - include: source.toml
@@ -98,8 +61,8 @@ repository:
             endCaptures:
               '1':
                 name: punctuation.definition.markdown comment
-          - begin: "\\A(\\+\\+\\+)\\s*$"
-            end: "^(\\+\\+\\+)\\s*$"
+          - begin: \A(\+\+\+)\s*$
+            end: ^(\+\+\+)\s*$
             contentName: meta.embedded.block.frontmatter.toml
             patterns:
               - include: source.toml
@@ -107,8 +70,8 @@ repository:
               '1':
                 name: punctuation.definition.markdown comment
       frontmatter-json:
-        begin: "\\A(---)(json)\\s*$"
-        end: "^(---)\\s*$"
+        begin: \A(---)(json)\s*$
+        end: ^(---)\s*$
         contentName: meta.embedded.block.frontmatter.json
         patterns:
           - include: source.json
@@ -123,16 +86,69 @@ repository:
   verbatim:
     patterns:
       - name: meta.embedded.block.latex
-        begin: "(?i)(<(tex|latex|tikz)(\\s[^>]*?)?>)"
+        match: |
+          (?x)                  # extended mode
+          (?i)                  # case-insensitive
+          ^                     # (start of line)
+          (.*)                  # 1: text before
+          (                     # 2: opening tag
+            <                   # (opening bracket)
+              (tex|latex|tikz)  # 3: tag name
+              (?:\s[^>]*?)?     # -: attributes, optional
+            >                   # (closing bracket)
+          )
+          (.*)                  # 4: inner content
+          (                     # 5: closing tag
+            </                  # (opening bracket)
+              \3                # (backreference to tag name)
+            >                   # (closing bracket)
+          )
+          (.*)                  # 6: text after
+          $                     # (end of line)
+        captures:
+          '1':
+            patterns:
+              - include: '#main'
+              - include: '#injectionPatterns'
+          '2':
+            patterns:
+              - include: source.svelte
+          '4':
+            patterns:
+              - include: text.tex.latex
+          '5':
+            patterns:
+              - include: source.svelte
+          '6':
+            patterns:
+              - include: '#main'
+              - include: '#injectionPatterns'
+      - name: meta.embedded.block.latex
+        begin: (?i)(<(tex|latex|tikz)(\s[^>]*?)?>)
         end: '(?i)(</(tex|latex|tikz)>)$'
         patterns:
-          - begin: '^'
-            while: '^(?!</(tex|latex|tikz)>)'
+          - begin: ^
+            while: ^(?!</(tex|latex|tikz)>)
             patterns:
               - include: text.tex.latex
         beginCaptures:
           '1':
-            name: meta.tag
+            patterns:
+              - include: source.svelte
+        endCaptures:
+          '1':
+            patterns:
+              - include: source.svelte
+      - name: meta.embedded.block.plain
+        begin: (?i)(<(verb|verbatim)(\s[^>]*?)?>)
+        end: (?i)(</(verb|verbatim)>)$
+        patterns:
+          - begin: ^
+            while: (?i)^(?!</(verb|verbatim)>)
+            patterns:
+              - include: source.ignore
+        beginCaptures:
+          '1':
             patterns:
               - include: source.svelte
         endCaptures:
@@ -142,248 +158,121 @@ repository:
               - include: source.svelte
   math:
     patterns:
-      - match: ".*(\\\\\\[.*?\\\\\\]).*"
-        captures:
+      - begin: "(\\$+)"
+        beginCaptures:
           '1':
-            name: meta.embedded.block.latex
-            patterns:
-              - include: text.html.markdown.math
-      - contentName: meta.embedded.block.latex
-        begin: "(?=\\\\\\[)"
-        end: "(?<=\\\\\\])"
+            name: punctuation.definition.string.begin.tex
+        end: "\\1"
+        endCaptures:
+          '0':
+            name: punctuation.definition.string.end.tex
+        name: meta.math.block.tex support.class.math.block.tex
         patterns:
-          - include: text.html.markdown.math
-      - contentName: meta.embedded.block.latex
-        begin: "(?=\\$\\$)"
-        end: "(?<=\\$\\$)"
+          - include: text.tex#math
+          - include: $self
+          - include: text.tex.latex
+      - begin: "\\\\\\["
+        beginCaptures:
+          '0':
+            name: punctuation.definition.string.begin.tex
+        end: "\\\\\\]"
+        endCaptures:
+          '0':
+            name: punctuation.definition.string.end.tex
+        name: meta.math.block.tex support.class.math.block.tex
         patterns:
-          - include: text.html.markdown.math
-      - match: ".*((\\$+).*?\\2).*"
-        captures:
-          '1':
-            name: meta.embedded.inline.latex
-            patterns:
-              - include: text.html.markdown.math
-      - name: meta.embedded.block.latex
-        begin: "\\\\\\("
+          - include: text.tex#math
+          - include: $self
+          - include: text.tex.latex
+      - begin: "\\\\\\("
+        beginCaptures:
+          '0':
+            name: punctuation.definition.string.begin.tex
         end: "\\\\\\)"
+        endCaptures:
+          '0':
+            name: punctuation.definition.string.end.tex
+        name: meta.math.block.tex support.class.math.block.tex
         patterns:
-          - include: text.html.markdown.math
-    svelte-tags:
-      begin: '<(script|style|template)'
-      end: "</\\1\\s*>|/>"
-      beginCaptures: # meta.scope.tag..svelte
-        '0':
-          patterns:
-            - include: 'source.svelte#tags-start-node'
-      endCaptures:
-        '0':
-          patterns:
-            - include: 'source.svelte#tags-end-node'
-      name: meta.$1.svelte
-      patterns:
-        - begin: \G(?=\s*[^>]*?(type|lang)\s*=\s*(['"]|)(?:text/)?(\w+)\2)
-          end: '(?=</|/>)'
-          name: meta.lang.$3.svelte
-          patterns:
-            - include: 'source.svelte#tags-lang-start-attributes'
-        - include: 'source.svelte#tags-lang-start-attributes'
-      # patterns:
-      #   - begin: '(?=<script(?: [^>]+)?>)'
-      #     end: '(?<=</script>)'
-      #     patterns:
-      #       - include: '#svelte'
-      #   - begin: '(?=<style(?: [^>]+)?>)'
-      #     end: '(?<=</style>)'
-      #     patterns:
-      #       - include: '#svelte'
-      #   - begin: '(?=<template(?: [^>]+)?>)'
-      #     end: '(?<=</template>)'
-      #     patterns:
-      #       - include: '#svelte'
+          - include: text.tex#math
+          - include: $self
+          - include: text.tex.latex
+  script-style:
+    begin: (?i)(^|\G)\s*(?=<(script|style)(\s|$|>)(?!.*?</(script|style)>))
+    end: (?i)(.*)((</)(script|style)(>))
+    endCaptures:
+      '1':
+        patterns:
+          - include: text.html.derivative
+      '2':
+        name: meta.tag.structure.$4.end.html
+      '3':
+        name: punctuation.definition.tag.begin.html
+      '4':
+        name: entity.name.tag.html
+      '5':
+        name: punctuation.definition.tag.end.html
+    patterns:
+      - begin: (\s*|$)
+        patterns:
+          - include: text.html.derivative
+        while: (?i)^(?!.*</(script|style)>)
   injectionPatterns:
     patterns:
-      # - include: 'source.svelte#comments'
-      # - include: 'source.svelte#special-tags'
-      # - include: 'source.svelte#tags'
-      # - include: 'source.svelte#interpolation'
-      # - match: |
-      #     (?x)
-      #     ^
-      #     (                       # 1: leading text
-      #       (?:
-      #         (?! <!-- )
-      #         .
-      #       )*?
-      #       (?: ^ | [^ \\ ` ]*? ) # (code span mustn't be preceded by '\')
-      #       (?: \\\\{2} )*        # (it may be, however, preceded by '\\'s)
-      #     )
-      #     (                       # 2: code span incl. backticks
-      #       ( `+ )                # 3: opening backticks
-      #       (                     # 4: code
-      #         [^`]                # (code can be a single non-backtick char)
-      #         | [^`] .*? [^`]     # (code mustn't start or end with backticks)
-      #       )
-      #       (?: \3 )              # -: closing backticks (backref to $3)
-      #     )
-      #     (.*)                    # 5: rest of the line
-      #     $
-      #   captures:
-      #     '1':
-      #       patterns:
-      #         - include: '#main'
-      #     '2':
-      #       patterns:
-      #         - include: '#markdown'
-      #     '5':
-      #       patterns:
-      #         - include: '#main'
-      - patterns:
-          - include: text.html.markdown#separator
-          - include: text.html.markdown#heading
-          - include: text.html.markdown#blockquote
-          - include: text.html.markdown#lists
-          - include: text.html.markdown#fenced_code_block
-          - include: text.html.markdown#link-def
-          - include: text.html.markdown#html
-          - include: text.html.markdown#table
-          - include: 'source.svelte#tags'
-      # - beginCaptures:
-      #     '2':
-      #       name: punctuation.definition.raw.markdown
-      #     '3':
-      #       name: markup.inline.raw.string.markdown
-      #   endCaptures:
-      #     '1':
-      #       name: markup.inline.raw.string.markdown
-      #     '2':
-      #       name: punctuation.definition.raw.markdown
-      #   name: markup.inline.raw.string.markdown
-      #   begin: (?:^|\\G)(.*)(``)(.*)$
-      #   end: (?:^|\\G)(.*)(``)(.*)$
-      #   patterns:
-      #     - begin: "(^|\\G)(\\s*)(.*)"
-      #       while: "(^|\\G)(?!.*(``).*$)"
-      #       contentName: markup.inline.raw.string.markdown
-      #       patterns:
-      #         - include: source.ignore
-      # - beginCaptures:
-      #     '2':
-      #       name: punctuation.definition.raw.markdown
-      #     '3':
-      #       name: markup.inline.raw.string.markdown
-      #   endCaptures:
-      #     '1':
-      #       name: markup.inline.raw.string.markdown
-      #     '2':
-      #       name: punctuation.definition.raw.markdown
-      #   name: markup.inline.raw.string.markdown
-      #   begin: (?:^|\\G)(.*)(`)(.*)$
-      #   end: (?:^|\\G)(.*)(`)(.*)$
-      #   patterns:
-      #     - begin: "(^|\\G)(\\s*)(.*)"
-      #       while: "(^|\\G)(?!.*(`).*$)"
-      #       contentName: markup.inline.raw.string.markdown
-      #       patterns:
-      #         - include: source.ignore
-      # - begin: '(?=<script(?: [^>]+)?>)'
-      #   end: '(?<=</script>)'
-      #   patterns:
-      #     - include: '#svelte'
-      # - begin: '(?=<style(?: [^>]+)?>)'
-      #   end: '(?<=</style>)'
-      #   patterns:
-      #     - include: '#svelte'
-      # - begin: '(?=<template(?: [^>]+)?>)'
-      #   end: '(?<=</template>)'
-      #   patterns:
-      #     - include: '#svelte'
-      # - match: "((?:(?!<!--).)*)(<(\\w+)( [^>]+)?>)(.*?)(</\\3>)(.*)"
-      #   captures:
-      #     '1':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #     '2':
-      #       patterns:
-      #         - include: '#svelte'
-      #     '4':
-      #       name: meta.tag.start.svelte
-      #       patterns:
-      #         - include: source.svelte#attributes
-      #     '5':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #     '6':
-      #       patterns:
-      #         - include: '#svelte'
-      #     '7':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      # - begin: "((?:(?!<!--).)*)(<(\\w+)( [^>]+)?>)(.*)"
-      #   end: "((?:(?!<!--).)*?)(</\\3>)(.*)"
-      #   beginCaptures:
-      #     '1':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #     '2':
-      #       patterns:
-      #         - include: '#svelte'
-      #     '4':
-      #       name: meta.tag.start.svelte
-      #       patterns:
-      #         - include: source.svelte#attributes
-      #     '5':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #   endCaptures:
-      #     '1':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #     '2':
-      #       patterns:
-      #         - include: '#svelte'
-      #     '3':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      # - match: "(.*)(\\{.*?\\})(.*)"
-      #   captures:
-      #     '1':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      #     '2':
-      #       patterns:
-      #         - include: '#svelte'
-      #     '3':
-      #       patterns:
-      #         - include: '#main'
-      #         - include: '#injectionPatterns'
-      # - begin: "\\{"
-      #   end: "\\}"
-      #   beginCaptures:
-      #     '0':
-      #       name: punctuation.section.embedded.begin.svelte
-      #   endCaptures:
-      #     '0':
-      #       name: punctuation.section.embedded.end.svelte
-      #   contentName: meta.embedded.expression.svelte source.ts
-      #   patterns:
-      #     - begin: "\\G\\s*(?={)"
-      #       end: '(?<=})'
-      #       patterns:
-      #         - include: source.ts#object-literal
-      #     - include: source.ts
-  svelte:
+      # - include: '#verbatim'
+      - include: source.svelte#comments
+      - include: source.svelte#special-tags
+      - include: source.svelte#tags
+      - include: source.svelte#interpolation
+      - include: '#math'
+      - include: text.html.markdown#separator
+      - include: text.html.markdown#heading
+      - include: '#blockquote'
+      - include: '#lists'
+      - include: text.html.markdown#fenced_code_block
+      - include: text.html.markdown#link-def
+      # - include: text.html.markdown#html
+      - include: source.svelte#tags
+      - include: text.html.markdown#table
+  blockquote:
+    begin: "(^|\\G)[ ]{0,3}(>) ?"
+    captures:
+      '2':
+        name: punctuation.definition.quote.begin.markdown
+    name: markup.quote.markdown
     patterns:
-      - include: source.svelte
-  markdown:
-    name: markup.raw
+      - include: 'text.html.markdown#block'
+    while: "(^|\\G)\\s*(>) ?"
+  lists:
     patterns:
-      - include: text.html.markdown
+      - begin: "(^|\\G)([ ]{0,3})([*+-])([ \\t])"
+        beginCaptures:
+          '3':
+            name: punctuation.definition.list.begin.markdown
+        comment: Currently does not support un-indented second lines.
+        name: markup.list.unnumbered.markdown
+        patterns:
+          - include: 'text.html.markdown#block'
+          # - include: '#list_paragraph'
+        while: "((^|\\G)([ ]{2,4}|\\t))|(^[ \\t]*$)"
+      - begin: "(^|\\G)([ ]{0,3})([0-9]+[\\.\\)])([ \\t])"
+        beginCaptures:
+          '3':
+            name: punctuation.definition.list.begin.markdown
+        name: markup.list.numbered.markdown
+        # patterns:
+        # - include: 'text.html.markdown#block'
+        # - include: '#list_paragraph'
+        while: "((^|\\G)([ ]{2,4}|\\t))|(^[ \\t]*$)"
+  # This is the #list_paragraph pattern from VS Code's markdown.tmLanguage.json,
+  # but without inclusion of the `text.html.derivative` pattern.
+  list_paragraph:
+    begin: "(^|\\G)(?=\\S)(?![*+->]\\s|[0-9]+\\.\\s)"
+    name: meta.paragraph.markdown
+    # patterns:
+    # - include: '#inline'
+    # - include: text.html.derivative
+    # - include: '#heading-setext'
+    while:
+      "(^|\\G)(?!\\s*$|#|[ ]{0,3}([-*_>][ ]{2,}){3,}[ \\t]*$\\n?|[
+      ]{0,3}[*+->]|[ ]{0,3}[0-9]+\\.)"

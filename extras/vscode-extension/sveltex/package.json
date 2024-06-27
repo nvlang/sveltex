@@ -1,17 +1,48 @@
 {
   "name": "sveltex",
   "displayName": "SvelTeX",
-  "description": "SvelTeX language support",
+  "description": "Svelte + Markdown + LaTeX",
   "version": "0.0.1",
+  "homepage": "https://sveltex.dev/",
+  "keywords": [
+    "sveltex",
+    "svelte",
+    "latex",
+    "markdown",
+    "vscode"
+  ],
+  "publisher": "nvlang",
+  "icon": "res/icon@128.png",
+  "pricing": "Free",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nvlang/sveltex.git"
+  },
+  "author": {
+    "name": "N. V. Lang",
+    "email": "hi@nvlang.dev",
+    "url": "https://nvlang.dev/"
+  },
+  "contributors": [
+    {
+      "name": "N. V. Lang",
+      "email": "hi@nvlang.dev",
+      "url": "https://nvlang.dev/"
+    }
+  ],
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.67.0"
   },
   "categories": [
     "Programming Languages"
   ],
   "scripts": {
-    "build": "tsx scripts/build.ts"
+    "build": "node scripts/build.js"
   },
+  "extensionDependencies": [
+    "svelte.svelte-vscode"
+  ],
   "contributes": {
     "languages": [
       {
@@ -31,9 +62,20 @@
         "language": "sveltex",
         "scopeName": "source.sveltex",
         "path": "./syntaxes/sveltex.tmLanguage.json",
+        "balancedBracketScopes": [
+          "*",
+          "meta.embedded"
+        ],
+        "unbalancedBracketScopes": [
+          "markup.fenced_code",
+          "meta.math.block.tex",
+          "support.class.math.block.tex",
+          "meta.function.environment.math.latex",
+          "support.class.math.block.environment.latex"
+        ],
         "embeddedLanguages": {
           "source.svelte": "svelte",
-          "text.html.markdown": "svelte",
+          "text.html.markdown": "markdown",
           "text.tex.latex": "latex"
         }
       }
