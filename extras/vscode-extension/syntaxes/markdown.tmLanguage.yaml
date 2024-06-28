@@ -7,7 +7,6 @@ fileTypes:
 keyEquivalent: '^~M'
 name: Markdown
 patterns:
-  - include: '#frontMatter'
   - include: '#block'
 repository:
   block:
@@ -1236,7 +1235,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
           - match: "(#{5})\\s+(.*?)(?:\\s+(#+))?\\s*$"
@@ -1248,7 +1246,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
           - match: "(#{4})\\s+(.*?)(?:\\s+(#+))?\\s*$"
@@ -1260,7 +1257,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
           - match: "(#{3})\\s+(.*?)(?:\\s+(#+))?\\s*$"
@@ -1272,7 +1268,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
           - match: "(#{2})\\s+(.*?)(?:\\s+(#+))?\\s*$"
@@ -1284,7 +1279,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
           - match: "(#{1})\\s+(.*?)(?:\\s+(#+))?\\s*$"
@@ -1296,7 +1290,6 @@ repository:
                 name: entity.name.section.markdown
                 patterns:
                   - include: '#inline'
-                  - include: text.html.derivative
               '3':
                 name: punctuation.definition.heading.markdown
     name: markup.heading.markdown
@@ -1306,43 +1299,6 @@ repository:
         name: markup.heading.setext.1.markdown
       - match: "^(-{3,})(?=[ \\t]*$\\n?)"
         name: markup.heading.setext.2.markdown
-  html:
-    patterns:
-      - begin: "(^|\\G)\\s*(<!--)"
-        captures:
-          '1':
-            name: punctuation.definition.comment.html
-          '2':
-            name: punctuation.definition.comment.html
-        end: '(-->)'
-        name: comment.block.html
-      - begin: "(?i)(^|\\G)\\s*(?=<(script|style|pre)(\\s|$|>)(?!.*?</(script|style|pre)>))"
-        end: '(?i)(.*)((</)(script|style|pre)(>))'
-        endCaptures:
-          '1':
-            patterns:
-              - include: text.html.derivative
-          '2':
-            name: meta.tag.structure.$4.end.html
-          '3':
-            name: punctuation.definition.tag.begin.html
-          '4':
-            name: entity.name.tag.html
-          '5':
-            name: punctuation.definition.tag.end.html
-        patterns:
-          - begin: "(\\s*|$)"
-            patterns:
-              - include: text.html.derivative
-            while: '(?i)^(?!.*</(script|style|pre)>)'
-      - begin: "(?i)(^|\\G)\\s*(?=</?[a-zA-Z]+[^\\s/&gt;]*(\\s|$|/?>))"
-        patterns:
-          - include: text.html.derivative
-        while: "^(?!\\s*$)"
-      - begin: "(^|\\G)\\s*(?=(<[a-zA-Z0-9\\-](/?>|\\s.*?>)|</[a-zA-Z0-9\\-]>)\\s*$)"
-        patterns:
-          - include: text.html.derivative
-        while: "^(?!\\s*$)"
   link-def:
     captures:
       '1':
@@ -1399,7 +1355,6 @@ repository:
     name: meta.paragraph.markdown
     patterns:
       - include: '#inline'
-      - include: text.html.derivative
       - include: '#heading-setext'
     while:
       "(^|\\G)(?!\\s*$|#|[ ]{0,3}([-*_>][ ]{2,}){3,}[ \\t]*$\\n?|[
@@ -1430,7 +1385,6 @@ repository:
     name: meta.paragraph.markdown
     patterns:
       - include: '#inline'
-      - include: text.html.derivative
       - include: '#heading-setext'
     while: "(^|\\G)((?=\\s*[-=]{3,}\\s*$)|[ ]{4,}(?=[^ \\t\\n]))"
   raw_block:
@@ -1440,12 +1394,6 @@ repository:
   separator:
     match: "(^|\\G)[ ]{0,3}([\\*\\-\\_])([ ]{0,2}\\2){2,}[ \\t]*$\\n?"
     name: meta.separator.markdown
-  frontMatter:
-    begin: "\\A-{3}\\s*$"
-    contentName: meta.embedded.block.frontmatter
-    patterns:
-      - include: source.yaml
-    end: "(^|\\G)-{3}|\\.{3}\\s*$"
   table:
     name: markup.table.markdown
     begin: "(^|\\G)(\\|)(?=[^|].+\\|\\s*$)"
@@ -1534,11 +1482,6 @@ repository:
     end: "(?<=\\S)(\\1)"
     name: markup.bold.markdown
     patterns:
-      - applyEndPatternLast: 1
-        begin: '(?=<[^>]*?>)'
-        end: '(?<=>)'
-        patterns:
-          - include: text.html.derivative
       - include: '#escape'
       - include: '#ampersand'
       - include: '#bracket'
@@ -1687,11 +1630,6 @@ repository:
     end: "(?<=\\S)(\\1)((?!\\1)|(?=\\1\\1))"
     name: markup.italic.markdown
     patterns:
-      - applyEndPatternLast: 1
-        begin: '(?=<[^>]*?>)'
-        end: '(?<=>)'
-        patterns:
-          - include: text.html.derivative
       - include: '#escape'
       - include: '#ampersand'
       - include: '#bracket'
@@ -1853,11 +1791,6 @@ repository:
         name: punctuation.definition.strikethrough.markdown
       '2':
         patterns:
-          - applyEndPatternLast: 1
-            begin: '(?=<[^>]*?>)'
-            end: '(?<=>)'
-            patterns:
-              - include: text.html.derivative
           - include: '#escape'
           - include: '#ampersand'
           - include: '#bracket'
@@ -1876,5 +1809,5 @@ repository:
         name: punctuation.definition.strikethrough.markdown
     match: "(?<!\\\\)(~{2,})((?:[^~]|(?!(?<![~\\\\])\\1(?!~))~)*+)(\\1)"
     name: markup.strikethrough.markdown
-scopeName: text.html.markdown
-uuid: 0A1D9874-B448-11D9-BD50-000D93B6E43C
+scopeName: text.markdown
+uuid: 82acf9f6-2d09-4c16-b600-8598b973557b

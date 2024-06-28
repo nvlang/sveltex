@@ -1,0 +1,5 @@
+syntaxes/*.json
+syntaxes/*.json_default
+out
+node_modules
+external

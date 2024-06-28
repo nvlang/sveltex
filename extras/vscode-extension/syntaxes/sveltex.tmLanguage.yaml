@@ -10,8 +10,59 @@ injections:
   ? 'R:source.sveltex - (source.svelte, source.ts, meta.embedded, meta.math,
     text.tex.latex, comment, markup.inline.raw, markup.fenced_code)'
   : patterns:
-      - include: text.html.markdown#inline
+      - include: text.markdown#inline
       - include: '#injectionPatterns'
+  # Script
+  'source.sveltex meta.script.svelte - meta.lang':
+    patterns:
+      - include: source.js
+  ? 'source.sveltex meta.script.svelte (meta.lang.ts.svelte,
+    meta.lang.typescript.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.ts
+  # ? 'source.sveltex meta.script.svelte (meta.lang.coffee.svelte,
+  #   meta.lang.coffeescript.svelte)'
+  # : patterns:
+  #     - include: source.coffee
+
+  # Style
+  # 'source.sveltex meta.style.svelte meta.lang.css.svelte':
+  #   patterns:
+  #     - include: source.css
+  ? 'source.sveltex meta.style.svelte meta.lang.css.svelte -
+    (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.css
+  ? 'source.sveltex meta.style.svelte - meta.lang - (meta.tag.start.svelte,
+    meta.tag.end.svelte)'
+  : patterns:
+      - include: source.css
+  ? 'source.sveltex meta.style.svelte meta.lang.scss.svelte -
+    (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.css.scss
+  ? 'source.sveltex meta.style.svelte meta.lang.sass.svelte -
+    (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.sass
+  ? 'source.sveltex meta.style.svelte (meta.lang.pcss.svelte,
+    meta.lang.postcss.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.css.postcss
+  # ? 'source.sveltex meta.style.svelte meta.lang.less.svelte -
+  #   (meta.tag.start.svelte, meta.tag.end.svelte)'
+  # : patterns:
+  #     - include: source.css.less
+  # 'source.sveltex meta.style.svelte meta.lang.less.svelte':
+  #   patterns:
+  #     - start: (?<=>)
+  #       while: ^(?!.*</style>.*)
+  #       patterns:
+  #         - include: source.css.less
+  ? 'source.sveltex meta.style.svelte meta.lang.stylus.svelte -
+    (meta.tag.start.svelte, meta.tag.end.svelte)'
+  : patterns:
+      - include: source.stylus
 repository:
   base:
     patterns:
@@ -21,7 +72,7 @@ repository:
     patterns:
       - include: '#verbatim'
       - include: '#math'
-      - include: '#script-style'
+      # - include: '#script-style'
       # - include: source.svelte#comments
       # - include: source.svelte#special-tags
       # - include: source.svelte#tags
@@ -140,13 +191,49 @@ repository:
             patterns:
               - include: source.svelte
       - name: meta.embedded.block.plain
+        match: |
+          (?x)                  # extended mode
+          (?i)                  # case-insensitive
+          ^                     # (start of line)
+          (.*)                  # 1: text before
+          (                     # 2: opening tag
+            <                   # (opening bracket)
+              (tex|latex|tikz)  # 3: tag name
+              (?:\s[^>]*?)?     # -: attributes, optional
+            >                   # (closing bracket)
+          )
+          (.*)                  # 4: inner content
+          (                     # 5: closing tag
+            </                  # (opening bracket)
+              \3                # (backreference to tag name)
+            >                   # (closing bracket)
+          )
+          (.*)                  # 6: text after
+          $                     # (end of line)
+        captures:
+          '1':
+            patterns:
+              - include: '#main'
+              - include: '#injectionPatterns'
+          '2':
+            patterns:
+              - include: source.svelte
+          '4':
+            name: markup.fenced_code.block.markdown
+          '5':
+            patterns:
+              - include: source.svelte
+          '6':
+            patterns:
+              - include: '#main'
+              - include: '#injectionPatterns'
+      - name: meta.embedded.block.plain
         begin: (?i)(<(verb|verbatim)(\s[^>]*?)?>)
         end: (?i)(</(verb|verbatim)>)$
         patterns:
           - begin: ^
             while: (?i)^(?!</(verb|verbatim)>)
-            patterns:
-              - include: source.ignore
+            name: markup.fenced_code.block.markdown
         beginCaptures:
           '1':
             patterns:
@@ -197,26 +284,26 @@ repository:
           - include: text.tex#math
           - include: $self
           - include: text.tex.latex
-  script-style:
-    begin: (?i)(^|\G)\s*(?=<(script|style)(\s|$|>)(?!.*?</(script|style)>))
-    end: (?i)(.*)((</)(script|style)(>))
-    endCaptures:
-      '1':
-        patterns:
-          - include: text.html.derivative
-      '2':
-        name: meta.tag.structure.$4.end.html
-      '3':
-        name: punctuation.definition.tag.begin.html
-      '4':
-        name: entity.name.tag.html
-      '5':
-        name: punctuation.definition.tag.end.html
-    patterns:
-      - begin: (\s*|$)
-        patterns:
-          - include: text.html.derivative
-        while: (?i)^(?!.*</(script|style)>)
+  # script-style:
+  #   begin: (?i)(^|\G)\s*(?=<(script|style)(\s|$|>)(?!.*?</(script|style)>))
+  #   end: (?i)(.*)((</)(script|style)(>))
+  #   endCaptures:
+  #     '1':
+  #       patterns:
+  #         - include: text.html.derivative
+  #     '2':
+  #       name: meta.tag.structure.$4.end.html
+  #     '3':
+  #       name: punctuation.definition.tag.begin.html
+  #     '4':
+  #       name: entity.name.tag.html
+  #     '5':
+  #       name: punctuation.definition.tag.end.html
+  #   patterns:
+  #     - begin: (\s*|$)
+  #       patterns:
+  #         - include: text.html.derivative
+  #       while: (?i)^(?!.*</(script|style)>)
   injectionPatterns:
     patterns:
       # - include: '#verbatim'
@@ -225,54 +312,12 @@ repository:
       - include: source.svelte#tags
       - include: source.svelte#interpolation
       - include: '#math'
-      - include: text.html.markdown#separator
-      - include: text.html.markdown#heading
-      - include: '#blockquote'
-      - include: '#lists'
-      - include: text.html.markdown#fenced_code_block
-      - include: text.html.markdown#link-def
-      # - include: text.html.markdown#html
+      - include: text.markdown#separator
+      - include: text.markdown#heading
+      - include: text.markdown#blockquote
+      - include: text.markdown#lists
+      - include: text.markdown#fenced_code_block
+      - include: text.markdown#link-def
+      # - include: text.markdown#html
       - include: source.svelte#tags
-      - include: text.html.markdown#table
-  blockquote:
-    begin: "(^|\\G)[ ]{0,3}(>) ?"
-    captures:
-      '2':
-        name: punctuation.definition.quote.begin.markdown
-    name: markup.quote.markdown
-    patterns:
-      - include: 'text.html.markdown#block'
-    while: "(^|\\G)\\s*(>) ?"
-  lists:
-    patterns:
-      - begin: "(^|\\G)([ ]{0,3})([*+-])([ \\t])"
-        beginCaptures:
-          '3':
-            name: punctuation.definition.list.begin.markdown
-        comment: Currently does not support un-indented second lines.
-        name: markup.list.unnumbered.markdown
-        patterns:
-          - include: 'text.html.markdown#block'
-          # - include: '#list_paragraph'
-        while: "((^|\\G)([ ]{2,4}|\\t))|(^[ \\t]*$)"
-      - begin: "(^|\\G)([ ]{0,3})([0-9]+[\\.\\)])([ \\t])"
-        beginCaptures:
-          '3':
-            name: punctuation.definition.list.begin.markdown
-        name: markup.list.numbered.markdown
-        # patterns:
-        # - include: 'text.html.markdown#block'
-        # - include: '#list_paragraph'
-        while: "((^|\\G)([ ]{2,4}|\\t))|(^[ \\t]*$)"
-  # This is the #list_paragraph pattern from VS Code's markdown.tmLanguage.json,
-  # but without inclusion of the `text.html.derivative` pattern.
-  list_paragraph:
-    begin: "(^|\\G)(?=\\S)(?![*+->]\\s|[0-9]+\\.\\s)"
-    name: meta.paragraph.markdown
-    # patterns:
-    # - include: '#inline'
-    # - include: text.html.derivative
-    # - include: '#heading-setext'
-    while:
-      "(^|\\G)(?!\\s*$|#|[ ]{0,3}([-*_>][ ]{2,}){3,}[ \\t]*$\\n?|[
-      ]{0,3}[*+->]|[ ]{0,3}[0-9]+\\.)"
+      - include: text.markdown#table

@@ -40,7 +40,8 @@ To contribute to SvelTeX, fork the repository, create a branch, commit your
 changes, and submit a pull request. Furthermore:
 
 -   Please add meaningful tests for your changes that cover all new code paths
-    and edge cases. If applicable, also add E2E Playwright tests.
+    and edge cases (exception: VS Code SvelTeX extension). If applicable, also
+    add E2E Playwright tests.
 -   Please ensure that all tests pass before submitting your pull request.
 -   Please ensure that your code follows the existing code style and formatting.
 -   Please ensure that your code is well-documented, and possibly update
