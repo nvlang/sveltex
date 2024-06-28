@@ -43,9 +43,7 @@ const config = {
 export default config;
 ```
 
-## How it works
-
-![Schematic overview of how Sveltex works](res/schematic-overview.svg)
+For further documentation, please visit the [project website](https://sveltex.dev).
 
 ## Roadmap
 
@@ -54,22 +52,17 @@ In alphabetical order:
 -   VSCode extension for proper LSP language support via request forwarding.
     Currently, only basic syntax highlighting is provided.
 
-## Contributing
+## Acknowledgments
 
-Contributions are very welcome. In lieu of proper contribution guidelines,
-please discuss your ideas with the maintainers before starting work on a PR,
-especially if the changes are substantial.
+See [acknowledgments](https://sveltex.dev/docs/acknowledgments) on the project website.
 
-## Acknowledgements
-
-- The TSDoc comments for many of this project's interfaces, particularly those describing options to
- be passed to external libraries, may be copies, paraphrasings, or adaptations
-  of the official documentations of the respective libraries. Some notable examples:
-  - MathJax
-  - TikZ
+The TSDoc comments for many of this project's interfaces, particularly those
+describing options to be passed to external libraries, may be copies,
+paraphrasings, or adaptations of the official documentations of the respective
+libraries. Some notable examples are MathJax and TikZ.
 
 
-## Lessons learned
+## Some lessons learned
 
 ### Tips
 

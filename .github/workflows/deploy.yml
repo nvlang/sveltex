@@ -4,11 +4,8 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches:
-      - mainfdsafdsfdsfsdfds
-  # push:
-  #   paths:
-  #     - 'docs/**'
+    paths:
+      - 'docs/**'
 
 jobs:
   deploy:

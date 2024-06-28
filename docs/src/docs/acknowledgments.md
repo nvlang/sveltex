@@ -27,7 +27,7 @@ Similar works to SvelTeX, which also inspired it:
 
 ### Indirect dependencies
 
--   [`dvisvgm`]: A fantastic tool for converting DVI, PDF, and XDV files to SVG.
+-   **[`dvisvgm`]:** A fantastic tool for converting DVI, PDF, and XDV files to SVG.
     Bundled with [texlive].
 
     **Note:** SvelTeX doesn't bundle it `dvisvgm`, but rather spawns child processes
@@ -37,14 +37,19 @@ Similar works to SvelTeX, which also inspired it:
 
 ### Development
 
--   [Vitest]: Unit testing.
--   [Playwright]: Integration testing.
--   [`fast-check`]: Property-based testing (aka. fuzzy testing).
+-   **[Vitest]:** Unit testing.
+-   **[Playwright]:** Integration testing.
+-   **[`fast-check`]:** Property-based testing (aka. fuzzy testing).
 
 
 ## Website
 
 -   **[VitePress]:** Great SSG using Vite and Vue to render docs from markdown.
+
+### Syntax highlighting
+
+-   **[Shiki]:** A beautiful, fast, and feature-rich syntax highlighter.
+-   **[`twoslash`]:** Powers the IntelliSense in the code blocks, together with [`floating-vue`].
 
 ### Graphics
 
@@ -60,7 +65,8 @@ Similar works to SvelTeX, which also inspired it:
 ## And so much more
 
 This list could go on and on, but it might become a bit frivolous at some point;
-after all, backtracking
+after all, backtracking dependencies and intellectual debts is often an endless
+pursuit.
 
 
 [Svelte]: https://svelte.dev
@@ -76,6 +82,10 @@ after all, backtracking
 [`fast-check`]: https://fast-check.dev/
 
 [VitePress]: https://vitepress.dev/
+[Shiki]: https://shiki.style/
+[`twoslash`]: https://shikijs.github.io/twoslash/
+[`floating-vue`]: https://floating-vue.starpad.dev/
+
 [Phosphor icons]: https://phosphoricons.com/
 [Inter]: https://rsms.me/inter/
 [Monaspace]: https://monaspace.githubnext.com/
