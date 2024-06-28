@@ -1,26 +1,36 @@
-import { mkdir, readFile, rm, writeFile } from 'fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { backendConfigs } from './sveltex.config';
 import { glob } from 'glob';
-import { dirname, join, relative } from 'path';
+import { dirname, join, resolve, relative } from 'node:path';
 
-await rm('src/routes/generated', { recursive: true, force: true });
+let cwdPrefix = '';
+if (!/.*[\\/]e2e[\\/]?$/.test(process.cwd())) {
+    cwdPrefix = 'tests/e2e/';
+}
+
+await rm(cwdPrefix + 'src/routes/generated', { recursive: true, force: true });
 // await rm('src/routes/+page.svelte', { recursive: true, force: true });
-await rm('src/sveltex', { recursive: true, force: true });
-await rm('static/sveltex', { recursive: true, force: true });
-await rm('node_modules/.cache', { recursive: true, force: true });
-await mkdir('static', { recursive: true });
+await rm(cwdPrefix + 'src/sveltex', { recursive: true, force: true });
+await rm(cwdPrefix + 'static/sveltex', { recursive: true, force: true });
+await rm(cwdPrefix + 'node_modules/.cache', { recursive: true, force: true });
+await mkdir(cwdPrefix + 'static', { recursive: true });
 
 // Function to use glob to read all markdown files
-const pages = await glob(`pages/**/*.md`, { maxDepth: 10 });
+const pages = await glob(cwdPrefix + 'pages/**/*.md', { maxDepth: 10 });
 
 await Promise.all(
     backendConfigs.map(async ([markdownBackend, codeBackend, mathBackend]) => {
         await Promise.all(
             pages.map(async (page) => {
-                const pre = `src/routes/generated/${markdownBackend}-${codeBackend}-${mathBackend}`;
+                const pre =
+                    cwdPrefix +
+                    `src/routes/generated/${markdownBackend}-${codeBackend}-${mathBackend}`;
                 const dir = join(
                     pre,
-                    relative('pages', page).replace(/\.md$/, ''),
+                    relative(resolve(cwdPrefix + 'pages'), page).replace(
+                        /\.md$/,
+                        '',
+                    ),
                 );
                 console.log('Creating directory:', dir);
                 await mkdir(dir, { recursive: true });
@@ -41,14 +51,34 @@ await Promise.all(
 );
 
 export const hrefs = (
-    await glob('tests/e2e/src/routes/generated/**/+page.*', { absolute: false })
-).map((path) => dirname(relative('tests/e2e/src/routes', path)));
+    await glob(cwdPrefix + 'src/routes/generated/**/+page.*', {
+        absolute: true,
+    })
+).map((path) => dirname(relative(resolve(cwdPrefix + 'src/routes'), path)));
 
-// await writeFile(
-//     'tests/e2e/src/routes/+page.svelte',
-//     `
-// <ul>
-//     ${hrefs.map((href) => `<li><a href="${href}"><code>${href}</code></a></li>`).join('\n')}
-// </ul>
-// `,
-// );
+console.log({
+    cwd: process.cwd(),
+    cwdPrefix,
+    'src/routes': resolve('src/routes'),
+    [cwdPrefix + 'src/routes']: resolve(cwdPrefix + 'src/routes'),
+    static: resolve('static'),
+    [cwdPrefix + 'static']: resolve(cwdPrefix + 'static'),
+    [cwdPrefix + 'src/routes/+page.svelte']: resolve(
+        cwdPrefix + 'src/routes/+page.svelte',
+    ),
+    pages,
+    hrefs,
+});
+
+await writeFile(
+    cwdPrefix + 'src/routes/+page.svelte',
+    [
+        '<nav>',
+        '<ul>',
+        ...hrefs.map(
+            (href) => `<li><a href="${href}"><code>${href}</code></a></li>`,
+        ),
+        '</ul>',
+        '</nav>\n',
+    ].join('\n'),
+);

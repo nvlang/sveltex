@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export const config = defineConfig({
-    testDir: 'tests/e2e',
+    testDir: './tests/e2e',
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -73,7 +73,7 @@ export const config = defineConfig({
                 ...devices['iPhone SE'],
                 colorScheme: 'dark',
                 baseURL: 'http://localhost:3033',
-                browserName: 'firefox',
+                browserName: 'chromium',
             },
             timeout: 300e3, // 5 minutes
             retries: 3,

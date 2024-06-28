@@ -20,7 +20,27 @@ yarn add -D @nvl/sveltex # If using Yarn
 
 ```js
 // svelte.config.js
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltex } from '@nvl/sveltex';
+
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+	// ...
+    preprocess: [
+        vitePreprocess(), // (optional)
+        await sveltex({
+            markdownBackend: 'unified',
+            codeBackend: 'shiki',
+            mathBackend: 'mathjax',
+        }, {
+            // Options
+        }),
+        // ...
+    ],
+    // ...
+};
+
+export default config;
 ```
 
 ## How it works

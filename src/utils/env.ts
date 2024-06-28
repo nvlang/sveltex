@@ -14,9 +14,7 @@ export const missingDeps: string[] = [];
 /**
  * Gets the version of the specified package.
  */
-export async function getVersion(
-    pkg: keyof (typeof import('package.json'))['peerDependencies'],
-): Promise<string | undefined> {
+export async function getVersion(pkg: string): Promise<string | undefined> {
     let backendVersion: string | undefined;
     try {
         const prefix =

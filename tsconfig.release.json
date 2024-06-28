@@ -1,10 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // "sourceMap": false,
-    // "removeComments": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
+  "include": [
+    "src",
+    "package.json",
+    "LICENSE",
+    "README.md",
+    "CODE_OF_CONDUCT.md"
+  ],
   "exclude": ["node_modules", "tests", "dist", "coverage", "examples", "legacy"]
 }
