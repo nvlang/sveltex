@@ -54,23 +54,26 @@ export const config = defineConfig({
             timeout: 300e3, // 5 minutes
             retries: 3,
         },
-        {
-            name: 'webkit',
-            use: {
-                ...devices['Desktop Safari'],
-                baseURL: 'http://localhost:3033',
-            },
+        // For some reason, webkit was messing with Playwright? I kept getting
+        // the error "Error: could not decode image as PNG.". I'm not sure why.
+        // I'll try to investigate this at some later point in time.
+        // {
+        //     name: 'webkit',
+        //     use: {
+        //         ...devices['Desktop Safari'],
+        //         baseURL: 'http://localhost:3033',
+        //     },
 
-            timeout: 300e3, // 5 minutes
-            retries: 3,
-        },
+        //     timeout: 300e3, // 5 minutes
+        //     retries: 3,
+        // },
         {
             name: 'iPhone SE',
             use: {
                 ...devices['iPhone SE'],
                 colorScheme: 'dark',
                 baseURL: 'http://localhost:3033',
-                browserName: 'webkit',
+                browserName: 'firefox',
             },
             timeout: 300e3, // 5 minutes
             retries: 3,

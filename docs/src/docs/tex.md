@@ -97,10 +97,7 @@ export default await sveltex({}, {
             converter: 'dvisvgm',
             dvisvgm: {
                 console: {
-                    color: true,
-                    progress: true,
                     verbosity: 0b0011,
-                    message: null,
                 },
                 customArgs: [],
                 svg: {

@@ -15,6 +15,13 @@
 @font-face {
     font-family: 'Monaspace Argon';
     font-style: normal;
+    font-weight: 600;
+    src: url('/fonts/monaspace/MonaspaceArgon-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Monaspace Argon';
+    font-style: normal;
     font-weight: 700;
     src: url('/fonts/monaspace/MonaspaceArgon-Bold.woff2') format('woff2');
 }
@@ -35,6 +42,14 @@ We're sort of "lying" with the italics here, and using Monaspace Radon instead.
     font-style: italic;
     font-weight: 500;
     src: url('/fonts/monaspace/MonaspaceRadon-MediumItalic.woff2')
+        format('woff2');
+}
+
+@font-face {
+    font-family: 'Monaspace Argon';
+    font-style: italic;
+    font-weight: 600;
+    src: url('/fonts/monaspace/MonaspaceRadon-SemiBoldItalic.woff2')
         format('woff2');
 }
 

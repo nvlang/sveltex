@@ -153,7 +153,6 @@ export type {
     Position as UnistPosition,
 } from 'unist';
 export { v4 as uuid } from 'uuid';
-// export { default as XRegExp } from 'xregexp';
 import { default as XRegExpOrig } from 'xregexp';
 XRegExpOrig.install({ namespacing: true });
 export const XRegExp = XRegExpOrig;

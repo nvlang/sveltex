@@ -22,7 +22,7 @@ export default {
             // https://vitepress.dev/guide/extending-default-theme#layout-slots
         });
     },
-    enhanceApp({ app, router, siteData }) {
+    enhanceApp({ app }) {
         app.use(TwoslashFloatingVue);
         app.use(FloatingVue, { boundary: 'body' });
         app.component('PhInfo', PhInfo);
@@ -35,4 +35,3 @@ export default {
         // app.component('PhBird', PhBird);
     },
 } satisfies Theme;
-// .vitepress/theme/index.ts

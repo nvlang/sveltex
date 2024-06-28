@@ -1,0 +1,81 @@
+# Deploy to Cloudflare Pages. If a push to a non-production branch is done, it
+# will deploy as a preview deployment.
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - mainfdsafdsfdsfsdfds
+  # push:
+  #   paths:
+  #     - 'docs/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      deployments: write
+
+    name: Deploy to Cloudflare Pages
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set working directory
+        run: cd docs
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: latest
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: docs
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          # Your Cloudflare API Token. See
+          # https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/#generate-an-api-token
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+          # Your Cloudflare Account ID. See
+          # https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/#get-project-account-id
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+          # The Wrangler command (along with any arguments) you wish to run.
+          # Multiple Wrangler commands can be run by separating each command
+          # with a newline. Defaults to `deploy`.
+          command: pages deploy .vitepress/dist --project-name=SvelTeX
+
+          # The package manager you'd like to use to install and run wrangler.
+          # If not specified, the preferred package manager will be inferred
+          # based on the presence of a lockfile or fallback to using npm if no
+          # lockfile is found. Valid values are `npm`, `pnpm`, `yarn`, and
+          # `bun`.
+          packageManager: pnpm
+
+          # By default Wrangler will run in the root package directory. If you
+          # want to specify a subdirectory of the repo from which to run the
+          # Wrangler command, you can add `workingDirectory:
+          # YOUR_PACKAGE_DIRECTORY` here. This can be useful for apps that live
+          # in monorepos, for example.
+
+          # Optional: Change the Wrangler version, allows you to point to a
+          # specific version or a tag such as `beta`
+          # wranglerVersion: '3'

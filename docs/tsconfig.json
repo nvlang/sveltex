@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    // Best practices
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    // Performance
+    // "skipLibCheck": true, // recommended
+    // Aliases
+    "baseUrl": "./",
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
+    "exactOptionalPropertyTypes": true, // recommended
+    "forceConsistentCasingInFileNames": true, // recommended
+    "importHelpers": true,
+    "lib": ["ESNext"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    // We're using this just for type-checking
+    "noEmit": true,
+    // Basic settings
+    "rootDir": ".",
+    // Debugging
+    "sourceMap": true,
+    // Type-checking
+    "strict": true,
+    // Versions and APIs
+    "target": "ESNext"
+  },
+  "exclude": ["**/node_modules", "**/cache", "**/dist"],
+  // "ts-node": {
+  //   // "swc": true
+  // },
+  "include": [
+    "*.config.js",
+    "*.config.ts",
+    "package.json",
+    ".vitepress/config.ts",
+    ".vitepress/theme",
+    "src"
+  ]
+}

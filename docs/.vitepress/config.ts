@@ -6,10 +6,29 @@ import { githubDarkDefault } from './theme/code-theme.js';
 import markdownItMultimdTable from 'markdown-it-multimd-table';
 import footnote from 'markdown-it-footnote';
 
+export const ESBUILD_MODULES_TARGET = [
+    'es2022',
+    // 'edge89',
+    // 'firefox89',
+    'chrome126',
+    // 'safari15',
+];
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: 'SvelTeX',
     description: 'Flexible Svelte preprocessor with extensive LaTeX support.',
+    vite: {
+        optimizeDeps: {
+            exclude: ['@nvl/sveltex'],
+            esbuildOptions: { target: ESBUILD_MODULES_TARGET },
+        },
+        esbuild: { target: ESBUILD_MODULES_TARGET },
+        build: {
+            rollupOptions: { external: ['@nvl/sveltex'] },
+            target: ESBUILD_MODULES_TARGET,
+        },
+    },
     markdown: {
         theme: {
             light: 'github-light-default',
@@ -18,7 +37,7 @@ export default defineConfig({
         math: true,
         codeTransformers: [transformerTwoslash()],
         config: (md) => {
-            md.use(footnote);
+            md.use(footnote as any);
             (md as any).use(markdownItMultimdTable, {
                 autolabel: true,
                 headerless: true,
@@ -26,8 +45,8 @@ export default defineConfig({
                 multiline: true,
                 rowspan: true,
             });
-            md.use(container, 'info', {
-                render: (tokens, idx) => {
+            md.use(container as any, 'info', {
+                render: (tokens: any, idx: any) => {
                     const token = tokens[idx];
                     if (token.nesting === 1) {
                         // Opening tag
@@ -47,8 +66,8 @@ export default defineConfig({
                     }
                 },
             });
-            md.use(container, 'warning', {
-                render: (tokens, idx) => {
+            md.use(container as any, 'warning', {
+                render: (tokens: any, idx: any) => {
                     const token = tokens[idx];
                     if (token.nesting === 1) {
                         // Opening tag
@@ -69,8 +88,8 @@ export default defineConfig({
                     }
                 },
             });
-            md.use(container, 'danger', {
-                render: (tokens, idx) => {
+            md.use(container as any, 'danger', {
+                render: (tokens: any, idx: any) => {
                     const token = tokens[idx];
                     if (token.nesting === 1) {
                         // Opening tag
@@ -142,7 +161,9 @@ export default defineConfig({
             },
             {
                 text: 'Examples',
-                link: '/docs/examples',
+                base: '/docs/examples',
+                collapsed: false,
+                items: [{ text: 'Basic', link: '/basic' }],
             },
             {
                 text: 'Implementation',

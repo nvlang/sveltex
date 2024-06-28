@@ -193,9 +193,6 @@ export function getDefaultTexConfig(): FullTexConfiguration {
             converter: 'dvisvgm',
             dvisvgm: {
                 console: {
-                    color: true, // overrides dvisvgm default
-                    message: null,
-                    progress: true, // overrides dvisvgm default
                     verbosity: 0b0011, // overrides dvisvgm default
                 },
                 customArgs: [],
