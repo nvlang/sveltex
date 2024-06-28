@@ -31,8 +31,8 @@ import { sveltex } from '@nvl/sveltex';
 
 In alphabetical order:
 
-- [ ] VSCode extension for proper syntax highlighting of `.sveltex` files.
-- [ ] Yeoman generator for scaffolding new Sveltex projects.
+-   VSCode extension for proper LSP language support via request forwarding.
+    Currently, only basic syntax highlighting is provided.
 
 ## Contributing
 

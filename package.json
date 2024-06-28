@@ -1,7 +1,7 @@
 {
   "name": "@nvl/sveltex",
-  "version": "0.0.1",
-  "description": "MDX-like Svelte preprocessor with extensive TeX support.",
+  "version": "0.1.0",
+  "description": "Svelte + Markdown + LaTeX",
   "type": "module",
   "author": {
     "name": "N. V. Lang",
@@ -30,6 +30,9 @@
   },
   "bugs": {
     "url": "https://github.com/nvlang/sveltex/issues"
+  },
+  "publishConfig": {
+    "provenance": true
   },
   "homepage": "https://sveltex.dev",
   "files": [

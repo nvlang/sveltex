@@ -30,7 +30,7 @@ describe('utils/cdn', () => {
         it.each([
             [
                 'https://httpstat.us/503',
-                1000,
+                2000,
                 undefined,
                 'HTTP error 503 (Service Unavailable): https://httpstat.us/503',
             ],
@@ -42,7 +42,7 @@ describe('utils/cdn', () => {
             ],
         ])(
             'fetchWithTimeout(%o, %o) === %o',
-            { timeout: 1500, retry: 1 },
+            { timeout: 2500, retry: 2 },
             async (url, timeout, expected, logMessage) => {
                 const { log } = await spy([
                     'writeFileEnsureDir',

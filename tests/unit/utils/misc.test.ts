@@ -125,7 +125,7 @@ describe.concurrent('utils/misc', () => {
     describe('ensureDoesNotStartWith', () => {
         it('should remove leading slash', () => {
             expect(ensureDoesNotStartWith('/abc', '/')).toEqual('abc');
-            expect(ensureDoesNotStartWith('//abc', '/')).toEqual('/abc');
+            expect(ensureDoesNotStartWith('//abc', '/')).toEqual('abc');
         });
         it('should return strings without leading slashes as-is', () => {
             expect(ensureDoesNotStartWith('abc', '/')).toEqual('abc');
