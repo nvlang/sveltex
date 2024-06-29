@@ -2,18 +2,18 @@ import { sveltex } from '@nvl/sveltex';
 import { randomUUID } from 'crypto';
 
 // 4 x 4 x 3 = 48 configurations
-// export const backendConfigs = () =>
-//     cartesianProduct(
-//         ['unified', 'markdown-it', 'micromark', 'marked'] as const,
-//         ['shiki', 'starry-night', 'highlight.js', 'escape'] as const,
-//         ['mathjax-svg', 'mathjax-chtml', 'katex'] as const,
-//     );
 export const backendConfigs = () =>
     cartesianProduct(
-        ['unified'] as const,
-        ['shiki'] as const,
-        ['katex'] as const,
+        ['unified', 'markdown-it', 'micromark', 'marked'] as const,
+        ['shiki', 'starry-night', 'highlight.js', 'escape'] as const,
+        ['mathjax-svg', 'mathjax-chtml', 'katex'] as const,
     );
+// export const backendConfigs = () =>
+//     cartesianProduct(
+//         ['unified'] as const,
+//         ['shiki'] as const,
+//         ['katex'] as const,
+//     );
 
 export const preprocessors = async () =>
     await Promise.all(
