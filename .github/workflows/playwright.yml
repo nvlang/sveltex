@@ -1,4 +1,6 @@
+---
 name: Integration Tests (Playwright)
+
 on:
   push:
     branches: [main]

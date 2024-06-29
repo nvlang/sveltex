@@ -5,6 +5,7 @@ import { githubDarkDefault } from './theme/code-theme.js';
 
 import markdownItMultimdTable from 'markdown-it-multimd-table';
 import footnote from 'markdown-it-footnote';
+import { readFile } from 'fs/promises';
 
 export const ESBUILD_MODULES_TARGET = [
     'es2022',
@@ -30,6 +31,29 @@ export default defineConfig({
         },
     },
     markdown: {
+        shikiSetup: async (shiki) => {
+            const grammarSveltex = JSON.parse(
+                await readFile(
+                    '../extras/vscode-extension/syntaxes/sveltex.tmLanguage.json',
+                    'utf8',
+                ),
+            );
+            const grammarMarkdownForSveltex = JSON.parse(
+                await readFile(
+                    '../extras/vscode-extension/syntaxes/markdown.tmLanguage.json',
+                    'utf8',
+                ),
+            );
+            const grammarSvelte = JSON.parse(
+                await readFile('misc/svelte.tmLanguage.json', 'utf8'),
+            );
+            grammarSveltex.name = 'sveltex';
+            await shiki.loadLanguage(
+                // grammarSvelte,
+                grammarMarkdownForSveltex,
+                grammarSveltex,
+            );
+        },
         theme: {
             light: 'github-light-default',
             dark: githubDarkDefault,
@@ -159,12 +183,12 @@ export default defineConfig({
                     { text: 'TeX', link: '/tex' },
                 ],
             },
-            {
-                text: 'Examples',
-                base: '/docs/examples',
-                collapsed: false,
-                items: [{ text: 'Basic', link: '/basic' }],
-            },
+            // {
+            //     text: 'Examples',
+            //     base: '/docs/examples',
+            //     collapsed: false,
+            //     items: [{ text: 'Basic', link: '/basic' }],
+            // },
             {
                 text: 'Implementation',
                 base: '/docs/implementation',

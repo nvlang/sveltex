@@ -116,10 +116,6 @@ export {
     type Options as MicromarkMdxExpressionOptions,
 } from 'micromark-extension-mdx-expression';
 export {
-    mdxJsx as micromarkMdxJsx,
-    type Options as MicromarkMdxJsxOptions,
-} from 'micromark-extension-mdx-jsx';
-export {
     mdxMd as micromarkMdxMd,
     type Extension as MicromarkExtension,
 } from 'micromark-extension-mdx-md';

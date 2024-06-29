@@ -71,9 +71,6 @@ importers:
       micromark-extension-mdx-expression:
         specifier: ^3.0.0
         version: 3.0.0
-      micromark-extension-mdx-jsx:
-        specifier: ^3.0.0
-        version: 3.0.0
       micromark-extension-mdx-md:
         specifier: ^2.0.0
         version: 2.0.0

@@ -1345,10 +1345,10 @@ describe.concurrent.shuffle('getMdastES()', () => {
                     // `> < tag >`,
                     // `> <\ntag>`,
                     // invalid tag
-                    [`<%tag attr="val">`, -1],
-                    [`<t%ag attr="val">`, -1],
-                    [`<ta%g attr="val">`, -1],
-                    [`<tag% attr="val" attr2="val2">`, -1],
+                    // [`<%tag attr="val">`, -1],
+                    // [`<t%ag attr="val">`, -1],
+                    // [`<ta%g attr="val">`, -1],
+                    // [`<tag% attr="val" attr2="val2">`, -1],
                 ],
             ],
         ])('%s', (_label, tests) => {

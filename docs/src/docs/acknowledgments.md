@@ -13,7 +13,7 @@ All of the software listed below is open-source, available under MIT, GPL, or
 
 Without these the project would've had little reason to exist:
 
--   **[Svelte]:** The front-end JS framework for which this project is built.
+-   **[Svelte]:** The frontend JS framework for which this project is built.
 -   **[LaTeX]:** An incredibly powerful typesetting system with a huge ecosystem
     of packages.
 -   **[PGF/TikZ]:** An amazing vector graphics language in TeX.
@@ -21,7 +21,7 @@ Without these the project would've had little reason to exist:
 Similar works to SvelTeX, which also inspired it:
 
 -   **[MDsveX]:** A great Svelte preprocessor that's become the de facto
-    standard for Svelte markdown processing.
+    standard for Svelte Markdown processing.
 
 ## Libraries
 
@@ -42,9 +42,9 @@ Similar works to SvelTeX, which also inspired it:
 -   **[`fast-check`]:** Property-based testing (aka. fuzzy testing).
 
 
-## Website
+## Site
 
--   **[VitePress]:** Great SSG using Vite and Vue to render docs from markdown.
+-   **[VitePress]:** Great SSG using Vite and Vue to render docs from Markdown.
 
 ### Syntax highlighting
 

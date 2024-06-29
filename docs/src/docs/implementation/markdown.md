@@ -191,7 +191,7 @@ following:
 
 ## Directives
 
-Directives are great. They're also somewhat tricky for us, since they can contain curly brackets, which could be mistaken for e.g. Svelte mustache tags. There
+Markdown directives are great. They're also somewhat tricky for us, since they can contain curly brackets, which could be mistaken for e.g. Svelte mustache tags. There
 
 
 

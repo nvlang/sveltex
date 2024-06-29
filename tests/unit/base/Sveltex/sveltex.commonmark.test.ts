@@ -286,6 +286,7 @@ const exceptions: Record<
         98, // frontmatter
         161,
         321, // - a\n  > b\n  ```\n  c\n  ```\n- d\n
+        344, // <a href="`">`\n
         346, // autolink
         480, // autolink
         481, // autolink
@@ -296,10 +297,7 @@ const exceptions: Record<
     micromark: [
         500, // [link](foo\\)\\:)\n
     ],
-    unified: [
-        102,
-        344, // <a href="`">`\n
-    ],
+    unified: [102],
     'markdown-it': [],
     marked: [
         // Differences in escaping

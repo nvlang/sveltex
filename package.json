@@ -9,7 +9,6 @@
     "url": "https://nvlang.dev/"
   },
   "license": "MIT",
-  "packageManager": "pnpm@9.4.0",
   "module": "./dist/src/mod.js",
   "main": "./dist/src/mod.js",
   "types": "./dist/src/mod.d.ts",
@@ -157,7 +156,6 @@
     "micromark-extension-math": "^3.0.0",
     "micromark-extension-mdx": "^2.1.0",
     "micromark-extension-mdx-expression": "^3.0.0",
-    "micromark-extension-mdx-jsx": "^3.0.0",
     "micromark-extension-mdx-md": "^2.0.0",
     "micromark-util-character": "^2.1.0",
     "micromark-util-html-tag-name": "^2.0.0",

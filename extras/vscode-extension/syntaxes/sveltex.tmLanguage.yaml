@@ -179,7 +179,7 @@ repository:
         end: '(?i)(</(tex|latex|tikz)>)$'
         patterns:
           - begin: ^
-            while: ^(?!</(tex|latex|tikz)>)
+            while: ^(?i)(?!</(tex|latex|tikz)>)
             patterns:
               - include: text.tex.latex
         beginCaptures:

@@ -1,3 +1,4 @@
+---
 # Deploy to Cloudflare Pages. If a push to a non-production branch is done, it
 # will deploy as a preview deployment.
 name: Deploy to Cloudflare Pages
@@ -7,13 +8,13 @@ on:
     paths:
       - 'docs/**'
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      deployments: write
 
     name: Deploy to Cloudflare Pages
 

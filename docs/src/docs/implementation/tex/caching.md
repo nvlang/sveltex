@@ -10,7 +10,8 @@ SvelTeX implements a simple but robust caching mechanism to prevent unnecessary 
 
 ## Introduction
 
-SvelTeX's LaTeX pipeline makes use of two directories:
+SvelTeX's LaTeX pipeline makes use of two directories (both of which are
+configurable):
 
 -   `node_modules/.cache/@nvl/sveltex`: The caching directory, where TeX files
     and their corresponding DVI, PDF, or XDV output files are stored.
@@ -21,11 +22,9 @@ Now, if we have a TeX component in a Svelte file on which SvelTeX is run, one of
 the first things that SvelTeX will do is check the component's HTML tag and its
 mandatory `ref` attribute. For example, consider the following TeX component:
 
-```html
-<!-- src/routes/example.sveltex -->
-<TeX ref='ref1'>
-...
-</TeX>
+```sveltex
+<!-- src/routes/example/+page.sveltex -->
+<TeX ref="ref1">...</TeX>
 ```
 
 The tag and `ref` attribute are combined into a composite key with which the

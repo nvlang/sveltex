@@ -37,7 +37,6 @@ import {
     mdastMdxExpressionFromMarkdown,
     micromarkMath,
     micromarkMdxExpression,
-    micromarkMdxJsx,
     micromarkMdxMd,
     nodeAssert,
     uuid,
@@ -981,7 +980,7 @@ export function parseToMdast(
             ]),
             ...(directiveSettings.enabled ? [micromarkDirective()] : []),
             micromarkMdxMd(),
-            micromarkMdxJsx(),
+            // micromarkMdxJsx(),
             micromarkSkip(verbatimTags),
             ...(mathDelims.dollars
                 ? [

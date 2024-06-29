@@ -112,9 +112,9 @@ h4 {
     --vp-c-brand-3: #3678c9;
     --vp-c-brand-soft: rgba(0, 126, 231, 0.14);
 
-    --vp-c-gray-1: var(--gray-200);
-    --vp-c-gray-2: var(--gray-300);
-    --vp-c-gray-3: var(--gray-400);
+    --vp-c-gray-1: var(--gray-400);
+    --vp-c-gray-2: var(--gray-700);
+    --vp-c-gray-3: var(--gray-800);
     --vp-c-gray-soft: #91919124;
 
     --vp-c-link: var(--vp-c-text-1);
@@ -204,10 +204,10 @@ div.VPLocalSearchBox {
     --vp-c-brand-3: var(--264-400); */
     --vp-c-brand-soft: rgba(0, 126, 231, 0.16);
 
-    /* --vp-c-gray-1: var(--gray-600);
+    --vp-c-gray-1: var(--gray-600);
     --vp-c-gray-2: var(--gray-300);
     --vp-c-gray-3: var(--gray-200);
-    --vp-c-gray-soft: #77777724; */
+    --vp-c-gray-soft: #77777724;
 
     --vp-c-yellow-bright: var(--72-950);
     --vp-c-yellow-0: var(--72-850);
@@ -313,13 +313,14 @@ div.VPLocalSearchBox {
                     padding-left: calc(var(--li-line-height) + 12px);
                     &::before {
                         content: counter(list-item-2, upper-roman);
-                        @apply text-264-625 bg-264-150 border-264-225;
+                        @apply text-264-450 bg-264-950 border-264-850 dark:text-264-625 dark:bg-264-150 dark:border-264-225;
                     }
 
                     > ol > li::before {
                         content: counter(list-item-2, lower-roman);
-                        @apply text-240-625 bg-240-150
-                            border-240-225;
+                        @apply text-240-450 bg-240-950
+                            border-240-850 dark:text-240-625 dark:bg-240-150
+                            dark:border-240-225;
                     }
 
                     > p {

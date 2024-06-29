@@ -4,7 +4,7 @@ description: Some highlights from SvelTeX's features.
 ---
 
 <script lang="ts" setup>
-import { PhGear, PhLightning, PhShieldCheck, PhPackage, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple } from '@phosphor-icons/vue';
+import { PhGear, PhLightning, PhShieldCheck, PhPackage, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple, PhTextAlignLeft } from '@phosphor-icons/vue';
 </script>
 
 # Overview
@@ -65,6 +65,12 @@ preprocessor can take over.
     also allows you to inject your own custom transformers into the pipeline for
     each of these processors.
 
+-   <PhTextAlignLeft :size="28" weight="duotone"/>
+
+    **SvelTeX language support:** A TextMate grammar for SvelTeX, and a VS Code
+    extension shipping the same, enables most IDEs to properly highlight SvelTeX
+    code.
+
 -   <PhBooks :size="28" weight="duotone"/>
 
     **Extensive documentation:** With these docs and the extensive IntelliSense
@@ -93,7 +99,7 @@ preprocessor can take over.
 
     **Robust:** [Fuzzy](https://en.wikipedia.org/wiki/Fuzzing)
     testing with [fast-check](https://github.com/dubzzz/fast-check), integration
-    tests with [Playwright](https://playwright.dev/), and 5,000+ unit tests with
+    tests with [Playwright](https://playwright.dev/) (1,000+ snapshots), and 5,000+ unit tests with
     [Vitest](https://vitest.dev/) provide 100% code coverage.
 
 -   <PhInfo :size="28" weight="duotone"/>

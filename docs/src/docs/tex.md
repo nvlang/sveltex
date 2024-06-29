@@ -124,7 +124,7 @@ export default await sveltex({}, {
         },
         debug: {
             ignoreLogMessages: [
-                'Package shellesc Warning: Shell escape disabled',
+                // ...
             ],
             verbosity: {
                 onFailure: 'box',
