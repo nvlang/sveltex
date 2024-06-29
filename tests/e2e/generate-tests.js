@@ -20,6 +20,7 @@ rmSync(cwdPrefix + 'node_modules/.cache', {
     force: true,
 });
 mkdirSync(cwdPrefix + 'static', { recursive: true });
+mkdirSync(cwdPrefix + 'specs', { recursive: true });
 
 // Function to use glob to read all markdown files
 const pages = globSync(cwdPrefix + 'pages/**/*.md', { maxDepth: 10 });

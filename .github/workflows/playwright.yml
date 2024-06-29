@@ -95,6 +95,7 @@ jobs:
             ~/.cache/ms-playwright
             node_modules
             ~/.pnpm-store
+            .svelte-kit
           key:
             ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
             env.PLAYWRIGHT_VERSION }}
@@ -140,7 +141,7 @@ jobs:
 
       - name: Run Playwright tests
         run:
-          pnpm test:e2e:golden --shard=${{ matrix.shardIndex }}/${{
+          pnpm playwright:golden --shard=${{ matrix.shardIndex }}/${{
           matrix.shardTotal }}
 
       - name: Upload blob report to GitHub Actions Artifacts
