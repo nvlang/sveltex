@@ -13,6 +13,11 @@ const config = {
         ...preprocessors.flatMap((p) => p.configuration.extensions),
     ],
 
+    onwarn: (warning, defaultHandler) => {
+        if (warning.code === 'a11y-no-noninteractive-tabindex') return;
+        defaultHandler(warning);
+    },
+
     kit: {
         // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
         // If your environment is not supported or you settled on a specific environment, switch out the adapter.

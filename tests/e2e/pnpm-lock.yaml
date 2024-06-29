@@ -1982,7 +1982,6 @@ snapshots:
       micromark-extension-math: 3.0.0
       micromark-extension-mdx: 2.1.0
       micromark-extension-mdx-expression: 3.0.0
-      micromark-extension-mdx-jsx: 3.0.0
       micromark-extension-mdx-md: 2.0.0
       micromark-util-character: 2.1.0
       micromark-util-html-tag-name: 2.0.0

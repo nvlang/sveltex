@@ -1,6 +1,7 @@
 import { sveltex } from '@nvl/sveltex';
+import { randomUUID } from 'crypto';
 
-// 4 x 4 x 2 = 32 configurations
+// 4 x 4 x 3 = 48 configurations
 export const backendConfigs = cartesianProduct(
     ['unified', 'markdown-it', 'micromark', 'marked'] as const,
     ['shiki', 'starry-night', 'highlight.js', 'escape'] as const,
@@ -16,6 +17,13 @@ export const preprocessors = await Promise.all(
                 mathBackend: mathBackend.split('-')[0] as 'mathjax' | 'katex',
             },
             {
+                tex: {
+                    caching: {
+                        enabled: false,
+                        cacheDirectory:
+                            'node_modules/.cache/@nvl/sveltex/' + randomUUID(),
+                    },
+                },
                 extensions: [
                     `.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`,
                 ],

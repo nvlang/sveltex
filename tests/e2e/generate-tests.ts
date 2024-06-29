@@ -1,5 +1,5 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { backendConfigs } from './sveltex.config';
+import { backendConfigs } from './sveltex.config.js';
 import { glob } from 'glob';
 import { dirname, join, resolve, relative } from 'node:path';
 
@@ -32,13 +32,11 @@ await Promise.all(
                         '',
                     ),
                 );
-                console.log('Creating directory:', dir);
                 await mkdir(dir, { recursive: true });
                 const dest = join(
                     dir,
                     `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`,
                 );
-                console.log('Copying', page, 'to', dest);
                 let md = await readFile(page, 'utf-8');
                 md = md.replace(
                     /@@@/g,
@@ -55,20 +53,6 @@ export const hrefs = (
         absolute: true,
     })
 ).map((path) => dirname(relative(resolve(cwdPrefix + 'src/routes'), path)));
-
-console.log({
-    cwd: process.cwd(),
-    cwdPrefix,
-    'src/routes': resolve('src/routes'),
-    [cwdPrefix + 'src/routes']: resolve(cwdPrefix + 'src/routes'),
-    static: resolve('static'),
-    [cwdPrefix + 'static']: resolve(cwdPrefix + 'static'),
-    [cwdPrefix + 'src/routes/+page.svelte']: resolve(
-        cwdPrefix + 'src/routes/+page.svelte',
-    ),
-    pages,
-    hrefs,
-});
 
 await writeFile(
     cwdPrefix + 'src/routes/+page.svelte',

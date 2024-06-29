@@ -1,5 +1,6 @@
 "use strict";
 import { sveltex } from "@nvl/sveltex";
+import { randomUUID } from "crypto";
 export const backendConfigs = cartesianProduct(
   ["unified", "markdown-it", "micromark", "marked"],
   ["shiki", "starry-night", "highlight.js", "escape"],
@@ -14,6 +15,12 @@ export const preprocessors = await Promise.all(
         mathBackend: mathBackend.split("-")[0]
       },
       {
+        tex: {
+          caching: {
+            enabled: false,
+            cacheDirectory: "node_modules/.cache/@nvl/sveltex/" + randomUUID()
+          }
+        },
         extensions: [
           `.${markdownBackend.replace(/-/g, "")}AND${codeBackend.replace(/-/g, "")}AND${mathBackend.replace(/-/g, "")}ANDsveltex`
         ],
