@@ -87,8 +87,19 @@ jobs:
         if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
+      - name: Build SvelTeX
+        run: pnpm build
+
+      - name: Install SvelTeX
+        run: pnpm install
+        working-directory: tests/e2e
+
+      - name: Build Test Project
+        run: pnpm build
+        working-directory: tests/e2e
+
       - name: Run Playwright tests
-        run: pnpm test:e2e:golden
+        run: pnpm playwright:golden
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
@@ -98,10 +109,10 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Upload Generated Tests and Actual Screenshots
+      - name: Upload Actual Screenshots
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: specs
-          path: tests/e2e/specs/
+          name: actual-screenshots
+          path: tests/e2e/basic.spec.ts-snapshots/
           retention-days: 7

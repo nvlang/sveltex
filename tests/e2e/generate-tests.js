@@ -20,29 +20,17 @@ rmSync(cwdPrefix + 'node_modules/.cache', {
     force: true,
 });
 mkdirSync(cwdPrefix + 'static', { recursive: true });
-mkdirSync(cwdPrefix + 'specs', { recursive: true });
 
 // Function to use glob to read all markdown files
 const pages = globSync(cwdPrefix + 'pages/**/*.md', { maxDepth: 10 });
 
 backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
-    const basename = `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`;
     pages.forEach(async (page) => {
-        // Skip commutative-diagrams test with KaTeX, since it tests a
-        // MathJax-specific feature
-        if (page.includes('commutative-diagrams') && mathBackend === 'katex') {
-            return;
-        }
-        // TeX compilations slow down the build significantly here, since we're
-        // skipping caching. As such, we only test TeX compilation with one set
-        // of backends.
+        // Skip commutative-diagrams test with non-MathJax math backend, since
+        // it tests a MathJax-specific feature
         if (
-            page.includes('/tex/') &&
-            !(
-                markdownBackend === 'unified' &&
-                codeBackend === 'shiki' &&
-                mathBackend === 'mathjax'
-            )
+            page.includes('commutative-diagrams') &&
+            mathBackend !== 'mathjax'
         ) {
             return;
         }
@@ -54,7 +42,10 @@ backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
             relative(resolve(cwdPrefix + 'pages'), page).replace(/\.md$/, ''),
         );
         mkdirSync(dir, { recursive: true });
-        const dest = join(dir, basename);
+        const dest = join(
+            dir,
+            `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`,
+        );
         let md = readFileSync(page, 'utf-8');
         md = md.replace(
             /@@@/g,
@@ -62,50 +53,6 @@ backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
         );
         writeFileSync(dest, md);
     });
-
-    const mathBackendPretty = {
-        katex: 'KaTeX',
-        'mathjax-chtml': 'MathJax (CHTML)',
-        'mathjax-svg': 'MathJax (SVG)',
-    }[mathBackend];
-
-    writeFileSync(
-        join(
-            cwdPrefix,
-            'specs',
-            `${markdownBackend}-${codeBackend}-${mathBackend}.spec.ts`,
-        ),
-        `
-import { test, expect } from '@playwright/test';
-import { globSync } from 'glob';
-import { dirname, relative, resolve } from 'node:path';
-
-// Function to sanitize href for use as a filename
-const sanitizeFilename = (href: string) => href.replace(/[\\\\/:]/g, '_');
-
-test('${markdownBackend} + ${codeBackend} + ${mathBackendPretty}', async ({ page }) => {
-    let cwdPrefix = '';
-    if (!/.*[\\\\/]e2e[\\\\/]?$/.test(process.cwd())) {
-        cwdPrefix = 'tests/e2e/';
-    }
-    const hrefs = globSync(cwdPrefix + 'src/routes/generated/**/${basename}', {
-        absolute: true,
-    }).map((path) =>
-        dirname(relative(resolve(cwdPrefix + 'src/routes'), path)),
-    );
-    for (const href of hrefs) {
-        const response = await page.goto(href);
-        if (!response || !response.ok()) {
-            throw new Error(\`Failed to navigate to \${href}: \${response ? response.status() : 'No response'}\`);
-        }
-        await expect(page).toHaveScreenshot(\`\${sanitizeFilename(href)}.png\`, {
-            fullPage: true,
-        });
-    }
-});
-
-`,
-    );
 });
 
 const hrefs = globSync(cwdPrefix + 'src/routes/generated/**/+page.*', {
