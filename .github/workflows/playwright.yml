@@ -22,10 +22,10 @@ permissions:
   statuses: write
 
 jobs:
-  setup:
-    name: Setup
-    timeout-minutes: 10
+  test:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -87,129 +87,21 @@ jobs:
         if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
-      - name: Save cache
-        id: cache-setup
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/ms-playwright
-            node_modules
-            ~/.pnpm-store
-            .svelte-kit
-            tests/e2e/.svelte-kit
-            tests/e2e/**
-            tests/e2e/*
-            tests/e2e
-          key:
-            ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
-            env.PLAYWRIGHT_VERSION }}
-
-  test:
-    name: Run E2E Tests
-    needs: setup
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/ms-playwright
-            node_modules
-            ~/.pnpm-store
-            .svelte-kit
-            tests/e2e/.svelte-kit
-            tests/e2e/**
-            tests/e2e/*
-            tests/e2e
-          key:
-            ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
-            env.PLAYWRIGHT_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-          run_install: false
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: pnpm
-          cache-dependency-path: ./pnpm-lock.yaml
-
       - name: Run Playwright tests
-        run:
-          pnpm playwright:golden --shard=${{ matrix.shardIndex }}/${{
-          matrix.shardTotal }}
+        run: pnpm test:e2e:golden
 
-      - name: Upload blob report to GitHub Actions Artifacts
-        if: ${{ !cancelled() }}
+      - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: blob-report-${{ matrix.shardIndex }}
-          path: blob-report
-          retention-days: 1
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
 
       - name: Upload Generated Tests and Actual Screenshots
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: specs-${{ matrix.shardIndex }}
+          name: specs
           path: tests/e2e/specs/
           retention-days: 7
-
-  merge-reports:
-    timeout-minutes: 5
-    name: Merge Reports
-    # Merge reports after playwright-tests, even if some shards have failed
-    if: ${{ !cancelled() }}
-    needs: test
-
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-blob-reports
-          pattern: blob-report-*
-          merge-multiple: true
-
-      - name: Merge into HTML Report
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
-
-      - name: Upload HTML report
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
-          retention-days: 14
-
-      - name: Merge specs
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: specs
-          pattern: specs-*
-          delete-merged: true
-          retention-days: 7
-
-      - name: Delete blob reports
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: |
-            blob-report-*
