@@ -45,22 +45,27 @@ jobs:
             lipsum
             xcolor
 
-      - name: Set up Node.js
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: lts/*
+          run_install: false
+
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Install Poppler
         run: sudo apt-get install -y poppler-data poppler-utils
 
       - name: Install MuPDF
         run: sudo apt-get install -y mupdf mupdf-tools
-
-      - name: Install PNPM
-        run: npm install -g pnpm
-
-      - name: Install Node.js dependencies
-        run: pnpm install
 
       - name: Run Vitest tests
         run: pnpm test

@@ -33,14 +33,34 @@ jobs:
           # list of changed files within `super-linter`
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run ESLint
+        run: pnpm lint
+
       - name: Lint Code Base
         uses: super-linter/super-linter@v6
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_JSCPD: false
-          JAVASCRIPT_ES_CONFIG_FILE: eslint.config.js
-          JAVASCRIPT_DEFAULT_STYLE: prettier
+          VALIDATE_TYPESCRIPT_STANDARD: false
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_JAVASCRIPT_ES: false
           EDITORCONFIG_FILE_NAME: .github/linters/.ecrc
           LINTER_RULES_PATH: ./
           DEFAULT_BRANCH: main
