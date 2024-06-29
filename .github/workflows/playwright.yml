@@ -95,7 +95,7 @@ jobs:
             ~/.cache/ms-playwright
             node_modules
             ~/.pnpm-store
-            .svelte-kit
+            tests/e2e
           key:
             ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
             env.PLAYWRIGHT_VERSION }}
@@ -120,6 +120,7 @@ jobs:
             ~/.cache/ms-playwright
             node_modules
             ~/.pnpm-store
+            tests/e2e
           key:
             ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
             env.PLAYWRIGHT_VERSION }}
