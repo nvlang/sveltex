@@ -80,7 +80,10 @@ test('${markdownBackend} + ${codeBackend} + ${mathBackendPretty}', async ({ page
         dirname(relative(resolve(cwdPrefix + 'src/routes'), path)),
     );
     for (const href of hrefs) {
-        await page.goto(href);
+        const response = await page.goto(href);
+        if (!response || !response.ok()) {
+            throw new Error(\`Failed to navigate to \${href}: \${response ? response.status() : 'No response'}\`);
+        }
         await expect(page).toHaveScreenshot(\`\${sanitizeFilename(href)}.png\`, {
             fullPage: true,
         });

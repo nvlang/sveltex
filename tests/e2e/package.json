@@ -1,8 +1,9 @@
 {
   "name": "e2e",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "dev": "vite dev",
     "build": "pnpm prebuild && pnpm generate-tests && vite build",
@@ -38,6 +39,5 @@
     "typescript": "^5.4.5",
     "unified": "^11.0.4",
     "vite": "^5.2.13"
-  },
-  "license": "MIT"
+  }
 }

@@ -12,48 +12,37 @@ import { defineConfig, devices } from '@playwright/test';
 export const config = defineConfig({
     testDir: './tests/e2e/specs',
     /* Run tests in files in parallel */
-    fullyParallel: true,
+    // fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env['CI'],
     /* Retry on CI only */
     retries: process.env['CI'] ? 2 : 0,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: 'html',
+    reporter: process.env['CI'] ? 'blob' : 'html',
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
-        // baseURL: 'http://127.0.0.1:3000',
+        baseURL: 'http://localhost:3033',
+
+        launchOptions: {},
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
     },
     expect: {
         toHaveScreenshot: {
-            // maxDiffPixels: 100,
+            // maxDiffPixels: 0,
         },
     },
+
+    timeout: 60e3, // 1 minute
     // testMatch: /.*\.spec\.ts/,
 
     /* Configure projects for major browsers */
     projects: [
-        {
-            name: 'chrome',
-            use: {
-                ...devices['Desktop Chrome'],
-                baseURL: 'http://localhost:3033',
-            },
-            timeout: 120e3, // 2 minutes
-            retries: 3,
-        },
-        {
-            name: 'firefox',
-            use: {
-                ...devices['Desktop Firefox'],
-                baseURL: 'http://localhost:3033',
-            },
-            timeout: 120e3, // 2 minutes
-            retries: 3,
-        },
+        { name: 'chrome', use: { ...devices['Desktop Chrome'] } },
+        { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+        // { name: 'webkit', use: { ...devices['Desktop Safari'] } },
         // For some reason, webkit was messing with Playwright? I kept getting
         // the error "Error: could not decode image as PNG.". I'm not sure why.
         // I'll try to investigate this at some later point in time.
@@ -61,33 +50,23 @@ export const config = defineConfig({
         //     name: 'webkit',
         //     use: {
         //         ...devices['Desktop Safari'],
-        //         baseURL: 'http://localhost:3033',
         //     },
-
-        //     timeout: 120e3, // 2 minutes
-        //     retries: 3,
         // },
         {
             name: 'iPhone SE',
             use: {
                 ...devices['iPhone SE'],
                 colorScheme: 'dark',
-                baseURL: 'http://localhost:3033',
-                browserName: 'chromium',
+                // browserName: 'chromium',
             },
-            timeout: 120e3, // 2 minutes
-            retries: 3,
         },
         {
             name: 'Galaxy S9+',
             use: {
                 ...devices['Galaxy S9+'],
                 colorScheme: 'no-preference',
-                baseURL: 'http://localhost:3033',
                 browserName: 'chromium',
             },
-            timeout: 120e3, // 2 minutes
-            retries: 3,
         },
     ],
 
