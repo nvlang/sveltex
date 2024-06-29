@@ -25,6 +25,7 @@ mkdirSync(cwdPrefix + 'static', { recursive: true });
 const pages = globSync(cwdPrefix + 'pages/**/*.md', { maxDepth: 10 });
 
 backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
+    const basename = `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`;
     pages.forEach(async (page) => {
         const pre =
             cwdPrefix +
@@ -34,10 +35,7 @@ backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
             relative(resolve(cwdPrefix + 'pages'), page).replace(/\.md$/, ''),
         );
         mkdirSync(dir, { recursive: true });
-        const dest = join(
-            dir,
-            `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`,
-        );
+        const dest = join(dir, basename);
         let md = readFileSync(page, 'utf-8');
         md = md.replace(
             /@@@/g,
@@ -45,6 +43,47 @@ backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
         );
         writeFileSync(dest, md);
     });
+
+    const mathBackendPretty = {
+        katex: 'KaTeX',
+        'mathjax-chtml': 'MathJax (CHTML)',
+        'mathjax-svg': 'MathJax (SVG)',
+    }[mathBackend];
+
+    writeFileSync(
+        join(
+            cwdPrefix,
+            'specs',
+            `${markdownBackend}-${codeBackend}-${mathBackend}.spec.ts`,
+        ),
+        `
+import { test, expect } from '@playwright/test';
+import { globSync } from 'glob';
+import { dirname, relative, resolve } from 'node:path';
+
+// Function to sanitize href for use as a filename
+const sanitizeFilename = (href: string) => href.replace(/[\\\\/:]/g, '_');
+
+test('${markdownBackend} + ${codeBackend} + ${mathBackendPretty}', async ({ page }) => {
+    let cwdPrefix = '';
+    if (!/.*[\\\\/]e2e[\\\\/]?$/.test(process.cwd())) {
+        cwdPrefix = 'tests/e2e/';
+    }
+    const hrefs = globSync(cwdPrefix + 'src/routes/generated/**/${basename}', {
+        absolute: true,
+    }).map((path) =>
+        dirname(relative(resolve(cwdPrefix + 'src/routes'), path)),
+    );
+    for (const href of hrefs) {
+        await page.goto(href);
+        await expect(page).toHaveScreenshot(\`\${sanitizeFilename(href)}.png\`, {
+            fullPage: true,
+        });
+    }
+});
+
+`,
+    );
 });
 
 const hrefs = globSync(cwdPrefix + 'src/routes/generated/**/+page.*', {

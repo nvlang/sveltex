@@ -67,7 +67,7 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run Playwright tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e:golden
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
@@ -77,10 +77,10 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Upload Actual Screenshots
+      - name: Upload Generated Tests and Actual Screenshots
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: actual-screenshots
-          path: tests/e2e/basic.spec.ts-snapshots/
+          name: specs
+          path: tests/e2e/specs/
           retention-days: 7

@@ -2,16 +2,15 @@ import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { preprocessors } from './sveltex.config.js';
 
+const ps = await preprocessors();
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
     // Consult https://kit.svelte.dev/docs/integrations#preprocessors
     // for more information about preprocessors
-    preprocess: [vitePreprocess(), ...preprocessors],
+    preprocess: [vitePreprocess(), ...ps],
 
-    extensions: [
-        '.svelte',
-        ...preprocessors.flatMap((p) => p.configuration.extensions),
-    ],
+    extensions: ['.svelte', ...ps.flatMap((p) => p.configuration.extensions)],
 
     onwarn: (warning, defaultHandler) => {
         if (warning.code === 'a11y-no-noninteractive-tabindex') return;

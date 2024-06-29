@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export const config = defineConfig({
-    testDir: './tests/e2e',
+    testDir: './tests/e2e/specs',
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -102,9 +102,11 @@ export const config = defineConfig({
     name: 'Integration tests',
 });
 
-/* Opt out of parallel tests on CI. */
-if (process.env['CI']) {
-    config.workers = 1;
-}
+config.fullyParallel = true;
+
+// /* Opt out of parallel tests on CI. */
+// if (process.env['CI']) {
+//     config.workers = 1;
+// }
 
 export default config;
