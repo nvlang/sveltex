@@ -22,14 +22,10 @@ permissions:
   statuses: write
 
 jobs:
-  test:
-    timeout-minutes: 20
+  setup:
+    name: Setup
+    timeout-minutes: 10
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
     steps:
       - uses: actions/checkout@v4
 
@@ -91,6 +87,29 @@ jobs:
         if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
+      - name: Save cache
+        id: cache-setup
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            node_modules
+            ~/.pnpm-store
+          key:
+            ${{ runner.os }}-setup-${{ hashFiles('**/pnpm-lock.yaml') }}-${{
+            env.PLAYWRIGHT_VERSION }}
+
+  test:
+    name: Run E2E Tests
+    needs: setup
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
+    steps:
       - name: Run Playwright tests
         run:
           pnpm test:e2e:golden --shard=${{ matrix.shardIndex }}/${{
@@ -113,9 +132,11 @@ jobs:
           retention-days: 7
 
   merge-reports:
+    timeout-minutes: 5
+    name: Merge Reports
     # Merge reports after playwright-tests, even if some shards have failed
     if: ${{ !cancelled() }}
-    needs: [test]
+    needs: test
 
     runs-on: ubuntu-latest
     steps:
@@ -140,3 +161,17 @@ jobs:
           name: html-report--attempt-${{ github.run_attempt }}
           path: playwright-report
           retention-days: 14
+
+      - name: Merge specs
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: specs
+          pattern: specs-*
+          delete-merged: true
+          retention-days: 7
+
+      - name: Delete blob reports
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            blob-report-*

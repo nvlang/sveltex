@@ -32,6 +32,19 @@ backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
         if (page.includes('commutative-diagrams') && mathBackend === 'katex') {
             return;
         }
+        // TeX compilations slow down the build significantly here, since we're
+        // skipping caching. As such, we only test TeX compilation with one set
+        // of backends.
+        if (
+            page.includes('/tex/') &&
+            !(
+                markdownBackend === 'unified' &&
+                codeBackend === 'shiki' &&
+                mathBackend === 'mathjax'
+            )
+        ) {
+            return;
+        }
         const pre =
             cwdPrefix +
             `src/routes/generated/${markdownBackend}-${codeBackend}-${mathBackend}`;

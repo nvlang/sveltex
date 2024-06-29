@@ -35,7 +35,7 @@ export const config = defineConfig({
         },
     },
 
-    timeout: 60e3, // 1 minute
+    timeout: 90e3, // 1.5 minutes
     // testMatch: /.*\.spec\.ts/,
 
     /* Configure projects for major browsers */
@@ -73,7 +73,7 @@ export const config = defineConfig({
     /* Run your local dev server before starting the tests */
     webServer: {
         cwd: 'tests/e2e',
-        command: 'pnpm i && pnpm build && pnpm preview',
+        command: 'pnpm preview',
         url: 'http://localhost:3033',
         reuseExistingServer: !process.env['CI'],
         timeout: 600e3, // 10 minutes

@@ -1,5 +1,4 @@
 import { sveltex } from '@nvl/sveltex';
-import { randomUUID } from 'crypto';
 
 // 4 x 4 x 3 = 48 configurations
 export const backendConfigs = () =>
@@ -25,9 +24,7 @@ export const preprocessors = async () =>
                         tex: {
                             caching: {
                                 enabled: false,
-                                cacheDirectory:
-                                    'node_modules/.cache/@nvl/sveltex/' +
-                                    randomUUID(),
+                                cacheDirectory: `node_modules/.cache/@nvl/sveltex/${markdownBackend}/${codeBackend}/${mathBackend}`,
                             },
                         },
                         extensions: [
