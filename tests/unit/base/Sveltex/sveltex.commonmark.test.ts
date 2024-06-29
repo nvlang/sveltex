@@ -7,7 +7,7 @@ import {
 } from '$utils/diagnosers/backendChoices.js';
 import { MarkdownBackend } from '$types/handlers/Markdown.js';
 import { nodeAssert } from '$deps.js';
-import { commonMarkSpec } from 'base/Sveltex/commonmark.js';
+import { commonMarkSpec } from '$tests/unit/base/Sveltex/commonmark.js';
 
 function fixture() {
     beforeEach(() => {
