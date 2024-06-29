@@ -59,30 +59,12 @@ export const preprocessors = async () =>
                                       ?.toLowerCase() as 'svg' | 'chtml',
                               }
                             : {},
-                        code: {
-                            shiki: { theme: 'github-dark-default' },
-                            transformers: {
-                                post: (str) =>
-                                    str.replace(
-                                        ' tabindex="0"><code>',
-                                        '><code>',
-                                    ),
-                            },
-                        },
-                        // code: codeBackend === 'starry-night'
-                        //     ? { languages: 'all' }
-                        //     : codeBackend === 'shiki'
-                        //       ? {
-                        //             shiki: { theme: 'github-dark-default' },
-                        //             transformers: {
-                        //                 post: (str) =>
-                        //                     str.replace(
-                        //                         ' tabindex="0"><code>',
-                        //                         '><code>',
-                        //                     ),
-                        //             },
-                        //         }
-                        //       : {},
+                        code:
+                            codeBackend === 'starry-night'
+                                ? { languages: 'all' }
+                                : codeBackend === 'shiki'
+                                  ? { shiki: { theme: 'github-dark-default' } }
+                                  : {},
                     },
                 );
             },

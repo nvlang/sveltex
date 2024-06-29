@@ -2,9 +2,9 @@
 import { sveltex } from "@nvl/sveltex";
 import { randomUUID } from "crypto";
 export const backendConfigs = () => cartesianProduct(
-  ["unified"],
-  ["shiki"],
-  ["katex"]
+  ["unified", "markdown-it", "micromark", "marked"],
+  ["shiki", "starry-night", "highlight.js", "escape"],
+  ["mathjax-svg", "mathjax-chtml", "katex"]
 );
 export const preprocessors = async () => await Promise.all(
   backendConfigs().map(

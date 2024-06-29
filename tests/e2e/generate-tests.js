@@ -27,6 +27,11 @@ const pages = globSync(cwdPrefix + 'pages/**/*.md', { maxDepth: 10 });
 backendConfigs().forEach(([markdownBackend, codeBackend, mathBackend]) => {
     const basename = `+page.${markdownBackend.replace(/-/g, '')}AND${codeBackend.replace(/-/g, '')}AND${mathBackend.replace(/-/g, '')}ANDsveltex`;
     pages.forEach(async (page) => {
+        // Skip commutative-diagrams test with KaTeX, since it tests a
+        // MathJax-specific feature
+        if (page.includes('commutative-diagrams') && mathBackend === 'katex') {
+            return;
+        }
         const pre =
             cwdPrefix +
             `src/routes/generated/${markdownBackend}-${codeBackend}-${mathBackend}`;

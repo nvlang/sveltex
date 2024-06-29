@@ -68,7 +68,23 @@ jobs:
       - name: Install MuPDF
         run: sudo apt-get install -y mupdf mupdf-tools
 
-      - name: Install Playwright Browsers
+      # Playwright caching. Adapted from
+      # https://github.com/microsoft/playwright/issues/7249#issuecomment-1385567519
+      - name: Store Playwright Version
+        run: |
+          PLAYWRIGHT_VERSION=$(pnpm ls @playwright/test | grep @playwright | sed 's|.*playwright/test ||')
+          echo "Playwright Version: $PLAYWRIGHT_VERSION"
+          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_ENV
+
+      - name: Cache Playwright Browsers for Playwright's Version
+        id: cache-playwright-browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Setup Playwright
+        if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
       - name: Run Playwright tests

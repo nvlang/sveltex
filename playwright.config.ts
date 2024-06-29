@@ -42,7 +42,7 @@ export const config = defineConfig({
                 ...devices['Desktop Chrome'],
                 baseURL: 'http://localhost:3033',
             },
-            timeout: 300e3, // 5 minutes
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
         {
@@ -51,7 +51,7 @@ export const config = defineConfig({
                 ...devices['Desktop Firefox'],
                 baseURL: 'http://localhost:3033',
             },
-            timeout: 300e3, // 5 minutes
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
         // For some reason, webkit was messing with Playwright? I kept getting
@@ -64,7 +64,7 @@ export const config = defineConfig({
         //         baseURL: 'http://localhost:3033',
         //     },
 
-        //     timeout: 300e3, // 5 minutes
+        //     timeout: 120e3, // 2 minutes
         //     retries: 3,
         // },
         {
@@ -75,7 +75,7 @@ export const config = defineConfig({
                 baseURL: 'http://localhost:3033',
                 browserName: 'chromium',
             },
-            timeout: 300e3, // 5 minutes
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
         {
@@ -86,7 +86,7 @@ export const config = defineConfig({
                 baseURL: 'http://localhost:3033',
                 browserName: 'chromium',
             },
-            timeout: 300e3, // 5 minutes
+            timeout: 120e3, // 2 minutes
             retries: 3,
         },
     ],
@@ -102,11 +102,11 @@ export const config = defineConfig({
     name: 'Integration tests',
 });
 
-config.fullyParallel = true;
+// config.fullyParallel = true;
 
-// /* Opt out of parallel tests on CI. */
-// if (process.env['CI']) {
-//     config.workers = 1;
-// }
+/* Opt out of parallel tests on CI. */
+if (process.env['CI']) {
+    config.workers = 1;
+}
 
 export default config;

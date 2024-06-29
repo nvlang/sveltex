@@ -411,6 +411,13 @@ export class Sveltex<
                 }
             }
 
+            console.log('src/base/Sveltex.ts:414\n', {
+                filename,
+                mathPresent,
+                headLines,
+                headSnippet,
+            });
+
             // Add <script> tag if not present
             if (!scriptPresent) {
                 prependToProcessed.push('<script>', '</script>');

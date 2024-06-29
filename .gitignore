@@ -30,7 +30,9 @@ scripts/tex/svg
 scripts/tex/svg-optimized
 
 tests/e2e/src/routes/generated
+tests/e2e/src/routes/+page.svelte
 tests/e2e/**/*darwin.png
+tests/e2e/specs/*.spec.ts
 
 # Docs
 docs/.vitepress/cache/

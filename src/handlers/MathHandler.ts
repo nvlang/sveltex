@@ -257,7 +257,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     } else {
                         log(
                             'error',
-                            'No CDN specified for KaTeX. If you want to deactivate Sveltex CSS handling for KaTeX, set the `tex.css.type` property of the Sveltex configuration to `none`.',
+                            'No CDN specified for KaTeX. If you want to deactivate SvelTeX CSS handling for KaTeX, set the `tex.css.type` property of the SvelTeX configuration to `none`.',
                         );
                         return;
                     }
@@ -532,7 +532,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 if (!firstCdn) {
                     throw new Error(
-                        'No CDN specified for MathJax. If you want to deactivate Sveltex CSS handling for MathJax, set the `tex.css.type` property of the Sveltex configuration to `none`.',
+                        'No CDN specified for MathJax. If you want to deactivate SvelTeX CSS handling for MathJax, set the `tex.css.type` property of the SvelTeX configuration to `none`.',
                     );
                 }
 
