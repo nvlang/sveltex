@@ -27,7 +27,7 @@ describe("MathHandler<'mathjax'>", () => {
     let fancyWrite: MockInstance;
     let log: MockInstance;
     let existsSync: MockInstance;
-    let writeFileEnsureDir: MockInstance;
+    let writeFileEnsureDirSync: MockInstance;
     beforeAll(async () => {
         vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
@@ -40,7 +40,9 @@ describe("MathHandler<'mathjax'>", () => {
         const mocks = await spy(
             [
                 'writeFile',
+                'writeFileSync',
                 'writeFileEnsureDir',
+                'writeFileEnsureDirSync',
                 'fancyWrite',
                 'mkdir',
                 'log',
@@ -52,7 +54,7 @@ describe("MathHandler<'mathjax'>", () => {
         fancyWrite = mocks.fancyWrite;
         log = mocks.log;
         existsSync = mocks.existsSync;
-        writeFileEnsureDir = mocks.writeFileEnsureDir;
+        writeFileEnsureDirSync = mocks.writeFileEnsureDirSync;
     });
 
     afterAll(() => {
@@ -90,8 +92,9 @@ describe("MathHandler<'mathjax'>", () => {
             const handler = await MathHandler.create('mathjax', {
                 outputFormat: 'svg',
             });
-            await handler.process('');
-            await handler.process('');
+            await Promise.all(
+                ['a', 'b', 'c'].map(async (str) => await handler.process(str)),
+            );
             expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
@@ -214,14 +217,14 @@ describe("MathHandler<'mathjax'>", () => {
                             xChtmlV4,
                         ]);
                         if (expectError) {
-                            await expect(async () => {
-                                await handler.updateCss();
-                            }).rejects.toThrowError();
+                            expect(() => {
+                                handler.updateCss();
+                            }).toThrowError();
                         } else {
-                            await handler.updateCss();
+                            handler.updateCss();
                         }
                         expect(log).not.toHaveBeenCalled();
-                        expect(writeFileEnsureDir).toHaveBeenCalledTimes(
+                        expect(writeFileEnsureDirSync).toHaveBeenCalledTimes(
                             nWrites,
                         );
                         if (mockFancyFetch) fancyFetch.mockRestore();

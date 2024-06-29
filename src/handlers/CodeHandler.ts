@@ -177,13 +177,29 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     get handleCss() {
         return async () => {
             if (this._handledCss) return;
-            this._handledCss = true;
+            if (this._handlingCss) {
+                // wait until the CSS is handled
+                await new Promise((resolve) => {
+                    const interval = setInterval(() => {
+                        if (this._handledCss) {
+                            clearInterval(interval);
+                            resolve(null);
+                        }
+                    }, 10);
+                });
+                return;
+            }
+            this._handlingCss = true;
             await this._handleCss();
+            this._handledCss = true;
+            this._handlingCss = false;
         };
     }
 
-    private configIsValid: boolean | undefined = undefined;
     private _handledCss: boolean = false;
+    private _handlingCss: boolean = false;
+
+    private configIsValid: boolean | undefined = undefined;
     private async _handleCss() {
         // If the backend isn't themable, don't try to fetch any CSS
         if (!isCodeBackendWithCss(this.backend)) return;

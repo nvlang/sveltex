@@ -8,12 +8,6 @@ export const backendConfigs = () =>
         ['shiki', 'starry-night', 'highlight.js', 'escape'] as const,
         ['mathjax-svg', 'mathjax-chtml', 'katex'] as const,
     );
-// export const backendConfigs = () =>
-//     cartesianProduct(
-//         ['unified'] as const,
-//         ['shiki'] as const,
-//         ['katex'] as const,
-//     );
 
 export const preprocessors = async () =>
     await Promise.all(

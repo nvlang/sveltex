@@ -177,7 +177,9 @@ describe('Sveltex', () => {
                 'rename',
                 'spawnCliInstruction',
                 'writeFile',
+                'writeFileSync',
                 'writeFileEnsureDir',
+                'writeFileEnsureDirSync',
             ],
             true,
         );

@@ -41,29 +41,7 @@ export const preprocessors = async () => await Promise.all(
           math: mathBackend.startsWith("mathjax") ? {
             outputFormat: mathBackend.split("-")[1]?.toLowerCase()
           } : {},
-          code: {
-            shiki: { theme: "github-dark-default" },
-            transformers: {
-              post: (str) => str.replace(
-                ' tabindex="0"><code>',
-                "><code>"
-              )
-            }
-          }
-          // code: codeBackend === 'starry-night'
-          //     ? { languages: 'all' }
-          //     : codeBackend === 'shiki'
-          //       ? {
-          //             shiki: { theme: 'github-dark-default' },
-          //             transformers: {
-          //                 post: (str) =>
-          //                     str.replace(
-          //                         ' tabindex="0"><code>',
-          //                         '><code>',
-          //                     ),
-          //             },
-          //         }
-          //       : {},
+          code: codeBackend === "starry-night" ? { languages: "all" } : codeBackend === "shiki" ? { shiki: { theme: "github-dark-default" } } : {}
         }
       );
     }

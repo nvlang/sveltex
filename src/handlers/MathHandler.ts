@@ -67,23 +67,39 @@ export class MathHandler<B extends MathBackend> extends Handler<
         Promise.resolve();
     get handleCss() {
         return async () => {
-            if (this._handledCss) return;
-            this._handledCss = true;
+            if (this._handledCss) {
+                return;
+            }
+            if (this._handlingCss) {
+                // wait until the CSS is handled
+                await new Promise((resolve) => {
+                    const interval = setInterval(() => {
+                        if (this._handledCss) {
+                            clearInterval(interval);
+                            resolve(null);
+                        }
+                    }, 10);
+                });
+                return;
+            }
+            this._handlingCss = true;
             await this._handleCss(this);
+            this._handledCss = true;
+            this._handlingCss = false;
         };
     }
 
     private _handledCss: boolean = false;
+    private _handlingCss: boolean = false;
 
-    // The `() => Promise.resolve()` function is unreachable, since the
-    // `updateCss` getter only calls `_updateCss` if MathJax and CHTML are being
-    // used, in which case `_updateCss` is overridden in the constructor.
+    // The `() => undefined` function is unreachable, since the `updateCss`
+    // getter only calls `_updateCss` if MathJax and CHTML are being used, in
+    // which case `_updateCss` is overridden in the constructor.
     /* v8 ignore next 2 (unreachable code) */
-    private _updateCss: (mathHandler: this) => Promise<void> = () =>
-        Promise.resolve();
+    private _updateCss: (mathHandler: this) => void = () => undefined;
 
     get updateCss() {
-        return async () => {
+        return () => {
             if (
                 this.backend === 'mathjax' &&
                 (this._configuration as FullMathConfiguration<'mathjax'>).css
@@ -91,7 +107,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 (this._configuration as FullMathConfiguration<'mathjax'>)
                     .outputFormat === 'chtml'
             ) {
-                await this._updateCss(this);
+                this._updateCss(this);
             }
         };
     }
@@ -132,7 +148,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
         process: MathProcessFn<B>;
         configuration: FullMathConfiguration<B>;
         handleCss?: (mathHandler: MathHandler<B>) => Promise<void>;
-        updateCss?: (mathHandler: MathHandler<B>) => Promise<void>;
+        updateCss?: (mathHandler: MathHandler<B>) => void;
     }) {
         super({ backend, process, configuration });
         if (handleCss) this._handleCss = handleCss;
@@ -503,7 +519,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
              */
             const updateCss: (
                 mathHandler: MathHandler<'mathjax'>,
-            ) => Promise<void> = async () => {
+            ) => void = () => {
                 nodeAssert(
                     configuration.outputFormat === 'chtml',
                     "Expected `outputFormat` to be 'chtml' in `updateCss` call.",
@@ -547,7 +563,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     dir,
                     `mathjax@${version}.chtml.min.css`,
                 );
-                await fs.writeFileEnsureDir(path, css);
+                fs.writeFileEnsureDirSync(path, css);
             };
 
             const process: MathProcessFn<'mathjax'> = async (

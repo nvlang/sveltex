@@ -385,7 +385,7 @@ export class Sveltex<
             if (mathPresent) {
                 this.mathPresent[filename] = true;
                 headLines.push(...this._mathHandler.headLines);
-                await this._mathHandler.updateCss();
+                this._mathHandler.updateCss();
             }
             if (codePresent) {
                 this.codePresent[filename] = true;
@@ -410,13 +410,6 @@ export class Sveltex<
                     );
                 }
             }
-
-            console.log('src/base/Sveltex.ts:414\n', {
-                filename,
-                mathPresent,
-                headLines,
-                headSnippet,
-            });
 
             // Add <script> tag if not present
             if (!scriptPresent) {

@@ -58,7 +58,7 @@ describe("MathHandler<'custom'>", () => {
                 process: (input: string) => input,
             });
             // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-            expect(await handler.updateCss()).toBeUndefined();
+            expect(handler.updateCss()).toBeUndefined();
         });
     });
 

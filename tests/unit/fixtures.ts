@@ -14,7 +14,9 @@ const mockableFunctions = [
     'rename',
     'spawnCliInstruction',
     'writeFile',
+    'writeFileSync',
     'writeFileEnsureDir',
+    'writeFileEnsureDirSync',
 ] as const;
 
 function isMockable(target: unknown): target is Mockable {
@@ -56,6 +58,12 @@ export async function spy(
         case 'writeFile':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'writeFile');
             break;
+        case 'writeFileSync':
+            spyFn = vi.spyOn(
+                (await import('$utils/fs.js')).fs,
+                'writeFileSync',
+            );
+            break;
         case 'readFile':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'readFile');
             break;
@@ -78,6 +86,12 @@ export async function spy(
             spyFn = vi.spyOn(
                 (await import('$utils/fs.js')).fs,
                 'writeFileEnsureDir',
+            );
+            break;
+        case 'writeFileEnsureDirSync':
+            spyFn = vi.spyOn(
+                (await import('$utils/fs.js')).fs,
+                'writeFileEnsureDirSync',
             );
             break;
         default: {
