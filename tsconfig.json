@@ -62,6 +62,9 @@
     "src",
     "tests",
     "src/scripts",
-    "scripts"
+    "scripts",
+    "LICENSE",
+    "README.md",
+    "CODE_OF_CONDUCT.md"
   ]
 }

@@ -34,7 +34,6 @@
   "homepage": "https://sveltex.dev",
   "files": [
     "dist",
-    "src",
     "package.json",
     "LICENSE",
     "README.md"
@@ -45,10 +44,11 @@
   "scripts": {
     "start": "node dist/src/main.js",
     "clean": "rimraf coverage dist tmp",
+    "copy:meta": "cp README.md dist/ && cp LICENSE dist/",
     "prebuild": "pnpm run lint",
     "build:dev": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "build:dev:watch": "tsc -w -p tsconfig.json",
-    "build": "pnpm run clean && tsc -p tsconfig.release.json && tsc-alias -p tsconfig.release.json",
+    "build": "pnpm run clean && tsc -p tsconfig.release.json && tsc-alias -p tsconfig.release.json && pnpm run copy:meta",
     "lint": "eslint . && tsc -p tsconfig.check.json",
     "test": "vitest run --coverage --watch --",
     "test:e2e": "pnpm test:e2e:prepare && playwright test",
