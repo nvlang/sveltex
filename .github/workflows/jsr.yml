@@ -11,12 +11,15 @@ permissions:
 
 jobs:
   publish:
+    name: Publish to JSR
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write # The OIDC ID token is used for authentication with JSR.
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensure all branches and tags are fetched
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -35,4 +38,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - run: pnpm exec jsr publish
+      - name: Determine Branch
+        run:
+          echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+
+      - name: Publish to JSR
+        run: pnpm dlx jsr publish

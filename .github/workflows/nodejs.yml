@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -32,6 +34,10 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
+
+      - name: Determine Branch
+        run:
+          echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
 
       - run: pnpm publish --provenance
         env:
