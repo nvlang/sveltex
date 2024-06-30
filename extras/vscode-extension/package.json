@@ -12,7 +12,7 @@
     "vscode"
   ],
   "main": "./out/extension.js",
-  "publisher": "nvlang",
+  "publisher": "sveltex-preprocessor",
   "icon": "res/icon@256.png",
   "pricing": "Free",
   "license": "MIT",
