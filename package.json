@@ -1,6 +1,6 @@
 {
   "name": "@nvl/sveltex",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Svelte + Markdown + LaTeX",
   "type": "module",
   "author": {
@@ -12,6 +12,7 @@
   "module": "./dist/src/mod.js",
   "main": "./dist/src/mod.js",
   "types": "./dist/src/mod.d.ts",
+  "private": false,
   "keywords": [
     "svelte",
     "marked",
