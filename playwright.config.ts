@@ -40,9 +40,9 @@ export const config = defineConfig({
 
     /* Configure projects for major browsers */
     projects: [
-        // { name: 'chrome', use: { ...devices['Desktop Chrome'] } },
-        // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-        { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+        { name: 'chrome', use: { ...devices['Desktop Chrome'] } },
+        { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+        // { name: 'webkit', use: { ...devices['Desktop Safari'] } },
         // For some reason, webkit was messing with Playwright? I kept getting
         // the error "Error: could not decode image as PNG.". I'm not sure why.
         // I'll try to investigate this at some later point in time.
@@ -60,14 +60,14 @@ export const config = defineConfig({
         //         // browserName: 'chromium',
         //     },
         // },
-        // {
-        //     name: 'Galaxy S9+',
-        //     use: {
-        //         ...devices['Galaxy S9+'],
-        //         colorScheme: 'no-preference',
-        //         browserName: 'chromium',
-        //     },
-        // },
+        {
+            name: 'Galaxy S9+',
+            use: {
+                ...devices['Galaxy S9+'],
+                colorScheme: 'no-preference',
+                browserName: 'chromium',
+            },
+        },
     ],
 
     /* Run your local dev server before starting the tests */
