@@ -17,7 +17,7 @@ importers:
     devDependencies:
       '@nvl/sveltex':
         specifier: latest
-        version: 0.1.1(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
+        version: 0.1.2(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
       '@shikijs/vitepress-twoslash':
         specifier: ^1.10.0
         version: 1.10.0(typescript@5.4.5)
@@ -379,8 +379,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@nvl/sveltex@0.1.1':
-    resolution: {integrity: sha512-txDYB/5SnyT0M7YA4yCSE3+1kKclfah2zZfvSjkMcWvaCs3FrNN02nAYttutxrMcJhQr5uZ6LKjyZrO2Bt96Iw==}
+  '@nvl/sveltex@0.1.2':
+    resolution: {integrity: sha512-0TJpAlZTHbeaMotWACUzf1/oWlHGx/j/du4oHRLwwLp7aFVh9wjDMSUZ4Vk3wOCu1a1B1uybbu+A+MtfmAhMSQ==}
     engines: {node: '>=16'}
     peerDependencies:
       '@wooorm/starry-night': '>=3.3.0'
@@ -1895,8 +1895,8 @@ packages:
     resolution: {integrity: sha512-HnLOCR3vjcY8beoNLtcjZ5/nxn2afmME6lhrDrebokqMap+XbeW8n9TXpPDOqdGK5qcI3oT0GKTW6wC7EMiVqA==}
     engines: {node: '>=12'}
 
-  string-width@7.1.0:
-    resolution: {integrity: sha512-SEIJCWiX7Kg4c129n48aDRwLbFb2LJmXXFrWBG4NGaRtMQ3myKPKbwrD1BKqQn74oCoNMBVrfDEr5M9YxCsrkw==}
+  string-width@7.2.0:
+    resolution: {integrity: sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==}
     engines: {node: '>=18'}
 
   stringify-entities@4.0.4:
@@ -2446,7 +2446,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@nvl/sveltex@0.1.1(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
+  '@nvl/sveltex@0.1.2(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
     dependencies:
       '@types/html-escaper': 3.0.2
       '@types/js-yaml': 4.0.9
@@ -3878,7 +3878,7 @@ snapshots:
       is-unicode-supported: 2.0.0
       log-symbols: 6.0.0
       stdin-discarder: 0.2.2
-      string-width: 7.1.0
+      string-width: 7.2.0
       strip-ansi: 7.1.0
 
   p-limit@4.0.0:
@@ -4125,7 +4125,7 @@ snapshots:
       emoji-regex: 9.2.2
       strip-ansi: 7.1.0
 
-  string-width@7.1.0:
+  string-width@7.2.0:
     dependencies:
       emoji-regex: 10.3.0
       get-east-asian-width: 1.2.0
