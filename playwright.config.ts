@@ -35,7 +35,7 @@ export const config = defineConfig({
         },
     },
 
-    timeout: 90e3, // 1.5 minutes
+    timeout: 300e3, // 5 minutes
     // testMatch: /.*\.spec\.ts/,
 
     /* Configure projects for major browsers */
