@@ -17,7 +17,7 @@ importers:
     devDependencies:
       '@nvl/sveltex':
         specifier: latest
-        version: 0.1.2(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
+        version: 0.1.3(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
       '@shikijs/vitepress-twoslash':
         specifier: ^1.10.0
         version: 1.10.0(typescript@5.4.5)
@@ -379,8 +379,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@nvl/sveltex@0.1.2':
-    resolution: {integrity: sha512-0TJpAlZTHbeaMotWACUzf1/oWlHGx/j/du4oHRLwwLp7aFVh9wjDMSUZ4Vk3wOCu1a1B1uybbu+A+MtfmAhMSQ==}
+  '@nvl/sveltex@0.1.3':
+    resolution: {integrity: sha512-0DHeHXKp4d+/doooS5z8/nCvywY/W5oSkygv1qszqHc0Y7Nyvp5yhQWCAH4XVmiYr3z5FXZJ43UMNcjLFfcT5w==}
     engines: {node: '>=16'}
     peerDependencies:
       '@wooorm/starry-night': '>=3.3.0'
@@ -2446,7 +2446,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@nvl/sveltex@0.1.2(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
+  '@nvl/sveltex@0.1.3(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
     dependencies:
       '@types/html-escaper': 3.0.2
       '@types/js-yaml': 4.0.9
