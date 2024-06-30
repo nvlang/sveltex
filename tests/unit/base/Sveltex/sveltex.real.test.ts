@@ -144,7 +144,7 @@ async function preprocess<
     const scriptContent =
         splitContent(content)
             .find((c) => c.startsWith('<script'))
-            ?.match(/<script[^>]*>([\w\W]*)<\/script>/)?.[1] ?? '';
+            ?.match(/<script[^>]*>([\w\W]*)<\/script>/i)?.[1] ?? '';
     const resultScript = await preprocessor.script({
         content: scriptContent,
         filename,
@@ -154,7 +154,7 @@ async function preprocess<
     const script = resultScript?.code;
     if (script) {
         markup = markup.replace(
-            /(<script[^>]*?>)[\w\W]*?(<\/script>)/,
+            /(<script[^>]*?>)[\w\W]*?(<\/script>)/i,
             `$1${script}$2`,
         );
     }

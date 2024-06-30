@@ -160,7 +160,7 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
                         // shiki escapes double quotes. Since this shouldn't
                         // make any difference in practice, it seems acceptable
                         // to me to ignore that discrepancy in the test.
-                        .replace('"', '&quot;');
+                        .replaceAll('"', '&quot;');
                     // shiki escapes < differently. Since this shouldn't make
                     // any difference in practice, it seems acceptable to me to
                     // ignore that discrepancy in the test.
