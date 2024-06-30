@@ -15,6 +15,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensure all branches and tags are fetched
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Determine Branch
+        run:
+          echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
 
       - name: Publish to JSR
-        run: npx jsr publish
+        run: pnpm dlx jsr publish
