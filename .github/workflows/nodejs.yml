@@ -49,6 +49,7 @@ jobs:
           sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" "package.json"
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          export HUSKY_SKIP_HOOKS=1
           git add deno.jsonc
           git commit -m "Bump version to $VERSION"
           git push origin $BRANCH_NAME
