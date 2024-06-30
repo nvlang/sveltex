@@ -51,7 +51,7 @@ jobs:
           export HUSKY_SKIP_HOOKS=1
           git add deno.jsonc
           git commit --no-verify -m "Bump version to $VERSION"
-          git push origin $BRANCH_NAMEs
+          git push origin $BRANCH_NAME
 
       - name: Publish to JSR
         run: pnpm dlx jsr publish
