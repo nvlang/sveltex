@@ -88,6 +88,7 @@ pursuit.
 [Vitest]: https://vitest.dev/
 [Playwright]: https://playwright.dev/
 [`fast-check`]: https://fast-check.dev/
+[Knip]: https://knip.dev/
 
 [VitePress]: https://vitepress.dev/
 [Shiki]: https://shiki.style/

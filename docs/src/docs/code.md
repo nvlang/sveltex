@@ -11,9 +11,6 @@ Highlight code blocks and inline code spans at build-time with one of three
 backends.
 </p>
 
-
-## Features
-
 <div class="features-list mt-8">
 
 -   <PhFileCss color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>

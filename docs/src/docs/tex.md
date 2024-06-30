@@ -8,9 +8,6 @@ import { PhLightning, PhHammer, PhTextT, PhDatabase, PhPalette, PhBird, PhGear, 
 Have SvelTeX compile LaTeX inside your markup and import the result.
 </p>
 
-
-## Features
-
 <div class="features-list mt-8">
 
 -   <PhBird color="var(--168-700)" :size="28" weight="duotone"/>
