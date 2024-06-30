@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { load } from 'js-yaml';
 
 ['sveltex', 'markdown'].forEach((lang) => {

@@ -170,6 +170,7 @@
     ]
   },
   "devDependencies": {
-    "@types/vscode": "^1.90.0"
+    "@types/vscode": "^1.90.0",
+    "js-yaml": "^4.1.0"
   }
 }
