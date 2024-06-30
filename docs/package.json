@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nvl/sveltex": "file:..",
+    "@nvl/sveltex": "latest",
     "@shikijs/vitepress-twoslash": "^1.10.0",
     "@sveltejs/kit": "^2.5.18",
     "@sveltejs/vite-plugin-svelte": "^3.1.1",
