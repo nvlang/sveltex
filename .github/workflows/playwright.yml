@@ -4,6 +4,13 @@ name: E2E Visual Regression Testing
 on:
   push:
     branches: [main]
+    paths:
+      - src/**
+      - tests/e2e/**
+      - playwright.config.ts
+      - pnpm-lock.yaml
+      - tsconfig.json
+      - tsconfig.*.json
   pull_request:
     branches: [main]
 

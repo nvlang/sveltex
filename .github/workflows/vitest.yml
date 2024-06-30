@@ -3,6 +3,13 @@ name: Unit Tests (Vitest)
 on:
   push:
     branches: [main]
+    paths:
+      - src/**
+      - tests/unit/**
+      - vitest.config.ts
+      - pnpm-lock.yaml
+      - tsconfig.json
+      - tsconfig.*.json
   pull_request:
     branches: [main]
 
