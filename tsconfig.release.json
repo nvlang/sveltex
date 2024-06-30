@@ -4,8 +4,7 @@
     "skipLibCheck": true,
     "sourceMap": false,
     "declarationMap": false,
-    "rootDir": "src",
-    "removeComments": true
+    "rootDir": "src"
   },
   "include": ["src"],
   "exclude": ["node_modules", "tests", "dist", "coverage", "examples", "legacy"]
