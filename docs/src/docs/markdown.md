@@ -22,7 +22,7 @@ import { PhMarkdownLogo, PhLifebuoy, PhDotsSix, PhGear, PhListDashes } from '@ph
 
 # Markdown
 
-<p class="text-lg">
+<p class="text-lg py-2">
 Render math expressions that don't require a full TeX distribution at build-time
 with MathJax or KaTeX.
 </p>
@@ -130,7 +130,7 @@ IntelliSense.
 
 ::: code-group
 ```js twoslash [unified]
-// svelte.config.js
+// sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ markdownBackend: 'unified' }, {
@@ -148,7 +148,7 @@ export default await sveltex({ markdownBackend: 'unified' }, {
 })
 ```
 ```js twoslash [markdown-it]
-// svelte.config.js
+// sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ markdownBackend: 'markdown-it' }, {
@@ -168,7 +168,7 @@ export default await sveltex({ markdownBackend: 'markdown-it' }, {
 })
 ```
 ```js twoslash [micromark]
-// svelte.config.js
+// sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ markdownBackend: 'micromark' }, {
@@ -191,7 +191,7 @@ export default await sveltex({ markdownBackend: 'micromark' }, {
 })
 ```
 ```js twoslash [marked]
-// svelte.config.js
+// sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ markdownBackend: 'marked' }, {
@@ -223,7 +223,7 @@ export default await sveltex({ markdownBackend: 'marked' }, {
 ### Languages
 
 ::: code-group
-```markdown [YAML]
+```sveltex [YAML]
 ---
 title: Example
 ---
@@ -263,7 +263,7 @@ All properties defined in the frontmatter are accessible in the markup as
 
 ::: details Example
 
-```markdown
+```sveltex
 ---
 prop: Example
 arr:
@@ -326,7 +326,7 @@ The `title` and `noscript` properties set the page's `<title>` and `<noscript>`
 elements, respectively.
 
 ::: code-group
-```markdown
+```sveltex
 ---
 title: Example
 noscript: JS disabled.
@@ -345,7 +345,7 @@ noscript: JS disabled.
 All [standard metadata names] are supported.
 
 ::: code-group
-```markdown
+```sveltex
 ---
 application-name: Name
 author: Alice
@@ -387,7 +387,7 @@ defined in the `script` tag will be different, as these always follow the
 structure of the frontmatter one-to-one.
 
 ::: code-group
-```markdown [Object]
+```sveltex [Object]
 ---
 meta:
   application-name: Name
@@ -402,7 +402,7 @@ meta:
   viewport: width=device-width, initial-scale=1
 ---
 ```
-```markdown [Array]
+```sveltex [Array]
 ---
 meta:
   - name: application-name
@@ -434,7 +434,7 @@ meta:
 #### Link
 
 ::: code-group
-```markdown
+```sveltex
 ---
 link:
   - rel: stylesheet
@@ -458,7 +458,7 @@ link:
 #### Base
 
 ::: code-group
-```markdown
+```sveltex
 ---
 base: https://example.com
 ---
@@ -477,7 +477,7 @@ property, and _may_ have a `target` property.
 
 ::: code-group
 
-```markdown
+```sveltex
 ---
 base:
   href: https://example.com

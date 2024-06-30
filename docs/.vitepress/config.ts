@@ -49,7 +49,7 @@ export default defineConfig({
             );
             grammarSveltex.name = 'sveltex';
             await shiki.loadLanguage(
-                // grammarSvelte,
+                grammarSvelte,
                 grammarMarkdownForSveltex,
                 grammarSveltex,
             );

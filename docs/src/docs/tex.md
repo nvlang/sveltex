@@ -4,7 +4,7 @@ import { PhLightning, PhHammer, PhTextT, PhDatabase, PhPalette, PhBird, PhGear, 
 
 # TeX
 
-<p class="text-lg">
+<p class="text-lg py-2">
 Have SvelTeX compile LaTeX inside your markup and import the result.
 </p>
 

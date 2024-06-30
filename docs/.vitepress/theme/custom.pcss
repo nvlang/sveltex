@@ -269,9 +269,22 @@ div.VPLocalSearchBox {
     }
 }
 
+hr.footnotes-sep {
+    @apply mt-12;
+}
+
+.footnote-ref > a {
+    @apply no-underline;
+}
+
+/* Fixes chevron alignment for "On this page" button for Safari */
+.VPLocalNavOutlineDropdown button {
+    white-space: nowrap;
+}
+
 /* Change ordered list markers */
 .VPDoc .vp-doc {
-    ol {
+    ol:not(.footnotes-list) {
         list-style: none;
         counter-reset: list-item-1;
 

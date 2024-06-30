@@ -9,7 +9,7 @@ import { PhFileCss, PhPalette, PhGear, PhArrowFatLineRight } from '@phosphor-ico
 
 # Math
 
-<p class="text-lg">
+<p class="text-lg py-2">
 Render math expressions that don't require a full TeX distribution at build-time
 with MathJax or KaTeX.
 </p>

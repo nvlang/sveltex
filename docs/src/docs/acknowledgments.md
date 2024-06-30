@@ -25,6 +25,11 @@ Similar works to SvelTeX, which also inspired it:
 
 ## Libraries
 
+### Direct dependencies
+
+-   **[micromark]:** A tiny, very powerful markdown parser. Most of SvelTeX's
+    parsing functionality is powered by micromark.
+
 ### Indirect dependencies
 
 -   **[`dvisvgm`]:** A fantastic tool for converting DVI, PDF, and XDV files to SVG.
@@ -73,6 +78,8 @@ pursuit.
 [LaTeX]: https://www.latex-project.org
 [PGF/TikZ]: https://www.ctan.org/pkg/pgf
 [MDsveX]: https://mdsvex.pngwn.io/
+
+[micromark]: https://github.com/micromark/micromark
 
 [`dvisvgm`]: https://dvisvgm.de/
 [texlive]: https://en.wikipedia.org/wiki/TeX_Live

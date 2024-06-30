@@ -4,7 +4,7 @@ title: Caching
 
 # Caching
 
-<p class="text-lg">
+<p class="text-lg py-2">
 SvelTeX implements a simple but robust caching mechanism to prevent unnecessary recompilations of LaTeX content.
 </p>
 

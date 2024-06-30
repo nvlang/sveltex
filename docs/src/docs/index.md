@@ -79,8 +79,8 @@ preprocessor can take over.
 
 -   <PhFeather :size="28" weight="duotone"/>
 
-    **Small codebase:** At under 10,000 lines of code, SvelTeX's core is
-    comparatively small, making it easier to maintain and contribute to.
+    **Small codebase:** At under 10,000 lines of code[^1], SvelTeX's core is comparatively small, making it easier to maintain
+    and contribute to.
 
 -   <PhShieldCheck :size="28" weight="duotone"/>
 
@@ -97,10 +97,11 @@ preprocessor can take over.
 
 -   <PhUmbrellaSimple :size="28" weight="duotone"/>
 
-    **Robust:** [Fuzzy](https://en.wikipedia.org/wiki/Fuzzing)
-    testing with [fast-check](https://github.com/dubzzz/fast-check), integration
-    tests with [Playwright](https://playwright.dev/) (1,000+ snapshots), and 5,000+ unit tests with
-    [Vitest](https://vitest.dev/) provide 100% code coverage.
+    **Robust:** [Fuzzy](https://en.wikipedia.org/wiki/Fuzzing) testing with
+    [fast-check](https://github.com/dubzzz/fast-check), E2E visual regression
+    tests with [Playwright](https://playwright.dev/) (1,000+ snapshots), and
+    5,000+ unit tests with [Vitest](https://vitest.dev/) provide 100% code
+    coverage.
 
 -   <PhInfo :size="28" weight="duotone"/>
 
@@ -110,3 +111,5 @@ preprocessor can take over.
 
 </div>
 
+[^1]: Lines of code in `src` directory, excluding `src/data` directory. This
+    count excludes comments and blank lines.

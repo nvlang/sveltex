@@ -6,7 +6,7 @@ import { PhFileCss, PhHighlighter, PhGear, PhArrowUDownRight } from '@phosphor-i
 
 # Code
 
-<p class="text-lg">
+<p class="text-lg py-2">
 Highlight code blocks and inline code spans at build-time with one of three
 backends.
 </p>

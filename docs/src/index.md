@@ -8,15 +8,15 @@ hero:
   tagline: Svelte + Markdown + LaTeX
   actions:
     - theme: brand
+      text: Getting Started
+      link: /docs/getting-started
+    - theme: alt
       text: Documentation
       link: /docs
-    - theme: alt
-      text: Examples
-      link: /examples
 
 features:
   - title: Markdown
-    details: Use your favorite markdown compiler and plugin ecosystem — built-in support for <code>remark-rehype</code>, <code>marked</code>, <code>markdown-it</code>, and <code>micromark</code>.
+    details: Use your favorite markdown compiler and plugin ecosystem — built-in support for <code>unified</code>, <code>marked</code>, <code>markdown-it</code>, and <code>micromark</code>.
     link: /docs/markdown
     icon:
       light: /light/markdown-logo-duotone.svg
