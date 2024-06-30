@@ -155,14 +155,18 @@ function compilationResultToTableRow(
     };
 }
 
+function nsToMs(x: number): string {
+    return (x * 1000).toLocaleString('en-US').replace(/\.\d+$/, '');
+}
+
 function compilationTableRowToString(row: CompilationTableRow): string {
     return (
         `| ${enginePrettyName[row.engine]} ` +
         `| ${row.format.toUpperCase()} ` +
-        `| ${(row.mean * 1000).toFixed(0)} ` +
-        `| ${(row.stddev * 1000).toFixed(0)} ` +
-        `| ${(row.min * 1000).toFixed(0)} ` +
-        `| ${(row.max * 1000).toFixed(0)} |`
+        `| ${nsToMs(row.mean)} ` +
+        `| ${nsToMs(row.stddev)} ` +
+        `| ${nsToMs(row.min)} ` +
+        `| ${nsToMs(row.max)} |`
     );
 }
 
@@ -233,10 +237,10 @@ function conversionTableRowToString(row: ConversionTableRow): string {
         `| ${row.converter} ` +
         `| ${row.format.toUpperCase()} ` +
         `| ${enginePrettyName[row.engine]} ` +
-        `| ${(row.mean * 1000).toFixed(0)} ` +
-        `| ${(row.stddev * 1000).toFixed(0)} ` +
-        `| ${row.size} ` +
-        `| ${row.sizeOptimized} |`
+        `| ${nsToMs(row.mean)} ` +
+        `| ${nsToMs(row.stddev)} ` +
+        `| ${row.size.toLocaleString('en-US')} ` +
+        `| ${row.sizeOptimized.toLocaleString('en-US')} |`
     );
 }
 
@@ -307,6 +311,10 @@ ${imports.join('\n')}
 </script>
 
 # Benchmarks
+
+<p class="text-lg py-2">
+Compare the compilation and conversion times, as well as the size of the output, for different kinds of content and supported LaTeX engines and converters.
+</p>
 
 ::: info
 

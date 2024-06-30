@@ -11,6 +11,10 @@ import Transparency from './res/benchmarks/Transparency.vue';
 
 # Benchmarks
 
+<p class="text-lg py-2">
+Compare the compilation and conversion times, as well as the size of the output, for different kinds of content and supported LaTeX engines and converters.
+</p>
+
 ::: info
 
 <div class="compact">
@@ -88,41 +92,41 @@ SVG output generated from <code>gradient.dvi</code> with <code>dvisvgm</code>.<b
 ::: details Compilation
 | Engine | Fmt. | Avg. | $\sigma$ | Min. | Max. |
 |--------|------|-----:|----------:|-----:|-----:|
-| LuaLaTeXmk | PDF | 1534 | 69 | 1459 | 1699 |
-| LuaLaTeXmk | DVI | 1517 | 20 | 1488 | 1549 |
-| XeLaTeXmk | PDF | 1366 | 49 | 1304 | 1442 |
+| LuaLaTeXmk | PDF | 1,534 | 69 | 1,459 | 1,699 |
+| LuaLaTeXmk | DVI | 1,517 | 20 | 1,488 | 1,549 |
+| XeLaTeXmk | PDF | 1,366 | 49 | 1,304 | 1,442 |
 | XeLaTeXmk | XDV | 746 | 14 | 733 | 775 |
 | pdfLaTeXmk | PDF | 802 | 48 | 744 | 877 |
 | pdfLaTeXmk | DVI | 771 | 36 | 731 | 853 |
-| LuaLaTeX | PDF | 1222 | 47 | 1182 | 1312 |
-| LuaLaTeX | DVI | 1232 | 27 | 1177 | 1264 |
+| LuaLaTeX | PDF | 1,222 | 47 | 1,182 | 1,312 |
+| LuaLaTeX | DVI | 1,232 | 27 | 1,177 | 1,264 |
 | pdfLaTeX | PDF | 548 | 32 | 524 | 607 |
 | pdfLaTeX | DVI | 547 | 21 | 520 | 581 |
-| XeLaTeX | PDF | 1129 | 37 | 1087 | 1204 |
+| XeLaTeX | PDF | 1,129 | 37 | 1,087 | 1,204 |
 | XeLaTeX | XDV | 587 | 7 | 578 | 595 |
 :::
 
 ::: details Conversion
 | Converter | Fmt. | Engine | Avg. | $\sigma$ | Size | Size (opt.)|
 |-----------|------|--------|-----:|----------:|-----:|-----------:|
-| dvisvgm | DVI | LuaLaTeXmk | 319 | 14 | 2855 | 2028 |
-| dvisvgm | XDV | XeLaTeXmk | 387 | 12 | 2855 | 2028 |
-| dvisvgm | DVI | pdfLaTeXmk | 385 | 7 | 2855 | 2028 |
-| dvisvgm | DVI | LuaLaTeX | 312 | 5 | 2855 | 2028 |
-| dvisvgm | DVI | pdfLaTeX | 387 | 10 | 2855 | 2028 |
-| dvisvgm | XDV | XeLaTeX | 338 | 6 | 2855 | 2028 |
+| dvisvgm | DVI | LuaLaTeXmk | 319 | 14 | 2,855 | 2,028 |
+| dvisvgm | XDV | XeLaTeXmk | 387 | 12 | 2,855 | 2,028 |
+| dvisvgm | DVI | pdfLaTeXmk | 385 | 7 | 2,855 | 2,028 |
+| dvisvgm | DVI | LuaLaTeX | 312 | 5 | 2,855 | 2,028 |
+| dvisvgm | DVI | pdfLaTeX | 387 | 10 | 2,855 | 2,028 |
+| dvisvgm | XDV | XeLaTeX | 338 | 6 | 2,855 | 2,028 |
 | dvisvgm | PDF | LuaLaTeXmk | 114 | 4 | 504 | 247 |
-| dvisvgm | PDF | XeLaTeXmk | 122 | 8 | 2855 | 2028 |
+| dvisvgm | PDF | XeLaTeXmk | 122 | 8 | 2,855 | 2,028 |
 | dvisvgm | PDF | pdfLaTeXmk | 112 | 3 | 504 | 247 |
 | dvisvgm | PDF | LuaLaTeX | 115 | 9 | 504 | 247 |
 | dvisvgm | PDF | pdfLaTeX | 110 | 2 | 504 | 247 |
-| dvisvgm | PDF | XeLaTeX | 116 | 2 | 2855 | 2028 |
-| pdftocairo | PDF | LuaLaTeXmk | 30 | 1 | 70200 | 33629 |
-| pdftocairo | PDF | XeLaTeXmk | 30 | 1 | 70354 | 33654 |
-| pdftocairo | PDF | pdfLaTeXmk | 30 | 1 | 70200 | 33629 |
-| pdftocairo | PDF | LuaLaTeX | 31 | 4 | 70200 | 33629 |
-| pdftocairo | PDF | pdfLaTeX | 30 | 1 | 70200 | 33629 |
-| pdftocairo | PDF | XeLaTeX | 31 | 1 | 70354 | 33654 |
+| dvisvgm | PDF | XeLaTeX | 116 | 2 | 2,855 | 2,028 |
+| pdftocairo | PDF | LuaLaTeXmk | 30 | 1 | 70,200 | 33,629 |
+| pdftocairo | PDF | XeLaTeXmk | 30 | 1 | 70,354 | 33,654 |
+| pdftocairo | PDF | pdfLaTeXmk | 30 | 1 | 70,200 | 33,629 |
+| pdftocairo | PDF | LuaLaTeX | 31 | 4 | 70,200 | 33,629 |
+| pdftocairo | PDF | pdfLaTeX | 30 | 1 | 70,200 | 33,629 |
+| pdftocairo | PDF | XeLaTeX | 31 | 1 | 70,354 | 33,654 |
 :::
 
 ## Plot
@@ -237,41 +241,41 @@ SVG output generated from <code>plot.dvi</code> with <code>dvisvgm</code>.<br>Th
 ::: details Compilation
 | Engine | Fmt. | Avg. | $\sigma$ | Min. | Max. |
 |--------|------|-----:|----------:|-----:|-----:|
-| LuaLaTeXmk | PDF | 2478 | 51 | 2419 | 2580 |
-| LuaLaTeXmk | DVI | 2437 | 38 | 2372 | 2521 |
-| XeLaTeXmk | PDF | 2084 | 22 | 2043 | 2113 |
-| XeLaTeXmk | XDV | 1465 | 13 | 1448 | 1493 |
-| pdfLaTeXmk | PDF | 1838 | 55 | 1772 | 1940 |
-| pdfLaTeXmk | DVI | 1543 | 38 | 1502 | 1612 |
-| LuaLaTeX | PDF | 2179 | 20 | 2149 | 2219 |
-| LuaLaTeX | DVI | 2111 | 26 | 2077 | 2156 |
-| pdfLaTeX | PDF | 1604 | 33 | 1535 | 1648 |
-| pdfLaTeX | DVI | 1298 | 19 | 1265 | 1321 |
-| XeLaTeX | PDF | 1915 | 66 | 1841 | 2033 |
-| XeLaTeX | XDV | 1421 | 61 | 1333 | 1538 |
+| LuaLaTeXmk | PDF | 2,478 | 51 | 2,419 | 2,580 |
+| LuaLaTeXmk | DVI | 2,437 | 38 | 2,372 | 2,521 |
+| XeLaTeXmk | PDF | 2,084 | 22 | 2,043 | 2,113 |
+| XeLaTeXmk | XDV | 1,465 | 13 | 1,448 | 1,493 |
+| pdfLaTeXmk | PDF | 1,838 | 55 | 1,772 | 1,940 |
+| pdfLaTeXmk | DVI | 1,543 | 38 | 1,502 | 1,612 |
+| LuaLaTeX | PDF | 2,179 | 20 | 2,149 | 2,219 |
+| LuaLaTeX | DVI | 2,111 | 26 | 2,077 | 2,156 |
+| pdfLaTeX | PDF | 1,604 | 33 | 1,535 | 1,648 |
+| pdfLaTeX | DVI | 1,298 | 19 | 1,265 | 1,321 |
+| XeLaTeX | PDF | 1,915 | 66 | 1,841 | 2,033 |
+| XeLaTeX | XDV | 1,421 | 61 | 1,333 | 1,538 |
 :::
 
 ::: details Conversion
 | Converter | Fmt. | Engine | Avg. | $\sigma$ | Size | Size (opt.)|
 |-----------|------|--------|-----:|----------:|-----:|-----------:|
-| dvisvgm | DVI | LuaLaTeXmk | 473 | 16 | 43660 | 28667 |
-| dvisvgm | XDV | XeLaTeXmk | 514 | 15 | 44132 | 28742 |
-| dvisvgm | DVI | pdfLaTeXmk | 519 | 13 | 44152 | 28762 |
-| dvisvgm | DVI | LuaLaTeX | 436 | 5 | 43680 | 28687 |
-| dvisvgm | DVI | pdfLaTeX | 524 | 11 | 44156 | 28766 |
-| dvisvgm | XDV | XeLaTeX | 442 | 5 | 43684 | 28691 |
-| dvisvgm | PDF | LuaLaTeXmk | 206 | 8 | 37088 | 28561 |
-| dvisvgm | PDF | XeLaTeXmk | 224 | 51 | 44132 | 28742 |
-| dvisvgm | PDF | pdfLaTeXmk | 210 | 15 | 37104 | 28498 |
-| dvisvgm | PDF | LuaLaTeX | 206 | 4 | 37104 | 28577 |
-| dvisvgm | PDF | pdfLaTeX | 207 | 2 | 37104 | 28498 |
-| dvisvgm | PDF | XeLaTeX | 208 | 20 | 43684 | 28691 |
-| pdftocairo | PDF | LuaLaTeXmk | 36 | 1 | 62876 | 28855 |
-| pdftocairo | PDF | XeLaTeXmk | 34 | 1 | 62821 | 28932 |
-| pdftocairo | PDF | pdfLaTeXmk | 36 | 1 | 62883 | 28849 |
-| pdftocairo | PDF | LuaLaTeX | 36 | 1 | 62876 | 28855 |
-| pdftocairo | PDF | pdfLaTeX | 36 | 1 | 62883 | 28849 |
-| pdftocairo | PDF | XeLaTeX | 34 | 1 | 62821 | 28932 |
+| dvisvgm | DVI | LuaLaTeXmk | 473 | 16 | 43,660 | 28,667 |
+| dvisvgm | XDV | XeLaTeXmk | 514 | 15 | 44,132 | 28,742 |
+| dvisvgm | DVI | pdfLaTeXmk | 519 | 13 | 44,152 | 28,762 |
+| dvisvgm | DVI | LuaLaTeX | 436 | 5 | 43,680 | 28,687 |
+| dvisvgm | DVI | pdfLaTeX | 524 | 11 | 44,156 | 28,766 |
+| dvisvgm | XDV | XeLaTeX | 442 | 5 | 43,684 | 28,691 |
+| dvisvgm | PDF | LuaLaTeXmk | 206 | 8 | 37,088 | 28,561 |
+| dvisvgm | PDF | XeLaTeXmk | 224 | 51 | 44,132 | 28,742 |
+| dvisvgm | PDF | pdfLaTeXmk | 210 | 15 | 37,104 | 28,498 |
+| dvisvgm | PDF | LuaLaTeX | 206 | 4 | 37,104 | 28,577 |
+| dvisvgm | PDF | pdfLaTeX | 207 | 2 | 37,104 | 28,498 |
+| dvisvgm | PDF | XeLaTeX | 208 | 20 | 43,684 | 28,691 |
+| pdftocairo | PDF | LuaLaTeXmk | 36 | 1 | 62,876 | 28,855 |
+| pdftocairo | PDF | XeLaTeXmk | 34 | 1 | 62,821 | 28,932 |
+| pdftocairo | PDF | pdfLaTeXmk | 36 | 1 | 62,883 | 28,849 |
+| pdftocairo | PDF | LuaLaTeX | 36 | 1 | 62,876 | 28,855 |
+| pdftocairo | PDF | pdfLaTeX | 36 | 1 | 62,883 | 28,849 |
+| pdftocairo | PDF | XeLaTeX | 34 | 1 | 62,821 | 28,932 |
 :::
 
 ## Text
@@ -320,41 +324,41 @@ SVG output generated from <code>text.dvi</code> with <code>dvisvgm</code>.<br>Th
 ::: details Compilation
 | Engine | Fmt. | Avg. | $\sigma$ | Min. | Max. |
 |--------|------|-----:|----------:|-----:|-----:|
-| LuaLaTeXmk | PDF | 1329 | 30 | 1277 | 1368 |
-| LuaLaTeXmk | DVI | 1255 | 36 | 1184 | 1303 |
-| XeLaTeXmk | PDF | 1151 | 30 | 1129 | 1220 |
+| LuaLaTeXmk | PDF | 1,329 | 30 | 1,277 | 1,368 |
+| LuaLaTeXmk | DVI | 1,255 | 36 | 1,184 | 1,303 |
+| XeLaTeXmk | PDF | 1,151 | 30 | 1,129 | 1,220 |
 | XeLaTeXmk | XDV | 517 | 14 | 505 | 553 |
 | pdfLaTeXmk | PDF | 805 | 13 | 794 | 836 |
 | pdfLaTeXmk | DVI | 545 | 14 | 527 | 573 |
-| LuaLaTeX | PDF | 1084 | 28 | 1054 | 1143 |
-| LuaLaTeX | DVI | 994 | 18 | 968 | 1032 |
+| LuaLaTeX | PDF | 1,084 | 28 | 1,054 | 1,143 |
+| LuaLaTeX | DVI | 994 | 18 | 968 | 1,032 |
 | pdfLaTeX | PDF | 630 | 9 | 617 | 648 |
 | pdfLaTeX | DVI | 346 | 12 | 336 | 377 |
-| XeLaTeX | PDF | 975 | 27 | 950 | 1036 |
+| XeLaTeX | PDF | 975 | 27 | 950 | 1,036 |
 | XeLaTeX | XDV | 460 | 7 | 446 | 470 |
 :::
 
 ::: details Conversion
 | Converter | Fmt. | Engine | Avg. | $\sigma$ | Size | Size (opt.)|
 |-----------|------|--------|-----:|----------:|-----:|-----------:|
-| dvisvgm | DVI | LuaLaTeXmk | 352 | 5 | 13395 | 12617 |
-| dvisvgm | XDV | XeLaTeXmk | 405 | 5 | 13317 | 12526 |
-| dvisvgm | DVI | pdfLaTeXmk | 405 | 5 | 13317 | 12526 |
-| dvisvgm | DVI | LuaLaTeX | 351 | 5 | 13395 | 12617 |
-| dvisvgm | DVI | pdfLaTeX | 407 | 8 | 13317 | 12526 |
-| dvisvgm | XDV | XeLaTeX | 350 | 7 | 12217 | 11495 |
-| dvisvgm | PDF | LuaLaTeXmk | 140 | 2 | 13395 | 12721 |
-| dvisvgm | PDF | XeLaTeXmk | 143 | 7 | 13317 | 12526 |
-| dvisvgm | PDF | pdfLaTeXmk | 139 | 2 | 13295 | 12622 |
-| dvisvgm | PDF | LuaLaTeX | 140 | 2 | 13395 | 12721 |
-| dvisvgm | PDF | pdfLaTeX | 139 | 2 | 13295 | 12622 |
-| dvisvgm | PDF | XeLaTeX | 141 | 5 | 12217 | 11495 |
-| pdftocairo | PDF | LuaLaTeXmk | 31 | 1 | 84080 | 48071 |
-| pdftocairo | PDF | XeLaTeXmk | 32 | 3 | 84003 | 48184 |
-| pdftocairo | PDF | pdfLaTeXmk | 32 | 1 | 85325 | 48551 |
-| pdftocairo | PDF | LuaLaTeX | 31 | 1 | 84080 | 48071 |
-| pdftocairo | PDF | pdfLaTeX | 33 | 3 | 85325 | 48551 |
-| pdftocairo | PDF | XeLaTeX | 32 | 2 | 84003 | 48184 |
+| dvisvgm | DVI | LuaLaTeXmk | 352 | 5 | 13,395 | 12,617 |
+| dvisvgm | XDV | XeLaTeXmk | 405 | 5 | 13,317 | 12,526 |
+| dvisvgm | DVI | pdfLaTeXmk | 405 | 5 | 13,317 | 12,526 |
+| dvisvgm | DVI | LuaLaTeX | 351 | 5 | 13,395 | 12,617 |
+| dvisvgm | DVI | pdfLaTeX | 407 | 8 | 13,317 | 12,526 |
+| dvisvgm | XDV | XeLaTeX | 350 | 7 | 12,217 | 11,495 |
+| dvisvgm | PDF | LuaLaTeXmk | 140 | 2 | 13,395 | 12,721 |
+| dvisvgm | PDF | XeLaTeXmk | 143 | 7 | 13,317 | 12,526 |
+| dvisvgm | PDF | pdfLaTeXmk | 139 | 2 | 13,295 | 12,622 |
+| dvisvgm | PDF | LuaLaTeX | 140 | 2 | 13,395 | 12,721 |
+| dvisvgm | PDF | pdfLaTeX | 139 | 2 | 13,295 | 12,622 |
+| dvisvgm | PDF | XeLaTeX | 141 | 5 | 12,217 | 11,495 |
+| pdftocairo | PDF | LuaLaTeXmk | 31 | 1 | 84,080 | 48,071 |
+| pdftocairo | PDF | XeLaTeXmk | 32 | 3 | 84,003 | 48,184 |
+| pdftocairo | PDF | pdfLaTeXmk | 32 | 1 | 85,325 | 48,551 |
+| pdftocairo | PDF | LuaLaTeX | 31 | 1 | 84,080 | 48,071 |
+| pdftocairo | PDF | pdfLaTeX | 33 | 3 | 85,325 | 48,551 |
+| pdftocairo | PDF | XeLaTeX | 32 | 2 | 84,003 | 48,184 |
 :::
 
 ## Transparency
@@ -407,39 +411,39 @@ SVG output generated from <code>transparency.dvi</code> with <code>dvisvgm</code
 ::: details Compilation
 | Engine | Fmt. | Avg. | $\sigma$ | Min. | Max. |
 |--------|------|-----:|----------:|-----:|-----:|
-| LuaLaTeXmk | PDF | 1466 | 17 | 1428 | 1484 |
-| LuaLaTeXmk | DVI | 1452 | 16 | 1434 | 1486 |
-| XeLaTeXmk | PDF | 1321 | 22 | 1281 | 1355 |
+| LuaLaTeXmk | PDF | 1,466 | 17 | 1,428 | 1,484 |
+| LuaLaTeXmk | DVI | 1,452 | 16 | 1,434 | 1,486 |
+| XeLaTeXmk | PDF | 1,321 | 22 | 1,281 | 1,355 |
 | XeLaTeXmk | XDV | 716 | 10 | 695 | 727 |
 | pdfLaTeXmk | PDF | 741 | 8 | 726 | 754 |
 | pdfLaTeXmk | DVI | 735 | 13 | 718 | 760 |
-| LuaLaTeX | PDF | 1231 | 31 | 1198 | 1292 |
-| LuaLaTeX | DVI | 1191 | 20 | 1166 | 1228 |
+| LuaLaTeX | PDF | 1,231 | 31 | 1,198 | 1,292 |
+| LuaLaTeX | DVI | 1,191 | 20 | 1,166 | 1,228 |
 | pdfLaTeX | PDF | 525 | 7 | 515 | 535 |
 | pdfLaTeX | DVI | 537 | 39 | 487 | 617 |
-| XeLaTeX | PDF | 1129 | 26 | 1084 | 1161 |
+| XeLaTeX | PDF | 1,129 | 26 | 1,084 | 1,161 |
 | XeLaTeX | XDV | 593 | 16 | 575 | 625 |
 :::
 
 ::: details Conversion
 | Converter | Fmt. | Engine | Avg. | $\sigma$ | Size | Size (opt.)|
 |-----------|------|--------|-----:|----------:|-----:|-----------:|
-| dvisvgm | DVI | LuaLaTeXmk | 313 | 6 | 1201 | 736 |
-| dvisvgm | XDV | XeLaTeXmk | 388 | 6 | 1201 | 736 |
-| dvisvgm | DVI | pdfLaTeXmk | 388 | 7 | 1201 | 736 |
-| dvisvgm | DVI | LuaLaTeX | 312 | 2 | 1201 | 736 |
-| dvisvgm | DVI | pdfLaTeX | 385 | 3 | 1201 | 736 |
-| dvisvgm | XDV | XeLaTeX | 313 | 4 | 1201 | 736 |
-| dvisvgm | PDF | LuaLaTeXmk | 118 | 4 | 1901 | 1256 |
-| dvisvgm | PDF | XeLaTeXmk | 119 | 4 | 1201 | 736 |
-| dvisvgm | PDF | pdfLaTeXmk | 118 | 4 | 1901 | 1256 |
-| dvisvgm | PDF | LuaLaTeX | 120 | 5 | 1901 | 1256 |
-| dvisvgm | PDF | pdfLaTeX | 117 | 4 | 1901 | 1256 |
-| dvisvgm | PDF | XeLaTeX | 117 | 4 | 1201 | 736 |
-| pdftocairo | PDF | LuaLaTeXmk | 28 | 1 | 3861 | 1833 |
-| pdftocairo | PDF | XeLaTeXmk | 28 | 1 | 3850 | 1832 |
-| pdftocairo | PDF | pdfLaTeXmk | 28 | 1 | 3861 | 1833 |
-| pdftocairo | PDF | LuaLaTeX | 28 | 1 | 3861 | 1833 |
-| pdftocairo | PDF | pdfLaTeX | 28 | 1 | 3861 | 1833 |
-| pdftocairo | PDF | XeLaTeX | 28 | 1 | 3850 | 1832 |
+| dvisvgm | DVI | LuaLaTeXmk | 313 | 6 | 1,201 | 736 |
+| dvisvgm | XDV | XeLaTeXmk | 388 | 6 | 1,201 | 736 |
+| dvisvgm | DVI | pdfLaTeXmk | 388 | 7 | 1,201 | 736 |
+| dvisvgm | DVI | LuaLaTeX | 312 | 2 | 1,201 | 736 |
+| dvisvgm | DVI | pdfLaTeX | 385 | 3 | 1,201 | 736 |
+| dvisvgm | XDV | XeLaTeX | 313 | 4 | 1,201 | 736 |
+| dvisvgm | PDF | LuaLaTeXmk | 118 | 4 | 1,901 | 1,256 |
+| dvisvgm | PDF | XeLaTeXmk | 119 | 4 | 1,201 | 736 |
+| dvisvgm | PDF | pdfLaTeXmk | 118 | 4 | 1,901 | 1,256 |
+| dvisvgm | PDF | LuaLaTeX | 120 | 5 | 1,901 | 1,256 |
+| dvisvgm | PDF | pdfLaTeX | 117 | 4 | 1,901 | 1,256 |
+| dvisvgm | PDF | XeLaTeX | 117 | 4 | 1,201 | 736 |
+| pdftocairo | PDF | LuaLaTeXmk | 28 | 1 | 3,861 | 1,833 |
+| pdftocairo | PDF | XeLaTeXmk | 28 | 1 | 3,850 | 1,832 |
+| pdftocairo | PDF | pdfLaTeXmk | 28 | 1 | 3,861 | 1,833 |
+| pdftocairo | PDF | LuaLaTeX | 28 | 1 | 3,861 | 1,833 |
+| pdftocairo | PDF | pdfLaTeX | 28 | 1 | 3,861 | 1,833 |
+| pdftocairo | PDF | XeLaTeX | 28 | 1 | 3,850 | 1,832 |
 :::
