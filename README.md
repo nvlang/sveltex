@@ -2,8 +2,8 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@nvl/sveltex?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B&logoSize=auto)](https://npmjs.com/@nvl/sveltex)
 [![JSR Version](https://img.shields.io/jsr/v/@nvl/sveltex?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&label=&logoSize=auto)](https://jsr.io/@nvl/sveltex)
-[![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=aaa&label=&labelColor=333&color=333)](https://github.com/nvlang/sveltex)
-[![Codecov](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=aaa&labelColor=333&color=333)](https://codecov.io/gh/nvlang/sveltex)
+[![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d)](https://github.com/nvlang/sveltex)
+[![Codecov](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=8D96A0&labelColor=21262d&color=21262d)](https://codecov.io/gh/nvlang/sveltex)
 
 ## Installation
 
