@@ -2,6 +2,9 @@
 // given an array of tags, returns the tokenizer that forms the essence of the
 // corresponding micromark extension.
 
+// NOTE: This file is based on the following micromark-internal file:
+// https://github.com/micromark/micromark/blob/6038803b533061627d9c2cb58579f74fc80e0339/packages/micromark-core-commonmark/dev/lib/html-flow.js
+
 /* eslint-disable @typescript-eslint/no-this-alias */
 // Types
 import type {
