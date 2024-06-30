@@ -119,10 +119,7 @@ export {
     mdxMd as micromarkMdxMd,
     type Extension as MicromarkExtension,
 } from 'micromark-extension-mdx-md';
-export type {
-    Value as MdastFromMarkdownValue,
-    Options,
-} from 'micromark-util-types';
+export type { TokenTypeMap as MicromarkTokenTypeMap } from 'micromark-util-types';
 export { AbortError, default as nodeFetch } from 'node-fetch';
 export { default as ora, type Ora } from 'ora';
 export { default as pc } from 'picocolors';

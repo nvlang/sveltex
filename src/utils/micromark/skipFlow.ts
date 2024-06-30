@@ -17,6 +17,7 @@ import type {
     MicromarkEffects as Effects,
     MicromarkState as State,
     MicromarkTokenizeContext as TokenizeContext,
+    MicromarkTokenTypeMap as TokenTypeMap,
 } from '$deps.js';
 
 // External dependencies
@@ -27,16 +28,20 @@ import {
     htmlRawNames,
 } from '$deps.js';
 
-/**
- * Interface augmentation for `micromark-util-types`'s `TokenTypeMap`, which is
- * a record of all permissible token types.
- */
-declare module 'micromark-util-types' {
-    interface TokenTypeMap {
-        skipFlow: 'skipFlow';
-        skipFlowData: 'skipFlowData';
-    }
-}
+// The below is, as far as I can tell, the approach suggested by micromark for
+// type safety. However, JSR doesn't like global type augmentation, so I'm going
+// to be using type assertions instead for now.
+//
+// /**
+//  * Interface augmentation for `micromark-util-types`'s `TokenTypeMap`, which is
+//  * a record of all permissible token types.
+//  */
+// declare module 'micromark-util-types' {
+//     interface TokenTypeMap {
+//         skipFlow: 'skipFlow';
+//         skipFlowData: 'skipFlowData';
+//     }
+// }
 
 /**
  * @param skipTags - An array of tags to skip.
@@ -77,8 +82,8 @@ export function tokenizeSkipFlowFactory(skipTags: string[]) {
          * ```
          */
         function before(code: Code): State | undefined {
-            effects.enter('skipFlow');
-            effects.enter('skipFlowData');
+            effects.enter('skipFlow' as keyof TokenTypeMap);
+            effects.enter('skipFlowData' as keyof TokenTypeMap);
             effects.consume(code);
             return open;
         }
@@ -164,7 +169,7 @@ export function tokenizeSkipFlowFactory(skipTags: string[]) {
                 return continuationRawTagOpen;
             }
             if (code === null || markdownLineEnding(code)) {
-                effects.exit('skipFlowData');
+                effects.exit('skipFlowData' as keyof TokenTypeMap);
                 return continuationStart(code);
             }
             effects.consume(code);
@@ -217,7 +222,7 @@ export function tokenizeSkipFlowFactory(skipTags: string[]) {
             if (code === null || markdownLineEnding(code)) {
                 return continuationStart(code);
             }
-            effects.enter('skipFlowData');
+            effects.enter('skipFlowData' as keyof TokenTypeMap);
             return continuation(code);
         }
 
@@ -303,7 +308,7 @@ export function tokenizeSkipFlowFactory(skipTags: string[]) {
          */
         function continuationClose(code: Code): State | undefined {
             // if (code === null || markdownLineEnding(code)) {
-            effects.exit('skipFlowData');
+            effects.exit('skipFlowData' as keyof TokenTypeMap);
             return continuationAfter(code);
             // }
             // effects.consume(code);
@@ -319,7 +324,7 @@ export function tokenizeSkipFlowFactory(skipTags: string[]) {
          * ```
          */
         function continuationAfter(code: Code): State | undefined {
-            effects.exit('skipFlow');
+            effects.exit('skipFlow' as keyof TokenTypeMap);
             return ok(code);
         }
     };
