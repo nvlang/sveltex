@@ -64,7 +64,7 @@ jobs:
           # The Wrangler command (along with any arguments) you wish to run.
           # Multiple Wrangler commands can be run by separating each command
           # with a newline. Defaults to `deploy`.
-          command: pages deploy .vitepress/dist --project-name=SvelTeX
+          command: pages deploy .vitepress/dist --project-name=sveltex
 
           # The package manager you'd like to use to install and run wrangler.
           # If not specified, the preferred package manager will be inferred
