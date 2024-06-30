@@ -51,7 +51,9 @@ For further documentation, please visit the [project site](https://sveltex.dev).
 In alphabetical order:
 
 -   VSCode extension for proper LSP language support via request forwarding.
-    Currently, only basic syntax highlighting is provided.
+    Currently, only [basic syntax
+    highlighting](https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex)
+    is provided.
 
 ## Acknowledgments
 

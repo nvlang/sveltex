@@ -67,14 +67,14 @@ preprocessor can take over.
 
 -   <PhTextAlignLeft :size="28" weight="duotone"/>
 
-    **SvelTeX language support:** A TextMate grammar for SvelTeX, and a VS Code
-    extension shipping the same, enables most IDEs to properly highlight SvelTeX
-    code.
+    **SvelTeX language support:** A TextMate grammar for SvelTeX, and a [VS Code
+    extension] shipping the same, enables most IDEs to properly highlight
+    SvelTeX code.
 
 -   <PhBooks :size="28" weight="duotone"/>
 
     **Extensive documentation:** With these docs and the extensive IntelliSense
-    that 7,000+ lines of comments provides, you'll find that just about every
+    that 7,000+ lines of comments provides, you'll find that almost every
     function or type in SvelTeX is documented, be it user-facing or internal.
 
 -   <PhFeather :size="28" weight="duotone"/>
@@ -113,3 +113,5 @@ preprocessor can take over.
 
 [^1]: Lines of code in `src` directory, excluding `src/data` directory. This
     count excludes comments and blank lines.
+
+[VS Code extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
