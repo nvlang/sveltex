@@ -44,7 +44,7 @@ jobs:
 
       - name: Build SvelTeX grammar
         run: pnpm install && pnpm build
-        working-directory: ./extras
+        working-directory: ./extras/vscode-extension
 
       - name: Build
         run: pnpm run build
