@@ -45,6 +45,9 @@
   "extensionDependencies": [
     "svelte.svelte-vscode"
   ],
+  "activationEvents": [
+    "onLanguage:sveltex"
+  ],
   "contributes": {
     "configuration": {
       "type": "object",
