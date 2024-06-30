@@ -1,5 +1,5 @@
 ---
-name: Integration Tests (Playwright)
+name: E2E Visual Regression Testing
 
 on:
   push:
@@ -23,6 +23,7 @@ permissions:
 
 jobs:
   test:
+    name: Run Playwright Tests
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
@@ -90,7 +91,7 @@ jobs:
       - name: Build SvelTeX
         run: pnpm build
 
-      - name: Install SvelTeX
+      - name: Install Dependencies for Test Project
         run: pnpm install
         working-directory: tests/e2e
 
