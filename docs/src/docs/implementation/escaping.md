@@ -72,8 +72,7 @@ value in a map indexed by the UUIDs.
     <script>
     ```
 
-    <Verbatim> // [!code highlight:5]
-
+    <Verbatim> // [!code highlight:4]
     ```
     </script>
     </Verbatim>
