@@ -13,7 +13,7 @@ preprocessor for Svelte that aims to combine markdown, Svelte, and (some) LaTeX.
 -   `<script>` languages: JavaScript, TypeScript
 -   `<style>` languages: CSS, SCSS, SASS, PostCSS, Stylus
 
-![screenshot](res/screenshot-ayu-dark-bordered.png)
+![screenshot](https://raw.githubusercontent.com/nvlang/sveltex/main/extras/vscode-extension/res/screenshot-ayu-dark-bordered.png)
 
 ## Requirements
 
@@ -33,8 +33,7 @@ This extension contributes the following settings:
     contents of these tags are highlighted the same way as a plaintext fenced
     code block would in markdown.
 
-> [!NOTE]
-> You might need to reload the window for the changes to take effect.
+⚠ **Note:** You might need to reload the window for the changes to take effect.
 
 ## Limitations
 
@@ -53,6 +52,12 @@ This extension contributes the following settings:
 ### 1.0.0
 
 Initial release.
+
+### 1.0.1
+
+#### Documentation
+
+-   Improved `README.md` for rendering on the VS Code Marketplace.
 
 
 [SvelTeX]: https://sveltex.dev/
