@@ -42,6 +42,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build SvelTeX grammar
+        run: pnpm install && pnpm build
+        working-directory: ./extras
+
       - name: Build
         run: pnpm run build
 

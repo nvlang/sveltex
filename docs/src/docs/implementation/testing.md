@@ -38,11 +38,13 @@ overlooked edge cases that one might not think to test for explicitly.
 
 ## E2E Visual Regression Testing
 
-End-to-end (E2E) visual regression testing is performed with [Playwright].
+End-to-end (E2E) [visual] [regression testing] is performed with [Playwright].
 
 
 
 [Vitest]: https://vitest.dev/
 [CommonMark test suite]: https://spec.commonmark.org/0.31.2/spec.json
 [`fast-check`]: https://fast-check.dev/
+[visual]: https://playwright.dev/docs/test-snapshots
+[regression testing]: https://en.wikipedia.org/wiki/Regression_testing
 [Playwright]: https://playwright.dev/
