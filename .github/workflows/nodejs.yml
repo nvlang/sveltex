@@ -13,6 +13,8 @@ jobs:
   publish:
     name: Publish to NPM
     runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,8 +52,8 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           export HUSKY_SKIP_HOOKS=1
-          git add deno.jsonc
-          git commit -m "Bump version to $VERSION"
+          git add package.json
+          git commit --no-verify -m "Bump version to $VERSION"
           git push origin $BRANCH_NAME
 
       - run: pnpm publish --provenance --access public
