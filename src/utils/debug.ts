@@ -14,7 +14,7 @@ import {
 } from '$typeGuards/utils.js';
 
 // External dependencies
-import { inspect, ora, pc } from '$deps.js';
+import { inspect, ora, pc, process } from '$deps.js';
 
 type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
@@ -82,6 +82,9 @@ const defaultPcStyles: Record<LogSeverity, PicocolorStyle[]> = {
     debug: ['dim'],
 } as const;
 
+/**
+ * Object containing Node.js's `console` methods.
+ */
 export const consoles = {
     error: console.error,
     warn: console.warn,
@@ -90,6 +93,10 @@ export const consoles = {
     debug: console.debug,
 } as const;
 
+/**
+ * @param input - The input to check.
+ * @returns `true` if `input` is a {@link LogSeverity | `LogSeverity`} object.
+ */
 function isLogSeverity(input: unknown): input is LogSeverity {
     return (
         isString(input) &&
@@ -97,6 +104,11 @@ function isLogSeverity(input: unknown): input is LogSeverity {
     );
 }
 
+/**
+ * @param input - The input to check.
+ * @returns `true` if `input` is a {@link LogOptionsObject | `LogOptionsObject`}
+ * object.
+ */
 function isLogOptionsObject(input: unknown): input is LogOptionsObject {
     return (
         isNonNullObject(input) &&
@@ -167,7 +179,8 @@ export function log(...args: unknown[]) {
     if (
         !pc.isColorSupported ||
         style === null ||
-        (defaultPcStyles[severity].length === 0 && style.length === 0)
+        (defaultPcStyles[severity].length === 0 &&
+            (style as string).length === 0)
     ) {
         consoles[severity](...remainingArgs);
         return;

@@ -4,7 +4,7 @@
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
 
 // External dependencies
-import { spawn } from '$deps.js';
+import { process, spawn } from '$deps.js';
 
 /**
  * Spawns a child process to execute a command.

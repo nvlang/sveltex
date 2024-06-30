@@ -29,7 +29,7 @@ import type { TexLogSeverity as _TexLogSeverity } from '$data/tex.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
- * Supported TeX backends.
+ * Supported TeX backend.
  */
 export type TexBackend = 'local';
 
@@ -575,6 +575,9 @@ interface DebugOptions {
         | undefined;
 }
 
+/**
+ * Configuration options for the TeX backend.
+ */
 export interface TexConfiguration {
     /**
      * Options relating to Sveltex's caching mechanism for the compilation (TeX

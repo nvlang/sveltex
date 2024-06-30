@@ -23,6 +23,11 @@ import type {
     PresetName,
     VerbatimType,
 } from '$types/handlers/Verbatim.js';
+import type {
+    CleanPopplerSvgOptions,
+    PopplerSvgOptions,
+} from '$types/utils/PopplerOptions.js';
+import type { PropertiesDefined } from '$types/utils/utility-types.js';
 
 // Internal dependencies
 import { sveltexHtmlAttributes } from '$data/keys.js';
@@ -31,11 +36,6 @@ import {
     isPresentAndDefined,
     isString,
 } from '$typeGuards/utils.js';
-import type {
-    CleanPopplerSvgOptions,
-    PopplerSvgOptions,
-} from '$types/utils/PopplerOptions.js';
-import type { PropertiesDefined } from '$types/utils/utility-types.js';
 import { interpretAttributes } from '$utils/parseComponent.js';
 
 // External dependencies
@@ -44,18 +44,19 @@ import {
     getProperty,
     homedir,
     join,
+    process,
     relative,
     resolve,
     setProperty,
-    process,
 } from '$deps.js';
 
-// if (getDefaultMathConfiguration('custom').delims) {
-//     console.log('getDefaultMathConfiguration works');
-// }
-
 /**
- * Get the default configuration for a TeX backend.
+ * Get the default configuration for a given math backend.
+ *
+ * @param mathBackend - Math backend.
+ * @param ca - "CSS approach" — this corresponds to the `math.css.type` setting.
+ * @returns The default configuration for the given math backend and CSS
+ * approach.
  */
 export function getDefaultMathConfiguration<
     T extends MathBackend,
@@ -178,6 +179,11 @@ export const defaultCacheDirectory: string = cacheDir
           'sveltex',
       );
 
+/**
+ * Get the default TeX configuration.
+ *
+ * @returns The default TeX configuration.
+ */
 export function getDefaultTexConfig(): FullTexConfiguration {
     return {
         caching: {
@@ -311,7 +317,10 @@ export function getDefaultTexConfig(): FullTexConfiguration {
 }
 
 /**
- * Default CodeConfiguration
+ * Get the default configuration for a given code backend.
+ *
+ * @param codeBackend - The code backend.
+ * @returns The default configuration for the given code backend.
  */
 export function getDefaultCodeConfig<C extends CodeBackend>(
     codeBackend: C,
@@ -480,6 +489,12 @@ export function getDefaultSveltexConfig<
     };
 }
 
+/**
+ * Get the default configuration for a given Markdown backend.
+ *
+ * @param m - Markdown backend.
+ * @returns The default configuration for the given Markdown backend.
+ */
 export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
     m: M,
 ): FullMarkdownConfiguration<M> {
@@ -573,6 +588,12 @@ type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'tex'
         ? FullVerbEnvConfigEscape
         : FullVerbEnvConfigBase;
 
+/**
+ * Get the default configuration for a given verbatim environment type.
+ *
+ * @param type - Verbatim environment type.
+ * @returns The default configuration for the given verbatim environment type.
+ */
 export function getDefaultVerbEnvConfig<T extends VerbatimType>(
     type: T,
 ): DefaultVerbEnvConfig<T> & Record<string, unknown> {
@@ -762,6 +783,13 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
     }
 }
 
+/**
+ * Sanitize options passed to Poppler. Basically just removes `undefined`s and
+ * `null`s. Also adds the `svgFile` property, set to `true`.
+ *
+ * @param options - The options to sanitize.
+ * @returns The sanitized options.
+ */
 export function sanitizePopplerSvgOptions(
     options: PropertiesDefined<PopplerSvgOptions>,
 ): CleanPopplerSvgOptions & {
@@ -775,6 +803,12 @@ export function sanitizePopplerSvgOptions(
     };
 }
 
+/**
+ * Get the default configuration for a given TeX preset.
+ *
+ * @param presetName - The name of a TeX preset.
+ * @returns The default configuration for the given TeX preset.
+ */
 export function getTexPresetDefaults(presetName: PresetName): Preset {
     switch (presetName) {
         case 'tikz':

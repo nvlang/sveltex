@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { process } from '$deps.js';
 
 /**
  * Read environment variables from file.

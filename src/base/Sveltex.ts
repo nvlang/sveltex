@@ -82,6 +82,19 @@ export async function sveltex<
     return s;
 }
 
+/**
+ * The `Sveltex` class implements Svelte's
+ * {@link PreprocessorGroup | `PreprocessorGroup`} interface, and is the awaited
+ * return type of the {@link sveltex | `sveltex`} method. Its most important
+ * methods are `markup`, which is run on the Svelte file's entire contents, and
+ * `script`, which is run on the content of the `<script>` tag in the Svelte
+ * file, _after_ the `markup` method. Together, they define how the Svelte file
+ * is preprocessed.
+ *
+ * @typeParam M - The markdown backend to use. Defaults to `'none'`.
+ * @typeParam C - The code backend to use. Defaults to `'none'`.
+ * @typeParam T - The math backend to use. Defaults to `'none'`.
+ */
 export class Sveltex<
     M extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',

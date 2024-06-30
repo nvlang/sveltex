@@ -1,7 +1,7 @@
 // File description: Read `package.json` and parse version numbers and the package manager being used.
 
 // Internal dependencies
-import { resolve } from '$deps.js';
+import { process, resolve } from '$deps.js';
 import { defaultCacheDirectory } from '$base/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs, pathExists } from '$utils/fs.js';

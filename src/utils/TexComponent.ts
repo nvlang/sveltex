@@ -61,6 +61,7 @@ import {
     ora,
     pc,
     prettyBytes,
+    process,
     relative,
     stat,
     svgoOptimize,
