@@ -56,7 +56,8 @@
             "latex",
             "tikz"
           ],
-          "description": "Tags to use for TeX components. Case-insensitive. Note: tag names must match the regex `[a-zA-Z][-.:0-9_a-zA-Z]*`, otherwise they will be ignored."
+          "description": "Tags to use for TeX components. Case-insensitive.",
+          "markdownDescription": "Tags to use for TeX components. Case-insensitive. Note: tag names must match the regex `[a-zA-Z][-.:0-9_a-zA-Z]*`, otherwise they will be ignored."
         },
         "sveltex.escapeTags": {
           "type": "array",
@@ -64,7 +65,8 @@
             "verb",
             "verbatim"
           ],
-          "description": "Tags to use for non-TeX verbatim components. Case-insensitive. Note: tag names must match the regex `[a-zA-Z][-.:0-9_a-zA-Z]*`, otherwise they will be ignored."
+          "description": "Tags to use for non-TeX verbatim components. Case-insensitive.",
+          "markdownDescription": "Tags to use for non-TeX verbatim components. Case-insensitive. Note: tag names must match the regex `[a-zA-Z][-.:0-9_a-zA-Z]*`, otherwise they will be ignored."
         }
       }
     },
