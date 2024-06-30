@@ -117,10 +117,8 @@ In order of recommendation:
 
 ::: warning
 
-Don't try to enable MDX syntax in your markdown parser. MDX combines markdown
-with [JSX](https://react.dev/learn/writing-markup-with-jsx), which is a syntax
-extension for JS built for [React](https://react.dev). Svelte, on the other
-hand, has its own special syntax, which extends
+Don't try to enable MDX syntax in your markdown parser when using SvelTeX, as
+it may conflict with SvelTeX's own parsing.
 
 :::
 
