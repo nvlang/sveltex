@@ -79,8 +79,8 @@ preprocessor can take over.
 
 -   <PhFeather :size="28" weight="duotone"/>
 
-    **Small codebase:** At under 10,000 lines of code[^1], SvelTeX's core is comparatively small, making it easier to maintain
-    and contribute to.
+    **Small codebase:** At under 10,000 lines of code[^1], SvelTeX's core is
+    relatively small, making it easier to maintain and contribute to.
 
 -   <PhShieldCheck :size="28" weight="duotone"/>
 
