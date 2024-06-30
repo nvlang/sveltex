@@ -3,9 +3,9 @@ name: Publish to JSR
 
 on:
   workflow_run:
-    workflows: ['Set Package Version']
-    branches: [main]
-    types: [completed]
+    workflows: [Set Package Version]
+    types:
+      - completed
 
 permissions:
   contents: read
