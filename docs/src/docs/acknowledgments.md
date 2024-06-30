@@ -45,6 +45,7 @@ Similar works to SvelTeX, which also inspired it:
 -   **[Vitest]:** Unit testing.
 -   **[Playwright]:** Integration testing.
 -   **[`fast-check`]:** Property-based testing (aka. fuzzy testing).
+-   **[Knip]:** Project linter to find unused files, dependencies and exports.
 
 
 ## Site
