@@ -22,8 +22,8 @@ import type { ProcessedSnippet, UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultVerbEnvConfig } from '$base/defaults.js';
-import { TexHandler } from '$handlers/TexHandler.js';
-import { CodeHandler } from '$handlers/CodeHandler.js';
+import type { TexHandler } from '$handlers/TexHandler.js';
+import type { CodeHandler } from '$handlers/CodeHandler.js';
 import { Handler } from '$handlers/Handler.js';
 import { log } from '$utils/debug.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';

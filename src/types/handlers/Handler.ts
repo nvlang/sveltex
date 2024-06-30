@@ -1,12 +1,7 @@
 // File description: Types related to the `Handler` class.
 
 /* eslint-disable tsdoc/syntax */
-import { ProcessedSnippet } from '$types/utils/Escape.js';
-
-// For TSDoc comments
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Handler } from '$handlers/Handler.js';
-/* eslint-enable @typescript-eslint/no-unused-vars */
+import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 /**
  * A transformer. Two types of transformers are supported:
@@ -26,8 +21,8 @@ import type { Handler } from '$handlers/Handler.js';
  *
  * @typeParam Options - The type of the options object that may be passed to the
  * transformation functions. Generally speaking, this should be or extend the
- * `ProcessOptions` type parameter of the {@link Handler | `Handler`} class in
- * which the transformer is being called.
+ * `ProcessOptions` type parameter of the `Handler` class in which the
+ * transformer is being called.
  */
 export type Transformer<Options extends object = object> =
     | [RegExp | string, string]

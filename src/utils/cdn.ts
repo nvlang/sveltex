@@ -1,7 +1,7 @@
 // File description: Get CDN URLs and fetch from them.
 
 // Types
-import { SupportedCdn } from '$types/handlers/Css.js';
+import type { SupportedCdn } from '$types/handlers/Css.js';
 
 // Internal dependencies
 import { cdnPrefixes } from '$data/cdn.js';

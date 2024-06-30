@@ -21,7 +21,7 @@ import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
 import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';
 import { getDefaultVerbEnvConfig } from '$base/defaults.js';
-import { VerbatimType } from '$types/handlers/Verbatim.js';
+import type { VerbatimType } from '$types/handlers/Verbatim.js';
 
 /**
  * Diagnose whether a given object is a valid verbatim environment

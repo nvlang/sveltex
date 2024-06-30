@@ -24,8 +24,8 @@ import type { TexComponent } from '$utils/TexComponent.js';
 
 // For IntelliSense
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { DvisvgmSvgOutputOptions } from '$types/utils/DvisvgmOptions.js';
-import type { TexLogSeverity } from '$data/tex.js';
+import type { DvisvgmSvgOutputOptions as _DvisvgmSvgOutputOptions } from '$types/utils/DvisvgmOptions.js';
+import type { TexLogSeverity as _TexLogSeverity } from '$data/tex.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
@@ -433,7 +433,7 @@ interface OptimizationOptions {
      * @remarks
      * `dvisvgm` already includes options to achieve the behavior that this
      * property aims to achieve (namely, the
-     * {@link DvisvgmSvgOutputOptions.currentColor | `DvisvgmOptions.svg.currentColor`}).
+     * {@link _DvisvgmSvgOutputOptions.currentColor | `DvisvgmOptions.svg.currentColor`}).
      * However, this present option can still be useful to take care of any
      * potential edge cases that `dvisvgm`'s `currentColor` option might not
      * cover.
@@ -522,7 +522,7 @@ interface DebugOptions {
      * ```
      */
     verbosity?:
-        | ('all' | TexLogSeverity | 'none' | undefined)
+        | ('all' | _TexLogSeverity | 'none' | undefined)
         | {
               /**
                * Lowest severity level of messages from LaTeX log to print upon
@@ -546,7 +546,7 @@ interface DebugOptions {
                * 'box'
                * ```
                */
-              onFailure?: 'all' | TexLogSeverity | 'none' | undefined;
+              onFailure?: 'all' | _TexLogSeverity | 'none' | undefined;
 
               /**
                * Lowest severity level of messages from LaTeX log to print upon
@@ -570,7 +570,7 @@ interface DebugOptions {
                * 'box'
                * ```
                */
-              onSuccess?: 'all' | TexLogSeverity | 'none' | undefined;
+              onSuccess?: 'all' | _TexLogSeverity | 'none' | undefined;
           }
         | undefined;
 }
@@ -668,5 +668,5 @@ export interface Problem {
     message: string;
     line: number;
     col?: number | undefined;
-    severity: TexLogSeverity;
+    severity: _TexLogSeverity;
 }

@@ -31,11 +31,11 @@ import {
     isPresentAndDefined,
     isString,
 } from '$typeGuards/utils.js';
-import {
+import type {
     CleanPopplerSvgOptions,
     PopplerSvgOptions,
 } from '$types/utils/PopplerOptions.js';
-import { PropertiesDefined } from '$types/utils/utility-types.js';
+import type { PropertiesDefined } from '$types/utils/utility-types.js';
 import { interpretAttributes } from '$utils/parseComponent.js';
 
 // External dependencies
@@ -159,7 +159,9 @@ export function getDefaultMathConfiguration<
     }
 }
 
-const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
+const cacheDir: string | undefined = findCacheDirectory({
+    name: '@nvl/sveltex',
+});
 
 /**
  * The default cache directory for SvelTeX.
@@ -169,7 +171,7 @@ const cacheDir = findCacheDirectory({ name: '@nvl/sveltex' });
  * 'node_modules/.cache/@nvl/sveltex'
  * ```
  */
-export const defaultCacheDirectory = cacheDir
+export const defaultCacheDirectory: string = cacheDir
     ? relative(process.cwd(), cacheDir)
     : resolve(
           process.env['XDG_CACHE_HOME'] ?? join(homedir(), '.cache'),

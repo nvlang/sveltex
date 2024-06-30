@@ -1,10 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "name": "@nvl/sveltex",
-  "version": "0.1.0-beta.4",
+  "version": "0.1.0-beta.5",
   "exports": {
     // Default entry point, which can be imported as `@nvl/sveltex`
     ".": "./src/mod.ts"
+  },
+  "lint": {
+    "include": ["src/**"],
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/docs/**",
+      "**/.github/**",
+      "**/.vscode/**",
+      "**/.svelte-kit/**"
+    ]
   },
   "publish": {
     "include": [
@@ -19,6 +30,7 @@
       "tsconfig.json",
       "jsr.jsonc"
     ],
+
     "exclude": [
       // Unit and E2E tests
       "**/tests/**",

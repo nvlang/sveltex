@@ -10,7 +10,7 @@ import {
 } from 'vitest';
 import { CodeHandler } from '$handlers/CodeHandler.js';
 import { consoles } from '$utils/debug.js';
-import { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
+import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 import { getDefaultCodeConfig } from '$base/defaults.js';
 import { nodeAssert, uuid } from '$deps.js';

@@ -9,6 +9,7 @@ import type {
     MarkdownProcessOptions,
     MarkdownProcessor,
 } from '$types/handlers/Markdown.js';
+import type { UnescapeOptions } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { missingDeps } from '$utils/env.js';
@@ -53,7 +54,13 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
         };
     }
 
-    override get process() {
+    override get process(): (
+        content: string,
+        options: MarkdownProcessOptions,
+    ) => Promise<{
+        processed: string;
+        unescapeOptions: UnescapeOptions;
+    }> {
         return async (content: string, options: MarkdownProcessOptions) => {
             let unescapeTags: (str: string) => string = (str) => str;
             if (!this._configuration.strict) {

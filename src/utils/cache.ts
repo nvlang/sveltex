@@ -110,9 +110,9 @@ export class SveltexCache {
      * that if anyone tries to serialize a `SvelteCache` object (which Vite
      * will), we exclude the `cacheDirGlob` property.
      */
-    toJSON() {
+    toJSON(): object {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { cacheDirGlob, ...otherProps } = this;
+        const { cacheDirGlob: _cacheDirGlob, ...otherProps } = this;
         return otherProps;
     }
 

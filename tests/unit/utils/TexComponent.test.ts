@@ -18,8 +18,8 @@ import { cartesianProduct } from '$tests/unit/utils.js';
 import { supportedTexEngines } from '$typeGuards/verbatim.js';
 import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
 import type { Problem } from '$types/handlers/Tex.js';
-import { VerbEnvConfigTex } from '$types/handlers/Verbatim.js';
-import { CliInstruction } from '$types/utils/CliInstruction.js';
+import type { VerbEnvConfigTex } from '$types/handlers/Verbatim.js';
+import type { CliInstruction } from '$types/utils/CliInstruction.js';
 import {
     TexComponent,
     enactPresets,
@@ -336,7 +336,7 @@ describe('compile(): catches errors', () => {
             if (!custom) {
                 readFile.mockResolvedValueOnce('test-pdf');
                 spawnCliInstructionMock.mockImplementation(
-                    async (instr: CliInstruction) => {
+                    (instr: CliInstruction) => {
                         if (instr.command === 'dvisvgm') {
                             return Promise.resolve({
                                 code: 1,

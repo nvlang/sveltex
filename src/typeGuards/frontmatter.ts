@@ -1,7 +1,7 @@
 // File description:
 
 // Types
-import { Equals, typeAssert } from '$deps.js';
+import { type Equals, typeAssert } from '$deps.js';
 import type { MetaHttpEquiv, MetaName } from '$types/utils/Frontmatter.js';
 
 export function isMetaName(name: string): name is MetaName {

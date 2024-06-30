@@ -25,7 +25,7 @@ import {
 } from '$utils/escape.js';
 import { cartesianProduct, range, uuidV4Regexp } from '$tests/unit/utils.js';
 import { typeAssert, is } from '$deps.js';
-import {
+import type {
     EscapableSnippet,
     EscapedSnippet,
     ProcessedSnippet,

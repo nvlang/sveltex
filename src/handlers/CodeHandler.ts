@@ -33,7 +33,7 @@ import { applyTransformations } from '$utils/transformers.js';
 import {
     type StarryNightLanguage,
     starryNightLanguages,
-    StarryNightScope,
+    type StarryNightScope,
 } from '$data/code.js';
 
 // External dependencies

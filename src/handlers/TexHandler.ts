@@ -18,6 +18,7 @@ import { SveltexCache } from '$utils/cache.js';
 import { Handler } from '$handlers/Handler.js';
 import { pathExists } from '$utils/fs.js';
 import { mergeConfigs } from '$utils/merge.js';
+import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 export class TexHandler extends Handler<
     TexBackend,
@@ -45,7 +46,10 @@ export class TexHandler extends Handler<
      * @param options - Options to pass to the processor.
      * @returns The processed content, or promise resolving to it.
      */
-    override get process() {
+    override get process(): (
+        content: string,
+        options: TexProcessOptions,
+    ) => ProcessedSnippet | Promise<ProcessedSnippet> {
         return (content: string, options: TexProcessOptions) => {
             return super.process(content, options);
         };

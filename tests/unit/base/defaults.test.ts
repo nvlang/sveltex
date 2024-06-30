@@ -7,7 +7,7 @@ import {
     beforeEach,
     afterEach,
     beforeAll,
-    MockInstance,
+    type MockInstance,
 } from 'vitest';
 import {
     getDefaultCodeConfig,
@@ -23,7 +23,7 @@ import { TexHandler } from '$handlers/TexHandler.js';
 import { verbatimTypes } from '$typeGuards/verbatim.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
-import {
+import type {
     FullVerbEnvConfigTex,
     VerbatimType,
 } from '$types/handlers/Verbatim.js';
@@ -34,11 +34,11 @@ import {
     markdownBackends,
 } from '$utils/diagnosers/backendChoices.js';
 import { is, typeAssert } from '$deps.js';
-import {
+import type {
     CleanPopplerSvgOptions,
     PopplerSvgOptions,
 } from '$types/utils/PopplerOptions.js';
-import { PropertiesDefined } from '$types/utils/utility-types.js';
+import type { PropertiesDefined } from '$types/utils/utility-types.js';
 import { fc, fuzzyTest } from '$dev_deps.js';
 import { TexComponent } from '$utils/TexComponent.js';
 

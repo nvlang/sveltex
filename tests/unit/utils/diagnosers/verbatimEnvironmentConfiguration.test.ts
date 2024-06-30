@@ -1,7 +1,7 @@
 import { getDefaultVerbEnvConfig } from '$base/defaults.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { isArray } from '$typeGuards/utils.js';
-import { VerbEnvConfigBase } from '$types/handlers/Verbatim.js';
+import type { VerbEnvConfigBase } from '$types/handlers/Verbatim.js';
 import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import {
     it,

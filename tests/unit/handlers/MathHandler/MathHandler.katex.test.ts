@@ -6,12 +6,12 @@ import {
     vi,
     beforeEach,
     beforeAll,
-    MockInstance,
+    type MockInstance,
 } from 'vitest';
 import { MathHandler } from '$handlers/MathHandler.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { v4 as uuid } from 'uuid';
-import { MathConfiguration } from '$types/handlers/Math.js';
+import type { MathConfiguration } from '$types/handlers/Math.js';
 
 function fixture() {
     beforeEach(() => {

@@ -14,7 +14,7 @@ import {
     vi,
 } from 'vitest';
 import { sha256 } from '$utils/misc.js';
-import { TexConfiguration } from '$mod.js';
+import type { TexConfiguration } from '$mod.js';
 import { getDefaultVerbEnvConfig } from '$base/defaults.js';
 
 /**

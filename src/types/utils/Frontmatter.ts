@@ -1,6 +1,6 @@
 // File description: Types related to SvelTeX's handling of frontmatter.
 
-import { MdastLiteral } from '$deps.js';
+import type { MdastLiteral } from '$deps.js';
 
 export type MetaName =
     | 'charset'
@@ -133,9 +133,12 @@ export interface MdastJson extends MdastLiteral {
     type: 'json';
 }
 
-declare module 'mdast' {
-    interface FrontmatterContentMap {
-        toml: MdastToml;
-        json: MdastJson;
-    }
-}
+// JSR doesn't like this
+// (see https://jsr.io/docs/about-slow-types#global-augmentation)
+
+// declare module 'mdast' {
+//     interface FrontmatterContentMap {
+//         toml: MdastToml;
+//         json: MdastJson;
+//     }
+// }

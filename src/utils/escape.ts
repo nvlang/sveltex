@@ -21,13 +21,13 @@ import { parseComponent } from '$utils/parseComponent.js';
 // External dependencies
 import {
     MagicString,
-    MdastCodeNode,
-    MdastInlineCodeNode,
-    MdastInlineMathNode,
-    MdastMathNode,
-    MdastMdxFlowExpressionNode,
-    MdastMdxTextExpressionNode,
-    MdastRoot,
+    type MdastCodeNode,
+    type MdastInlineCodeNode,
+    type MdastInlineMathNode,
+    type MdastMathNode,
+    type MdastMdxFlowExpressionNode,
+    type MdastMdxTextExpressionNode,
+    type MdastRoot,
     XRegExp,
     typeAssert,
     getProperty,
@@ -43,15 +43,15 @@ import {
     micromarkFrontmatter,
     micromarkDirective,
     mdastFrontmatterFromMarkdown,
-    MdastYaml,
+    type MdastYaml,
     inspect,
     type UnistPosition,
     directiveFromMarkdown,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
-import { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
-import { VerbatimHandler } from '$handlers/VerbatimHandler.js';
-import { CodeBackend, getDefaultMathConfiguration } from '$mod.js';
+import type { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
+import type { VerbatimHandler } from '$handlers/VerbatimHandler.js';
+import { type CodeBackend, getDefaultMathConfiguration } from '$mod.js';
 import { log, prettifyError } from '$utils/debug.js';
 import type { WithFullDelims } from '$types/handlers/Math.js';
 

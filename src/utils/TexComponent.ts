@@ -15,7 +15,7 @@ import type {
     VerbEnvConfigTex,
 } from '$types/handlers/Verbatim.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
-import type { KeyPath } from '$utils/cache.js';
+import type { KeyPath, SveltexCache } from '$utils/cache.js';
 
 // Internal dependencies
 import {
@@ -30,7 +30,7 @@ import {
     type TexLogSeverity,
 } from '$data/tex.js';
 import { isArray, isObject, isString } from '$typeGuards/utils.js';
-import { InterpretedAttributes } from '$types/utils/Escape.js';
+import type { InterpretedAttributes } from '$types/utils/Escape.js';
 import { spawnCliInstruction } from '$utils/cli.js';
 import {
     escapeCssColorVars,
@@ -102,7 +102,7 @@ export class TexComponent {
      * 'Sveltex_tikz_myfig'
      *
      */
-    get id() {
+    get id(): string {
         return TexComponent.id({
             name: this.tag,
             ref: this.ref,
@@ -134,7 +134,7 @@ export class TexComponent {
 
     /**
      */
-    get svgComponentTag() {
+    get svgComponentTag(): string {
         return TexComponent.svgComponentTag({
             ref: this.ref,
             name: this.tag,
@@ -143,7 +143,7 @@ export class TexComponent {
 
     /**
      */
-    get outputString() {
+    get outputString(): string {
         return this.configuration.postprocess(this.svgComponentTag, this);
     }
 
@@ -211,11 +211,11 @@ export class TexComponent {
      * created this component.
      *
      */
-    get cache() {
+    get cache(): SveltexCache {
         return this.texHandler.cache;
     }
 
-    get texConfig() {
+    get texConfig(): FullTexConfiguration {
         return mergeConfigs(
             this.texHandler.configuration,
             this._configuration.overrides,
@@ -473,7 +473,12 @@ export class TexComponent {
      *    returned by the previous step.
      *
      */
-    get handleAttributes() {
+    get handleAttributes(): (
+        attributes: Record<
+            string,
+            string | number | boolean | null | undefined
+        >,
+    ) => Record<string, unknown> {
         return (
             attributes: Record<
                 string,
@@ -528,7 +533,7 @@ export class TexComponent {
      * files' directory relative to the cache directory.
      *
      */
-    get keyPath() {
+    get keyPath(): KeyPath {
         return join(this.tag, this.ref) as KeyPath;
     }
 

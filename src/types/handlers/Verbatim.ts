@@ -15,8 +15,8 @@ import type { TexComponent } from '$utils/TexComponent.js';
 
 // For TSDoc comments
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { CompilationOptions } from '$types/handlers/Tex.js';
-import type { SveltexConfiguration } from '$types/SveltexConfiguration.js';
+import type { CompilationOptions as _CompilationOptions } from '$types/handlers/Tex.js';
+import type { SveltexConfiguration as _SveltexConfiguration } from '$types/SveltexConfiguration.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 export interface VerbatimProcessOptions {
@@ -607,7 +607,7 @@ interface TikzPreset {
         /**
          * This library provides capabilities for automatic graph drawing. It
          * requires that the document is typeset using LuaTeX (i.e.,
-         * {@link CompilationOptions.engine | `engine`} set to `lualatex` or
+         * {@link _CompilationOptions.engine | `engine`} set to `lualatex` or
          * `lualatexmk`). This package should work with LuaTeX 0.54 or higher.
          *
          * @see https://tikz.dev/gd-usage-tikz#pgf.graphdrawing
@@ -869,7 +869,7 @@ interface TikzPreset {
          * such annotations with this library.
          *
          * @remarks
-         * {@link CompilationOptions.intermediateFiletype | `intermediateFiletype`}
+         * {@link _CompilationOptions.intermediateFiletype | `intermediateFiletype`}
          * must be set to `'dvi'` for this library to work.
          *
          * @see https://tikz.dev/library-rdf
@@ -1114,7 +1114,7 @@ export interface VerbEnvConfigTex extends VerbEnvConfigBase {
                *
                * @remarks
                * Sveltex will automatically add the class option `dvisvgm` if
-               * {@link CompilationOptions.intermediateFiletype | `intermediateFiletype`}
+               * {@link _CompilationOptions.intermediateFiletype | `intermediateFiletype`}
                * is set to `'dvi'`. See https://tikz.dev/drivers.
                */
               options?: string[] | undefined;
@@ -1123,7 +1123,7 @@ export interface VerbEnvConfigTex extends VerbEnvConfigBase {
 
     /**
      * Override any part of the default TeX configuration inherited
-     * from the {@link SveltexConfiguration.tex | `tex`}
+     * from the {@link _SveltexConfiguration.tex | `tex`}
      * property of the Sveltex configuration.
      */
     overrides?: TexConfiguration | undefined;

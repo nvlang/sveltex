@@ -2,7 +2,7 @@ import {
     describe,
     it,
     expect,
-    MockInstance,
+    type MockInstance,
     beforeAll,
     afterAll,
     vi,
@@ -13,10 +13,10 @@ import {
     interpretFrontmatter,
     parseFrontmatter,
 } from '$utils/frontmatter.js';
-import { Frontmatter } from '$types/utils/Frontmatter.js';
+import type { Frontmatter } from '$types/utils/Frontmatter.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { isString } from '$typeGuards/utils.js';
-import { ProcessableSnippet } from '$types/utils/Escape.js';
+import type { ProcessableSnippet } from '$types/utils/Escape.js';
 
 let log: MockInstance;
 beforeAll(async () => {

@@ -1,9 +1,9 @@
-import { Sveltex, sveltex } from '$base/Sveltex.js';
+import { type Sveltex, sveltex } from '$base/Sveltex.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { mockFs } from '$dev_deps.js';
-import { Processed } from 'svelte/compiler';
+import type { Processed } from 'svelte/compiler';
 import {
-    MockInstance,
+    type MockInstance,
     afterAll,
     beforeAll,
     beforeEach,

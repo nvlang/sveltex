@@ -8,6 +8,7 @@ import type {
     MathProcessFn,
     MathProcessOptions,
 } from '$types/handlers/Math.js';
+import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
 import { getDefaultMathConfiguration } from '$base/defaults.js';
@@ -33,7 +34,10 @@ export class MathHandler<B extends MathBackend> extends Handler<
     FullMathConfiguration<B>,
     MathHandler<B>
 > {
-    override get process() {
+    override get process(): (
+        tex: string,
+        options?: MathProcessOptions<B>,
+    ) => Promise<ProcessedSnippet> {
         return async (tex: string, options?: MathProcessOptions<B>) => {
             await this.handleCss();
 
@@ -65,7 +69,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
     private _handleCss: (mathHandler: this) => Promise<void> = () =>
         Promise.resolve();
-    get handleCss() {
+    get handleCss(): () => Promise<void> {
         return async () => {
             if (this._handledCss) {
                 return;
@@ -98,7 +102,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
     /* v8 ignore next 2 (unreachable code) */
     private _updateCss: (mathHandler: this) => void = () => undefined;
 
-    get updateCss() {
+    get updateCss(): () => void {
         return () => {
             if (
                 this.backend === 'mathjax' &&
@@ -119,7 +123,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
      * handler is being used on.
      */
     private _headLines: string[] = [];
-    get headLines() {
+    get headLines(): string[] {
         return this._headLines;
     }
 
@@ -133,7 +137,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
      * of the page.
      */
     private _scriptLines: string[] = [];
-    get scriptLines() {
+    get scriptLines(): string[] {
         return this._scriptLines;
     }
 

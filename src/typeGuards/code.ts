@@ -6,11 +6,11 @@ import type { Equals, Extends } from '$deps.js';
 
 // Internal dependencies
 import { isOneOf, isString } from '$typeGuards/utils.js';
-import { CodeBackend, CodeBackendWithCss } from '$types/handlers/Code.js';
-import { SupportedCdn } from '$types/handlers/Css.js';
+import type { CodeBackend, CodeBackendWithCss } from '$types/handlers/Code.js';
+import type { SupportedCdn } from '$types/handlers/Css.js';
 import {
-    HighlightJsThemeName,
-    StarryNightThemeName,
+    type HighlightJsThemeName,
+    type StarryNightThemeName,
     highlightJsThemeNames,
     starryNightThemeNames,
 } from '$data/code.js';

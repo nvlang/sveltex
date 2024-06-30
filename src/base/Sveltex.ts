@@ -454,7 +454,7 @@ export class Sveltex<
      * ⚠ **Warning**: Mutating this object will have no effect on the Sveltex
      * instance.
      */
-    get configuration() {
+    get configuration(): FullSveltexConfiguration<M, C, T> {
         const clone = deepClone(this._configuration);
         const { markdown, code, math, verbatim } = this._configuration;
 

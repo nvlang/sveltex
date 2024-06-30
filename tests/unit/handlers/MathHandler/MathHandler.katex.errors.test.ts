@@ -6,7 +6,7 @@ import {
     vi,
     beforeEach,
     beforeAll,
-    MockInstance,
+    type MockInstance,
 } from 'vitest';
 import { MathHandler } from '$handlers/MathHandler.js';
 import { spy } from '$tests/unit/fixtures.js';

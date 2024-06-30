@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getLocationUnist, lineColToLocation } from '$utils/ast.js';
 import type { UnistNode } from '$deps.js';
 import { cartesianProduct, range } from '$tests/unit/utils.js';
-import { LineColumn, Offsets } from '$types/utils/Ast.js';
+import type { LineColumn, Offsets } from '$types/utils/Ast.js';
 
 describe('getLocationUnist', () => {
     describe('core functionality', () => {

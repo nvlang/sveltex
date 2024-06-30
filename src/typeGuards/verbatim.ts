@@ -20,7 +20,7 @@ import {
 } from '$typeGuards/utils.js';
 
 // External dependencies
-import { Equals, typeAssert } from '$deps.js';
+import { type Equals, typeAssert } from '$deps.js';
 
 export const supportedTexEngines = [
     'lualatex',

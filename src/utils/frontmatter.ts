@@ -13,7 +13,7 @@ import { log, prettifyError } from '$utils/debug.js';
 
 // External dependencies
 import { parseYaml, parseToml } from '$deps.js';
-import { ProcessableSnippet } from '$types/utils/Escape.js';
+import type { ProcessableSnippet } from '$types/utils/Escape.js';
 import {
     isArray,
     isNonNullObject,
