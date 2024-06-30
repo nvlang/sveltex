@@ -14,6 +14,7 @@ import { v4 as uuid } from 'uuid';
 import { consoles } from '$utils/debug.js';
 import { SupportedCdn } from '$types/handlers/Css.js';
 import { PossibleMathCssApproach } from '$types/handlers/Math.js';
+import { sveltex } from '$base/Sveltex.js';
 
 function fixture() {
     beforeEach(() => {
@@ -121,6 +122,20 @@ describe("MathHandler<'mathjax'>", () => {
             await handler.process('');
             expect(writeFile).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
+        });
+
+        it('updates css as it goes', async () => {
+            const s = await sveltex({ mathBackend: 'mathjax' });
+            await Promise.all(
+                ['$a$', '$b$', '$c$'].map(
+                    async (str) =>
+                        await s.markup({
+                            content: str,
+                            filename: 'test.sveltex',
+                        }),
+                ),
+            );
+            expect(writeFileEnsureDirSync).toHaveBeenCalledTimes(3);
         });
     });
 
