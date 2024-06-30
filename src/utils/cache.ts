@@ -160,7 +160,7 @@ export class SveltexCache {
  * Returns `false` if `dir === path`, i.e., a directory does not contain itself
  * according to this function.
  */
-function dirContains(dir: string, path: string) {
+function dirContains(dir: string, path: string): boolean {
     dir = ensureEndsWith(normalize(dir), pathSep);
     if (path.length <= dir.length) return false;
     path = ensureEndsWith(normalize(path), pathSep);

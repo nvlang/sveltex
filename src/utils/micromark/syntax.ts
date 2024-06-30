@@ -23,7 +23,7 @@ function skipFlowFactory(skipTags: string[]): Construct {
  */
 export function micromarkSkip(
     tags: string[] | undefined = ['script', 'style'],
-) {
+): { flow: { 60: Construct }; text: { 60: Construct } } {
     return {
         flow: { [codes.lessThan]: skipFlowFactory(tags) },
         text: { [codes.lessThan]: skipFlowFactory(tags) },

@@ -24,7 +24,7 @@ export function cdnLink(
     resource: string,
     version: string = 'latest',
     cdn: SupportedCdn = 'jsdelivr',
-) {
+): string {
     let separator = '@';
     if (cdn === 'cdnjs') {
         if (pkg === '@wooorm/starry-night') cdn = 'jsdelivr';

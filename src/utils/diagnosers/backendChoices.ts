@@ -67,7 +67,7 @@ typeAssert<
  */
 export function diagnoseBackendChoices(
     choices: BackendChoices<MarkdownBackend, CodeBackend, MathBackend>,
-) {
+): { errors: number; warnings: number; problems: number } {
     if (!isNonNullObject(choices)) {
         log(
             'error',

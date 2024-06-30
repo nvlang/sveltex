@@ -47,7 +47,7 @@ export class Diagnoser {
      */
     problems: { message: string; severity: 'error' | 'warn' }[] = [];
 
-    get stats() {
+    get stats(): { errors: number; warnings: number; problems: number } {
         return {
             errors: this.problems.filter((p) => p.severity === 'error').length,
             warnings: this.problems.filter((p) => p.severity === 'warn').length,
@@ -58,7 +58,7 @@ export class Diagnoser {
     noteUnexpectedProperties(
         expected: string[],
         severity: 'error' | 'warn' = 'warn',
-    ) {
+    ): void {
         const subject = this.subject;
         const keys = Object.keys(subject);
         const unexpected = keys.filter((k) => !expected.includes(k));
@@ -73,7 +73,7 @@ export class Diagnoser {
     /**
      * Whether the object passed the diagnosis.
      */
-    get passed() {
+    get passed(): boolean {
         return this.problems.length === 0;
     }
 
@@ -97,7 +97,7 @@ export class Diagnoser {
         order: 'unmodified' | 'reversed' | 'asc' | 'desc' = 'asc',
         color: boolean = true,
         prefix: string = '- ',
-    ) {
+    ): void {
         // "what"
         let allProblems = [...this.problems];
         if (what === 'errors') {
@@ -139,7 +139,7 @@ export class Diagnoser {
      * d.addProblem('Expected "a" to be a string. Instead, got a number.', 'warn')
      * ```
      */
-    addProblem(message: string, severity: 'error' | 'warn' = 'error') {
+    addProblem(message: string, severity: 'error' | 'warn' = 'error'): void {
         this.problems.push({ message, severity });
     }
 
@@ -201,7 +201,7 @@ function getType(x: unknown): NameOfPrimitiveTypeOrNull {
 export function insteadGot(
     x: unknown,
     expectedType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
-) {
+): string {
     const typeStr = getType(x);
     const showDetails = isArray(expectedType)
         ? expectedType.includes(typeStr)
@@ -217,6 +217,6 @@ export function insteadGot(
     }
 }
 
-export function enquote(str: unknown) {
+export function enquote(str: unknown): string {
     return `"${String(str)}"`;
 }

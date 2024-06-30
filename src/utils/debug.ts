@@ -152,7 +152,7 @@ export function log(...args: unknown[]): void;
  *
  * @param args - The arguments to pass to `console.log`.
  */
-export function log(...args: unknown[]) {
+export function log(...args: unknown[]): void {
     const possiblyOptions = args[0];
     let remainingArgs = args;
     let severity: LogSeverity = 'log';

@@ -94,7 +94,7 @@ export function sha256(
  *    ${'mg'}`;
  * ```
  */
-export function re(strings: TemplateStringsArray, ...flags: string[]) {
+export function re(strings: TemplateStringsArray, ...flags: string[]): RegExp {
     return new RegExp(
         strings.raw
             .join('')

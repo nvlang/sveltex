@@ -1,7 +1,6 @@
 // File description: Types describing the options that can be passed to MathJax
 // via SvelTeX.
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export interface MathjaxConfiguration {
     /**
      * Document options.
@@ -29,8 +28,7 @@ export interface MathjaxConfiguration {
     mml?: MathjaxMathmlInputProcessorOptions | undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface MathjaxOptions extends MathjaxDocumentOptions {}
+type MathjaxOptions = MathjaxDocumentOptions;
 
 /**
  * Options that can be passed to `tex2chtml`, `tex2svg`, and related functions.
@@ -98,78 +96,6 @@ export interface MathjaxConversionOptions {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MathjaxCommonInputProcessorOptions {}
-
-/**
- * These options control the operation of the [AsciiMath input
- * processor](https://docs.mathjax.org/en/latest/basic/mathematics.html#asciimath-input)
- * that is run when you include `'input/asciimath'` in the in the `load` array
- * of the `loader` block of your MathJax configuration, or if you load a
- * combined component that includes the AsciiMath input jax (none currently do,
- * since the AsciiMath input has not been fully ported to version 3). They are
- * listed with their default values. To set any of these options, include an
- * `asciimath` section in your `MathJax` global object.
- */
-// @ts-expect-error We include this interface for the sake of completeness, even
-// if it's unused.
-interface MathjaxAsciimathInputProcessorOptions
-    extends MathjaxCommonInputProcessorOptions {
-    /**
-     * Specifies whether to use TeX mapping or unicode mapping for the `fixphi`
-     * option.
-     *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
-     *
-     * Determines whether MathJax will switch the Unicode values for `phi` and
-     * `varphi`. If set to true MathJax will use the TeX mapping, otherwise the
-     * Unicode mapping.
-     */
-    fixphi?: boolean;
-
-    /**
-     * Specifies whether to use displaystyle typesetting or in-line typesetting
-     * for the `displaystyle` option.
-     *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
-     *
-     * Determines whether operators like summation symbols will have their
-     * limits above and below the operators (true) or to their right (false).
-     * The former is how they would appear in displayed equations that are shown
-     * on their own lines, while the latter is better suited to in-line
-     * equations so that they don’t interfere with the line spacing so much.
-     */
-    displaystyle?: boolean;
-
-    /**
-     * Specifies the character to use for the decimal separator for the
-     * `decimalsign` option.
-     *
-     * @defaultValue `'.'`
-     *
-     * This is the character to be used for decimal points in numbers. If you
-     * change this to `','`, then you need to be careful about entering points
-     * or intervals. E.g., use `(1, 2)` rather than `(1,2)` in that case.
-     */
-    decimalsign?: string;
-
-    /**
-     * The `FindAsciiMath` object instance that will override the default one.
-     * This allows you to create a subclass of `FindAsciiMath` and pass that to
-     * the AsciiMath input jax. A `null` value means use the default
-     * `FindAsciiMath` class and make a new instance of that.
-     *
-     * @defaultValue `null`
-     *
-     * @remarks This is a "developer option", i.e., a low-level option intended
-     * for developers.
-     */
-    FindAsciiMath?: unknown;
-}
 
 /**
  * These options control the operation of the [MathML input
@@ -1097,38 +1023,4 @@ interface MathjaxDocumentOptions {
     //  * for developers.
     //  */
     // MathItem?: MathItem;
-}
-
-/**
- *  The InputJax interface
- */
-// @ts-expect-error We include this interface for the sake of completeness, even
-// if it's unused.
-interface InputJax {
-    /**
-     * The name of the input jax subclass (e.g,. 'TeX')
-     */
-    name: string;
-
-    /**
-     * Whether this input jax processes string arrays or DOM nodes
-     * (TeX and AsciiMath process strings, MathML processes DOM nodes)
-     */
-    processStrings: boolean;
-
-    /**
-     * The options for this input jax instance
-     */
-    options: Record<string, unknown>;
-
-    /**
-     * Lists of pre- and post-filters to call before and after processing the input
-     */
-    preFilters: Record<string, unknown>;
-    postFilters: Record<string, unknown>;
-
-    /**
-     * The DOM adaptor for managing HTML elements
-     */
-    adaptor: unknown;
 }

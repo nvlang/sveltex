@@ -1253,7 +1253,7 @@ export class TexComponent {
 export function extendedPreamble(
     verbEnvConfig: FullVerbEnvConfigTex,
     texConfig: FullTexConfiguration,
-) {
+): string {
     const preamble = verbEnvConfig.preamble;
     const { packages, gdlibraries, tikzlibraries } = enactPresets(
         verbEnvConfig,
@@ -1284,7 +1284,7 @@ export function extendedPreamble(
     ].join('\n');
 }
 
-function extractTrueKeys(obj: object) {
+function extractTrueKeys(obj: object): string[] {
     return Object.entries(obj)
         .filter(([, value]) => value === true)
         .map(([key]) => key);
@@ -1293,7 +1293,7 @@ function extractTrueKeys(obj: object) {
 export function enactPresets(
     verbEnvConfig: FullVerbEnvConfigTex,
     texConfig: FullTexConfiguration,
-) {
+): { tikzlibraries: string[]; gdlibraries: string[]; packages: string[] } {
     const presets = isArray(verbEnvConfig.preset)
         ? verbEnvConfig.preset
         : [verbEnvConfig.preset];
@@ -1331,7 +1331,7 @@ export function parseLatexLog(
     stdout: string,
     texLineOffset: number,
     svelteLineOffset?: number | undefined,
-) {
+): Problem[] {
     const problems: Problem[] = [];
     specialCases.forEach((specialCase) => {
         const [regExp, handler] = specialCase;
@@ -1367,7 +1367,7 @@ export function printLogProblems(
     verbosity: 'all' | TexLogSeverity | 'none',
     filepath: string,
     ignoreLogMessages: (string | RegExp)[],
-) {
+): void {
     problems.forEach((problem) => {
         if (
             extendedLogSeverities.indexOf(problem.severity) >=
@@ -1396,7 +1396,7 @@ export function printLogProblems(
  * 5.  _(Optional)_ Line number
  * 6.  _(Optional)_ Ending punctuation
  */
-const errorRegExp1 = re`
+const errorRegExp1: RegExp = re`
     ^
     (                           # 1: Message
         (?:                     # -:
@@ -1466,7 +1466,7 @@ const errorRegExp1 = re`
  * 3.  _(Optional)_ If "undefined control sequence", this is the undefined
  *     control sequence in question.
  */
-const errorRegExp = re`
+const errorRegExp: RegExp = re`
     ^                               # (start of line)
     ! [\ ]                          # ("! ")
     (                               # 1: Message
@@ -1536,7 +1536,7 @@ const errorRegExp = re`
  * 2.  _(Optional)_ Start line number (if range in paragraph)
  * 3.  _(Optional)_ Line number (if detected at specific line)
  */
-const boxRegExp = re`
+const boxRegExp: RegExp = re`
     ^                       # (start of line)
     (                       # 1: Message
         (?:                 # -:
@@ -1612,7 +1612,7 @@ const boxRegExp = re`
  * 3.  _(Optional)_ Class/package/module name
  * 4.  `'Error'`, `'Warning'`, `'Info'`, or `'Missing'`
  */
-const errmessageRegExp = re`
+const errmessageRegExp: RegExp = re`
     ^                       # (start of line)
     [^:\r\n]+?              # (any (excl. newlines and colons), ≥1, lazy)
     \.tex:                  # (".tex:")

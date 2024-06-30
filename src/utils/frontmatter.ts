@@ -212,7 +212,7 @@ function addMetaHttpEquiv(
             | (string | number | boolean | null)
             | (string | number | boolean | null)[];
     },
-) {
+): Meta[] {
     const item = {
         ...rawItem,
         content: isArray(rawItem.content)

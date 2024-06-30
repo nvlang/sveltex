@@ -35,7 +35,10 @@ import type { VerbatimType } from '$types/handlers/Verbatim.js';
  * - `warnings`: The number of warnings found.
  * - `problems`: The total number of problems found (i.e., `errors + warnings`).
  */
-export function diagnoseVerbEnvConfig(x: unknown, env?: string) {
+export function diagnoseVerbEnvConfig(
+    x: unknown,
+    env?: string,
+): { errors: number; warnings: number; problems: number } {
     if (!isNonNullObject(x)) {
         log(
             'error',

@@ -47,7 +47,9 @@ import {
  * @param skipTags - An array of tags to skip.
  * @returns A tokenizer that skips the specified tags.
  */
-export function tokenizeSkipFlowFactory(skipTags: string[]) {
+export function tokenizeSkipFlowFactory(
+    skipTags: string[],
+): (this: TokenizeContext, effects: Effects, ok: State, nok: State) => State {
     return function tokenizeSkipFlow(
         this: TokenizeContext,
         effects: Effects,

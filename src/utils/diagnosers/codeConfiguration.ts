@@ -29,7 +29,10 @@ import { Diagnoser, enquote, insteadGot } from '$utils/diagnosers/Diagnoser.js';
 // External dependencies
 import { isRegExp, nodeAssert } from '$deps.js';
 
-export function diagnoseCodeConfiguration(backend: CodeBackend, x: unknown) {
+export function diagnoseCodeConfiguration(
+    backend: CodeBackend,
+    x: unknown,
+): { errors: number; warnings: number; problems: number } {
     if (!isNonNullObject(x)) {
         log(
             'error',

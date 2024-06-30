@@ -27,13 +27,13 @@ export const fs = {
     ensureDirSync,
     writeFileEnsureDir,
     writeFileEnsureDirSync,
-};
+} as const;
 
 /**
  * Ensure that a directory exists, creating it (and any necessary intermediate
  * directories) if it does not.
  */
-async function ensureDir(dir: string) {
+async function ensureDir(dir: string): Promise<void> {
     if (!fs.existsSync(dir)) {
         await fs.mkdir(dir, { recursive: true });
     }
@@ -43,7 +43,7 @@ async function ensureDir(dir: string) {
  * Ensure that a directory exists, creating it (and any necessary intermediate
  * directories) if it does not.
  */
-function ensureDirSync(dir: string) {
+function ensureDirSync(dir: string): void {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
@@ -58,7 +58,10 @@ function ensureDirSync(dir: string) {
  *
  * @remarks `'utf8'` encoding is used to write the file.
  */
-async function writeFileEnsureDir(file: string, content: string) {
+async function writeFileEnsureDir(
+    file: string,
+    content: string,
+): Promise<void> {
     const dir = dirname(file);
     if (dir !== '.') await ensureDir(dir);
     await fs.writeFile(file, content, 'utf8');
@@ -73,7 +76,7 @@ async function writeFileEnsureDir(file: string, content: string) {
  *
  * @remarks `'utf8'` encoding is used to write the file.
  */
-function writeFileEnsureDirSync(file: string, content: string) {
+function writeFileEnsureDirSync(file: string, content: string): void {
     const dir = dirname(file);
     if (dir !== '.') ensureDirSync(dir);
     fs.writeFileSync(file, content, 'utf8');
@@ -85,7 +88,7 @@ function writeFileEnsureDirSync(file: string, content: string) {
  * @param path - The path to check.
  * @returns `true` if the path exists, `false` otherwise.
  */
-export function pathExists(path: string) {
+export function pathExists(path: string): boolean {
     try {
         return fs.existsSync(path);
     } catch {

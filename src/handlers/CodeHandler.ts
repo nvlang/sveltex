@@ -156,7 +156,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * variable must be set at most once.
      */
     private _headLines: string[] = [];
-    get headLines() {
+    get headLines(): string[] {
         return this._headLines;
     }
 
@@ -170,11 +170,11 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * of the page.
      */
     private _scriptLines: string[] = [];
-    get scriptLines() {
+    get scriptLines(): string[] {
         return this._scriptLines;
     }
 
-    get handleCss() {
+    get handleCss(): () => Promise<void> {
         return async () => {
             if (this._handledCss) return;
             if (this._handlingCss) {
@@ -200,7 +200,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     private _handlingCss: boolean = false;
 
     private configIsValid: boolean | undefined = undefined;
-    private async _handleCss() {
+    private async _handleCss(): Promise<void> {
         // If the backend isn't themable, don't try to fetch any CSS
         if (!isCodeBackendWithCss(this.backend)) return;
 

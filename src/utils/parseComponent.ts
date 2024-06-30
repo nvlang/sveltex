@@ -4,7 +4,10 @@
 // Internal dependencies
 import { is, typeAssert } from '$deps.js';
 import { isBoolean, isNumber, isString } from '$typeGuards/utils.js';
-import type { InterpretedAttributes, ParsedComponent } from '$types/utils/Escape.js';
+import type {
+    InterpretedAttributes,
+    ParsedComponent,
+} from '$types/utils/Escape.js';
 import { escapeWhitespace } from '$utils/debug.js';
 import { re } from '$utils/misc.js';
 
@@ -128,7 +131,8 @@ export function parseComponent(html: string): ParsedComponent {
             rawAttributes[key] = val;
         }
     }
-    const attributes = interpretAttributes(rawAttributes);
+    const attributes: InterpretedAttributes =
+        interpretAttributes(rawAttributes);
     return { tag, attributes, innerContent, selfClosing };
 }
 
@@ -141,7 +145,7 @@ export function parseComponent(html: string): ParsedComponent {
  *
  * @see {@link parseComponent | `parseComponent`}
  */
-const attributesRegExp = re`
+const attributesRegExp: RegExp = re`
     (                           # 1: attribute name
         [                       # (first character)
             a-zA-Z
@@ -189,7 +193,7 @@ const attributesRegExp = re`
  *
  * @see {@link parseComponent | `parseComponent`}
  */
-export const componentRegExp = re`
+export const componentRegExp: RegExp = re`
     ^                           # (start of string)
     \s*                         # (optional leading whitespace)
     <                           # (opening angle bracket)

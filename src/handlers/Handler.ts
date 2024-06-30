@@ -9,7 +9,7 @@ import type { ProcessFn, SimplerProcessFn } from '$types/handlers/Handler.js';
 import { rfdc } from '$deps.js';
 import { isString } from '$typeGuards/utils.js';
 
-export const deepClone = rfdc();
+export const deepClone: <T>(input: T) => T = rfdc();
 
 /**
  * This is the generic class which all handlers should extend.

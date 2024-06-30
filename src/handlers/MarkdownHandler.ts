@@ -341,7 +341,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
 function adjustHtmlSpacing(
     content: string,
     prefersInline: (tag: string) => boolean,
-) {
+): { content: string; unescapeTags: (str: string) => string } {
     /**
      * An UUIDv4 (without dashes) to use to escape HTML block-level element
      * tags.
@@ -418,7 +418,7 @@ function adjustHtmlSpacing(
  * `\r\n`, and `\n`. Each of these is counted as a single newline (in
  * particular, `\r\n` is considered 1 newline).
  */
-export function countNewlines(s: string) {
+export function countNewlines(s: string): number {
     let n = 0;
     for (let i = 0; i < s.length; i++) {
         if (s[i] === '\n') n++;
@@ -427,7 +427,7 @@ export function countNewlines(s: string) {
     return n;
 }
 
-const shared = `
+const shared: string = `
     ^                   # (start of line)
     {{space}}*          # (whitespace, ≥0, greedy)
     (?<opening>         # 1: opening tag
@@ -458,16 +458,16 @@ const shared = `
     )
 `;
 
-const space = '[ \\t]';
-const newline = '(?:\\r\\n?|\\n)';
+const space: string = '[ \\t]';
+const newline: string = '(?:\\r\\n?|\\n)';
 
-const regexAny = XRegExp.build(
+const regexAny: RegExp = XRegExp.build(
     shared,
     { tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)', space, newline },
     'gimsux',
 );
 
-const regexSpecials = XRegExp.build(
+const regexSpecials: RegExp = XRegExp.build(
     shared,
     {
         space,

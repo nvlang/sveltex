@@ -143,7 +143,7 @@ export function outermostRanges<
 /**
  *
  */
-export function escapeBraces(content: string) {
+export function escapeBraces(content: string): string {
     return content.replaceAll('{', '&lbrace;').replaceAll('}', '&rbrace;');
 }
 
@@ -159,7 +159,7 @@ export const uniqueEscapeSequences = {
  *
  * TODO: Make this safer (see https://npmjs.com/package/html-escaper)
  */
-export function customEscapeSequencesToHtml(escapedContent: string) {
+export function customEscapeSequencesToHtml(escapedContent: string): string {
     return escapedContent
         .replaceAll(uniqueEscapeSequences['<'], '&lt;')
         .replaceAll(uniqueEscapeSequences['>'], '&gt;')
@@ -182,7 +182,7 @@ export function customEscapeSequencesToHtml(escapedContent: string) {
 //       check if it's a mustache tag, and, if not, remove surrounding
 //       <p>...</p> tag, if present, after unescaping)
 
-export function escapeStringForRegExp(str: string) {
+export function escapeStringForRegExp(str: string): string {
     return str.replace(/([.*+?^${}()|[\]\\-])/gu, '\\$1');
 }
 
@@ -434,7 +434,7 @@ export function getSvelteES(document: string): EscapableSnippet<'svelte'>[] {
     return escapableSnippets;
 }
 
-export const colonUuid = uuid().replace(/-/g, '');
+export const colonUuid: string = uuid().replace(/-/g, '');
 
 export function getColonES(document: string): EscapableSnippet<'svelte'>[] {
     const escapableSnippets: EscapableSnippet<'svelte'>[] = [];
@@ -857,7 +857,7 @@ export function escape(
     texSettings: WithFullDelims['delims'],
     verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
     directiveSettings: DirectiveEscapeSettings = {},
-) {
+): { escapedDocument: string; escapedSnippets: [string, EscapedSnippet][] } {
     // Escape colons inside special Svelte elements (e.g. <svelte:component>) so
     // that they don't confuse the markdown processor. We don't want to escape
     // the entire special Svelte element because we want the markdown processor

@@ -26,7 +26,7 @@ import { Diagnoser, enquote } from '$utils/diagnosers/Diagnoser.js';
  * @param x - The object to diagnose.
  * @returns Diagnoser object.
  */
-export function diagnoseTexConfig(x: object) {
+export function diagnoseTexConfig(x: object): Diagnoser {
     const d = new Diagnoser(x);
 
     // Caching options

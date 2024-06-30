@@ -6,7 +6,7 @@
  */
 export function remarkDisableIndentedCodeBlocksAndAutolinks(
     this: import('unified').Processor,
-) {
+): void {
     const data = this.data();
     const micromarkExtensions =
         data.micromarkExtensions ?? (data.micromarkExtensions = []);
@@ -19,7 +19,7 @@ export function remarkDisableIndentedCodeBlocksAndAutolinks(
  * @remarks
  * The names come from `import('micromark-util-types').TokenTypeMap`.
  */
-export const micromarkDisableIndentedCodeAndAutolinks = {
+export const micromarkDisableIndentedCodeAndAutolinks: object = {
     disable: {
         null: [
             'codeIndented',

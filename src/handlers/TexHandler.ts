@@ -102,7 +102,7 @@ export class TexHandler extends Handler<
      * @param filename - The name of the file.
      * @param tc - The tex component to note.
      */
-    noteTcInFile(filename: string, tc: TexComponentImportInfo) {
+    noteTcInFile(filename: string, tc: TexComponentImportInfo): void {
         if (
             filename in this.texComponents &&
             this.texComponents[filename] !== undefined

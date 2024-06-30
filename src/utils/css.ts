@@ -14,7 +14,7 @@ import { sha256 } from '$utils/misc.js';
 /**
  * Regular expression for matching CSS variables.
  */
-const cssVarRegex =
+const cssVarRegex: RegExp =
     /var\((--[-]*[_a-zA-Z\u00A1-\uFFFF][-\w\u00A1-\uFFFF]*)\)/gu;
 
 /**
@@ -77,7 +77,7 @@ function texDefineHexColors(cssColorVars: Map<CssVar, string>): string {
  *
  * ...would return a map with the entry `'--red' => 'e4a6ed'`.
  */
-export function parseCssColorVarsFromTex(tex: string) {
+export function parseCssColorVarsFromTex(tex: string): Map<CssVar, string> {
     const cssColorVarMatches = tex.matchAll(cssVarRegex);
     const cssColorVars = new Map<CssVar, string>();
     const hashes: string[] = [];
@@ -137,7 +137,7 @@ export function parseCssColorVarsFromTex(tex: string) {
 export function unescapeCssColorVars(
     svg: string,
     cssColorVars: Map<CssVar, string>,
-) {
+): string {
     let unescaped = svg;
     cssColorVars.forEach((hexColor, cssColorVar) => {
         const regExp = getHexRegExp(hexColor);
@@ -147,7 +147,7 @@ export function unescapeCssColorVars(
     return unescaped;
 }
 
-export function getHexRegExp(hex: string) {
+export function getHexRegExp(hex: string): RegExp | undefined {
     if (hex.startsWith('#')) hex = hex.slice(1);
     if (!/^[0-9A-Fa-f]+$/i.test(hex)) {
         const name = hex.toLowerCase();
@@ -243,7 +243,13 @@ export function getHexRegExp(hex: string) {
  * ...and a map `cssColorVars` with the entry `'--red' => 'e4a6ed'`.
  *
  */
-export function escapeCssColorVars(tex: string, preamble?: string) {
+export function escapeCssColorVars(
+    tex: string,
+    preamble?: string,
+): {
+    escaped: string;
+    cssColorVars: Map<CssVar, string>;
+} {
     const cssColorVars = parseCssColorVarsFromTex(tex);
     let escaped = tex;
     cssColorVars.forEach((color, cssColorVar) => {

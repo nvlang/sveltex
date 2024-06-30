@@ -34,7 +34,7 @@ import { mergeConfigs } from '$utils/merge.js';
 import { escapeHtml, is, nodeAssert, rfdc, typeAssert } from '$deps.js';
 import { applyTransformations } from '$utils/transformers.js';
 
-const deepClone = rfdc();
+const deepClone: <T>(input: T) => T = rfdc();
 
 /**
  * Handler for verbatim environments.
