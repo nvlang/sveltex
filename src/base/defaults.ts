@@ -1,3 +1,5 @@
+// File description: Default configurations for SvelTeX.
+
 // Types
 import type { FullSveltexConfiguration } from '$types/SveltexConfiguration.js';
 import type {
