@@ -6,7 +6,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write # The OIDC ID token is used for authentication with JSR.
 
 jobs:
@@ -43,7 +43,12 @@ jobs:
         run: |
           TAG_NAME="${{ github.event.release.tag_name }}"
           VERSION=${TAG_NAME#v}
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"$VERSION\"/" "deno.jsonc"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" "deno.jsonc"
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add deno.jsonc
+          git commit -m "Bump version to $VERSION"
+          git push origin $BRANCH_NAMEs
 
       - name: Publish to JSR
         run: pnpm dlx jsr publish
