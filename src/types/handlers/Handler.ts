@@ -89,15 +89,3 @@ export type ProcessFn<ProcessOptions extends object, H> = (
     options: ProcessOptions,
     handler: H,
 ) => string | ProcessedSnippet | Promise<string | ProcessedSnippet>;
-
-/**
- * Generic type for a handler's `configure` function.
- *
- * @typeParam Configuration - The type of the configuration object that the
- * handler accepts as input to its `configure` function.
- * @typeParam H - The type of the handler that the function is associated with.
- */
-export type ConfigureFn<Configuration extends object, H> = (
-    configuration: Configuration,
-    handler: H,
-) => void | Promise<void>;
