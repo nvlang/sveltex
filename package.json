@@ -31,9 +31,6 @@
   "bugs": {
     "url": "https://github.com/nvlang/sveltex/issues"
   },
-  "publishConfig": {
-    "provenance": true
-  },
   "homepage": "https://sveltex.dev",
   "files": [
     "dist",
