@@ -5,7 +5,11 @@
 // NOTE: This file is based on the following micromark-internal file:
 // https://github.com/micromark/micromark/blob/6038803b533061627d9c2cb58579f74fc80e0339/packages/micromark-core-commonmark/dev/lib/html-flow.js
 
+// I'm not entirely sure why the `this` aliases are necessary, but I tried
+// removing them and the code broke. I may investigate this at some later point
+// in time. For now, we'll just disable the corresponding ESLint rule.
 /* eslint-disable @typescript-eslint/no-this-alias */
+
 // Types
 import type {
     MicromarkCode as Code,
@@ -15,6 +19,7 @@ import type {
     MicromarkTokenizeContext as TokenizeContext,
 } from '$deps.js';
 
+// External dependencies
 import {
     micromarkMarkdownLineEnding as markdownLineEnding,
     micromarkMarkdownLineEndingOrSpace as markdownLineEndingOrSpace,
@@ -34,7 +39,8 @@ declare module 'micromark-util-types' {
 }
 
 /**
- *
+ * @param skipTags - An array of tags to skip.
+ * @returns A tokenizer that skips the specified tags.
  */
 export function tokenizeSkipFlowFactory(skipTags: string[]) {
     return function tokenizeSkipFlow(
