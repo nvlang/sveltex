@@ -6,7 +6,8 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     paths:
-      - 'docs/**'
+      - docs/**
+  workflow_dispatch: {}
 
 permissions:
   contents: read
