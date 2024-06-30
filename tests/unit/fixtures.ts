@@ -4,11 +4,13 @@ import { type MockInstance, vi } from 'vitest';
 type Mockable = (typeof mockableFunctions)[number];
 
 const mockableFunctions = [
-    'ensureDir',
     'existsSync',
     'fancyWrite',
     'log',
     'mkdir',
+    'mkdirSync',
+    'ensureDir',
+    'ensureDirSync',
     'readFile',
     'readFileSync',
     'rename',
@@ -79,8 +81,17 @@ export async function spy(
         case 'mkdir':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'mkdir');
             break;
+        case 'mkdirSync':
+            spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'mkdirSync');
+            break;
         case 'ensureDir':
             spyFn = vi.spyOn((await import('$utils/fs.js')).fs, 'ensureDir');
+            break;
+        case 'ensureDirSync':
+            spyFn = vi.spyOn(
+                (await import('$utils/fs.js')).fs,
+                'ensureDirSync',
+            );
             break;
         case 'writeFileEnsureDir':
             spyFn = vi.spyOn(

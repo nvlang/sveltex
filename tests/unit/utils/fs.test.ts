@@ -8,19 +8,12 @@ import {
     beforeEach,
     afterAll,
     beforeAll,
-    type MockInstance,
+    afterEach,
 } from 'vitest';
 import { spy } from '$tests/unit/fixtures.js';
 
 describe('filesystem utils (`src/utils/fs.ts`)', () => {
-    let existsSync: MockInstance;
-    let mkdir: MockInstance;
-    let writeFile: MockInstance;
-    beforeAll(async () => {
-        const mocks = await spy(['existsSync', 'mkdir', 'writeFile'], true);
-        existsSync = mocks.existsSync;
-        mkdir = mocks.mkdir;
-        writeFile = mocks.writeFile;
+    beforeAll(() => {
         mockFs({});
     });
     afterAll(() => {
@@ -31,13 +24,22 @@ describe('filesystem utils (`src/utils/fs.ts`)', () => {
     describe.each([
         ['/path/to/file.txt', 'Test data', '/path/to'],
         ['test.txt', 'data', '.'],
-    ])('fs.writeFileEnsureDir', (testPath, testData, dir) => {
+    ])('fs.writeFileEnsureDir(%o)', (testPath, testData, dir) => {
         beforeEach(() => {
             vi.clearAllMocks();
             mockFs({});
         });
+        afterEach(() => {
+            vi.clearAllMocks();
+            vi.restoreAllMocks();
+        });
 
         it('writes file in an existing directory', async () => {
+            const { existsSync, mkdir, writeFile } = await spy([
+                'existsSync',
+                'mkdir',
+                'writeFile',
+            ]);
             existsSync.mockReturnValueOnce(true); // Pretend directory exists
             await fs.writeFileEnsureDir(testPath, testData);
             if (dir !== '.') {
@@ -56,6 +58,11 @@ describe('filesystem utils (`src/utils/fs.ts`)', () => {
         });
 
         it('creates directory and writes file when directory does not exist', async () => {
+            const { existsSync, mkdir, writeFile } = await spy([
+                'existsSync',
+                'mkdir',
+                'writeFile',
+            ]);
             existsSync.mockReturnValueOnce(false); // Pretend directory does not exist
             await fs.writeFileEnsureDir(testPath, testData);
             if (dir !== '.') {
@@ -68,26 +75,88 @@ describe('filesystem utils (`src/utils/fs.ts`)', () => {
         });
     });
 
+    describe.each([
+        ['/path/to/file.txt', 'Test data', '/path/to'],
+        ['test.txt', 'data', '.'],
+    ])('fs.writeFileEnsureDirSync(%o)', (testPath, testData, dir) => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockFs({});
+        });
+        afterEach(() => {
+            vi.clearAllMocks();
+            vi.restoreAllMocks();
+        });
+        it('writes file in an existing directory', async () => {
+            const { existsSync, mkdirSync, writeFileSync } = await spy([
+                'existsSync',
+                'mkdirSync',
+                'writeFileSync',
+            ]);
+            existsSync.mockReturnValueOnce(true); // Pretend directory exists
+            fs.writeFileEnsureDirSync(testPath, testData);
+            if (dir !== '.') {
+                expect(existsSync).toHaveBeenCalledWith(dir);
+            } else {
+                expect(existsSync).not.toHaveBeenCalled();
+            }
+            expect(mkdirSync).not.toHaveBeenCalled();
+            expect(writeFileSync).toHaveBeenCalledTimes(1);
+            expect(writeFileSync).toHaveBeenNthCalledWith(
+                1,
+                testPath,
+                testData,
+                'utf8',
+            );
+        });
+
+        it('creates directory and writes file when directory does not exist', async () => {
+            const { existsSync, mkdirSync, writeFileSync } = await spy([
+                'existsSync',
+                'mkdirSync',
+                'writeFileSync',
+            ]);
+            existsSync.mockReturnValueOnce(false); // Pretend directory does not exist
+            fs.writeFileEnsureDirSync(testPath, testData);
+            if (dir !== '.') {
+                expect(existsSync).toHaveBeenCalledWith(dir);
+                expect(mkdirSync).toHaveBeenCalledWith(dir, {
+                    recursive: true,
+                });
+            }
+            expect(writeFileSync).toHaveBeenCalledWith(
+                testPath,
+                testData,
+                'utf8',
+            );
+        });
+    });
+
     describe('pathExists', () => {
-        it.each([[{ 'exists.txt': '' }, 'exists.txt']])(
-            'returns true when the path exists',
-            (files, path) => {
-                mockFs(files);
-                const res = pathExists(path);
-                expect(existsSync).toHaveBeenCalledTimes(1);
-                expect(existsSync).toHaveBeenNthCalledWith(1, path);
-                expect(existsSync).toHaveNthReturnedWith(1, true);
-                expect(res).toEqual(true);
-            },
-        );
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockFs({});
+        });
+        afterEach(() => {
+            vi.clearAllMocks();
+            vi.restoreAllMocks();
+        });
+        it('returns true when the path exists', async () => {
+            const { existsSync } = await spy(['existsSync']);
+            existsSync.mockReturnValueOnce(true);
+            const res = pathExists('exists.txt');
+            expect(existsSync).toHaveBeenCalledTimes(1);
+            expect(existsSync).toHaveBeenNthCalledWith(1, 'exists.txt');
+            expect(existsSync).toHaveNthReturnedWith(1, true);
+            expect(res).toEqual(true);
+        });
 
         it('returns false when the path does not exist', () => {
-            mockFs({});
             expect(pathExists('does-not-exist')).toEqual(false);
         });
 
-        it('catches errors and silently returns false', () => {
-            mockFs({});
+        it('catches errors and silently returns false', async () => {
+            const { existsSync } = await spy(['existsSync']);
             existsSync.mockImplementationOnce(() => {
                 throw new Error();
             });
