@@ -67,16 +67,22 @@ libraries. Some notable examples are MathJax and TikZ.
 ### Tips
 
 -   Always run your linter before you run your tests. In particular, note that
-    VSCode's ESLint extension only runs on files that are currently open, so even
-    if the problems pane is clear, you might still have linting errors in files
-    that are not currently open.
+    VSCode's ESLint extension only runs on files that are currently open, so
+    even if the problems pane is clear, you might still have linting errors in
+    files that are not currently open.
 -   Generally speaking, don't combine `.ts` and `.d.ts` files. In short, it's
-    either `.ts` or it's `.js` + (optionally) `.d.ts`. This is almost certainly an
-    egregious oversimplification, but it's the feeling I got after spending a
-    bunch of time trying to debug issues caused by me mixing `.ts` and `.d.ts` files.
+    either `.ts` or it's `.js` + (optionally) `.d.ts`. This is almost certainly
+    an egregious oversimplification, but it's the feeling I got after spending a
+    bunch of time trying to debug issues caused by me mixing `.ts` and `.d.ts`
+    files.
+-   In YAML files for GitHub actions, `'text'`, `"text"`, and `text` may not be
+    the same. In particular, I had `workflow_run` events not triggering because
+    the needed workflow's name wasn't in quotes, but the `workflow_run` element
+    was.
 
 ### Cool software I didn't know before
 
-- `fast-check`, for fuzzy testing.
-- `shiki`, for code highlighting.
-- VitePress.
+-   `fast-check`, for fuzzy testing.
+-   Shiki, for code highlighting.
+-   `twoslash`, for IntelliSense in markdown code blocks.
+-   VitePress.
