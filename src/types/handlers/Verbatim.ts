@@ -1035,16 +1035,6 @@ interface TikzPreset {
  * TeX component configuration options.
  */
 export interface VerbEnvConfigTex extends VerbEnvConfigBase {
-    /**
-     * Name of the component (used to define an HTML tag for SvelTeX files).
-     *
-     * @remarks Names are case-sensitive.
-     * @remarks Don't use existing HTML tags as names (e.g., don't use `code` or
-     * `span`).
-     * @example 'tikz'
-     */
-    // name: string;
-
     type: 'tex';
 
     respectSelfClosing?: false;
