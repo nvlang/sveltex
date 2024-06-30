@@ -9,9 +9,9 @@
     "url": "https://nvlang.dev/"
   },
   "license": "MIT",
-  "module": "./dist/src/mod.js",
-  "main": "./dist/src/mod.js",
-  "types": "./dist/src/mod.d.ts",
+  "module": "./dist/mod.js",
+  "main": "./dist/mod.js",
+  "types": "./dist/mod.d.ts",
   "private": false,
   "keywords": [
     "svelte",
@@ -44,11 +44,10 @@
   "scripts": {
     "start": "node dist/src/main.js",
     "clean": "rimraf coverage dist tmp",
-    "copy:meta": "cp README.md dist/ && cp LICENSE dist/",
     "prebuild": "pnpm run lint",
     "build:dev": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "build:dev:watch": "tsc -w -p tsconfig.json",
-    "build": "pnpm run clean && tsc -p tsconfig.release.json && tsc-alias -p tsconfig.release.json && pnpm run copy:meta",
+    "build": "pnpm run clean && tsc -p tsconfig.release.json && tsc-alias -p tsconfig.release.json",
     "lint": "eslint . && tsc -p tsconfig.check.json",
     "test": "vitest run --coverage --watch --",
     "test:e2e": "pnpm test:e2e:prepare && playwright test",

@@ -17,7 +17,7 @@ importers:
     devDependencies:
       '@nvl/sveltex':
         specifier: latest
-        version: 0.1.0-beta.5(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
+        version: 0.1.1(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)
       '@shikijs/vitepress-twoslash':
         specifier: ^1.10.0
         version: 1.10.0(typescript@5.4.5)
@@ -336,14 +336,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@floating-ui/core@1.6.3':
-    resolution: {integrity: sha512-1ZpCvYf788/ZXOhRQGFxnYQOVgeU+pi0i+d0Ow34La7qjIXETi6RNswGVKkA6KcDO8/+Ysu2E/CeUmmeEBDvTg==}
+  '@floating-ui/core@1.6.4':
+    resolution: {integrity: sha512-a4IowK4QkXl4SCWTGUR0INAfEOX3wtsYw3rKK5InQEHMGObkR8Xk44qYQD9P4r6HHw0iIfK6GUKECmY8sTkqRA==}
 
   '@floating-ui/dom@1.1.1':
     resolution: {integrity: sha512-TpIO93+DIujg3g7SykEAGZMDtbJRrmnYRCNYSjJlvIbGhBjRSNTLVbNeDQBrzy9qDgUbiWdc7KA0uZHZ2tJmiw==}
 
-  '@floating-ui/utils@0.2.3':
-    resolution: {integrity: sha512-XGndio0l5/Gvd6CLIABvsav9HHezgDFFhDfHk1bvLfr9ni8dojqLSvBbotJEjmIwNHL7vK4QzBJTdBRoB+c1ww==}
+  '@floating-ui/utils@0.2.4':
+    resolution: {integrity: sha512-dWO2pw8hhi+WrXq1YJy2yCuWoL20PddgGaqTgVe4cOS9Q6qklXCiA1tJEqX6BEwRNSCP84/afac9hd4MS+zEUA==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -379,8 +379,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@nvl/sveltex@0.1.0-beta.5':
-    resolution: {integrity: sha512-8r4ZoL2AVmu/gbv8ojuNc7DGY3jD9q0EDSIRMmBRe0EN9QQtXqlCT5KQK/sgsKf1wDWz3tmqALHEMRtvBn+p+w==}
+  '@nvl/sveltex@0.1.1':
+    resolution: {integrity: sha512-txDYB/5SnyT0M7YA4yCSE3+1kKclfah2zZfvSjkMcWvaCs3FrNN02nAYttutxrMcJhQr5uZ6LKjyZrO2Bt96Iw==}
     engines: {node: '>=16'}
     peerDependencies:
       '@wooorm/starry-night': '>=3.3.0'
@@ -635,11 +635,11 @@ packages:
       vite: ^5.0.0
       vue: ^3.2.25
 
-  '@volar/language-core@2.3.4':
-    resolution: {integrity: sha512-wXBhY11qG6pCDAqDnbBRFIDSIwbqkWI7no+lj5+L7IlA7HRIjRP7YQLGzT0LF4lS6eHkMSsclXqy9DwYJasZTQ==}
+  '@volar/language-core@2.4.0-alpha.2':
+    resolution: {integrity: sha512-BmVAHEHO6n8g958n1/S6cR9uf76YGlrp/D6rYSTBtdLKrS4CVK9A2MjKf+gpbj+A8JCGVA/16N4atPZZmI7kVw==}
 
-  '@volar/source-map@2.3.4':
-    resolution: {integrity: sha512-C+t63nwcblqLIVTYXaVi/+gC8NukDaDIQI72J3R7aXGvtgaVB16c+J8Iz7/VfOy7kjYv7lf5GhBny6ACw9fTGQ==}
+  '@volar/source-map@2.4.0-alpha.2':
+    resolution: {integrity: sha512-hnCOUx/zuvpDeh0YNC2bnQDEzzIr+tYzphpwTvUV4o4wXCAmyjNYqBR8ElR1s9O9pQF3n9CqLlYRYOe7RQnTHg==}
 
   '@vue/compiler-core@3.4.31':
     resolution: {integrity: sha512-skOiodXWTV3DxfDhB4rOf3OGalpITLlgCeOwb+Y9GJpfQ8ErigdBUHomBzvG78JoVE8MJoQsb+qhZiHfKeNeEg==}
@@ -662,8 +662,8 @@ packages:
   '@vue/devtools-shared@7.3.5':
     resolution: {integrity: sha512-Rqii3VazmWTi67a86rYopi61n5Ved05EybJCwyrfoO9Ok3MaS/4yRFl706ouoISMlyrASJFEzM0/AiDA6w4f9A==}
 
-  '@vue/language-core@2.0.22':
-    resolution: {integrity: sha512-dNTAAtEOuMiz7N1s5tKpypnVVCtawxVSF5BukD0ELcYSw+DSbrSlYYSw8GuwvurodCeYFSHsmslE+c2sYDNoiA==}
+  '@vue/language-core@2.0.24':
+    resolution: {integrity: sha512-997YD6Lq/66LXr3ZOLNxDCmyn13z9NP8LU1UZn9hGCDWhzlbXAIP0hOgL3w3x4RKEaWTaaRtsHP9DzHvmduruQ==}
     peerDependencies:
       typescript: '*'
     peerDependenciesMeta:
@@ -2398,15 +2398,15 @@ snapshots:
   '@esbuild/win32-x64@0.21.5':
     optional: true
 
-  '@floating-ui/core@1.6.3':
+  '@floating-ui/core@1.6.4':
     dependencies:
-      '@floating-ui/utils': 0.2.3
+      '@floating-ui/utils': 0.2.4
 
   '@floating-ui/dom@1.1.1':
     dependencies:
-      '@floating-ui/core': 1.6.3
+      '@floating-ui/core': 1.6.4
 
-  '@floating-ui/utils@0.2.3': {}
+  '@floating-ui/utils@0.2.4': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -2446,7 +2446,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
-  '@nvl/sveltex@0.1.0-beta.5(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
+  '@nvl/sveltex@0.1.1(katex@0.16.10)(mathjax-full@3.2.2)(micromark@4.0.0)(shiki@1.10.0)':
     dependencies:
       '@types/html-escaper': 3.0.2
       '@types/js-yaml': 4.0.9
@@ -2702,11 +2702,11 @@ snapshots:
       vite: 5.3.2
       vue: 3.4.31(typescript@5.4.5)
 
-  '@volar/language-core@2.3.4':
+  '@volar/language-core@2.4.0-alpha.2':
     dependencies:
-      '@volar/source-map': 2.3.4
+      '@volar/source-map': 2.4.0-alpha.2
 
-  '@volar/source-map@2.3.4': {}
+  '@volar/source-map@2.4.0-alpha.2': {}
 
   '@vue/compiler-core@3.4.31':
     dependencies:
@@ -2756,9 +2756,9 @@ snapshots:
     dependencies:
       rfdc: 1.4.1
 
-  '@vue/language-core@2.0.22(typescript@5.4.5)':
+  '@vue/language-core@2.0.24(typescript@5.4.5)':
     dependencies:
-      '@volar/language-core': 2.3.4
+      '@volar/language-core': 2.4.0-alpha.2
       '@vue/compiler-dom': 3.4.31
       '@vue/shared': 3.4.31
       computeds: 0.0.1
@@ -4255,7 +4255,7 @@ snapshots:
 
   twoslash-vue@0.2.9(typescript@5.4.5):
     dependencies:
-      '@vue/language-core': 2.0.22(typescript@5.4.5)
+      '@vue/language-core': 2.0.24(typescript@5.4.5)
       twoslash: 0.2.9(typescript@5.4.5)
       twoslash-protocol: 0.2.9
       typescript: 5.4.5
