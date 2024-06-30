@@ -56,6 +56,12 @@ jobs:
           git commit --no-verify -m "Bump version to $VERSION"
           git push origin $BRANCH_NAME
 
-      - run: pnpm publish --provenance --access public
+      - name: Publish to NPM withouth provenance
+        run: pnpm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to NPM with provenance
+        run: pnpm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
