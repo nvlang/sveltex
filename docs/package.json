@@ -26,7 +26,7 @@
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-mathjax3": "^4.3.2",
     "markdown-it-multimd-table": "^4.2.3",
-    "postcss": "^8.4.38",
+    "postcss": "^8.4.39",
     "postcss-import": "^16.1.0",
     "postcss-load-config": "^6.0.1",
     "prettier-plugin-tailwindcss": "^0.6.5",
