@@ -37,6 +37,7 @@ const config = {
         }),
         // ...
     ],
+    extensions: ['.svelte', '.sveltex'],
     // ...
 };
 

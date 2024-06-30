@@ -80,6 +80,7 @@ const config = {
         sveltexPreprocessor,
         // ...
     ],
+    extensions: ['.svelte', '.sveltex'],
     // ...
 };
 
