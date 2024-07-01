@@ -1,11 +1,36 @@
-# SvelTeX
 
-[![NPM Version](https://img.shields.io/npm/v/@nvl/sveltex?style=flat-square&logo=npm&logoColor=white&label=&labelColor=BD453B&color=BD453B&logoSize=auto)](https://npmjs.com/@nvl/sveltex)
-[![JSR Version](https://img.shields.io/jsr/v/@nvl/sveltex?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&label=&logoSize=auto)](https://jsr.io/@nvl/sveltex)
-[![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d)](https://github.com/nvlang/sveltex)
-[![Codecov](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=8D96A0&labelColor=21262d&color=21262d)](https://codecov.io/gh/nvlang/sveltex)
+<div style="display: flex; flex-direction: column; align-items: center; gap: 3ex; margin-bottom: 4ex;">
+<picture style="display: flex; width: calc(30% + 8rem); max-width: min(25rem, 80%);">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/dark/logotype.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
+    <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
+</picture>
+<div style="display: flex; column-gap: .4em; justify-content: center; flex-wrap: wrap;">
+<span style="display: flex; gap: .4em; justify-content: center; flex-wrap: wrap;">
+<a href="https://npmjs.com/@nvl/sveltex">
+<img alt="NPM Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=white&labelColor=8e433b&color=8e433b&logoSize=auto">
+</a>
+<a href="https://jsr.io/@nvl/sveltex">
+<img alt="JSR Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&logoSize=auto">
+</a>
+</span>
+<span style="display: flex; gap: .4em; justify-content: center; flex-wrap: wrap;">
+<a href="https://github.com/nvlang/sveltex"><img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d">
+</a>
+<a href="https://codecov.io/gh/nvlang/sveltex">
+<img alt="Codecov Coverage" src="https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=8D96A0&labelColor=21262d&color=21262d">
+</a>
+</span>
+</div>
+</div>
 
-## Installation
+
+## Getting Started
+
+**Note:** See the [docs](https://sveltex.dev/docs) for more information.
+
+
+### Installation
 
 ```sh
 pnpm add -D @nvl/sveltex # If using PNPM
@@ -14,9 +39,8 @@ npm  add -D @nvl/sveltex # If using NPM
 yarn add -D @nvl/sveltex # If using Yarn
 ```
 
-## Documentation
 
-### Quickstart
+### Basic steup
 
 ```js
 // svelte.config.js
@@ -44,28 +68,43 @@ const config = {
 export default config;
 ```
 
-For further documentation, please visit the [project site](https://sveltex.dev).
+Now, install the backends (cf. IntelliSense or the error message you'd get if
+you tried to run the above code without installing the backends), and you should
+be good to go. Create a `+page.sveltex` file in your `src/routes` directory, and
+start adding markdown, math, code blocks, and even TeX components.
 
-## Roadmap
 
-In alphabetical order:
+## Editor integration
 
--   VSCode extension for proper LSP language support via request forwarding.
-    Currently, only [basic syntax
-    highlighting](https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex)
-    is provided.
+For VS Code, you can install the official [SvelTeX extension] from the
+marketplace. This will provide syntax highlighting for `.sveltex` files.
+
+For other editors, you'd need to configure syntax highlighting yourself using
+the SvelTeX [TextMate grammar] provided within the VS Code extension.
+
+Proper LSP-style language support is not currently implemented. Doing so via
+e.g. [request forwarding] could be an immense enrichment to the developer
+experience, but it's not something I can currently commit to. Contributions for
+this would be extremely welcome.
+
+[SvelTeX extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
+[TextMate grammar]: https://github.com/nvlang/sveltex/tree/main/extras/vscode-extension/syntaxes
+[request forwarding]: https://code.visualstudio.com/api/language-extensions/embedded-languages#request-forwarding
+
 
 ## Acknowledgments
 
-See [acknowledgments](https://sveltex.dev/docs/acknowledgments) on the project site.
+See [acknowledgments] on the project site.
 
-The TSDoc comments for many of this project's interfaces, particularly those
-describing options to be passed to external libraries, may be copies,
+**Note:** The TSDoc comments for many of this project's interfaces, particularly
+those describing options to be passed to external libraries, may be copies,
 paraphrasings, or adaptations of the official documentations of the respective
 libraries. Some notable examples are MathJax and TikZ.
 
+[acknowledgments]: https://sveltex.dev/docs/acknowledgments
 
-## Some lessons learned
+
+## Addendum: Some lessons learned
 
 ### Tips
 
@@ -85,7 +124,16 @@ libraries. Some notable examples are MathJax and TikZ.
 
 ### Cool software I didn't know before
 
--   `fast-check`, for fuzzy testing.
--   Shiki, for code highlighting.
--   `twoslash`, for IntelliSense in markdown code blocks.
--   VitePress.
+-   [`fast-check`], for fuzzy testing.
+-   [Shiki], for code highlighting.
+-   [`twoslash`], for IntelliSense in markdown code blocks.
+-   [VitePress], a great [SSG] for docs.
+-   [`node-poppler`], a Node.js wrapper for Poppler, which can used to convert
+    PDFs to SVGs.
+
+[`fast-check`]: https://fast-check.dev
+[Shiki]: https://shiki.style
+[`twoslash`]: https://twoslash.netlify.app
+[VitePress]: https://vitepress.dev
+[SSG]: https://en.wikipedia.org/wiki/Static_site_generator
+[`node-poppler`]: https://github.com/Fdawgs/node-poppler
