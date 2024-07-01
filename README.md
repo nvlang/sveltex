@@ -6,6 +6,7 @@
     <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
 </picture>
 <br>
+<br>
 <div>
 <span>
 <a href="https://npmjs.com/@nvl/sveltex">
