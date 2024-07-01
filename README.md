@@ -1,12 +1,13 @@
 
-<div style="display: flex; flex-direction: column; align-items: center; gap: 3ex; margin-bottom: 4ex;">
-<picture style="display: flex; width: calc(30% + 8rem); max-width: min(25rem, 80%);">
+<div align="center">
+<picture style="display: flex; width: 50%;">
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/dark/logotype.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
     <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
 </picture>
-<div style="display: flex; column-gap: .4em; justify-content: center; flex-wrap: wrap;">
-<span style="display: flex; gap: .4em; justify-content: center; flex-wrap: wrap;">
+<br>
+<div>
+<span>
 <a href="https://npmjs.com/@nvl/sveltex">
 <img alt="NPM Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=white&labelColor=8e433b&color=8e433b&logoSize=auto">
 </a>
@@ -14,7 +15,7 @@
 <img alt="JSR Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&logoSize=auto">
 </a>
 </span>
-<span style="display: flex; gap: .4em; justify-content: center; flex-wrap: wrap;">
+<span>
 <a href="https://github.com/nvlang/sveltex"><img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d">
 </a>
 <a href="https://codecov.io/gh/nvlang/sveltex">
