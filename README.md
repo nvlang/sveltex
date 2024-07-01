@@ -1,28 +1,19 @@
 
 <div align="center">
-<picture style="display: flex; width: 50%;">
+<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/dark/logotype.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
-    <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg">
+    <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/logotype.svg" width="50%">
 </picture>
 <br>
 <br>
 <div>
-<span>
-<a href="https://npmjs.com/@nvl/sveltex">
-<img alt="NPM Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=white&labelColor=8e433b&color=8e433b&logoSize=auto">
-</a>
-<a href="https://jsr.io/@nvl/sveltex">
-<img alt="JSR Version" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&logoSize=auto">
-</a>
-</span>
-<span>
-<a href="https://github.com/nvlang/sveltex"><img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d">
-</a>
-<a href="https://codecov.io/gh/nvlang/sveltex">
-<img alt="Codecov Coverage" src="https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=8D96A0&labelColor=21262d&color=21262d">
-</a>
-</span>
+
+[![NPM Version](https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=white&labelColor=8e433b&color=8e433b&logoSize=auto)](https://npmjs.com/@nvl/sveltex)
+[![JSR Version](https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=1A3644&color=1A3644&logo=jsr&logoSize=auto)](https://jsr.io/@nvl/sveltex)
+[![GitHub Tag](https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=8D96A0&label=&labelColor=21262d&color=21262d)](https://github.com/nvlang/sveltex)
+[![Codecov Coverage](https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=8D96A0&labelColor=21262d&color=21262d)](https://codecov.io/gh/nvlang/sveltex)
+
 </div>
 </div>
 
