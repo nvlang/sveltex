@@ -15,7 +15,6 @@
   "private": false,
   "keywords": [
     "svelte",
-    "marked",
     "mdx",
     "markdown",
     "tex",
