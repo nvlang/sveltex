@@ -8,16 +8,19 @@ patterns:
   - include: '#base'
 injections:
   ? 'R:source.sveltex - (source.svelte, source.ts, meta.embedded, meta.math,
-    text.tex.latex, comment, markup.inline.raw, markup.fenced_code)'
+    text.tex.latex, comment, string, markup.inline.raw, markup.fenced_code,
+    meta.style, meta.script)'
   : patterns:
       - include: text.markdown#inline
       - include: '#injectionPatterns'
   # Script
-  'source.sveltex meta.script.svelte - meta.lang':
-    patterns:
+  ? '(source.sveltex meta.script.svelte - (meta.lang - meta.lang.js)) -
+    (meta.tag.start.svelte, meta.tag.end.svelte, string, comment, meta.style)'
+  : patterns:
       - include: source.js
   ? 'source.sveltex meta.script.svelte (meta.lang.ts.svelte,
-    meta.lang.typescript.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte)'
+    meta.lang.typescript.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte,
+    string, comment, meta.style)'
   : patterns:
       - include: source.ts
   # ? 'source.sveltex meta.script.svelte (meta.lang.coffee.svelte,
@@ -26,27 +29,25 @@ injections:
   #     - include: source.coffee
 
   # Style
-  # 'source.sveltex meta.style.svelte meta.lang.css.svelte':
-  #   patterns:
-  #     - include: source.css
   ? 'source.sveltex meta.style.svelte meta.lang.css.svelte -
-    (meta.tag.start.svelte, meta.tag.end.svelte)'
+    (meta.tag.start.svelte, meta.tag.end.svelte, string, comment)'
   : patterns:
       - include: source.css
   ? 'source.sveltex meta.style.svelte - meta.lang - (meta.tag.start.svelte,
-    meta.tag.end.svelte)'
+    meta.tag.end.svelte, string, comment)'
   : patterns:
       - include: source.css
   ? 'source.sveltex meta.style.svelte meta.lang.scss.svelte -
-    (meta.tag.start.svelte, meta.tag.end.svelte)'
+    (meta.tag.start.svelte, meta.tag.end.svelte, string, comment)'
   : patterns:
       - include: source.css.scss
   ? 'source.sveltex meta.style.svelte meta.lang.sass.svelte -
-    (meta.tag.start.svelte, meta.tag.end.svelte)'
+    (meta.tag.start.svelte, meta.tag.end.svelte, string, comment)'
   : patterns:
       - include: source.sass
   ? 'source.sveltex meta.style.svelte (meta.lang.pcss.svelte,
-    meta.lang.postcss.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte)'
+    meta.lang.postcss.svelte) - (meta.tag.start.svelte, meta.tag.end.svelte,
+    string, comment)'
   : patterns:
       - include: source.css.postcss
   # ? 'source.sveltex meta.style.svelte meta.lang.less.svelte -
@@ -60,7 +61,7 @@ injections:
   #       patterns:
   #         - include: source.css.less
   ? 'source.sveltex meta.style.svelte meta.lang.stylus.svelte -
-    (meta.tag.start.svelte, meta.tag.end.svelte)'
+    (meta.tag.start.svelte, meta.tag.end.svelte, string, comment)'
   : patterns:
       - include: source.stylus
 repository:

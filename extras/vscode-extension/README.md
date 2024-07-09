@@ -59,5 +59,12 @@ Initial release.
 
 -   Improved `README.md` for rendering on the VS Code Marketplace.
 
+### 1.0.2
+
+#### Fixes
+
+-   Increased specificity of scopes of some pattern injections to avoid
+    conflicts with e.g. the comment or string scopes within script blocks.
+
 
 [SvelTeX]: https://sveltex.dev/
