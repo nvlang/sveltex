@@ -18,3 +18,8 @@
 
 -   Increased specificity of scopes of some pattern injections to avoid
     conflicts with e.g. the comment or string scopes within script blocks.
+
+### Dev Dependencies
+
+-   Updated `@types/node`: `^20.14.9` → `^20.14.10`.
+-   Updated `@types/vscode`: `^1.90.0` → `^1.91.0`.

@@ -175,8 +175,8 @@
     ]
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
-    "@types/vscode": "^1.67.0",
+    "@types/node": "^20.14.10",
+    "@types/vscode": "^1.91.0",
     "js-yaml": "^4.1.0"
   }
 }
