@@ -69,7 +69,6 @@ Initial release.
 #### Dev Dependencies
 
 -   Updated `@types/node`: `^20.14.9` → `^20.14.10`.
--   Updated `@types/vscode`: `^1.90.0` → `^1.91.0`.
 
 
 [SvelTeX]: https://sveltex.dev/
