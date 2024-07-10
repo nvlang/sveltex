@@ -189,7 +189,8 @@
     "remark-parse": ">=11.0.0",
     "remark-rehype": ">=11.1.0",
     "shiki": ">=1.6.1",
-    "unified": ">=11.0.4"
+    "unified": ">=11.0.4",
+    "remark-retext": ">=6.0.0"
   },
   "peerDependenciesMeta": {
     "@wooorm/starry-night": {
@@ -232,6 +233,9 @@
       "optional": true
     },
     "remark-rehype": {
+      "optional": true
+    },
+    "remark-retext": {
       "optional": true
     }
   }
