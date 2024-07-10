@@ -49,16 +49,15 @@
     "README.md"
   ],
   "devDependencies": {
-    "@types/minimist": "^1.2.5",
-    "esbuild": "^0.23.0",
-    "picocolors": "^1.0.1",
-    "plop": "^4.0.1"
+    "@types/minimist": "^1.2.5"
   },
   "preferGlobal": true,
   "bin": {
     "create-sveltex": "./dist/mod.js"
   },
   "dependencies": {
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "picocolors": "^1.0.1",
+    "plop": "^4.0.1"
   }
 }
