@@ -11,6 +11,13 @@
 
 [
 <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=a3acb7&label=&labelColor=21262d&color=21262d">
+    <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2">
+    <img alt="Logotype" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2">
+</picture>
+](https://github.com/nvlang/sveltex)
+[
+<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=a3acb7&labelColor=21262d&color=21262d&logoSize=auto)">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=24292f&labelColor=eaeef2&color=eaeef2&logoSize=auto)">
     <img alt="Logotype" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=24292f&labelColor=eaeef2&color=eaeef2&logoSize=auto)">
@@ -25,11 +32,11 @@
 ](https://jsr.io/@nvl/sveltex)
 [
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=a3acb7&label=&labelColor=21262d&color=21262d">
-    <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2">
-    <img alt="Logotype" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2">
+    <source media="(prefers-color-scheme: dark)" srcset="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=21262d&color=21262d&logoColor=a3acb7">
+    <source media="(prefers-color-scheme: light)" srcset="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=eaeef2&color=eaeef2&logoColor=24292f">
+    <img alt="Logotype" src="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=eaeef2&color=eaeef2&logoColor=24292f">
 </picture>
-](https://github.com/nvlang/sveltex)
+](https://jsr.io/@nvl/sveltex)
 [
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/codecov/c/github/nvlang/sveltex?style=flat-square&logo=codecov&label=&logoColor=a3acb7&labelColor=21262d&color=21262d">
