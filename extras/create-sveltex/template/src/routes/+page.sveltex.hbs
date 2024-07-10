@@ -1,0 +1,41 @@
+---
+title: Home
+description: SvelTeX demo app
+---
+
+<script lang="ts">
+import Example from '$lib/components/Example.svelte'
+</script>
+{{#if (contains tools 'tailwindcss')}}
+
+<div class="prose">
+{{/if}}
+
+# SvelTeX demo
+
+Markdown: _italic_ **bold** `code` [link](https://example.com)
+
+Fenced code blocks:
+
+```ts
+console.log('Hello, World!')
+```
+{{#if (equals mathBackend 'none')}}
+{{else}}
+
+Math:
+
+$$
+\int_{a}^{b} f'(t) \, \mathrm{d}t = f(b) - f(a).
+$$
+{{/if}}
+
+Components:
+
+<Example>
+Example component
+</Example>
+{{#if (contains tools 'tailwindcss')}}
+
+</div>
+{{/if}}

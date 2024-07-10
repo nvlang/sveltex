@@ -1,0 +1,45 @@
+<script lang="ts">
+{{#if (contains tools 'tailwindcss')}}
+import '../app.pcss';
+{{else}}
+import '../app.css';
+{{/if}}
+{{#if svelte5}}
+let { children } = $props();
+{{/if}}
+</script>
+
+{{#if (contains tools 'tailwindcss')}}
+<div class="grid w-screen justify-center gap-4 h-screen">
+{{else}}
+<div class="app">
+{{/if}}
+    {{#if (contains tools 'tailwindcss')}}
+    <main class="w-[90vw] max-w-screen-lg">
+    {{else}}
+    <main>
+    {{/if}}
+        {{#if svelte5}}
+        {@render children()}
+        {{else}}
+        <slot />
+        {{/if}}
+    </main>
+</div>
+{{#if (contains tools 'tailwindcss')}}
+{{else}}
+
+<style>
+.app {
+    display: grid;
+    gap: 1rem;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+}
+.app > main {
+    width: 90vw;
+    max-width: 1024px;
+}
+</style>
+{{/if}}

@@ -1,0 +1,87 @@
+import eslint from '@eslint/js';
+import tsdocPlugin from 'eslint-plugin-tsdoc';
+import tseslint from 'typescript-eslint';
+{{#if (contains tools 'vitest')}}
+import vitest from 'eslint-plugin-vitest';
+{{/if}}
+{{#if (contains tools 'playwright')}}
+import playwright from 'eslint-plugin-playwright';
+{{/if}}
+{{#if (contains tools 'prettier')}}
+import prettierConfig from 'eslint-config-prettier';
+{{/if}}
+
+export default tseslint.config(
+    {
+        ignores: [
+            '.DS_Store',
+            'node_modules',
+            'dist',
+            'pnpm-lock.yaml',
+            'package-lock.json',
+            'yarn.lock',
+            'coverage',
+        ],
+    },
+    {
+        // TypeScript files
+        files: ['{src,tests}/**/*.ts'],
+        extends: [
+            eslint.configs.recommended,
+            ...tseslint.configs.stylisticTypeChecked,
+            ...tseslint.configs.strictTypeChecked,
+        ],
+        languageOptions: {
+            parser: tseslint.parser,
+            parserOptions: {
+                project: 'tsconfig.json',
+                projectService: true,
+                ecmaVersion: 'latest',
+                sourceType: 'module',
+            },
+        },
+        plugins: {
+            '@typescript-eslint': tseslint.plugin,
+            tsdoc: tsdocPlugin,
+        },
+        rules: {
+            'tsdoc/syntax': 'warn',
+            '@typescript-eslint/no-inferrable-types': 'off',
+        },
+    },
+    {
+        // JavaScript files
+        files: ['**/*.js'],
+        ...tseslint.configs.disableTypeChecked,
+    },
+    {{#if (contains tools 'vitest')}}
+    {
+        // Vitest test files
+        {{#if (contains tools 'playwright')}}
+        files: ['tests/unit/**/*.{test,spec}.ts'],
+        {{else}}
+        files: ['tests/**/*.{test,spec}.ts'],
+        {{/if}}
+        plugins: { vitest },
+        rules: vitest.configs.recommended.rules,
+        languageOptions: {
+            globals: vitest.environments.env.globals,
+        },
+    },
+    {{/if}}
+    {{#if (contains tools 'playwright')}}
+    {
+        // Playwright test files
+        {{#if (contains tools 'vitest')}}
+        files: ['tests/e2e/**/*.{test,spec}.ts'],
+        {{else}}
+        files: ['tests/**/*.{test,spec}.ts'],
+        {{/if}}
+        plugins: { playwright },
+        rules: playwright.configs.recommended.rules,
+    },
+    {{/if}}
+    {{#if (contains tools 'prettier')}}
+    prettierConfig,
+    {{/if}}
+);

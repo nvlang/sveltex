@@ -1,0 +1,42 @@
+import type { UserConfig } from '@commitlint/types';
+import { RuleConfigSeverity } from '@commitlint/types';
+
+/**
+ *
+ * `commitlint` configuration.
+ *
+ * @see https://commitlint.js.org/#/reference-configuration
+ */
+const Configuration: UserConfig = {
+    extends: ['@commitlint/config-conventional'],
+    rules: {
+        /**
+         * In `type(scope): subject`, `type` must always be lowercase.
+         */
+        'type-case': [RuleConfigSeverity.Error, 'always', 'lower-case'],
+
+        /**
+         * The header, i.e., `type(scope): subject`, must always be less than 50
+         * characters long in total.
+         */
+        'header-max-length': [RuleConfigSeverity.Error, 'always', 50],
+
+        /**
+         * The `header` must always be preceded by a blank line.
+         */
+        'body-leading-blank': [RuleConfigSeverity.Error, 'always'],
+
+        /**
+         * The body, i.e., the part after the header, must always be wrapped at
+         * 72 characters.
+         */
+        'body-max-line-length': [RuleConfigSeverity.Error, 'always', 72],
+
+        /**
+         * The `footer` must always be preceded by a blank line.
+         */
+        'footer-leading-blank': [RuleConfigSeverity.Error, 'always'],
+    },
+};
+
+export default Configuration;

@@ -1,0 +1,16 @@
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+	webServer: {
+		command: '{{packageManager}} run build && {{packageManager}} run preview',
+		port: 4173
+	},
+    {{#if (contains tools 'vitest')}}
+	testDir: 'tests/e2e',
+    {{else}}
+    testDir: 'tests',
+    {{/if}}
+	testMatch: /(.+\.)?(test|spec)\.[jt]s/
+};
+
+export default config;

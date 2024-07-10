@@ -1,0 +1,41 @@
+import { sveltex } from '@nvl/sveltex';
+
+export default await sveltex(
+    {
+        markdownBackend: '{{markdownBackend}}',
+        codeBackend: '{{codeBackend}}',
+        mathBackend: '{{mathBackend}}',
+    },
+    {
+        markdown: {
+            // Markdown options
+        },
+        code: {
+            {{#if (equals codeBackend 'shiki')}}
+            shiki: {
+                themes: {
+                    light: 'github-light-default',
+                    dark: 'github-dark-default',
+                },
+            },
+            {{else}}
+            // Code options
+            {{/if}}
+        },
+        math: {
+            // Math options
+        },
+        tex: {
+            // Default LaTeX options
+        },
+        verbatim: {
+            // Content inside <TeX ref="...">...</TeX> will now be compiled by
+            // the local TeX distribution. For example, you can try the
+            // following: "<TeX ref="example">\LaTeX</TeX>". Note that the "ref"
+            // attribute is mandatory.
+            TeX: {
+                type: 'tex',
+            },
+        },
+    },
+);

@@ -1,0 +1,28 @@
+{{#if svelte5}}
+<script lang="ts">
+    let { children } = $props();
+</script>
+
+{{/if}}
+{{#if (contains tools 'tailwindcss')}}
+<div class="px-1.5 py-1 border border-gray-500 rounded">
+{{else}}
+<div class="example">
+{{/if}}
+    {{#if svelte5}}
+    {@render children()}
+    {{else}}
+    <slot />
+    {{/if}}
+</div>
+{{#if (contains tools 'tailwindcss')}}
+{{else}}
+
+<style>
+    .example {
+        padding: 4px 6px;
+        border: 1px solid gray;
+        border-radius: 4px;
+    }
+</style>
+{{/if}}

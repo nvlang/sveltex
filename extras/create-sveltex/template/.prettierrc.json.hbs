@@ -1,0 +1,53 @@
+{
+  "plugins": [
+    {{#if (contains tools 'tailwindcss')}}
+    "prettier-plugin-tailwindcss",
+    {{/if}}
+    "prettier-plugin-svelte"
+  ],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.mts"],
+      "options": {
+        "parser": "typescript"
+      }
+    },
+    {
+      "files": "*.svelte",
+      "options": {
+        "parser": "svelte",
+        "bracketSameLine": true,
+        "svelteIndentScriptAndStyle": false,
+        "svelteStrictMode": true
+      }
+    },
+    {
+      "files": ["*.json", "*.yaml", "*.yml"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {{#if (equals packageManager 'pnpm')}}
+    {
+      "files": ["pnpm-lock.yaml"],
+      "options": {
+        "printWidth": 130
+      }
+    },
+    {{/if}}
+    {
+      "files": ["*.jsonc"],
+      "options": {
+        "trailingComma": "none",
+        "tabWidth": 2
+      }
+    }
+  ],
+  "printWidth": 80,
+  "proseWrap": "always",
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 4,
+  "trailingComma": "all",
+  "useTabs": false
+}

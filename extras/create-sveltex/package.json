@@ -1,0 +1,64 @@
+{
+  "name": "create-sveltex",
+  "version": "0.1.0",
+  "description": "Create a new SvelTeX project",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/mod.js",
+  "module": "./dist/mod.js",
+  "types": "./dist/mod.d.ts",
+  "private": false,
+  "scripts": {
+    "start": "plop",
+    "build": "tsc -p tsconfig.json",
+    "prepublish": "pnpm run build"
+  },
+  "keywords": [
+    "sveltex",
+    "generator",
+    "svelte",
+    "mdx",
+    "markdown",
+    "tex",
+    "latex",
+    "math",
+    "preprocess",
+    "preprocessor"
+  ],
+  "author": {
+    "name": "N. V. Lang",
+    "email": "npm@nvlang.dev",
+    "url": "https://nvlang.dev/"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nvlang/sveltex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nvlang/sveltex/issues"
+  },
+  "homepage": "https://sveltex.dev",
+  "files": [
+    "dist",
+    "package.json",
+    "template",
+    "LICENSE",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/minimist": "^1.2.5",
+    "esbuild": "^0.23.0",
+    "picocolors": "^1.0.1",
+    "plop": "^4.0.1"
+  },
+  "preferGlobal": true,
+  "bin": {
+    "create-sveltex": "./dist/mod.js"
+  },
+  "dependencies": {
+    "minimist": "^1.2.8"
+  }
+}

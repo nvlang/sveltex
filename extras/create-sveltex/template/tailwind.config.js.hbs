@@ -1,0 +1,12 @@
+import typography from '@tailwindcss/typography';
+
+/** @type {import('tailwindcss').Config} */
+export default {
+    // If you change the `extensions` property of the SvelTeX or Svelte
+    // configuration, make sure you update the below glob pattern accordingly.
+    content: ['./src/**/*.{html,js,ts,svelte,sveltex}'],
+    theme: {
+		extend: {}
+	},
+    plugins: [typography],
+};

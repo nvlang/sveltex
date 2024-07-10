@@ -1,0 +1,51 @@
+# create-sveltex
+
+## Creating a project
+
+If you're seeing this, you've probably already done this step. Otherwise:
+
+```bash
+pnpm dlx create-sveltex # If using PNPM
+bunx create-sveltex     # If using Bun
+npx create-sveltex      # If using NPM
+yarn dlx create-sveltex # If using Yarn
+```
+
+## Developing
+
+Once you've created a project and installed dependencies, start a development
+server:
+
+```bash
+pnpm run dev
+```
+
+## Building
+
+To create a production version of your app:
+
+```bash
+pnpm run build
+```
+
+You can then preview the production build with the following:
+
+```bash
+pnpm run preview
+```
+{{#if (contains tools 'husky')}}
+{{#if git}}
+{{else}}
+
+## Troubleshooting
+
+### Husky hooks not running
+
+Be sure to run `{{packageManager}} install` at least once _after_ initializing
+your git repository to ensure that Husky's hooks are set up correctly. If that
+still doesn't fix the issue, ensure that the `prepare` script in `package.json`
+is `husky` or `svelte-kit sync && husky` and run `{{packageManager}} install`
+again. If you're still having trouble, consult the [Husky
+documentation](https://typicode.github.io/husky/troubleshoot.html).
+{{/if}}
+{{/if}}
