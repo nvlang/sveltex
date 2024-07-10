@@ -294,7 +294,6 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                     'remark-retext',
                     'remark-rehype',
                     'rehype-stringify',
-                    '@types/mdast',
                 );
                 throw error;
             }

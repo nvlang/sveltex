@@ -201,9 +201,6 @@
     "hast-util-to-html": {
       "optional": true
     },
-    "@types/mdast": {
-      "optional": true
-    },
     "highlight.js": {
       "optional": true
     },
