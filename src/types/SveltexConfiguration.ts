@@ -100,7 +100,7 @@ export interface BackendChoices<
      *     [Shiki](https://shiki.style/). Install:
      *
      * ```sh
-     *       <pnpm|bun|npm|yarn> add -D shiki "@shikijs/transformers"
+     *       <pnpm|bun|npm|yarn> add -D shiki
      * ```
      *
      * -   `'starry-night'`: Syntax highlighting with
