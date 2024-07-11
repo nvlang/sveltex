@@ -101,7 +101,7 @@ describe('CodeHandler.create', () => {
     });
 });
 
-describe.concurrent.each(codeBackends)('CodeHandler<%o>', (backend) => {
+describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
     describe('.process', () => {
         describe.each([['', {}]])('(%o) → ParsedSnippet', (input, opts) => {
             test(`_premise_`, async () => {
