@@ -49,7 +49,7 @@
     "build:dev:watch": "tsc -w -p tsconfig.json",
     "build": "pnpm run clean && tsc -p tsconfig.release.json && tsc-alias -p tsconfig.release.json",
     "lint": "eslint . && tsc -p tsconfig.check.json",
-    "test": "vitest run --coverage --watch --",
+    "test": "vitest run --coverage",
     "test:e2e": "pnpm test:e2e:prepare && playwright test",
     "playwright": "playwright test",
     "playwright:golden": "playwright test --update-snapshots",
