@@ -3,9 +3,9 @@
 /**
  * Supported TeX engines.
  */
-type SupportedTexEngine = (typeof texEngines)[number];
+export type SupportedTexEngine = (typeof texEngines)[number];
 
-const texEngines = [
+export const texEngines = [
     'pdflatexmk',
     'lualatex',
     'lualatexmk',

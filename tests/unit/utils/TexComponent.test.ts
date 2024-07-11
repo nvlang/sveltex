@@ -15,8 +15,8 @@ import {
 import { TexHandler } from '$handlers/TexHandler.js';
 import { spy } from '$tests/unit/fixtures.js';
 import { cartesianProduct } from '$tests/unit/utils.js';
-import { supportedTexEngines } from '$typeGuards/verbatim.js';
-import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import { texEngines } from '$data/tex.js';
+import type { SupportedTexEngine } from '$data/tex.js';
 import type { Problem } from '$types/handlers/Tex.js';
 import type { VerbEnvConfigTex } from '$types/handlers/Verbatim.js';
 import type { CliInstruction } from '$types/utils/CliInstruction.js';
@@ -787,16 +787,8 @@ describe.concurrent('compile()', () => {
         describe('gradients', () => {
             fixture();
             it.each([
-                ...cartesianProduct(
-                    [...supportedTexEngines],
-                    ['dvi'],
-                    ['dvisvgm'],
-                ),
-                ...cartesianProduct(
-                    [...supportedTexEngines],
-                    ['pdf'],
-                    ['poppler'],
-                ),
+                ...cartesianProduct([...texEngines], ['dvi'], ['dvisvgm']),
+                ...cartesianProduct([...texEngines], ['pdf'], ['poppler']),
             ])(
                 '%s (%s) + %s',
                 { timeout: 30e3 },
@@ -854,16 +846,8 @@ describe.concurrent('compile()', () => {
 
         describe('transparency', () => {
             it.each([
-                ...cartesianProduct(
-                    [...supportedTexEngines],
-                    ['dvi'],
-                    ['dvisvgm'],
-                ),
-                ...cartesianProduct(
-                    [...supportedTexEngines],
-                    ['pdf'],
-                    ['poppler'],
-                ),
+                ...cartesianProduct([...texEngines], ['dvi'], ['dvisvgm']),
+                ...cartesianProduct([...texEngines], ['pdf'], ['poppler']),
             ])(
                 '%s (%s) + %s',
                 { timeout: 30e3 },
@@ -933,11 +917,7 @@ describe.concurrent('compile()', () => {
                     ['pdf', 'dvi'],
                     ['dvisvgm'],
                 ),
-                ...cartesianProduct(
-                    [...supportedTexEngines],
-                    ['pdf'],
-                    ['poppler'],
-                ),
+                ...cartesianProduct([...texEngines], ['pdf'], ['poppler']),
             ])(
                 '%s (%s) + %s',
                 { timeout: 300e3, retry: 2, sequential: true },

@@ -1,7 +1,6 @@
 // File description: contains type definitions for the,`SveltexConfig`
 // interface, which is used to configure the SvelTeX,preprocessor.
 
-/* eslint-disable tsdoc/syntax */
 /**
  * This file, `SveltexConfig.d.ts`, contains type definitions for the
  * `SveltexConfig` interface, which is used to configure the SvelTeX
@@ -37,17 +36,6 @@ import type {
     FullVerbatimConfiguration,
     VerbatimConfiguration,
 } from '$types/handlers/Verbatim.js';
-
-/**
- * Supported TeX engines.
- */
-export type SupportedTexEngine =
-    | 'pdflatexmk'
-    | 'lualatex'
-    | 'lualatexmk'
-    | 'pdflatex'
-    | 'xelatex';
-// | 'xelatexmk';
 
 export interface BackendChoices<
     M extends MarkdownBackend,

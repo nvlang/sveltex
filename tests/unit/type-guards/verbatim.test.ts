@@ -1,9 +1,9 @@
+import { texEngines } from '$data/tex.js';
 import {
     isCliInstruction,
     isDvisvgmOptions,
     isSimpleEscapeInstruction,
     isSupportedTexEngine,
-    supportedTexEngines,
 } from '$typeGuards/verbatim.js';
 import { describe, expect, it } from 'vitest';
 
@@ -45,7 +45,7 @@ describe('isDvisvgmOptions', () => {
 });
 
 describe('isSupportedTexEngine', () => {
-    it.each(supportedTexEngines)(
+    it.each(texEngines)(
         'should return true for valid SupportedTexEngine strings (%o)',
         (engine) => {
             expect(isSupportedTexEngine(engine)).toBe(true);

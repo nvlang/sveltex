@@ -975,7 +975,7 @@ export const starryNightLanguages = {
     xbase: 'source.harbour',
 } as const;
 
-const highlightJsLanguages = [
+export const highlightJsLanguages = [
     '1c',
     'abnf',
     'accesslog',

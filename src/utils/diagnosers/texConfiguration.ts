@@ -2,6 +2,7 @@
 
 // Internal dependencies
 import { getDefaultTexConfig } from '$base/defaults.js';
+import { texEngines } from '$data/tex.js';
 import { isRegExp } from '$deps.js';
 import {
     isArray,
@@ -15,7 +16,6 @@ import {
 import {
     isCliInstruction,
     isSupportedTexEngine,
-    supportedTexEngines,
 } from '$typeGuards/verbatim.js';
 import { extendedLogSeverities } from '$utils/TexComponent.js';
 import { Diagnoser, enquote } from '$utils/diagnosers/Diagnoser.js';
@@ -73,7 +73,7 @@ export function diagnoseTexConfig(x: object): Diagnoser {
     );
     d.ifPresent(
         'compilation.engine',
-        `one of: ${supportedTexEngines.map(enquote).join(', ')}`,
+        `one of: ${texEngines.map(enquote).join(', ')}`,
         isSupportedTexEngine,
         'string',
     );

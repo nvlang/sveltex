@@ -963,11 +963,11 @@ interface MathjaxDocumentOptions {
      * each action, and the `value` is an array consisting of a number and zero,
      * one, or two functions.
      *
-     * @defaultValue `See documentation for default structure`
+     * @defaultValue See documentation for default structure.
      */
     renderActions?: Record<
         string,
-        // eslint-disable-next-line @typescript-eslint/ban-types
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         [number, Function | string, Function | string | boolean]
     >;
 

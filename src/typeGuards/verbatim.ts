@@ -1,7 +1,7 @@
 // File description:
 
 // Types
-import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import type { SupportedTexEngine } from '$data/tex.js';
 import type {
     SimpleEscapeInstruction,
     VerbatimType,
@@ -18,23 +18,15 @@ import {
     isString,
     isStringArray,
 } from '$typeGuards/utils.js';
+import { texEngines } from '$data/tex.js';
 
 // External dependencies
 import { type Equals, typeAssert } from '$deps.js';
 
-export const supportedTexEngines = [
-    'lualatex',
-    'lualatexmk',
-    'pdflatex',
-    'pdflatexmk',
-    'xelatex',
-    // 'xelatexmk',
-] as const;
-
-typeAssert<Equals<(typeof supportedTexEngines)[number], SupportedTexEngine>>();
+typeAssert<Equals<(typeof texEngines)[number], SupportedTexEngine>>();
 
 export function isSupportedTexEngine(x: unknown): x is SupportedTexEngine {
-    return isOneOf(x, supportedTexEngines);
+    return isOneOf(x, texEngines);
 }
 
 export function isDvisvgmOptions(x: unknown): x is DvisvgmOptions {

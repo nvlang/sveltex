@@ -4,7 +4,7 @@
 // Types
 import type { SvgoOptions } from '$deps.js';
 import type { TexHandler } from '$handlers/TexHandler.js';
-import type { SupportedTexEngine } from '$types/SveltexConfiguration.js';
+import type { SupportedTexEngine } from '$data/tex.js';
 import type { ProcessFn } from '$types/handlers/Handler.js';
 import type {
     FullVerbEnvConfigTex,
