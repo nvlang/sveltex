@@ -7,11 +7,6 @@ export default defineConfig({
     test: {
         include: ['./tests/unit/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
         exclude: ['./tests/e2e/**/*'],
-        typecheck: {
-            tsconfig: './tests/unit/tsconfig.json',
-            enabled: true,
-            only: false,
-        },
         // bail: 10,
         // dir: './tests/unit',
         silent: true,
