@@ -37,7 +37,7 @@
     // Type-checking
     "strict": true,
     // Versions and APIs
-    "target": "ESNext"
+    "target": "ES2018"
   },
   "exclude": [
     "coverage",
