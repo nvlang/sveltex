@@ -275,19 +275,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         ];
     }
 
-    // Setting a config value to `null` should be akin to "disabling" the
-    // functionality it controls.
-    // override configureNullOverrides: [string, unknown][] = [
-    //     ['transformers', { pre: null, post: null }],
-    //     ['langAlias', {}],
-    //     ['addLanguageClass', false],
-    //     ['appendNewline', false],
-    //     ['escapeBraces', false],
-    //     ['escapeHtml', false],
-    //     ['inlineMeta', () => undefined],
-    //     ['shiki', {}],
-    // ];
-
     /**
      * Creates a code handler of the specified type.
      *
