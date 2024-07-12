@@ -53,8 +53,23 @@
 
 **Note:** See the [docs](https://sveltex.dev/docs) for more information.
 
+### Creating a new project
 
-### Installation
+You can use the `create-sveltex` package to create a new project using SvelTeX:
+
+```sh
+pnpm dlx create-sveltex # If using PNPM
+bunx     create-sveltex # If using Bun
+npx      create-sveltex # If using NPM
+yarn dlx create-sveltex # If using Yarn
+```
+
+...and follow the prompts.
+
+
+### Adding to existing project
+
+#### Installation
 
 ```sh
 pnpm add -D @nvl/sveltex # If using PNPM
@@ -63,8 +78,7 @@ npm  add -D @nvl/sveltex # If using NPM
 yarn add -D @nvl/sveltex # If using Yarn
 ```
 
-
-### Basic steup
+#### Basic steup
 
 ```js
 // svelte.config.js
