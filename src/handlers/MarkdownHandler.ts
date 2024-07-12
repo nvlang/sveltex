@@ -23,8 +23,9 @@ import { log } from '$utils/debug.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';
-import XRegExp from 'xregexp';
-import { is, nodeAssert, typeAssert, uuid } from '$deps.js';
+
+// External dependencies
+import { is, nodeAssert, typeAssert, uuid, XRegExp } from '$deps.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
