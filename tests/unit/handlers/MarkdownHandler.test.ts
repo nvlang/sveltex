@@ -16,7 +16,7 @@ import {
 } from '$dev_deps.js';
 import { countNewlines } from '$handlers/MarkdownHandler.js';
 import { isArray } from '$typeGuards/utils.js';
-import { spy } from 'fixtures.js';
+import { spy } from '$tests/unit/fixtures.js';
 
 describe('MarkdownHandler<MarkdownBackend>', () => {
     describe.each([
