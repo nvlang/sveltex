@@ -1,7 +1,32 @@
 
 # Getting Started
 
-## Installation
+## Creating a new project
+
+You can use the [`create-sveltex`] package to create a new project using
+SvelTeX:
+
+::: code-group
+```sh [pnpm]
+pnpm dlx create-sveltex
+```
+```sh [bun]
+bunx create-sveltex
+```
+```sh [npm]
+npx create-sveltex
+```
+```sh [yarn]
+yarn dlx create-sveltex
+```
+:::
+
+...and follow the prompts.
+
+
+## Adding to an existing project
+
+### Installation
 
 To install SvelTeX, run the following command in your project's root directory
 (wherever your `package.json` is located):
@@ -21,7 +46,7 @@ yarn add -D @nvl/sveltex
 ```
 :::
 
-## Setup
+### Setup
 
 SvelTeX has one main export, `sveltex`. This is an asynchronous function that
 takes two arguments:
@@ -91,6 +116,7 @@ If you prefer, you can also just use the `sveltex` function directly in your
 `svelte.config.js`. Just remember to `await` it.
 
 
+[`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
 [`markdownBackend`]: markdown
 [`codeBackend`]: code
 [`mathBackend`]: math
