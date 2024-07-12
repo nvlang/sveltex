@@ -42,7 +42,7 @@ import {
 import { mergeConfigs } from '$utils/merge.js';
 
 // External dependencies
-import { MagicString, is, typeAssert } from '$deps.js';
+import { MagicString, is, resolve, typeAssert } from '$deps.js';
 import { handleFrontmatter } from '$utils/frontmatter.js';
 import type { Frontmatter } from '$types/utils/Frontmatter.js';
 import { applyTransformations } from '$utils/transformers.js';
@@ -223,10 +223,11 @@ export class Sveltex<
             // automatically generated from the source code within the current
             // file, which is already watched for changes.
             dependencies: [
+                'sveltex.config.ts',
                 'sveltex.config.js',
                 'sveltex.config.cjs',
                 'sveltex.config.mjs',
-            ],
+            ].map((path) => resolve(path)),
         } as Processed;
     };
 
@@ -455,7 +456,15 @@ export class Sveltex<
                 code = prependToProcessed.join('\n') + '\n' + code;
             }
 
-            return { code };
+            return {
+                code,
+                dependencies: [
+                    'sveltex.config.ts',
+                    'sveltex.config.js',
+                    'sveltex.config.cjs',
+                    'sveltex.config.mjs',
+                ].map((path) => resolve(path)),
+            };
         } catch (err) {
             log('error', prettifyError(err));
             return;
