@@ -163,6 +163,7 @@ libraries. Some notable examples are MathJax and TikZ.
 ### Cool software I didn't know before
 
 -   [`fast-check`], for fuzzy testing.
+-   [`plop`], for code generation with templates and CLI prompts.
 -   [Shiki], for code highlighting.
 -   [`twoslash`], for IntelliSense in markdown code blocks.
 -   [VitePress], a great [SSG] for docs.
@@ -170,6 +171,7 @@ libraries. Some notable examples are MathJax and TikZ.
     PDFs to SVGs.
 
 [`fast-check`]: https://fast-check.dev
+[`plop`]: https://github.com/plopjs/plop
 [Shiki]: https://shiki.style
 [`twoslash`]: https://twoslash.netlify.app
 [VitePress]: https://vitepress.dev
