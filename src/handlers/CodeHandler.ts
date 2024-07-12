@@ -141,7 +141,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             if (transformers.post) {
                 processed = applyTransformations(
                     processed,
-                    mergedOpts,
+                    { ...mergedOpts, original: code },
                     transformers.post,
                 );
             }

@@ -56,7 +56,19 @@ export interface Transformers<Options extends object> {
      * - 2-tuple: `transformed = content.replaceAll(...transformation)`
      * - Function: `transformed = transformation(content, opts)`
      */
-    post?: Transformer<Options> | Transformer<Options>[] | undefined | null;
+    post?:
+        | Transformer<Options & WithOriginal>
+        | Transformer<Options & WithOriginal>[]
+        | undefined
+        | null;
+}
+
+interface WithOriginal {
+    /**
+     * The original content that was passed to the backend for processing. This
+     * is before pre-transformations were applied, too.
+     */
+    original: string;
 }
 
 /**

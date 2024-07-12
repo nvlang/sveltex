@@ -42,21 +42,21 @@ export class MathHandler<B extends MathBackend> extends Handler<
             await this.handleCss();
 
             // Apply pre-transformers
-            tex = applyTransformations(
+            const pretransformed = applyTransformations(
                 tex,
                 { inline: options?.inline !== false },
                 this._configuration.transformers.pre,
             );
 
             const res = await super.process(
-                tex,
+                pretransformed,
                 options ?? ({} as MathProcessOptions<B>),
             );
 
             // Apply post-transformers
             res.processed = applyTransformations(
                 res.processed,
-                { inline: options?.inline !== false },
+                { inline: options?.inline !== false, original: tex },
                 this._configuration.transformers.post,
             );
 

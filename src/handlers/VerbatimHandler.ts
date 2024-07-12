@@ -261,7 +261,11 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 typeAssert(is<FullVerbEnvConfigNoop>(config));
             }
 
-            processed = applyTransformations(processed, options, post);
+            processed = applyTransformations(
+                processed,
+                { ...options, original: innerContent },
+                post,
+            );
 
             // If `component !== 'none'`, wrap the processed content in the
             // output tag, so that `processed` now stores the _outer_ content.

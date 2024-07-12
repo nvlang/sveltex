@@ -444,7 +444,7 @@ export class Sveltex<
             // Apply the post-transformers
             html = applyTransformations(
                 html,
-                frontmatter ?? {},
+                { ...(frontmatter ?? {}), original: content },
                 markdownHandler.configuration.transformers.post,
             );
             /* eslint-enable @typescript-eslint/no-unnecessary-condition */
