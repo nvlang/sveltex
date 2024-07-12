@@ -438,7 +438,8 @@ export class Sveltex<
                 markdownHandler.configuration.transformers.pre,
             );
 
-            html = (await markdownHandler.process(html, {})).processed;
+            html = (await markdownHandler.process(html, { filename }))
+                .processed;
 
             // Apply the post-transformers
             html = applyTransformations(

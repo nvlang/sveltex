@@ -17,6 +17,7 @@ export { test as fuzzyTest, fc } from '@fast-check/vitest';
 export { default as markdownItMultimdTablePlugin } from 'markdown-it-multimd-table';
 export { default as rehypeSlug } from 'rehype-slug';
 export { default as remarkDirective } from 'remark-directive';
+export { default as retextIndefiniteArticle } from 'retext-indefinite-article';
 export {
     transformerNotationDiff as shikiTransformerNotationDiff,
     transformerMetaHighlight as shikiTransformerMetaHighlight,

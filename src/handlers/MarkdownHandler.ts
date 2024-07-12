@@ -19,6 +19,7 @@ import {
     remarkDisableIndentedCodeBlocksAndAutolinks,
 } from '$utils/markdown.js';
 import { getDefaultMarkdownConfig } from '$base/defaults.js';
+import { log } from '$utils/debug.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';
@@ -312,9 +313,16 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 .use(rehypeStringify, { allowDangerousHtml: true });
             const process: MarkdownProcessFn<Backend> = async (
                 markdown: string,
+                opts: MarkdownProcessOptions,
             ) => {
-                const res = (await processor.process(markdown)).toString();
-                return res;
+                const res = await processor.process(markdown);
+                res.messages.forEach((msg) => {
+                    log(
+                        msg.fatal ? 'error' : 'warn',
+                        opts.filename + '\t' + msg.message,
+                    );
+                });
+                return res.toString();
             };
             return new MarkdownHandler<Backend>({
                 backend,

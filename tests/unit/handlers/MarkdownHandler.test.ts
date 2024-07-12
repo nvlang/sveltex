@@ -11,10 +11,12 @@ import {
     micromarkGfmHtml,
     rehypeSlug,
     remarkDirective,
+    retextIndefiniteArticle,
     unistVisit,
 } from '$dev_deps.js';
 import { countNewlines } from '$handlers/MarkdownHandler.js';
 import { isArray } from '$typeGuards/utils.js';
+import { spy } from 'fixtures.js';
 
 describe('MarkdownHandler<MarkdownBackend>', () => {
     describe.each([
@@ -183,6 +185,10 @@ describe.each([
                 ],
             ],
             [
+                { retextPlugins: [retextIndefiniteArticle] },
+                [['a example', 'a example', 'Unexpected article']],
+            ],
+            [
                 {
                     remarkPlugins: [
                         remarkDirective,
@@ -241,7 +247,7 @@ describe.each([
     MarkdownBackend,
     [
         MarkdownConfiguration<MarkdownBackend> | undefined,
-        [string, (string | RegExp) | (string | RegExp)[]][],
+        [string, (string | RegExp) | (string | RegExp)[], (string | RegExp)?][],
     ][],
 ][])('MarkdownHandler<%o>', (markdownBackend, tests) => {
     test.each(tests)('%o', async (configuration, samples) => {
@@ -249,7 +255,8 @@ describe.each([
             { markdownBackend },
             { markdown: configuration },
         );
-        for (const [input, expected] of samples) {
+        const log = await spy('log');
+        for (const [input, expected, logged] of samples) {
             const output = (
                 await processor.markup({
                     filename: uuid() + '.sveltex',
@@ -262,6 +269,12 @@ describe.each([
                 }
             } else {
                 expect(output).toMatch(expected);
+            }
+            if (logged) {
+                expect(log).toHaveBeenCalledWith(
+                    expect.any(String),
+                    expect.stringMatching(logged),
+                );
             }
         }
     });

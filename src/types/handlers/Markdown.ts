@@ -267,4 +267,6 @@ export type MarkdownProcessFn<B extends MarkdownBackend> = ProcessFn<
     MarkdownHandler<B>
 >;
 
-export type MarkdownProcessOptions = object;
+export interface MarkdownProcessOptions {
+    filename: string;
+}
