@@ -139,7 +139,7 @@ export interface BackendChoices<
      * -   `'mathjax'`: Install:
      *
      *     ```sh
-     *     <pnpm|bun|npm|yarn> add -D mathjax
+     *     <pnpm|bun|npm|yarn> add -D mathjax-full
      *     ```
      */
     /* eslint-enable tsdoc/syntax */
