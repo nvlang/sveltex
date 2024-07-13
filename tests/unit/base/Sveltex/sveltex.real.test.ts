@@ -195,6 +195,11 @@ describe('Sveltex', () => {
             it.each([
                 ['*italic*', '<em>italic</em>'],
                 ['**bold**', '<strong>bold</strong>'],
+                ['<span>foo</span> bar', '<p><span>foo</span> bar</p>'],
+                ['foo <span>bar</span>', '<p>foo <span>bar</span></p>'],
+                ['foo <span>bar\n</span>', '<p>foo <span>bar\n</span></p>'],
+                ['foo <span>\nbar</span>', '<p>foo <span>\nbar</span></p>'],
+                // ['foo <span>\n\nbar\n\n</span>', '<p>foo <span>bar</span></p>'], // I'm not sure how this should be handled yet
                 [
                     '[link](https://example.com)',
                     '<a href="https://example.com">link</a>',
