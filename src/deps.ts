@@ -46,6 +46,11 @@ export {
 export { htmlRawNames } from 'micromark-util-html-tag-name';
 export { codes as asciiCodes } from 'micromark-util-symbol';
 
+export { fromHtml as hastFromHtml } from 'hast-util-from-html';
+export { toHtml as hastToHtml } from 'hast-util-to-html';
+
+export type { Element as HastElement } from 'hast';
+
 /**
  * MDAST types for better type-safety.
  */

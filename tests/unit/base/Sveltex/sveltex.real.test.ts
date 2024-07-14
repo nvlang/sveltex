@@ -197,8 +197,8 @@ describe('Sveltex', () => {
                 ['**bold**', '<strong>bold</strong>'],
                 ['<span>foo</span> bar', '<p><span>foo</span> bar</p>'],
                 ['foo <span>bar</span>', '<p>foo <span>bar</span></p>'],
-                ['foo <span>bar\n</span>', '<p>foo <span>bar\n</span></p>'],
-                ['foo <span>\nbar</span>', '<p>foo <span>\nbar</span></p>'],
+                ['foo <span>bar\n</span>', '<p>foo <span>bar</span></p>'],
+                ['foo <span>\nbar</span>', '<p>foo <span>bar</span></p>'],
                 // ['foo <span>\n\nbar\n\n</span>', '<p>foo <span>bar</span></p>'], // I'm not sure how this should be handled yet
                 [
                     '[link](https://example.com)',
@@ -220,6 +220,7 @@ describe('Sveltex', () => {
                     '<style>/*comment*/ body { color: red; }</style>',
                     '<style>/*comment*/ body { color: red; }</style>',
                 ],
+                // [wikipediaHtmlExcerpt, wikipediaHtmlExcerpt],
                 ...cartesianProduct(
                     ['foo', 'div', 'p', 'span'],
                     [0, 1, 2],
@@ -227,13 +228,15 @@ describe('Sveltex', () => {
                     [() => true, () => false],
                 ).map(([tag, x, y, prefersInline]) => [
                     `<${tag}>${'\n'.repeat(x)}*italic*${'\n'.repeat(y)}</${tag}>`,
-                    x === 2 || (x === 1 && !prefersInline())
+                    (x === 2 || (x === 1 && !prefersInline())) &&
+                    tag !== 'span' &&
+                    tag !== 'p'
                         ? `<${tag}>\n<p><em>italic</em></p>\n</${tag}>`
                         : `<${tag}><em>italic</em></${tag}>`,
                     { prefersInline },
                 ]),
             ] as [string, string, MarkdownConfiguration<MarkdownBackend>?][])(
-                '%o → %o',
+                '%o → %o (%s)',
                 async (input, expected, configuration) => {
                     let output;
                     if (configuration) {

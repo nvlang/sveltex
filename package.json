@@ -126,6 +126,7 @@
     "deepmerge-ts": "^7.0.3",
     "find-cache-dir": "^5.0.0",
     "glob": "^11.0.0",
+    "hast-util-from-html": "^2.0.1",
     "html-escaper": "^3.0.3",
     "html-tag-names": "^2.1.0",
     "js-yaml": "^4.1.0",

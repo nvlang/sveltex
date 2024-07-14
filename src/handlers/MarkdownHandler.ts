@@ -2,6 +2,7 @@
 
 // Types
 import type {
+    ComponentInfo,
     FullMarkdownConfiguration,
     MarkdownBackend,
     MarkdownConfiguration,
@@ -15,6 +16,7 @@ import type { UnescapeOptions } from '$types/utils/Escape.js';
 import { missingDeps } from '$utils/env.js';
 import { Handler, deepClone } from '$handlers/Handler.js';
 import {
+    adjustHtmlSpacing,
     micromarkDisableIndentedCodeAndAutolinks,
     remarkDisableIndentedCodeBlocksAndAutolinks,
 } from '$utils/markdown.js';
@@ -25,7 +27,20 @@ import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';
 
 // External dependencies
-import { is, nodeAssert, typeAssert, uuid, XRegExp } from '$deps.js';
+import {
+    hastFromHtml,
+    hastToHtml,
+    is,
+    nodeAssert,
+    typeAssert,
+    uuid,
+    XRegExp,
+} from '$deps.js';
+import {
+    componentCanBeInParagraph,
+    specials,
+    tagsThatCannotBeInParagraphs,
+} from '$data/markdown.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -65,20 +80,25 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     }> {
         return async (content: string, options: MarkdownProcessOptions) => {
             let unescapeTags: (str: string) => string = (str) => str;
+            console.log({ content });
             if (!this._configuration.strict) {
-                const adjusted = adjustHtmlSpacing(
+                const adjusted = adjustHtmlSpacingAndEscape(
                     content,
                     this._configuration.prefersInline,
+                    this._configuration.components,
                 );
                 content = adjusted.content;
-                unescapeTags = adjusted.unescapeTags;
+                unescapeTags = adjusted.cleanup;
             }
+            console.log({ content });
             const res = await this._process(content, options, this);
+            console.log({ res });
             // Markdown processors all output strings, so this is unreachable.
             /* v8 ignore next 3 (unreachable code) */
             if (isObject(res)) {
                 return { ...res, processed: unescapeTags(res.processed) };
             }
+            console.log({ processed: unescapeTags(res) });
             return {
                 processed: unescapeTags(res),
                 unescapeOptions: { removeParagraphTag: true },
@@ -346,10 +366,11 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
 /**
  *
  */
-function adjustHtmlSpacing(
+function adjustHtmlSpacingAndEscape(
     content: string,
     prefersInline: (tag: string) => boolean,
-): { content: string; unescapeTags: (str: string) => string } {
+    components: ComponentInfo[],
+): { content: string; cleanup: (str: string) => string } {
     /**
      * An UUIDv4 (without dashes) to use to escape HTML block-level element
      * tags.
@@ -361,60 +382,71 @@ function adjustHtmlSpacing(
      */
     const id = uuid().replaceAll('-', '');
 
+    content = adjustHtmlSpacing(content, prefersInline, components);
+
     // Escape the aforementioned tags, so that all tags are treated equally. For
     // example: `<p>...</p>` becomes `<p${id}>...</p${id}>`.
-    content = XRegExp.replace(
-        content,
-        regexSpecials,
-        (match, _opening, tag) => {
-            nodeAssert(isString(tag));
-            const res = match
-                .replace(tag, tag + id)
-                .replace(`</${tag}>`, `</${tag + id}>`);
-            return res;
-        },
-    );
+    content = XRegExp.replace(content, regexSpecials, (match, tag) => {
+        nodeAssert(isString(tag));
+        const res = match.replace(tag, tag + id);
+        return res;
+    });
 
-    // Now, we
-    content = XRegExp.replace(
-        content,
-        regexAny,
-        (_match, opening, tag, leading, inner, _trailing, closing) => {
-            nodeAssert(
-                isString(opening) &&
-                    isString(tag) &&
-                    isString(leading) &&
-                    isString(inner) &&
-                    isString(closing),
-                'Expected match groups to be strings.',
-            );
-            const xOriginal = countNewlines(leading);
-            let x = 0;
-            if (xOriginal >= 2) {
-                x = 2;
-            } else if (xOriginal === 1) {
-                x = prefersInline(tag.replace(id, '')) ? 0 : 2;
-            }
-            const ws = '\n'.repeat(x);
-            return opening + ws + inner + ws + closing;
-        },
-    );
+    const componentsThatCannotBeInParagraphs = components
+        .filter((c) => !componentCanBeInParagraph(c))
+        .map((c) => c.name);
 
     // Function with which the MarkdownHandler will be able to unescape the tags
     // we escaped earlier, after it is done processing the document.
-    const unescapeTags = (str: string) => {
-        const s = str
+    const cleanup = (str: string) => {
+        console.log({ contentBeforeCleanup: str });
+
+        let s = str
             .replaceAll(
                 new RegExp(
-                    `<p><([^>]+)${id}(.*?)<\\/(?:\\1)${id}><\\/p>`,
+                    `<p>(<\\s*(${[
+                        ...tagsThatCannotBeInParagraphs,
+                        ...componentsThatCannotBeInParagraphs,
+                    ].join(
+                        '|',
+                    )}|[A-Z][-.:\\w]*)${id}.*?<\\/\\s*(?:\\2)${id}\\s*>)<\\/p>`,
                     'gsu',
                 ),
-                '<$1$2</$1>',
+                '$1',
             )
             .replaceAll(id, '');
+
+        const escapedComponentNames: Record<string, string> = {};
+
+        // escape all tags that are case-sensitive, since htmlToHast will
+        // lowercase them
+        s = XRegExp.replace(s, regexCaseSensitiveComponents, (match, tag) => {
+            nodeAssert(isString(tag));
+            if (!escapedComponentNames[tag]) {
+                escapedComponentNames[tag] = uuid().replaceAll('-', '');
+            }
+            return match.replace(tag, escapedComponentNames[tag]);
+        });
+
+        s = hastToHtml(hastFromHtml(s, { fragment: true }), {
+            allowDangerousHtml: true,
+            closeSelfClosing: true,
+        });
+        s = s.replaceAll(/<p>\s*<\/p>/gsu, '');
+
+        // unescape the case-sensitive tags
+        Object.entries(escapedComponentNames).forEach(([tag, id]) => {
+            s = s.replaceAll(id, tag);
+        });
+
+        console.log({ contentAfterCleanup: s, regexCaseSensitiveComponents });
         return s;
     };
-    return { content, unescapeTags };
+    return { content, cleanup };
+}
+
+export function removeBadParagraphs(content: string): string {
+    return content;
 }
 
 /**
@@ -435,118 +467,85 @@ export function countNewlines(s: string): number {
     return n;
 }
 
-const shared: string = `
-    ^                   # (start of line)
-    {{space}}*          # (whitespace, ≥0, greedy)
-    (?<opening>         # 1: opening tag
+// const shared: string = `
+//     ^                   # (start of line)
+//     {{space}}*          # (whitespace, ≥0, greedy)
+//     (?<opening>         # 1: opening tag
+//         <
+//         /?
+//         (               # 2: tag name
+//             {{tag}}
+//         )
+//         (?:
+//             {{space}}
+//             [^>]*?      # (any character other than '>', ≥0, lazy)
+//         )?
+//         >
+//     )
+//     (?<leading>         # 3: leading whitespace in inner content
+//         \\s*            # (whitespace, ≥0, greedy)
+//     )
+//     (?<inner>           # 4: inner content, trimmed
+//         .*?             # (any character (incl. newline), ≥0, lazy)
+//     )
+//     (?<trailing>        # 5: trailing whitespace in inner content
+//         \\s*            # (whitespace, ≥0, greedy)
+//     )
+//     (?<closing>         # 6: closing tag
+//         </
+//         \\s*
+//         \\2
+//         \\s*
+//         >
+//     )?
+// `;
+
+const htmlTag: string = `
+    (?:                 # (html tag, with delims and possibly attributes)
         <
-        /?
-        (               # 2: tag name
+        /?              # (optional backslash)
+        \\s*            # (whitespace, ≥0, greedy)
+        (               # 1: tag name
             {{tag}}
         )
         (?:
             {{space}}
             [^>]*?      # (any character other than '>', ≥0, lazy)
         )?
-        >
-    )
-    (?<leading>         # 3: leading whitespace in inner content
         \\s*            # (whitespace, ≥0, greedy)
-    )
-    (?<inner>           # 4: inner content, trimmed
-        .*?             # (any character (incl. newline), ≥0, lazy)
-    )
-    (?<trailing>        # 5: trailing whitespace in inner content
-        \\s*            # (whitespace, ≥0, greedy)
-    )
-    (?<closing>         # 6: closing tag
-        </
-        \\2
+        /?              # (optional backslash)
         >
     )
 `;
 
 const space: string = '[ \\t]';
-const newline: string = '(?:\\r\\n?|\\n)';
+// const newline: string = '(?:\\r\\n?|\\n)';
 
-const regexAny: RegExp = XRegExp.build(
-    shared,
-    { tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)', space, newline },
+// const regexAny: RegExp = XRegExp.build(
+//     shared,
+//     { tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)', space, newline },
+//     'gimsux',
+// );
+
+const regexSpecials: RegExp = XRegExp.build(
+    htmlTag,
+    {
+        space,
+        tag: '(?:' + specials.join('|') + ')',
+    },
     'gimsux',
 );
 
-const regexSpecials: RegExp = XRegExp.build(
-    shared,
+const regexCaseSensitiveComponents: RegExp = XRegExp.build(
+    htmlTag,
     {
         space,
-        newline,
         tag:
             '(?:' +
-            [
-                'address',
-                'article',
-                'aside',
-                'base',
-                'basefont',
-                'blockquote',
-                'body',
-                'caption',
-                'center',
-                'col',
-                'colgroup',
-                'dd',
-                'details',
-                'dialog',
-                'dir',
-                'div',
-                'dl',
-                'dt',
-                'fieldset',
-                'figcaption',
-                'figure',
-                'footer',
-                'form',
-                'frame',
-                'frameset',
-                'h1',
-                'h2',
-                'h3',
-                'h4',
-                'h5',
-                'h6',
-                'head',
-                'header',
-                'hr',
-                'html',
-                'iframe',
-                'legend',
-                'li',
-                'link',
-                'main',
-                'menu',
-                'menuitem',
-                'nav',
-                'noframes',
-                'ol',
-                'optgroup',
-                'option',
-                'p',
-                'param',
-                'search',
-                'section',
-                'summary',
-                'table',
-                'tbody',
-                'td',
-                'tfoot',
-                'th',
-                'thead',
-                'title',
-                'tr',
-                'track',
-                'ul',
-            ].join('|') +
+            '(?:[A-Z][-.:0-9_a-zA-Z]*)' +
+            '|' +
+            '(?:[a-z][-.:0-9_a-zA-Z]*[A-Z][-.:0-9_a-zA-Z]*)' +
             ')',
     },
-    'gimsux',
+    'gmsux',
 );

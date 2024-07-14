@@ -223,11 +223,11 @@ export const componentRegExp: RegExp = re`
             \/?                 # (optional slash)
         )
     >
-    (                           # 5: inner content
+    (                           # 5: inner content (optional)
         .*?                     # (any character, incl. newlines; lazy, so that
                                 # it doesn't eat the closing tag)
     )
-    (                           # 6: closing tag
+    (                           # 6: closing tag (optional)
         (?:                     # -: optional closing tag
             <                   # (opening angle bracket)
             /                   # (leading slash)

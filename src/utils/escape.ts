@@ -15,7 +15,7 @@ import type {
 
 // Internal dependencies
 import { isArray, isOneOf, isString } from '$typeGuards/utils.js';
-import { getLocationUnist, walkMdast } from '$utils/ast.js';
+import { getLocationUnist, walkUnist } from '$utils/ast.js';
 import { parseComponent } from '$utils/parseComponent.js';
 
 // External dependencies
@@ -515,7 +515,7 @@ export function getMdastES({
     directiveSettings: DirectiveEscapeSettings;
 }): EscapableSnippet[] {
     const escapableSnippets: EscapableSnippet[] = [];
-    walkMdast(ast, (node) => {
+    walkUnist(ast, (node) => {
         // If the node is not one of the interesting types, we don't need to
         // analyze it any further; instead, we just keep walking this branch
         // of the tree.
@@ -706,6 +706,7 @@ export function getMdastES({
         }
         return false;
     });
+    console.log(inspect({ ast, escapableSnippets }, { depth: 10 }));
     return escapableSnippets;
 }
 
@@ -749,12 +750,6 @@ function calcPadding(
     }
     return padding;
 }
-
-// remarkParse.Parser.prototype.blockTokenizers.indentedCode = indentedCode
-
-// function indentedCode() {
-//   return true
-// }
 
 /**
  * Pad a string left and right.
@@ -800,7 +795,6 @@ export function padString(
  *
  * @param document - The document in which to escape the snippets.
  * @param snippets - The (escapable) snippets to escape.
- *
  */
 export function escapeSnippets(
     document: string,
@@ -812,7 +806,7 @@ export function escapeSnippets(
     const s = new MagicString(document);
     const ranges = outermostRanges([...snippets], 'original.loc');
     const escapedSnippets: [string, Snippet][] = ranges.map((range) => {
-        const id = uuid();
+        const id = uuid().replace(/-/g, '');
         const paddedId = padString(id, range.escapeOptions?.pad ?? false);
         nodeAssert(paddedId, 'paddedId must be truthy');
         s.overwrite(range.original.loc.start, range.original.loc.end, paddedId);

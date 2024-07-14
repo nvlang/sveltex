@@ -432,6 +432,8 @@ export class Sveltex<
 
             let html = escapedDocument;
 
+            console.log({ htmlBeforeProcessing: html });
+
             // Apply the pre-transformers
             html = applyTransformations(
                 html,
@@ -441,6 +443,8 @@ export class Sveltex<
 
             html = (await markdownHandler.process(html, { filename }))
                 .processed;
+
+            console.log({ htmlAfterProcessing: html });
 
             // Apply the post-transformers
             html = applyTransformations(

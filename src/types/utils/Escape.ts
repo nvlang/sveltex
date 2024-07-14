@@ -8,14 +8,17 @@ import type { Offsets } from '$types/utils/Ast.js';
 
 /**
  * Vernacular:
- * - "snippet": A small segment (or fragment, part, excerpt... or, indeed,
- *   snippet) of a document that should be escaped and processed by a handler
- *   other than the markdown processor.
- * - "escaped snippet": A snippet that has been replaced with a UUID.
- * - "processed snippet": An escaped snippet that has been processed by a
- *   handler.
+ * -   "snippet": A small segment (or fragment, part, excerpt... or, indeed,
+ *     snippet) of a document that should be escaped and processed by a handler
+ *     other than the markdown processor.
+ * -   "escaped snippet": A snippet that has been replaced with a UUID.
+ * -   "processed snippet": An escaped snippet that has been processed by a
+ *     handler.
  */
 
+/**
+ *
+ */
 export type InterpretedAttributes = Record<
     string,
     string | number | boolean | null | undefined
@@ -76,6 +79,7 @@ export interface EscapeOptions {
      * it into the document.
      */
     pad?: PaddingInstruction | undefined;
+
     /**
      * Whether to include hyphens in the UUID generated for the snippet.
      *
@@ -111,7 +115,7 @@ interface OriginalSnippet<T extends SnippetType> {
      * Essentially just the slice of the original document at
      * {@link loc | `loc`}.
      */
-    outerContent: T extends 'svelte' | 'mustacheTag' | 'verbatim'
+    outerContent: T extends NonProcessableSnippetType | 'verbatim'
         ? string
         : string | undefined;
 }
@@ -141,6 +145,7 @@ export interface EscapedSnippet<T extends SnippetType = SnippetType>
 }
 
 type ProcessableSnippetType = 'code' | 'math' | 'verbatim' | 'frontmatter';
+type NonProcessableSnippetType = Exclude<SnippetType, ProcessableSnippetType>;
 
 /**
  * A small segment (or fragment, part, excerpt... or, indeed, snippet) of a
@@ -151,25 +156,25 @@ export interface Snippet<T extends SnippetType = SnippetType> {
     /**
      * Snippet type. This is used to determine which handler, if any, should
      * process the snippet. Possible values are:
-     * - `'math'`: Some TeX code to be rendered by MathJax or KaTeX.
-     * - `'code'`: A code span or a fenced code block. This is forwarded to the
-     *   `CodeHandler`.
-     * - `'verbatim'`: A verbatim environment. This is forwarded to the
-     *   `VerbatimHandler`, which checks for some errors and then may forward
-     *   the snippet to:
-     *   - `TexHandler`, if the verbatim environment was set up as a TeX
-     *     component.
-     *   - `CodeHandler`, if the verbatim environment was set up with
-     *     `type` set to `code`.
-     *   - Otherwise: the `VerbatimHandler` will take care of the processing
-     *     itself (this is the case for `type` values `noop`,
-     *     `escape`).
-     * - `'mustacheTag'`: A mustache tag, like `{...}`.
-     * - `'svelte'`: Svelte syntax (other than mustache tags), like
-     *   `{@html ...}`, `{#if ...}`, `<svelte:head>`, `<script>`, `<style>`,
-     *   etc.
+     * -   `'math'`: Some TeX code to be rendered by MathJax or KaTeX.
+     * -   `'code'`: A code span or a fenced code block. This is forwarded to
+     *     the `CodeHandler`.
+     * -   `'verbatim'`: A verbatim environment. This is forwarded to the
+     *     `VerbatimHandler`, which checks for some errors and then may forward
+     *     the snippet to:
+     *     -   `TexHandler`, if the verbatim environment was set up as a TeX
+     *         component.
+     *     -   `CodeHandler`, if the verbatim environment was set up with `type`
+     *         set to `code`.
+     *     -   Otherwise: the `VerbatimHandler` will take care of the processing
+     *         itself (this is the case for `type` values `noop`, `escape`).
+     * -   `'mustacheTag'`: A mustache tag, like `{...}`.
+     * -   `'svelte'`: Svelte syntax (other than mustache tags), like
+     *     `{@html ...}`, `{#if ...}`, `<svelte:head>`, `<script>`, `<style>`,
+     *     etc.
      */
     type: T;
+
     /**
      * Describes the snippet in the original document.
      * - `loc` is the location of the snippet in the original document (given by

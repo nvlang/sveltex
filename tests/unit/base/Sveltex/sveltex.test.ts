@@ -450,6 +450,12 @@ describe('Sveltex.markup()', () => {
                     '<script>\n</script>\n<p><svelte:element>foo</svelte:element></p>',
             },
             {
+                label: 'tags with uppercase letters',
+                input: '<MyComponent test="a" {c} test2={b}>foo</MyComponent>',
+                expected:
+                    '<MyComponent test="a" {c} test2={b}>foo</MyComponent>',
+            },
+            {
                 label: 'if block',
                 input: '{#if condition}\nA\n{/if}',
                 expected:
@@ -546,7 +552,7 @@ describe('Sveltex.markup()', () => {
                 label: 'img',
                 input: '![alt](https://example.com/image.jpg)',
                 expected:
-                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="alt"></p>',
+                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="alt" /></p>',
             },
         ];
         it.each(tests)('$label', async (test) => {
