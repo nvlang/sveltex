@@ -27,20 +27,16 @@ import { copyTransformations } from '$utils/misc.js';
 import { isObject, isString } from '$typeGuards/utils.js';
 
 // External dependencies
+import { is, nodeAssert, sanitizeHtml, typeAssert, XRegExp } from '$deps.js';
 import {
-    hastFromHtml,
-    hastToHtml,
-    is,
-    nodeAssert,
-    typeAssert,
-    uuid,
-    XRegExp,
-} from '$deps.js';
-import {
+    canBeOnlyThingInParagraph,
     componentCanBeInParagraph,
+    componentCanContainParagraph,
     specials,
     tagsThatCannotBeInParagraphs,
+    tagsThatCannotContainParagraphs,
 } from '$data/markdown.js';
+import { generateId } from '$utils/escape.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -80,7 +76,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     }> {
         return async (content: string, options: MarkdownProcessOptions) => {
             let unescapeTags: (str: string) => string = (str) => str;
-            console.log({ content });
+
             if (!this._configuration.strict) {
                 const adjusted = adjustHtmlSpacingAndEscape(
                     content,
@@ -90,15 +86,15 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 content = adjusted.content;
                 unescapeTags = adjusted.cleanup;
             }
-            console.log({ content });
+
             const res = await this._process(content, options, this);
-            console.log({ res });
+
             // Markdown processors all output strings, so this is unreachable.
             /* v8 ignore next 3 (unreachable code) */
             if (isObject(res)) {
                 return { ...res, processed: unescapeTags(res.processed) };
             }
-            console.log({ processed: unescapeTags(res) });
+
             return {
                 processed: unescapeTags(res),
                 unescapeOptions: { removeParagraphTag: true },
@@ -215,6 +211,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                         micromarkDisableIndentedCodeAndAutolinks,
                         ...(configuration.options.extensions ?? []),
                     ],
+                    allowDangerousHtml: true,
                 });
             };
 
@@ -329,9 +326,15 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 .use(configuration.remarkPlugins)
                 // @ts-expect-error https://github.com/remarkjs/remark-retext/issues/17#issuecomment-2170802405
                 .use(remarkRetext, unified().use(configuration.retextPlugins))
-                .use(remarkRehype, { allowDangerousHtml: true })
+                .use(remarkRehype, {
+                    ...configuration.remarkRehypeOptions,
+                    allowDangerousHtml: true,
+                })
                 .use(configuration.rehypePlugins)
-                .use(rehypeStringify, { allowDangerousHtml: true });
+                .use(rehypeStringify, {
+                    ...configuration.rehypeStringifyOptions,
+                    allowDangerousHtml: true,
+                });
             const process: MarkdownProcessFn<Backend> = async (
                 markdown: string,
                 opts: MarkdownProcessOptions,
@@ -339,6 +342,9 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
                 const res = await processor.process(markdown);
                 res.messages.forEach((msg) => {
                     log(
+                        // I have no idea how to make unified emit a fatal
+                        // error, and it's not all that relevant for us.
+                        /* v8 ignore next 1 */
                         msg.fatal ? 'error' : 'warn',
                         opts.filename + '\t' + msg.message,
                     );
@@ -366,7 +372,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
 /**
  *
  */
-function adjustHtmlSpacingAndEscape(
+export function adjustHtmlSpacingAndEscape(
     content: string,
     prefersInline: (tag: string) => boolean,
     components: ComponentInfo[],
@@ -380,9 +386,7 @@ function adjustHtmlSpacingAndEscape(
      * @example
      * '69cf641f45b54d31a7f511beb97f2855'
      */
-    const id = uuid().replaceAll('-', '');
-
-    content = adjustHtmlSpacing(content, prefersInline, components);
+    const id = generateId();
 
     // Escape the aforementioned tags, so that all tags are treated equally. For
     // example: `<p>...</p>` becomes `<p${id}>...</p${id}>`.
@@ -392,60 +396,236 @@ function adjustHtmlSpacingAndEscape(
         return res;
     });
 
+    content = adjustHtmlSpacing(content, prefersInline, components, id);
+
+    const escaped: Record<string, string> = {};
+
+    const balancedBracesL = '(?:[^{}]|\\{';
+    const balancedBracesR = '\\})*?';
+    const maxDepth = 12;
+
+    // Escape mustache tags in attributes. It's unlikely that any will be found,
+    // since mustache tags have, in principle, been escaped at an earlier stage,
+    // but still, just to be sure.
+    content = XRegExp.replace(
+        content,
+        XRegExp.build(
+            '< {{tag}} \\s (?: [^>{}]*? {{mustacheTag}} [^>{}]*? )+ /? >',
+            {
+                tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)',
+                mustacheTag:
+                    '\\{' +
+                    balancedBracesL.repeat(maxDepth) +
+                    balancedBracesR.repeat(maxDepth) +
+                    '\\}',
+            },
+            'gimsux',
+        ),
+        (match) => {
+            return XRegExp.replace(
+                match.toString(),
+                /(?:(["'])\{.*\}\1)|(?:\{.*\})/gsu,
+                (m) => {
+                    const id = generateId();
+                    escaped[id] = m.toString();
+                    return id;
+                },
+            );
+        },
+    );
+
     const componentsThatCannotBeInParagraphs = components
         .filter((c) => !componentCanBeInParagraph(c))
+        .map((c) => c.name);
+
+    const componentsThatCannotContainParagraphs = components
+        .filter((c) => !componentCanContainParagraph(c))
         .map((c) => c.name);
 
     // Function with which the MarkdownHandler will be able to unescape the tags
     // we escaped earlier, after it is done processing the document.
     const cleanup = (str: string) => {
-        console.log({ contentBeforeCleanup: str });
+        // Remove <p> tags surrounding non-phrasing HTML elements, or
+        // surrounding Svelte components which are not allowed to be in
+        // paragraphs, or at least not the only thing in a paragraph.
+        str = XRegExp.replace(
+            str,
+            XRegExp.build(
+                `<p>
+                \\s*
+                (
+                    < \\s*
+                    (
+                        {{tagThatCannotBeInParagraphs}}
+                      | {{componentThatCannotBeInParagraphs}}
+                      | [A-Z][-.:0-9_a-zA-Z]*
+                    )
+                    (?:
+                        \\s
+                        [^>]*?
+                      | \\s*
+                    )
+                    (?:
+                        />
+                      | >
+                        .*?
 
-        let s = str
-            .replaceAll(
-                new RegExp(
-                    `<p>(<\\s*(${[
-                        ...tagsThatCannotBeInParagraphs,
-                        ...componentsThatCannotBeInParagraphs,
-                    ].join(
-                        '|',
-                    )}|[A-Z][-.:\\w]*)${id}.*?<\\/\\s*(?:\\2)${id}\\s*>)<\\/p>`,
-                    'gsu',
-                ),
-                '$1',
-            )
-            .replaceAll(id, '');
+                        </
+                        \\s*
+                        (?:\\2)
+                        \\s*
+                        >
+                    )
+                )
+                \\s*
+                </p>
+                `,
+                {
+                    tagThatCannotBeInParagraphs: `(?:${tagsThatCannotBeInParagraphs.join('|')})`,
+                    componentThatCannotBeInParagraphs: `(?:${componentsThatCannotBeInParagraphs.join('|')})`,
+                },
+                'gsux',
+            ),
+            (match, inner, tag) => {
+                nodeAssert(isString(inner) && isString(tag));
+                if (canBeOnlyThingInParagraph(tag, components)) {
+                    return match.toString();
+                }
+                return inner;
+            },
+        );
 
-        const escapedComponentNames: Record<string, string> = {};
+        str = str.replaceAll(id, '');
 
-        // escape all tags that are case-sensitive, since htmlToHast will
-        // lowercase them
-        s = XRegExp.replace(s, regexCaseSensitiveComponents, (match, tag) => {
-            nodeAssert(isString(tag));
-            if (!escapedComponentNames[tag]) {
-                escapedComponentNames[tag] = uuid().replaceAll('-', '');
-            }
-            return match.replace(tag, escapedComponentNames[tag]);
+        str = removeBadParagraphs(str, {
+            componentsThatCannotBeInParagraphs,
+            componentsThatCannotContainParagraphs,
         });
 
-        s = hastToHtml(hastFromHtml(s, { fragment: true }), {
-            allowDangerousHtml: true,
-            closeSelfClosing: true,
+        // Unescape mustache tags in attributes.
+        Object.entries(escaped).forEach(([id, mt]) => {
+            str = str.replace(
+                // The escaped attribute might've been wrapped in quotes, so we
+                // need to remove those if present, restoring instead the
+                // original quotes, if there were any, or otherwise the original
+                // lack of quotes.
+                new RegExp(`(["'])${id}\\1|${id}`, 'gsu'),
+                mt,
+            );
         });
-        s = s.replaceAll(/<p>\s*<\/p>/gsu, '');
 
-        // unescape the case-sensitive tags
-        Object.entries(escapedComponentNames).forEach(([tag, id]) => {
-            s = s.replaceAll(id, tag);
-        });
-
-        console.log({ contentAfterCleanup: s, regexCaseSensitiveComponents });
-        return s;
+        return str;
     };
+
     return { content, cleanup };
 }
 
-export function removeBadParagraphs(content: string): string {
+export function removeBadParagraphs(
+    content: string,
+    opts: {
+        componentsThatCannotBeInParagraphs: string[];
+        componentsThatCannotContainParagraphs: string[];
+    },
+): string {
+    const escaped: Record<string, string> = {};
+
+    // escape self-closing tags, since they'd be converted into empty regular
+    // tags by sanitizeHtml (unless they're any of HTML's standard void
+    // elements)
+    content = XRegExp.replace(
+        content,
+        /<\s*[a-zA-Z][-.:0-9_a-zA-Z]*(?:\s+[^>]*?)?\s*\/>/gu,
+        (match) => {
+            nodeAssert(isString(match));
+            const id = generateId();
+            escaped[id] = match;
+            return id;
+        },
+    );
+
+    const empty = generateId();
+    escaped[empty] = '';
+
+    // escape ...="" and ...='' attributes, since they'd be removed by
+    // sanitizeHtml
+    content = XRegExp.replace(
+        content,
+        /<\s*[a-zA-Z][-.:0-9_a-zA-Z]*(?:\s+[^>]*?(?:""|'')[^>]*?)\s*>/gu,
+        (match) => {
+            nodeAssert(isString(match));
+            return match.replace(/(["'])\1/gu, '$1' + empty + '$1');
+        },
+    );
+
+    const innerL = '(?:[^<]' + '|' + '<(?!/?p[>\\s])' + '|' + '<p>';
+    const innerR = '</p>)*?';
+    const maxDepth = 4;
+
+    // Regex to match elements that can't contain paragraphs
+    const cannotContainParagraphs = XRegExp.build(
+        `<
+        \\s*
+        ({{tag}})
+        (?:\\s+[^>]*?)?
+        \\s*
+        >
+        ({{inner}})
+        </
+        \\s*
+        \\1
+        \\s*
+        >`,
+        {
+            tag: `(?:${[
+                ...tagsThatCannotContainParagraphs,
+                ...opts.componentsThatCannotContainParagraphs,
+            ].join('|')})`,
+            inner: innerL.repeat(maxDepth) + innerR.repeat(maxDepth),
+        },
+        'gmsux',
+    );
+
+    // Remove paragraph tags from within elements that can't contain paragraphs.
+    content = XRegExp.replace(content, cannotContainParagraphs, (match) => {
+        return match.toString().replace(/(?<!^)<p>|<\/p>(?!$)/gsu, '');
+    });
+
+    // Remove paragraphs that contain elements that can't be in paragraphs
+    const cannotBeInParagraphs = new RegExp(
+        `</?\\s*(${[
+            ...tagsThatCannotBeInParagraphs,
+            ...opts.componentsThatCannotBeInParagraphs,
+        ].join('|')})(?:\\s+[^>]*?)?\\s*/?>`,
+    );
+
+    content = XRegExp.replace(content, /<p>(.*?)<\/p>/gsu, (match, inner) => {
+        nodeAssert(isString(match) && isString(inner));
+        if (cannotBeInParagraphs.test(inner)) return inner;
+        return match;
+    });
+
+    content = sanitizeHtml(content, {
+        allowedAttributes: false,
+        allowedTags: false,
+        allowVulnerableTags: true,
+        parseStyleAttributes: false,
+        nonBooleanAttributes: [],
+        parser: {
+            decodeEntities: false,
+            lowerCaseAttributeNames: false,
+            lowerCaseTags: false,
+            xmlMode: false,
+        },
+    });
+
+    // Remove empty paragraphs
+    content = content.replaceAll(/<p>\s*<\/p>/gsu, '');
+
+    // unescape empty attributes and self-closing tags
+    Object.entries(escaped).forEach(([id, tag]) => {
+        content = content.replaceAll(id, tag);
+    });
+
     return content;
 }
 
@@ -509,7 +689,7 @@ const htmlTag: string = `
             {{tag}}
         )
         (?:
-            {{space}}
+            \\s+
             [^>]*?      # (any character other than '>', ≥0, lazy)
         )?
         \\s*            # (whitespace, ≥0, greedy)
@@ -534,18 +714,4 @@ const regexSpecials: RegExp = XRegExp.build(
         tag: '(?:' + specials.join('|') + ')',
     },
     'gimsux',
-);
-
-const regexCaseSensitiveComponents: RegExp = XRegExp.build(
-    htmlTag,
-    {
-        space,
-        tag:
-            '(?:' +
-            '(?:[A-Z][-.:0-9_a-zA-Z]*)' +
-            '|' +
-            '(?:[a-z][-.:0-9_a-zA-Z]*[A-Z][-.:0-9_a-zA-Z]*)' +
-            ')',
-    },
-    'gmsux',
 );

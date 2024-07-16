@@ -9,7 +9,6 @@ import {
     resolve,
     rimraf,
     spawn,
-    uuid,
     writeFile,
 } from '$deps.js';
 import { TexHandler } from '$handlers/TexHandler.js';
@@ -39,6 +38,7 @@ import {
     it,
     vi,
 } from 'vitest';
+import { uuid } from '$deps.js';
 
 function realSpawnCliInstruction(
     instr: CliInstruction,

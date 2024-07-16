@@ -3,9 +3,10 @@
  */
 
 import { sveltex } from '$base/Sveltex.js';
+import { nodeAssert, sanitizeHtml } from '$deps.js';
 import { fc, fuzzyTest } from '$dev_deps.js';
+import { generateId } from '$utils/escape.js';
 import { describe, expect, test } from 'vitest';
-import { uuid } from '$deps.js';
 
 const arr: string[] = [];
 for (let i = 0; i < 10; i++) {
@@ -68,7 +69,7 @@ describe("fuzzy '<div>', '</div>', '\\n', and '*test*' combinations", () => {
             const result = (
                 await p.markup({
                     content,
-                    filename: uuid() + '.sveltex',
+                    filename: generateId() + '.sveltex',
                 })
             )?.code;
             console.log({ permutation, content, result });
@@ -106,10 +107,18 @@ describe('specific examples', () => {
                 const result = (
                     await p.markup({
                         content: input,
-                        filename: uuid() + '.sveltex',
+                        filename: generateId() + '.sveltex',
                     })
                 )?.code;
+                expect(result).toBeDefined();
+                nodeAssert(result !== undefined);
                 expect(result).toMatch(expected);
+                expect(result).toEqual(
+                    sanitizeHtml(result, {
+                        allowedTags: false,
+                        allowVulnerableTags: true,
+                    }),
+                );
             });
         },
     );

@@ -11,7 +11,7 @@ import { range } from '$tests/unit/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { SveltexConfiguration } from '$mod.js';
 import { isRegExp } from '$deps.js';
-import { isArray, isDefined } from '$typeGuards/utils.js';
+import { isArray, isDefined, isString } from '$typeGuards/utils.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -450,12 +450,6 @@ describe('Sveltex.markup()', () => {
                     '<script>\n</script>\n<p><svelte:element>foo</svelte:element></p>',
             },
             {
-                label: 'tags with uppercase letters',
-                input: '<MyComponent test="a" {c} test2={b}>foo</MyComponent>',
-                expected:
-                    '<MyComponent test="a" {c} test2={b}>foo</MyComponent>',
-            },
-            {
                 label: 'if block',
                 input: '{#if condition}\nA\n{/if}',
                 expected:
@@ -491,10 +485,17 @@ describe('Sveltex.markup()', () => {
                 expected:
                     '<script>\n</script>\n<p>{@html "<p>hello, world!</p>"}</p>',
             },
+            {
+                label: 'tags with uppercase letters',
+                input: '<MyComponent test="a" {c} test2={b} g="">foo</MyComponent>',
+                expected:
+                    /<MyComponent test="a" \{c\} test2=("?)\{b\}\1 g="">foo<\/MyComponent>/,
+            },
         ];
         it.each(tests)('$label', async (test) => {
-            expect(removeEmptyLines(await preprocess(test.input))).toContain(
-                removeEmptyLines(test.expected ?? test.input),
+            const expected = test.expected ?? test.input;
+            expect(removeEmptyLines(await preprocess(test.input))).toMatch(
+                isString(expected) ? removeEmptyLines(expected) : expected,
             );
         });
     });

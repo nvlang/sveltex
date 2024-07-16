@@ -7,6 +7,7 @@ import {
     inspect,
     is,
     MagicString,
+    nodeAssert,
     typeAssert,
     type HastElement,
 } from '$deps.js';
@@ -49,6 +50,7 @@ export function adjustHtmlSpacing(
     document: string,
     prefersInline: (tag: string) => boolean,
     components: ComponentInfo[],
+    id: string,
 ): string {
     const hast = hastFromHtml(document, { fragment: true, verbose: true });
     const lines = document.split(/\r\n?|\n/);
@@ -58,47 +60,87 @@ export function adjustHtmlSpacing(
         if (node.type === 'element') {
             typeAssert(is<HastElement>(node));
             const loc = getLocationUnist(node, lines);
-            if (!node.data?.position.opening || !node.data.position.closing) {
-                // Self-closing element; don't need to look any deeper.
-                return false;
-            }
+            /* v8 ignore next 1 (unreachable code) */
+            if (!node.data?.position.opening) return false;
             const locOpeningTag = getLocationUnist(
                 { position: node.data.position.opening },
                 lines,
             );
+
+            const match = new RegExp(node.tagName, 'i').exec(
+                document.slice(locOpeningTag.start, locOpeningTag.end),
+            );
+            nodeAssert(match !== null);
+            const tagName = match[0].replaceAll(id, '');
+
+            const canBeInPar = canBeInParagraph(tagName, components);
+
+            if (!node.data.position.closing) {
+                // Self-closing element
+
+                if (!canBeInPar) {
+                    s.prependRight(locOpeningTag.start, '\n\n');
+                    s.appendLeft(locOpeningTag.end, '\n\n');
+                }
+
+                // Self-closing element; don't need to look any deeper.
+                return false;
+            }
+
             const locClosingTag = getLocationUnist(
                 { position: node.data.position.closing },
                 lines,
             );
+
+            if (!canBeInPar) {
+                s.prependRight(locOpeningTag.start, '\n\n');
+                s.appendLeft(locClosingTag.end, '\n\n');
+            }
+
+            // Don't modify inner content of <pre> tags.
+            if (tagName === 'pre') {
+                return false;
+            }
+
             const innerContent = document.slice(
                 locOpeningTag.end,
                 locClosingTag.start,
             );
-            if (node.tagName === 'pre') {
-                return false;
-            }
-            const leadingWhitespace = /^\s*/.exec(innerContent)?.[0] ?? '';
+
+            /* v8 ignore next 2 (unreachable branches due to regex format) */
+            const leadingWhitespace = /^(\s*)/.exec(innerContent)?.[0] ?? '';
             const trailingWhitespace = /(\s*)$/.exec(innerContent)?.[0] ?? '';
             const leadingNewlines = countNewlines(leadingWhitespace);
-            let prefIn = prefersInline(node.tagName);
-            let noPar = !canContainParagraph(node.tagName);
+            let prefIn = prefersInline(tagName);
 
-            console.log({ noPar, node });
-
-            const compInfo = components.find((c) => c.name === node.tagName);
+            const compInfo = components.find((c) => c.name === tagName);
 
             if (compInfo) {
-                if (['all', 'sectioning'].includes(compInfo.type as string)) {
-                    noPar = false;
-                } else if (
-                    ['phrasing', 'none'].includes(compInfo.type as string)
-                ) {
-                    noPar = true;
-                }
                 if (compInfo.prefersInline !== undefined) {
                     prefIn = compInfo.prefersInline;
                 }
             }
+
+            const inline =
+                /[^ \t\r\n][ \t]*$/.test(
+                    document.slice(0, locOpeningTag.start),
+                ) ||
+                /^[ \t]*[^ \t\r\n]/.test(document.slice(locClosingTag.end));
+
+            const noPar =
+                !canContainParagraph(tagName, components) ||
+                (inline &&
+                    canBeInPar &&
+                    (leadingNewlines === 0 ||
+                        (leadingNewlines === 1 && prefIn)));
+
+            console.log({
+                canContainParagraph: canContainParagraph(tagName, components),
+                inline,
+                noPar,
+                leadingNewlines,
+                prefIn,
+            });
 
             const inNoParRange = noParRanges.some(
                 ([start, end]) => loc.start >= start && loc.end <= end,
@@ -108,21 +150,7 @@ export function adjustHtmlSpacing(
                 noParRanges.push([loc.start, loc.end]);
             }
 
-            console.log(
-                inspect(
-                    {
-                        hast,
-                        compInfo,
-                        prefIn,
-                        prefersInline: prefersInline.toString(),
-                        noPar,
-                        inNoParRange,
-                        noParRanges,
-                        document,
-                    },
-                    { depth: 10 },
-                ),
-            );
+            console.log({ noPar, inNoParRange, leadingNewlines, prefIn });
 
             if (
                 noPar ||
@@ -156,26 +184,28 @@ export function adjustHtmlSpacing(
                 // processed by the markdown processor at all.
                 s.prependRight(locOpeningTag.end, '\n\n');
                 s.appendLeft(locClosingTag.start, '\n\n');
-            }
 
-            const canBeInPar = canBeInParagraph(node.tagName);
-            if (!canBeInPar) {
-                s.prependRight(locOpeningTag.start, '\n\n');
-                s.appendLeft(locClosingTag.end, '\n\n');
+                // We want to avoid stuff like
+                //   a<Foo>\n\nb\n\n</Foo>c
+                // since that would result in
+                //   <p>a <Foo></Foo></p>\n<p>b</p>\n<p>c</p>
+                if (inline) {
+                    s.prependRight(locOpeningTag.start, '\n\n');
+                    s.appendLeft(locClosingTag.end, '\n\n');
+                }
             }
         }
         return true;
     });
+    console.log(
+        `adjustHtmlSpacing(${inspect(document)}) → ${inspect(s.toString())}`,
+    );
     return s.toString();
 }
 
 // function isWhitespace(str: unknown): str is ' ' | '\n' | '\t' | '\r' {
 //     return str === ' ' || str === '\n' || str === '\t' || str === '\r';
 // }
-
-export function removeBadParagraphs(content: string): string {
-    return content;
-}
 
 /**
  * Regular expression for parsing a component from an HTML string. The regular

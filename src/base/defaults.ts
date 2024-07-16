@@ -506,6 +506,8 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 remarkPlugins: [],
                 rehypePlugins: [],
                 retextPlugins: [],
+                remarkRehypeOptions: {},
+                rehypeStringifyOptions: {},
                 // Common options
                 prefersInline: () => true,
                 strict: false,

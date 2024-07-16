@@ -51,6 +51,8 @@ export { toHtml as hastToHtml } from 'hast-util-to-html';
 
 export type { Element as HastElement } from 'hast';
 
+export { default as sanitizeHtml } from 'sanitize-html';
+
 /**
  * MDAST types for better type-safety.
  */
@@ -78,6 +80,10 @@ export {
     type Extension as MdastExtension,
     type Options as MdastFromMarkdownOptions,
 } from 'mdast-util-from-markdown';
+
+export { mdxJsxFromMarkdown as mdastMdxJsxFromMarkdown } from 'mdast-util-mdx-jsx';
+
+export { mdxJsx as micromarkMdxJsx } from 'micromark-extension-mdx-jsx';
 
 /**
  * MDAST extensions to parse and serialize math (e.g. $x^2$).

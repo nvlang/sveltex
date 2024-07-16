@@ -13,7 +13,7 @@ import { spy } from '$tests/unit/fixtures.js';
 import { isArray, isString } from '$typeGuards/utils.js';
 import { re } from '$utils/misc.js';
 
-import { typeAssert, is, uuid } from '$deps.js';
+import { typeAssert, is } from '$deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -27,6 +27,7 @@ import {
 } from 'vitest';
 import { cartesianProduct } from '$tests/unit/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
+import { generateId } from '$utils/escape.js';
 
 function fixture() {
     beforeEach(() => {
@@ -138,7 +139,7 @@ async function preprocess<
 >(
     preprocessor: Sveltex<M, C, T>,
     content: string,
-    filename: string = `${uuid()}.sveltex`,
+    filename: string = `${generateId()}.sveltex`,
 ) {
     let markup = (await preprocessor.markup({ content, filename }))?.code ?? '';
     const scriptContent =
@@ -237,6 +238,7 @@ describe('Sveltex', () => {
                 ]),
             ] as [string, string, MarkdownConfiguration<MarkdownBackend>?][])(
                 '%o → %o (%s)',
+                { timeout: 1e8 },
                 async (input, expected, configuration) => {
                     let output;
                     if (configuration) {

@@ -24,9 +24,10 @@ export type MarkdownBackend =
  * @returns Depending on `B`:
  * - `markdown-it`: Type of the module's `MarkdownIt` class.
  * - `marked`: Type of the module's `Marked` class.
- * - `micromark`: `null`.
+ * - `micromark`: `object`.
  * - `unified`: Type of the module's `Processor` class.
- * - `custom`: `unknown`.
+ * - `custom`: `object`.
+ * - `none`: `object`.
  *
  * @remarks This is the type of the `processor` property of the markdown
  * handler.
@@ -104,6 +105,30 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
             }
           : B extends 'micromark'
             ? MarkdownCommonConfiguration & {
+                  /**
+                   * Options to pass to the `micromark` processor.
+                   *
+                   * @remarks
+                   * The `allowDangerousHtml` option is not supported here,
+                   * since SvelTeX needs it to be `true` to work properly.
+                   *
+                   * @remarks
+                   * The `extensions` option passed to the `micromark` processor
+                   * will always be a (nonempty) array with a custom extension
+                   * in its first position (i.e., at index 0) that disables
+                   * indented code blocks and autolinks. The array of extensions
+                   * passed to the `extensions` property here in the SvelTeX
+                   * configuration will merely be appended to this array.
+                   *
+                   * @defaultValue
+                   * ```ts
+                   * {
+                   *     extensions: [],
+                   *     htmlExtensions: [],
+                   *     allowDangerousProtocol: false,
+                   * }
+                   * ```
+                   */
                   options?:
                       | Omit<import('micromark').Options, 'allowDangerousHtml'>
                       | undefined;
@@ -157,6 +182,46 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      * ```
                      */
                     retextPlugins?: import('unified').PluggableList | undefined;
+
+                    /**
+                     * Options to pass to the `remark-rehype` unified plugin.
+                     *
+                     * @remarks
+                     * The `allowDangerousHtml` option is not supported here,
+                     * since SvelTeX always needs it to be `true` to work
+                     * properly.
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * {}
+                     * ```
+                     */
+                    remarkRehypeOptions?:
+                        | Omit<
+                              import('remark-rehype').Options,
+                              'allowDangerousHtml'
+                          >
+                        | undefined;
+
+                    /**
+                     * Options to pass to the `rehype-stringify` unified plugin.
+                     *
+                     * @remarks
+                     * The `allowDangerousHtml` option is not supported here,
+                     * since SvelTeX always needs it to be `true` to work
+                     * properly.
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * {}
+                     * ```
+                     */
+                    rehypeStringifyOptions?:
+                        | Omit<
+                              import('rehype-stringify').Options,
+                              'allowDangerousHtml'
+                          >
+                        | undefined;
                 }
               : B extends 'custom'
                 ? MarkdownCommonConfiguration & {
@@ -252,6 +317,8 @@ export type FullMarkdownConfiguration<B extends MarkdownBackend> =
                     remarkPlugins: import('unified').PluggableList;
                     rehypePlugins: import('unified').PluggableList;
                     retextPlugins: import('unified').PluggableList;
+                    remarkRehypeOptions: import('remark-rehype').Options;
+                    rehypeStringifyOptions: import('rehype-stringify').Options;
                 }
               : B extends 'custom'
                 ? FullMarkdownCommonConfiguration & {
@@ -314,6 +381,9 @@ export interface ComponentInfo {
     importPath?: string | undefined;
 
     /**
+     * -   `'default'`: The component can be placed inside a paragraph and can
+     *     contain paragraphs. However, it cannot be the _only_ thing inside a
+     *     paragraph.
      * -   `'phrasing'`: The component should be treated as "phrasing content",
      *     i.e., it can be placed inside a paragraph, but cannot contain a
      *     paragraph itself.
@@ -323,16 +393,16 @@ export interface ComponentInfo {
      * -   `'none'`: The component can neither be placed inside of- nor contain
      *     a paragraph.
      * -   `'all'`: The component can be placed inside a paragraph and can
-     *     contain paragraphs. This is the default value, since it makes no
-     *     assumptions about the component's intended behavior. However, it is
-     *     recommended to specify a more specific type if possible.
+     *     contain paragraphs.
      *
      * @defaultValue
      * ```ts
-     * 'all'
+     * 'default'
      * ```
+     *
+     * @see https://sveltex.dev/docs/implementation/markdown
      */
-    type?: 'phrasing' | 'sectioning' | 'none' | 'all' | undefined;
+    type?: 'default' | 'phrasing' | 'sectioning' | 'none' | 'all' | undefined;
 
     /**
      * For edge cases only: Whether the inner content of the component should be

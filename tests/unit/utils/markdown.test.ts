@@ -3,28 +3,54 @@ import { describe, it, expect } from 'vitest';
 
 describe('adjustHtmlSpacing', () => {
     it.each([
-        ['<span>\n\ntext</span>', '<span>text</span>'],
-        ['<span>\n\n\ntext</span>', '<span>text</span>'],
-        ['<div>\n\ntext</div>', /<div>\n{2,}text\n{2,}<\/div>/],
-        ['<div>\n\n\ntext</div>', /<div>\n{2,}text\n{2,}<\/div>/],
-        ['<div>\ntext</div>', '<div>text</div>', () => true],
-        ['<div>\ntext</div>', /<div>\n{2,}text\n{2,}<\/div>/, () => false],
-        ['<div>\ntext</div>', /<div>\n{2,}text\n{2,}<\/div>/, () => false],
-        ['<span>text\n\n</span>', '<span>text</span>'],
+        ['<spanABC123>\n\ntext</spanABC123>', '<spanABC123>text</spanABC123>'],
         [
-            '<div>\n<div>\n\ntest\n</div>\n</div>',
-            /<div><div>\n{2,}test\n{2,}<\/div><\/div>/,
+            '<spanABC123>\n\n\ntext</spanABC123>',
+            '<spanABC123>text</spanABC123>',
         ],
         [
-            '<div>\n<div>\n*test*\n</div>\n</div>\n\n<div>\n<div>\n*test*\n</div>\n</div>',
-            '<div><div>*test*</div></div>\n\n<div><div>*test*</div></div>',
+            '<divABC123>\n\ntext</divABC123>',
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+        ],
+        [
+            '<divABC123>\n\n\ntext</divABC123>',
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+        ],
+        [
+            '<divABC123>\ntext</divABC123>',
+            '<divABC123>text</divABC123>',
+            () => true,
+        ],
+        [
+            '<divABC123>\ntext</divABC123>',
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            () => false,
+        ],
+        [
+            '<divABC123>\ntext</divABC123>',
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            () => false,
+        ],
+        ['<spanABC123>text\n\n</spanABC123>', '<spanABC123>text</spanABC123>'],
+        [
+            '<divABC123>\n<divABC123>\n\ntest\n</divABC123>\n</divABC123>',
+            /<divABC123>\n{2,}<divABC123>\n{2,}test\n{2,}<\/divABC123>\n{2,}<\/divABC123>/,
+        ],
+        [
+            '<divABC123>\n<divABC123>\ntest\n</divABC123>\n</divABC123>\n\n<divABC123>\n<divABC123>\ntest\n</divABC123>\n</divABC123>',
+            /<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>\n{2,}<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>/,
         ],
     ] as [string, string, ((str: string) => boolean)?][])(
         '%o → %o',
         { timeout: 1e8 },
         (input, expected, prefersInline) => {
             expect(
-                adjustHtmlSpacing(input, prefersInline ?? (() => true), []),
+                adjustHtmlSpacing(
+                    input,
+                    prefersInline ?? (() => true),
+                    [],
+                    'ABC123',
+                ),
             ).toMatch(expected);
         },
     );

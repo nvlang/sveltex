@@ -34,7 +34,7 @@ import { log, prettifyError } from '$utils/debug.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
 import { detectPackageManager, missingDeps } from '$utils/env.js';
 import {
-    colonUuid,
+    colonId,
     escape,
     unescapeColons,
     unescapeSnippets,
@@ -369,7 +369,7 @@ export class Sveltex<
                         if (snippet.type === 'svelte') {
                             if (
                                 !headId &&
-                                processed.startsWith(`<svelte${colonUuid}head`)
+                                processed.startsWith(`<svelte${colonId}head`)
                             ) {
                                 headId = uuid;
                             } else if (
@@ -413,7 +413,7 @@ export class Sveltex<
                 }
                 if (headSnippet) {
                     headSnippet.processed = headSnippet.processed.replace(
-                        new RegExp(`</\\s*svelte${colonUuid}head\\s*>`),
+                        new RegExp(`</\\s*svelte${colonId}head\\s*>`),
                         headLines.join('\n') + '\n$0',
                     );
                 } else {
@@ -432,8 +432,6 @@ export class Sveltex<
 
             let html = escapedDocument;
 
-            console.log({ htmlBeforeProcessing: html });
-
             // Apply the pre-transformers
             html = applyTransformations(
                 html,
@@ -443,8 +441,6 @@ export class Sveltex<
 
             html = (await markdownHandler.process(html, { filename }))
                 .processed;
-
-            console.log({ htmlAfterProcessing: html });
 
             // Apply the post-transformers
             html = applyTransformations(

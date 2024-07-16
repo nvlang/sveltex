@@ -20,8 +20,8 @@ export type TagThatCanBeInParagraph =
     (typeof tagsThatCanBeInParagraphs)[number];
 
 // Ensure that `TagThatCanContainParagraph` is a "subtype" of
-// `MarkdownHtmlTagType6`.
-typeAssert<Extends<TagThatCanContainParagraph, MarkdownHtmlTagType6>>();
+// `MarkdownHtmlTagType6 | 'pre'`.
+typeAssert<Extends<TagThatCanContainParagraph, MarkdownHtmlTagType6 | 'pre'>>();
 
 /**
  * @see https://spec.commonmark.org/0.31.2/#html-blocks
@@ -130,6 +130,7 @@ export const tagsThatCanContainParagraphs = [
     'ol',
     'optgroup',
     'option',
+    'pre',
     'search',
     'section',
     'summary',
@@ -210,11 +211,21 @@ export const tagsThatCannotBeInParagraphs = htmlTagNames.filter(
     (tag) => !canBeInParagraph(tag),
 );
 
+export const tagsThatCannotContainParagraphs = htmlTagNames.filter(
+    (tag) => !canContainParagraph(tag),
+);
+
+/**
+ * @param tag - The tag to check.
+ * @param components - Optional array of component infos.
+ * @returns `true` if `tag` can contain a paragraph.
+ */
 export function canContainParagraph(
-    tag: unknown,
+    tag: string,
     components?: ComponentInfo[],
 ): tag is TagThatCanContainParagraph {
-    if (!isString(tag)) return false;
+    // If `tag` matches one of the components in the components array that
+    // cannot contain a paragraph, it is not a tag that can contain a paragraph.
     if (
         components?.some(
             (c) => c.name === tag && !componentCanContainParagraph(c),
@@ -222,6 +233,10 @@ export function canContainParagraph(
     ) {
         return false;
     }
+
+    // If `tag` is a standard HTML tag, but not one of the standard HTML tags
+    // that can contain paragraphs, it is not a tag that can contain a
+    // paragraph.
     if (
         htmlTagNames.includes(tag) &&
         !tagsThatCanContainParagraphs.includes(
@@ -230,6 +245,8 @@ export function canContainParagraph(
     ) {
         return false;
     }
+
+    // We return `true` by default to be permissive.
     return true;
 }
 
@@ -246,10 +263,37 @@ export function canBeInParagraph(
     );
 }
 
+export function canBeOnlyThingInParagraph(
+    tag: unknown,
+    components: ComponentInfo[],
+): tag is TagThatCanBeInParagraph {
+    return (
+        isString(tag) &&
+        ((tagsThatCanBeInParagraphs as unknown as string[]).includes(tag) ||
+            !!components.some(
+                (c) => c.name === tag && componentCanBeOnlyThingInParagraph(c),
+            ))
+    );
+}
+
+export function componentCanBeOnlyThingInParagraph(c: ComponentInfo): boolean {
+    return c.type === 'phrasing' || c.type === 'all';
+}
+
 export function componentCanBeInParagraph(c: ComponentInfo): boolean {
-    return c.type === 'phrasing' || c.type === 'all' || c.type === undefined;
+    return (
+        c.type === 'phrasing' ||
+        c.type === 'all' ||
+        c.type === 'default' ||
+        c.type === undefined
+    );
 }
 
 export function componentCanContainParagraph(c: ComponentInfo): boolean {
-    return c.type === 'sectioning' || c.type === 'all' || c.type === undefined;
+    return (
+        c.type === 'sectioning' ||
+        c.type === 'all' ||
+        c.type === 'default' ||
+        c.type === undefined
+    );
 }

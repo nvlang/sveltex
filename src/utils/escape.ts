@@ -39,7 +39,6 @@ import {
     micromarkMdxExpression,
     micromarkMdxMd,
     nodeAssert,
-    uuid,
     micromarkFrontmatter,
     micromarkDirective,
     mdastFrontmatterFromMarkdown,
@@ -47,6 +46,7 @@ import {
     inspect,
     type UnistPosition,
     directiveFromMarkdown,
+    uuid,
 } from '$deps.js';
 import { micromarkSkip } from '$utils/micromark/syntax.js';
 import type { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
@@ -148,10 +148,10 @@ export function escapeBraces(content: string): string {
 }
 
 export const uniqueEscapeSequences = {
-    '<': uuid(),
-    '>': uuid(),
-    '{': uuid(),
-    '}': uuid(),
+    '<': generateId(),
+    '>': generateId(),
+    '{': generateId(),
+    '}': generateId(),
 } as const;
 
 /**
@@ -288,7 +288,7 @@ function getVerbatimES(
     const es: EscapableSnippet<'verbatim'>[] = [];
     if (verbatimTags.length === 0) return es;
     const escapedVerbatimTags = verbatimTags.map((t) =>
-        t.replaceAll(':', colonUuid),
+        t.replaceAll(':', colonId),
     );
     const verbatimTagsRegExp =
         normalAndSelfClosingComponentsRegExp(escapedVerbatimTags);
@@ -405,12 +405,12 @@ export function getMathInSpecialDelimsES(
 export function getSvelteES(document: string): EscapableSnippet<'svelte'>[] {
     const escapableSnippets: EscapableSnippet<'svelte'>[] = [];
     [
-        normalComponentsRegExp(['script', 'style', `svelte${colonUuid}head`]),
+        normalComponentsRegExp(['script', 'style', `svelte${colonId}head`]),
         normalAndSelfClosingComponentsRegExp([
-            `svelte${colonUuid}window`,
-            `svelte${colonUuid}document`,
-            `svelte${colonUuid}body`,
-            `svelte${colonUuid}options`,
+            `svelte${colonId}window`,
+            `svelte${colonId}document`,
+            `svelte${colonId}body`,
+            `svelte${colonId}options`,
         ]),
     ].forEach((regExp) => {
         // console.log('document: ', document);
@@ -434,7 +434,7 @@ export function getSvelteES(document: string): EscapableSnippet<'svelte'>[] {
     return escapableSnippets;
 }
 
-export const colonUuid: string = uuid().replace(/-/g, '');
+export const colonId: string = generateId();
 
 export function getColonES(document: string): EscapableSnippet<'svelte'>[] {
     const escapableSnippets: EscapableSnippet<'svelte'>[] = [];
@@ -706,7 +706,7 @@ export function getMdastES({
         }
         return false;
     });
-    console.log(inspect({ ast, escapableSnippets }, { depth: 10 }));
+
     return escapableSnippets;
 }
 
@@ -723,8 +723,8 @@ function calcPadding(
     // first and last lines of the snippet
     const lineStart = lines[start.line];
     const lineEnd = lines[end.line];
-    nodeAssert(lineStart, 'expected starting line to be defined');
-    nodeAssert(lineEnd, 'expected ending line to be defined');
+    nodeAssert(lineStart !== undefined, 'expected starting line to be defined');
+    nodeAssert(lineEnd !== undefined, 'expected ending line to be defined');
     const leadingStart = lineStart.slice(0, start.column);
     // Padding before
     if (/^\s*$/.test(leadingStart)) {
@@ -806,7 +806,7 @@ export function escapeSnippets(
     const s = new MagicString(document);
     const ranges = outermostRanges([...snippets], 'original.loc');
     const escapedSnippets: [string, Snippet][] = ranges.map((range) => {
-        const id = uuid().replace(/-/g, '');
+        const id = generateId();
         const paddedId = padString(id, range.escapeOptions?.pad ?? false);
         nodeAssert(paddedId, 'paddedId must be truthy');
         s.overwrite(range.original.loc.start, range.original.loc.end, paddedId);
@@ -829,7 +829,7 @@ function escapeColons(document: string): string {
         s.overwrite(
             snippet.original.loc.start,
             snippet.original.loc.end,
-            colonUuid,
+            colonId,
         );
     });
     return s.toString();
@@ -842,7 +842,7 @@ function escapeColons(document: string): string {
  * @returns The document with the colons unescaped.
  */
 export function unescapeColons(document: string): string {
-    return document.replaceAll(colonUuid, ':');
+    return document.replaceAll(colonId, ':');
 }
 
 export function escape(
@@ -868,10 +868,10 @@ export function escape(
                 'script',
                 'style',
                 // `svelte${colonUuid}head`,
-                `svelte${colonUuid}window`,
-                `svelte${colonUuid}document`,
-                `svelte${colonUuid}body`,
-                `svelte${colonUuid}options`,
+                `svelte${colonId}window`,
+                `svelte${colonId}document`,
+                `svelte${colonId}body`,
+                `svelte${colonId}options`,
             ],
             texSettings,
             directiveSettings,
@@ -974,7 +974,6 @@ export function parseToMdast(
             ]),
             ...(directiveSettings.enabled ? [micromarkDirective()] : []),
             micromarkMdxMd(),
-            // micromarkMdxJsx(),
             micromarkSkip(verbatimTags),
             ...(mathDelims.dollars
                 ? [
@@ -984,6 +983,7 @@ export function parseToMdast(
                   ]
                 : []),
             micromarkMdxExpression(),
+            // micromarkMdxJsx(),
         ],
         mdastExtensions: [
             mdastFrontmatterFromMarkdown([
@@ -994,9 +994,13 @@ export function parseToMdast(
                 { type: 'json', fence: { open: '---json', close: '---' } },
             ]),
             mdastMathFromMarkdown(),
+            // mdastMdxJsxFromMarkdown(),
             mdastMdxExpressionFromMarkdown(),
             ...(directiveSettings.enabled ? [directiveFromMarkdown()] : []),
-            // mdastMdxJsxFromMarkdown(),
         ],
     });
+}
+
+export function generateId(): `id${string}` {
+    return `id${uuid().replaceAll('-', '')}`;
 }
