@@ -20,7 +20,7 @@ parser][div22something]:
 ```markdown
 <div>
 
-*something*
+_something_
 
 </div>
 ```
