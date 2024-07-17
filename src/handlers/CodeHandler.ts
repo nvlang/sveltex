@@ -161,13 +161,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     }
 
     /**
-     * Lines of code that should be added to the `<script>` tag
-     * of any page that contains any TeX on which this handler ran. This
+     * Lines of code that should be added to the `<script>` tag of any page that
+     * contains any code span or code block on which this handler ran. This
      * variable must be set at most once, and cannot depend on what page the
      * handler is being used on. These aren't necessarily the only lines that
      * will be added to the `<script>` tag on this handler's behalf, but they're
-     * the only ones that don't depend on further details about the TeX content
-     * of the page.
+     * the only ones that don't depend on further details about the content of
+     * the page.
      */
     private _scriptLines: string[] = [];
     get scriptLines(): string[] {
