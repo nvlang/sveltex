@@ -284,6 +284,7 @@ describe.each([
                         remarkDirective,
                         remarkDirectiveExamplePlugin,
                     ],
+                    directives: { enabled: true },
                 },
                 [
                     [
@@ -308,6 +309,7 @@ describe.each([
                         remarkDirective,
                         remarkDirectiveExamplePluginError,
                     ],
+                    directives: { enabled: true },
                 },
                 [
                     [
@@ -318,7 +320,10 @@ describe.each([
                 ],
             ],
             [
-                { remarkPlugins: [remarkDirective] },
+                {
+                    remarkPlugins: [remarkDirective],
+                    directives: { enabled: true },
+                },
                 [
                     [
                         ':::note{.example}\ntext {mustacheTag} :hr text\n:::',
@@ -331,7 +336,7 @@ describe.each([
                 ],
             ],
             [
-                {},
+                { directives: { enabled: true } },
                 [
                     [
                         ':::note{.example}\ntext {mustacheTag} :hr text\n:::',
