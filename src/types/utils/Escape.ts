@@ -195,6 +195,9 @@ export interface Snippet<T extends SnippetType = SnippetType> {
         : undefined;
 }
 
+/**
+ * Settings related to markdown directives.
+ */
 export interface DirectiveEscapeSettings {
     /**
      * Whether markdown directives are being used in the document. In

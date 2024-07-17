@@ -229,6 +229,9 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                   }
                 : MarkdownCommonConfiguration & Record<string, unknown>;
 
+/**
+ * Interface with the properties shared by all markdown configurations.
+ */
 interface MarkdownCommonConfiguration {
     /**
      * Transformers to apply to
@@ -271,6 +274,10 @@ interface MarkdownCommonConfiguration {
      */
     prefersInline?: ((tag: string) => boolean) | undefined;
 
+    /**
+     * An array of objects describing components that should receive special
+     * consideration by SvelTeX.
+     */
     components?: ComponentInfo[] | undefined;
 
     /**
@@ -279,10 +286,17 @@ interface MarkdownCommonConfiguration {
     directives?: DirectiveEscapeSettings | undefined;
 }
 
+/**
+ * A type with the properties shared by all markdown configurations, all
+ * required.
+ */
 type FullMarkdownCommonConfiguration = {
     transformers: RequiredDefined<Transformers<Frontmatter>>;
 } & RequiredDefined<MarkdownCommonConfiguration>;
 
+/**
+ * Return type of `Sveltex.configuration.markdown`.
+ */
 export type FullMarkdownConfiguration<B extends MarkdownBackend> =
     B extends 'markdown-it'
         ? FullMarkdownCommonConfiguration & {

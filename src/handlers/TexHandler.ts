@@ -55,44 +55,42 @@ export class TexHandler extends Handler<
         };
     }
 
-    // TODO: check if documentation below is still up to date
     /**
-     * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the
-     * parent `Sveltex` instance.
+     * {@link Sveltex.texComponents | `Sveltex.texComponents`} of the parent
+     * `Sveltex` instance.
      *
      * @remarks Important: This property should always set by the parent
-     * `Sveltex` instance. Without it, the `TexHandler` will not be able
-     * to work properly.
+     * `Sveltex` instance. Without it, the `TexHandler` will not be able to work
+     * properly.
      *
      * While preprocessing a file with name `filename`, the Sveltex instance
      * will call the `process` method of its instance of `TexHandler` on
-     * whatever TeX blocks it finds in the file. Now,
-     * `TexHandler.process` will instantiate a `TexComponent` object for
-     * each TeX block, and call its `compile` method, which will in
-     * turn generate the SVG file for the TeX block.
+     * whatever TeX blocks it finds in the file. Now, `TexHandler.process` will
+     * instantiate a `TexComponent` object for each TeX block, and call its
+     * `compile` method, which will in turn generate the Svelte SVG component
+     * (in a separate file) for the TeX block.
      *
-     * However, the question now is how we include the SVG file in the
-     * preprocessed code. The answer is: we add some code to the file's
-     * `<script>` tag that will add the SVG file's contents to the `<figure>`
-     * tag that `TexHandler.process` returned for the TeX block.
-     * However, this code can't be added by the `Sveltex.markup` method, since
-     * Svelte requires (prefers?) that the `<script>` tag be preprocessed with a
-     * separate preprocessor, which in our case corresponds to `Sveltex.script`.
-     * But, for this preprocessor to be able to add the code, it needs to know,
-     * given a filename, for what SVG files it should add code to the `<script>`
-     * tag to add their content to the corresponding `<figure>` tags. This
-     * precise need is fulfilled by this `texComponents` property, which
-     * `Sveltex.markup` writes to via `Sveltex.markup` →
-     * `VerbatimHandler.process` → `TexHandler.process`, and
-     * `Sveltex.script` reads from directly.
+     * However, the question now is how do we include the Svelte SVG component
+     * in the preprocessed code. The answer is: we add import statements to the
+     * file's `<script>` tag which will allow us to include the SVG component in
+     * the `<figure>` tag that `TexHandler.process` returned for the TeX block.
+     * However, these import statements can't (shouldn't?) be added by the
+     * `Sveltex.markup` method, since Svelte requires (prefers?) that the
+     * `<script>` tag be preprocessed with a separate preprocessor, which in our
+     * case corresponds to `Sveltex.script`. But, for this preprocessor to be
+     * able to add the import statements, it needs to know, given a filename,
+     * what SVG components it should be importing. This precise need is
+     * fulfilled by this `texComponents` property, which `Sveltex.markup` writes
+     * to via `Sveltex.markup` → `VerbatimHandler.process` →
+     * `TexHandler.process`, and `Sveltex.script` reads from directly.
      *
-     * This is also why `TexProcessOptions` requires a `filename`
-     * property, and why the `TexHandler.process` method requires the
-     * `options` parameter to be provided.
+     * This is also why `TexProcessOptions` requires a `filename` property, and
+     * why the `TexHandler.process` method requires the `options` parameter to
+     * be provided.
      *
      * **NB**: The `Sveltex.markup` always runs before `Sveltex.script`; this
      * behavior is guaranteed by Svelte itself, see [Svelte
-     * docs](https://svelte.dev/docs/svelte-compiler#preprocess))
+     * docs](https://svelte.dev/docs/svelte-compiler#preprocess).
      */
     texComponents: Record<string, TexComponentImportInfo[]>;
 
