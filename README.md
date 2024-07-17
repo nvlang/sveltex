@@ -51,7 +51,8 @@
 
 ## Getting Started
 
-**Note:** See the [docs](https://sveltex.dev/docs) for more information.
+**Note:** See the [docs](https://sveltex.dev/docs) for more information.<br>
+**Note**: This package is [ESM-only].
 
 ### Creating a new project
 
@@ -177,3 +178,4 @@ libraries. Some notable examples are MathJax and TikZ.
 [VitePress]: https://vitepress.dev
 [SSG]: https://en.wikipedia.org/wiki/Static_site_generator
 [`node-poppler`]: https://github.com/Fdawgs/node-poppler
+[ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
