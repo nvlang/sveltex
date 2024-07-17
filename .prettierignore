@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+*.md
+deno.lock
+tests/e2e
+.husky
+LICENSE
+node_modules
+dist
+coverage
+.vscode
+tmp
+*.hbs
+res
+*.tmLanguage.json
