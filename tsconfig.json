@@ -5,11 +5,11 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     // Performance
-    // "skipLibCheck": true, // recommended
+    "skipLibCheck": true, // recommended
     // Aliases
     "baseUrl": "./",
     "declaration": true,
-    "declarationMap": true,
+    //
     "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
     "exactOptionalPropertyTypes": true, // recommended
     "forceConsistentCasingInFileNames": true, // recommended
@@ -32,10 +32,9 @@
     "resolveJsonModule": true,
     // Basic settings
     "rootDir": ".",
-    // Debugging
-    "sourceMap": true,
     // Type-checking
     "strict": true,
+    "strictNullChecks": true,
     // Versions and APIs
     "target": "ES2018"
   },
@@ -52,19 +51,5 @@
     "tmp",
     "**/e2e/**"
   ],
-  // "ts-node": {
-  //   // "swc": true
-  // },
-  "include": [
-    "*.config.js",
-    "*.config.ts",
-    "package.json",
-    "src",
-    "tests",
-    "src/scripts",
-    "scripts",
-    "LICENSE",
-    "README.md",
-    "CODE_OF_CONDUCT.md"
-  ]
+  "include": ["*.config.js", "*.config.ts", "src", "tests", "scripts"]
 }
