@@ -56,7 +56,7 @@
 
 ### Creating a new project
 
-You can use the `create-sveltex` package to create a new project using SvelTeX:
+You can use the [`create-sveltex`] package to create a new project using SvelTeX:
 
 ```sh
 pnpm dlx create-sveltex # If using PNPM
@@ -179,3 +179,4 @@ libraries. Some notable examples are MathJax and TikZ.
 [SSG]: https://en.wikipedia.org/wiki/Static_site_generator
 [`node-poppler`]: https://github.com/Fdawgs/node-poppler
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+[`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
