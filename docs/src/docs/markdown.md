@@ -131,96 +131,114 @@ IntelliSense.
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
-export default await sveltex({ markdownBackend: 'unified' }, {
-    markdown: {
-        remarkPlugins: [],
-        rehypePlugins: [],
-        // Common options
-        prefersInline: () => true,
-        strict: false,
-        transformers: {
-            pre: [],
-            post: [],
+export default await sveltex(
+    { markdownBackend: 'unified' },
+    {
+        markdown: {
+            remarkPlugins: [],
+            retextPlugins: [],
+            rehypePlugins: [],
+            remarkRehypeOptions: {},
+            rehypeStringifyOptions: {},
+            // Common options
+            components: [],
+            prefersInline: () => true,
+            strict: false,
+            transformers: {
+                pre: [],
+                post: [],
+            },
         },
-    }
-})
+    },
+);
 ```
+
 ```js twoslash [markdown-it]
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
-export default await sveltex({ markdownBackend: 'markdown-it' }, {
-    markdown: {
-        extensions: [],
-        options: {
-            // markdown-it options
+export default await sveltex(
+    { markdownBackend: 'markdown-it' },
+    {
+        markdown: {
+            extensions: [],
+            options: {
+                // markdown-it options
+            },
+            // Common options
+            components: [],
+            prefersInline: () => true,
+            strict: false,
+            transformers: {
+                pre: [],
+                post: [],
+            },
         },
-        // Common options
-        prefersInline: () => true,
-        strict: false,
-        transformers: {
-            pre: [],
-            post: [],
-        },
-    }
-})
+    },
+);
 ```
+
 ```js twoslash [micromark]
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
-export default await sveltex({ markdownBackend: 'micromark' }, {
-    markdown: {
-        options: {
-            // micromark options
-            extensions: [],
-            htmlExtensions: [],
-            allowDangerousProtocol: false,
-            defaultLineEnding: undefined,
+export default await sveltex(
+    { markdownBackend: 'micromark' },
+    {
+        markdown: {
+            options: {
+                // micromark options
+                extensions: [],
+                htmlExtensions: [],
+                allowDangerousProtocol: false,
+                defaultLineEnding: undefined,
+            },
+            // Common options
+            components: [],
+            prefersInline: () => true,
+            strict: false,
+            transformers: {
+                pre: [],
+                post: [],
+            },
         },
-        // Common options
-        prefersInline: () => true,
-        strict: false,
-        transformers: {
-            pre: [],
-            post: [],
-        },
-    }
-})
+    },
+);
 ```
+
 ```js twoslash [marked]
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
-export default await sveltex({ markdownBackend: 'marked' }, {
-    markdown: {
-        extensions: [],
-        options: {
-            // marked options
+export default await sveltex(
+    { markdownBackend: 'marked' },
+    {
+        markdown: {
+            extensions: [],
+            options: {
+                // marked options
+            },
+            // Common options
+            components: [],
+            prefersInline: () => true,
+            strict: false,
+            transformers: {
+                pre: [],
+                post: [],
+            },
         },
-        // Common options
-        prefersInline: () => true,
-        strict: false,
-        transformers: {
-            pre: [],
-            post: [],
-        },
-    }
-})
+    },
+);
 ```
+
 :::
-
-
-
-
-
-
 
 ## Frontmatter
 
 ### Languages
 
 ::: code-group
+
 ```sveltex [YAML]
 ---
 title: Example
@@ -230,7 +248,8 @@ title: Example
 
 Lorem ipsum dolor.
 ```
-``` [TOML]
+
+```[TOML]
 ---toml
 title = "Example"
 ---
@@ -239,7 +258,8 @@ title = "Example"
 
 Lorem ipsum dolor.
 ```
-``` [JSON]
+
+```[JSON]
 ---json
 {
     title: "Example"
@@ -250,12 +270,14 @@ Lorem ipsum dolor.
 
 Lorem ipsum dolor.
 ```
+
 :::
 
 ### Variables
 
 All properties defined in the frontmatter are accessible in the markup as
-    variables:
+variables:
+
 -   Top-level properties are accessible as variables of the same name.
 -   Nested properties are accessible as nested objects.
 
@@ -305,7 +327,6 @@ const obj = { a: 'foo', b: { b1: 'bar', b2: 'baz' }, c: ['c1', 2] };
 **NB**: You can't use the variables in math expressions, code spans, code
 blocks, or verbatim environments.
 
-
 ### Head elements
 
 You can set many of the page's `<head>` elements from the frontmatter.
@@ -324,18 +345,21 @@ The `title` and `noscript` properties set the page's `<title>` and `<noscript>`
 elements, respectively.
 
 ::: code-group
+
 ```sveltex
 ---
 title: Example
 noscript: JS disabled.
 ---
 ```
+
 ```svelte
 <svelte:head>
 <title>Example</title>
 <noscript>JS disabled</noscript>
 </svelte:head>
 ```
+
 :::
 
 #### Meta
@@ -343,6 +367,7 @@ noscript: JS disabled.
 All [standard metadata names] are supported.
 
 ::: code-group
+
 ```sveltex
 ---
 application-name: Name
@@ -357,6 +382,7 @@ theme-color: black
 viewport: width=device-width, initial-scale=1
 ---
 ```
+
 ```svelte
 <svelte:head>
 <meta name="application-name" content="Name">
@@ -371,6 +397,7 @@ viewport: width=device-width, initial-scale=1
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </svelte:head>
 ```
+
 :::
 
 :::: details Alternative forms
@@ -385,6 +412,7 @@ defined in the `script` tag will be different, as these always follow the
 structure of the frontmatter one-to-one.
 
 ::: code-group
+
 ```sveltex [Object]
 ---
 meta:
@@ -400,6 +428,7 @@ meta:
   viewport: width=device-width, initial-scale=1
 ---
 ```
+
 ```sveltex [Array]
 ---
 meta:
@@ -432,6 +461,7 @@ meta:
 #### Link
 
 ::: code-group
+
 ```sveltex
 ---
 link:
@@ -444,28 +474,32 @@ link:
     crossorigin: anonymous
 ---
 ```
+
 ```svelte
 <svelte:head>
 <link rel="stylesheet" href="styles.css">
 <link rel="preload" href="someFont.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 </svelte:head>
 ```
-:::
 
+:::
 
 #### Base
 
 ::: code-group
+
 ```sveltex
 ---
 base: https://example.com
 ---
 ```
+
 ```svelte
 <svelte:head>
 <base href="https://example.com"/>
 </svelte:head>
 ```
+
 :::
 
 :::: details Alternative forms
@@ -482,6 +516,7 @@ base:
   target: _blank
 ---
 ```
+
 ```svelte
 <svelte:head>
 <base href="https://example.com" target="_blank"/>
