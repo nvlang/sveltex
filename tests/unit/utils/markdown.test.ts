@@ -1,4 +1,4 @@
-import { adjustHtmlSpacing } from '$utils/markdown.js';
+import { adjustHtmlSpacing, isImported } from '$utils/markdown.js';
 import { describe, it, expect } from 'vitest';
 
 describe('adjustHtmlSpacing', () => {
@@ -52,6 +52,21 @@ describe('adjustHtmlSpacing', () => {
                     'ABC123',
                 ),
             ).toMatch(expected);
+        },
+    );
+});
+
+describe('isImported', () => {
+    it.each([
+        [
+            "// something\n    import Example from '$lib/components/Example.svelte';\nconst title = 'Something';\n",
+            { name: 'Example', importPath: '$lib/components/Example.svelte' },
+            true,
+        ],
+    ])(
+        'should return true if the module is imported',
+        (script, componentInfo, expected) => {
+            expect(isImported(script, componentInfo)).toEqual(expected);
         },
     );
 });

@@ -167,10 +167,7 @@ export class Sveltex<
         const s = new MagicString(content);
 
         // This array represents the code that will be appended to the <script>
-        // tag in the Svelte file. It imports the `onMount` function from Svelte
-        // and uses it as a hook to fetch the SVG contents of the TeX components
-        // and add them to the `<figure>` DOM elements that were created for
-        // them.
+        // tag in the Svelte file.
         const script = tcInfos.map((info) => TexComponent.importSvg(info));
 
         // For info on the language aliases being used here, see
@@ -200,6 +197,7 @@ export class Sveltex<
             ...detectAndImportComponents(
                 markup,
                 this._configuration.markdown.components,
+                content,
                 script,
             ),
         );

@@ -212,18 +212,18 @@ export function adjustHtmlSpacing(
 export function detectAndImportComponents(
     markup: string,
     components: ComponentInfo[],
-    script: string[],
+    script: string,
+    scriptAppend: string[],
 ): string[] {
     const append: string[] = [];
-    const scriptStr = script.join('\n');
+    const scriptFullStr = [script, ...scriptAppend].join('\n');
     components.forEach((componentInfo) => {
         if (
+            isPresentAndDefined(componentInfo, 'name') &&
+            /[A-Z][0-9_a-zA-Z]*/.test(componentInfo.name) &&
             isPresentAndDefined(componentInfo, 'importPath') &&
-            !isImported(scriptStr, componentInfo) &&
-            isUsed(
-                scriptStr ? markup.replace(scriptStr, '') : markup,
-                componentInfo,
-            )
+            !isImported(scriptFullStr, componentInfo) &&
+            isUsed(script ? markup.replace(script, '') : markup, componentInfo)
         ) {
             append.push(
                 `import ${componentInfo.name} from '${componentInfo.importPath}';`,
@@ -233,7 +233,7 @@ export function detectAndImportComponents(
     return append;
 }
 
-function isImported(
+export function isImported(
     script: string,
     componentInfo: { name: string; importPath: string },
 ): boolean {

@@ -202,5 +202,27 @@ describe('Sveltex', () => {
             );
             existsSync.mockReset();
         });
+
+        it('auto-importing some components (already imported)', async () => {
+            existsSync.mockReturnValue(true);
+            const markupOut = await sp.markup({
+                content:
+                    "<script>\nimport Example from '$lib/components/Example.svelte';\n</script>\n<Example />",
+                filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                "<script>\nimport Example from '$lib/components/Example.svelte';\n</script>\n<Example />",
+            );
+
+            const scriptOut = await sp.script({
+                content:
+                    "\nimport Example from '$lib/components/Example.svelte';\n",
+                attributes: {},
+                markup: markupOut?.code ?? '',
+                filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
+            });
+            expect(scriptOut).toBeUndefined();
+            existsSync.mockReset();
+        });
     });
 });
