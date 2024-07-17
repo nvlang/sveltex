@@ -192,7 +192,7 @@ export default defineConfig({
             {
                 text: 'Implementation',
                 base: '/docs/implementation',
-                collapsed: true,
+                collapsed: false,
                 items: [
                     { text: 'Escaping', link: '/escaping' },
                     { text: 'Markdown', link: '/markdown' },
