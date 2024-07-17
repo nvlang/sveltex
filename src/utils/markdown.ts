@@ -238,7 +238,8 @@ export function isImported(
     componentInfo: { name: string; importPath: string },
 ): boolean {
     return new RegExp(
-        `import\\s*(?:\\s${componentInfo.name}\\s|\\{\\s*default as ${componentInfo.name}\\s*\\})\\s*from\\s*['"]`,
+        `^\\s*import\\s*(?:\\s${componentInfo.name}\\s|\\{\\s*default as ${componentInfo.name}\\s*\\})\\s*from\\s*['"]`,
+        'm',
     ).test(script);
 }
 
