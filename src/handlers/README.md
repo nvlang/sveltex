@@ -5,7 +5,6 @@ different kinds of content it encounters.
 
 <figure>
 
-
 ```mermaid
 flowchart TB
     subgraph Inputs
@@ -74,7 +73,6 @@ flowchart TB
 Schematic overview of how SvelTeX works and makes use of its "handlers".
 </figcaption>
 </figure>
-
 
 # Handlers
 

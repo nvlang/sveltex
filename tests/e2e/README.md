@@ -1,4 +1,3 @@
-
 # E2E tests
 
 This directory contains integration tests for the project.

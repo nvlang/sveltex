@@ -1,4 +1,3 @@
-
 # `src/types/handlers`
 
 | Location | Description |

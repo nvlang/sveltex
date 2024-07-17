@@ -573,10 +573,10 @@ export class TexComponent {
         const propIsString = isString(documentClass);
         const name: string = propIsString
             ? documentClass
-            : documentClass.name ?? 'standalone';
+            : (documentClass.name ?? 'standalone');
         const options: string[] = propIsString
             ? []
-            : documentClass.options ?? [];
+            : (documentClass.options ?? []);
         if (
             texConfig.compilation.intermediateFiletype === 'dvi' &&
             !options.includes('dvisvgm')

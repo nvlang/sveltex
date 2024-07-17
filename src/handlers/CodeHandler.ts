@@ -348,7 +348,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         lang = inlineParsed.lang ?? lang;
                     }
                 }
-                lang = (lang ? configuration.langAlias?.[lang] ?? lang : lang)
+                lang = (lang ? (configuration.langAlias?.[lang] ?? lang) : lang)
                     ?.toLowerCase()
                     .replaceAll(' ', '-');
                 let processed;
@@ -535,7 +535,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     }
                 }
                 lang = (
-                    (lang ? configuration.langAlias?.[lang] ?? lang : lang) ??
+                    (lang ? (configuration.langAlias?.[lang] ?? lang) : lang) ??
                     configuration.lang
                 )
                     ?.toLowerCase()
@@ -652,7 +652,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         code !== '' && !/(?:\r\n?|\n)$/.test(code);
                 }
                 lang = (
-                    (lang ? config.langAlias?.[lang] ?? lang : lang) ??
+                    (lang ? (config.langAlias?.[lang] ?? lang) : lang) ??
                     handler.configuration.shiki.lang
                 )
                     ?.toLowerCase()

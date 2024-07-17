@@ -1348,7 +1348,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
             it.each(tests as (string | [string, number | undefined])[])(
                 '%o',
                 (doc) => {
-                    const n = isArray(doc) ? doc[1] ?? 0 : 0;
+                    const n = isArray(doc) ? (doc[1] ?? 0) : 0;
                     const document = isArray(doc) ? doc[0] : doc;
                     // console.log(inspect(ast, { depth: 10, colors: true }));
                     if (n === -1) {

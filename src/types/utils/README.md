@@ -1,4 +1,3 @@
-
 # `src/types/utils`
 
 | Location | Description |
