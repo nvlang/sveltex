@@ -170,6 +170,7 @@ libraries. Some notable examples are MathJax and TikZ.
 -   [VitePress], a great [SSG] for docs.
 -   [`node-poppler`], a Node.js wrapper for Poppler, which can used to convert
     PDFs to SVGs.
+-   [Knip], a tool for detecting unused files, dependencies, and exports.
 
 [`fast-check`]: https://fast-check.dev
 [`plop`]: https://github.com/plopjs/plop
@@ -180,3 +181,4 @@ libraries. Some notable examples are MathJax and TikZ.
 [`node-poppler`]: https://github.com/Fdawgs/node-poppler
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 [`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
+[Knip]: https://github.com/webpro-nl/knip
