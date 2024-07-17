@@ -506,6 +506,8 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 remarkPlugins: [],
                 rehypePlugins: [],
                 retextPlugins: [],
+                remarkRehypeOptions: {},
+                rehypeStringifyOptions: {},
                 // Common options
                 prefersInline: () => true,
                 strict: false,
@@ -514,6 +516,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'unified'> as FullMarkdownConfiguration<M>;
         case 'marked':
             return {
@@ -527,6 +530,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'marked'> as FullMarkdownConfiguration<M>;
         case 'micromark':
             return {
@@ -544,6 +548,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'micromark'> as FullMarkdownConfiguration<M>;
         case 'markdown-it':
             return {
@@ -555,6 +560,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'markdown-it'> as FullMarkdownConfiguration<M>;
         case 'custom':
             return {
@@ -567,6 +573,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'custom'> as FullMarkdownConfiguration<M>;
         default:
             return {
@@ -578,6 +585,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                     enabled: true,
                     bracesArePartOfDirective: null,
                 },
+                components: [],
             } as FullMarkdownConfiguration<'none'> as FullMarkdownConfiguration<M>;
     }
 }

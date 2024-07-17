@@ -35,7 +35,10 @@ export function lineColToLocation(
     };
 }
 
-export function getLocationUnist(node: UnistNode, lines: string[]): Offsets {
+export function getLocationUnist(
+    node: Pick<UnistNode, 'position'>,
+    lines: string[],
+): Offsets {
     if (hasStartEnd_Offset(node.position)) {
         return {
             start: node.position.start.offset,
@@ -60,8 +63,8 @@ export function getLocationUnist(node: UnistNode, lines: string[]): Offsets {
 /**
  * Recursively walks
  * ({@link https://en.wikipedia.org/wiki/Depth-first_search | depth-first})
- * through an {@link https://github.com/syntax-tree/mdast | MDAST} and performs
- * an action on each node.
+ * through a UNIST, like a {@link https://github.com/syntax-tree/mdast | MDAST}
+ * or an HAST, and performs an action on each node.
  *
  * @param node - The current node to process.
  * @param action - The action to perform on each node. It should return `true`
@@ -69,7 +72,7 @@ export function getLocationUnist(node: UnistNode, lines: string[]): Offsets {
  * @param depth - The depth of the current node in the MDAST. This parameter is
  * passed to the action function, and should generally not be set by the user.
  */
-export function walkMdast(
+export function walkUnist(
     node: UnistNode & { children?: UnistNode[] },
     action: (
         node: UnistNode & { children?: UnistNode[] },
@@ -79,7 +82,7 @@ export function walkMdast(
 ): void {
     if (action(node, depth)) {
         node.children?.forEach((child) => {
-            walkMdast(child, action, depth + 1);
+            walkUnist(child, action, depth + 1);
         });
     }
 }

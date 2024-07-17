@@ -34,7 +34,7 @@ import { log, prettifyError } from '$utils/debug.js';
 import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
 import { detectPackageManager, missingDeps } from '$utils/env.js';
 import {
-    colonUuid,
+    colonId,
     escape,
     unescapeColons,
     unescapeSnippets,
@@ -49,6 +49,7 @@ import { applyTransformations } from '$utils/transformers.js';
 import { enquote } from '$utils/diagnosers/Diagnoser.js';
 import { deepClone } from '$handlers/Handler.js';
 import { copyTransformations } from '$utils/misc.js';
+import { detectAndImportComponents } from '$utils/markdown.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -143,6 +144,7 @@ export class Sveltex<
         content,
         attributes,
         filename,
+        markup,
     }: {
         content: string;
         attributes: Record<string, string | boolean>;
@@ -190,8 +192,17 @@ export class Sveltex<
         if (this.codePresent[filename]) {
             script.push(...this._codeHandler.scriptLines);
         }
+
         // From frontmatter
         script.push(...(this.scriptLines[filename] ?? []));
+
+        script.push(
+            ...detectAndImportComponents(
+                markup,
+                this._configuration.markdown.components,
+                script,
+            ),
+        );
 
         if (script.length === 0) return;
 
@@ -369,7 +380,7 @@ export class Sveltex<
                         if (snippet.type === 'svelte') {
                             if (
                                 !headId &&
-                                processed.startsWith(`<svelte${colonUuid}head`)
+                                processed.startsWith(`<svelte${colonId}head`)
                             ) {
                                 headId = uuid;
                             } else if (
@@ -413,7 +424,7 @@ export class Sveltex<
                 }
                 if (headSnippet) {
                     headSnippet.processed = headSnippet.processed.replace(
-                        new RegExp(`</\\s*svelte${colonUuid}head\\s*>`),
+                        new RegExp(`</\\s*svelte${colonId}head\\s*>`),
                         headLines.join('\n') + '\n$0',
                     );
                 } else {

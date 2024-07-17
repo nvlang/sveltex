@@ -10,7 +10,7 @@ import {
 } from 'vitest';
 import { spy } from '$tests/unit/fixtures.js';
 import {
-    colonUuid,
+    colonId,
     escape,
     escapeSnippets,
     escapeStringForRegExp,
@@ -23,7 +23,7 @@ import {
     parseToMdast,
     unescapeSnippets,
 } from '$utils/escape.js';
-import { cartesianProduct, range, uuidV4Regexp } from '$tests/unit/utils.js';
+import { cartesianProduct, range, idRegexp } from '$tests/unit/utils.js';
 import { typeAssert, is } from '$deps.js';
 import type {
     EscapableSnippet,
@@ -135,7 +135,7 @@ describe.concurrent.shuffle('escape()', () => {
                     {
                         type: 'svelte',
                         original: {
-                            outerContent: `<${tag.replace(':', colonUuid)}>b</${tag.replace(':', colonUuid)}>`,
+                            outerContent: `<${tag.replace(':', colonId)}>b</${tag.replace(':', colonId)}>`,
                         },
                         processable: undefined,
                         escapeOptions: { pad: 2 },
@@ -176,14 +176,14 @@ describe.concurrent.shuffle('escape()', () => {
                         new RegExp(
                             escapeStringForRegExp(escaped).replaceAll(
                                 '□',
-                                uuidV4Regexp.source,
+                                idRegexp.source,
                             ),
                         ),
                     ) as unknown,
                 );
                 escapedSnippets.forEach((snip, i) => {
                     expect(res.escapedSnippets[i]?.[0]).toEqual(
-                        expect.stringMatching(uuidV4Regexp),
+                        expect.stringMatching(idRegexp),
                     );
                     expect(res.escapedSnippets[i]?.[1]).toMatchObject(snip);
                 });
@@ -309,15 +309,13 @@ describe.concurrent.shuffle('escape()', () => {
                     new RegExp(
                         escapeStringForRegExp(escaped).replaceAll(
                             '□',
-                            uuidV4Regexp.source,
+                            idRegexp.source,
                         ),
                     ),
                 );
                 expect(res.escapedSnippets.length).toEqual(snippets.length);
                 res.escapedSnippets.forEach((snippet, i) => {
-                    expect(snippet[0]).toEqual(
-                        expect.stringMatching(uuidV4Regexp),
-                    );
+                    expect(snippet[0]).toEqual(expect.stringMatching(idRegexp));
                     const snip = snippets[i];
                     typeAssert(is<PartialSnippet>(snip));
                     expect(snippet[1].type).toEqual(snip.type);
@@ -518,13 +516,13 @@ describe.concurrent.shuffle('escapeSnippets()', () => {
                 new RegExp(
                     escapeStringForRegExp(test.escapedDocument).replaceAll(
                         '□',
-                        uuidV4Regexp.source,
+                        idRegexp.source,
                     ),
                 ),
             ) as unknown,
             escapedSnippets: test.escapedSnippets.map(
                 (snip) =>
-                    [expect.stringMatching(uuidV4Regexp), snip[1]] as [
+                    [expect.stringMatching(idRegexp), snip[1]] as [
                         string,
                         EscapedSnippet,
                     ],
@@ -667,10 +665,10 @@ describe.concurrent.shuffle('getSvelteES()', () => {
                                             end:
                                                 9 +
                                                 2 *
-                                                    tag.replace(':', colonUuid)
+                                                    tag.replace(':', colonId)
                                                         .length,
                                         },
-                                        outerContent: `<${tag.replace(':', colonUuid)}>...</${tag.replace(':', colonUuid)}>`,
+                                        outerContent: `<${tag.replace(':', colonId)}>...</${tag.replace(':', colonId)}>`,
                                     },
                                     processable: undefined,
                                     type: 'svelte',
@@ -703,9 +701,9 @@ describe.concurrent.shuffle('getSvelteES()', () => {
                             original: {
                                 loc: {
                                     start: 1,
-                                    end: 4 + tag.replace(':', colonUuid).length,
+                                    end: 4 + tag.replace(':', colonId).length,
                                 },
-                                outerContent: `<${tag.replace(':', colonUuid)}/>`,
+                                outerContent: `<${tag.replace(':', colonId)}/>`,
                             },
                             processable: undefined,
                             type: 'svelte',
@@ -722,7 +720,7 @@ describe.concurrent.shuffle('getSvelteES()', () => {
                 '%o → %o',
                 (document, _outerContent, escapedSnippets) => {
                     expect(
-                        getSvelteES(document.replaceAll(':', colonUuid)),
+                        getSvelteES(document.replaceAll(':', colonId)),
                     ).toMatchObject(escapedSnippets);
                 },
             );

@@ -13,7 +13,7 @@ import { consoles } from '$utils/debug.js';
 import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
 import { codeBackends } from '$utils/diagnosers/backendChoices.js';
 import { getDefaultCodeConfig } from '$base/defaults.js';
-import { nodeAssert, uuid } from '$deps.js';
+import { nodeAssert } from '$deps.js';
 import { isFunction, isString } from '$typeGuards/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
 import { bundledLanguages, bundledThemes } from 'shiki';
@@ -24,7 +24,7 @@ import {
     shikiTransformerMetaHighlight,
     shikiTransformerNotationDiff,
 } from '$dev_deps.js';
-import { escapeStringForRegExp } from '$utils/escape.js';
+import { escapeStringForRegExp, generateId } from '$utils/escape.js';
 import { sveltex } from '$base/Sveltex.js';
 import type { SupportedCdn } from '$types/handlers/Css.js';
 import { supportedCdns } from '$typeGuards/code.js';
@@ -760,7 +760,7 @@ describe('fixtures', () => {
             for (const [input, expected] of samples) {
                 const output = (
                     await processor.markup({
-                        filename: uuid() + '.sveltex',
+                        filename: generateId() + '.sveltex',
                         content: input,
                     })
                 )?.code;

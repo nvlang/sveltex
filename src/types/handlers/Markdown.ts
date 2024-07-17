@@ -24,9 +24,10 @@ export type MarkdownBackend =
  * @returns Depending on `B`:
  * - `markdown-it`: Type of the module's `MarkdownIt` class.
  * - `marked`: Type of the module's `Marked` class.
- * - `micromark`: `null`.
+ * - `micromark`: `object`.
  * - `unified`: Type of the module's `Processor` class.
- * - `custom`: `unknown`.
+ * - `custom`: `object`.
+ * - `none`: `object`.
  *
  * @remarks This is the type of the `processor` property of the markdown
  * handler.
@@ -104,6 +105,30 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
             }
           : B extends 'micromark'
             ? MarkdownCommonConfiguration & {
+                  /**
+                   * Options to pass to the `micromark` processor.
+                   *
+                   * @remarks
+                   * The `allowDangerousHtml` option is not supported here,
+                   * since SvelTeX needs it to be `true` to work properly.
+                   *
+                   * @remarks
+                   * The `extensions` option passed to the `micromark` processor
+                   * will always be a (nonempty) array with a custom extension
+                   * in its first position (i.e., at index 0) that disables
+                   * indented code blocks and autolinks. The array of extensions
+                   * passed to the `extensions` property here in the SvelTeX
+                   * configuration will merely be appended to this array.
+                   *
+                   * @defaultValue
+                   * ```ts
+                   * {
+                   *     extensions: [],
+                   *     htmlExtensions: [],
+                   *     allowDangerousProtocol: false,
+                   * }
+                   * ```
+                   */
                   options?:
                       | Omit<import('micromark').Options, 'allowDangerousHtml'>
                       | undefined;
@@ -157,6 +182,46 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                      * ```
                      */
                     retextPlugins?: import('unified').PluggableList | undefined;
+
+                    /**
+                     * Options to pass to the `remark-rehype` unified plugin.
+                     *
+                     * @remarks
+                     * The `allowDangerousHtml` option is not supported here,
+                     * since SvelTeX always needs it to be `true` to work
+                     * properly.
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * {}
+                     * ```
+                     */
+                    remarkRehypeOptions?:
+                        | Omit<
+                              import('remark-rehype').Options,
+                              'allowDangerousHtml'
+                          >
+                        | undefined;
+
+                    /**
+                     * Options to pass to the `rehype-stringify` unified plugin.
+                     *
+                     * @remarks
+                     * The `allowDangerousHtml` option is not supported here,
+                     * since SvelTeX always needs it to be `true` to work
+                     * properly.
+                     *
+                     * @defaultValue
+                     * ```ts
+                     * {}
+                     * ```
+                     */
+                    rehypeStringifyOptions?:
+                        | Omit<
+                              import('rehype-stringify').Options,
+                              'allowDangerousHtml'
+                          >
+                        | undefined;
                 }
               : B extends 'custom'
                 ? MarkdownCommonConfiguration & {
@@ -184,7 +249,7 @@ interface MarkdownCommonConfiguration {
      * comply more strictly with CommonMark for these cases, set this property
      * to `true`.
      *
-     * @see https://sveltex.dev/dovs/implementation/markdown
+     * @see https://sveltex.dev/docs/implementation/markdown
      *
      * @remarks Setting this property to `true` will void the
      * {@link prefersInline | `prefersInline`} property.
@@ -197,7 +262,7 @@ interface MarkdownCommonConfiguration {
     strict?: boolean | undefined;
 
     /**
-     * @see https://sveltex.dev/dovs/implementation/markdown
+     * @see https://sveltex.dev/docs/implementation/markdown
      *
      * @defaultValue
      * ```ts
@@ -205,6 +270,8 @@ interface MarkdownCommonConfiguration {
      * ```
      */
     prefersInline?: ((tag: string) => boolean) | undefined;
+
+    components?: ComponentInfo[] | undefined;
 
     /**
      * Settings related to markdown directives.
@@ -250,6 +317,8 @@ export type FullMarkdownConfiguration<B extends MarkdownBackend> =
                     remarkPlugins: import('unified').PluggableList;
                     rehypePlugins: import('unified').PluggableList;
                     retextPlugins: import('unified').PluggableList;
+                    remarkRehypeOptions: import('remark-rehype').Options;
+                    rehypeStringifyOptions: import('rehype-stringify').Options;
                 }
               : B extends 'custom'
                 ? FullMarkdownCommonConfiguration & {
@@ -269,4 +338,112 @@ export type MarkdownProcessFn<B extends MarkdownBackend> = ProcessFn<
 
 export interface MarkdownProcessOptions {
     filename: string;
+}
+
+export interface ComponentInfo {
+    /**
+     * The name of the component. Must start with an uppercase letter.
+     *
+     * @remarks
+     * **Vernacular:** I often use "component" and "element" interchangeably in this context.
+     * Furthermore, I also often refer to a component's "name" as its "tag".
+     *
+     * Meanwhile, when talking about opening or closing tags, the angle brackets
+     * are usually understood to be included; e.g., `<Example>` is an opening
+     * tag, whereas `Example` isn't.
+     *
+     * @example
+     * ```ts
+     * 'MyComponent'
+     * ```
+     */
+    name: Capitalize<string>;
+
+    /**
+     * The path from which the component can be imported. Should use an alias.
+     *
+     * This property is useful if the component is not present in the source
+     * file, but is inserted at build-time by the SvelTeX preprocessor (e.g.,
+     * within a pre- or post-transformation). In this case, the component will
+     * be imported by Svelte iff this property is set; otherwise, a runtime
+     * error will occur.
+     *
+     * @defaultValue
+     * ```ts
+     * undefined
+     * ```
+     *
+     * @example
+     * ```ts
+     * '$lib/components/MyComponent.svelte'
+     * ```
+     */
+    importPath?: string | undefined;
+
+    /**
+     * -   `'default'`: The component can be placed inside a paragraph and can
+     *     contain paragraphs. However, it cannot be the _only_ thing inside a
+     *     paragraph.
+     * -   `'phrasing'`: The component should be treated as "phrasing content",
+     *     i.e., it can be placed inside a paragraph, but cannot contain a
+     *     paragraph itself.
+     * -   `'sectioning'`: The component should be treated as a "sectioning"
+     *     element, i.e., it cannot be placed inside a paragraph, but can
+     *     contain paragraphs.
+     * -   `'none'`: The component can neither be placed inside of- nor contain
+     *     a paragraph.
+     * -   `'all'`: The component can be placed inside a paragraph and can
+     *     contain paragraphs.
+     *
+     * @defaultValue
+     * ```ts
+     * 'default'
+     * ```
+     *
+     * @see https://sveltex.dev/docs/implementation/markdown
+     */
+    type?: 'default' | 'phrasing' | 'sectioning' | 'none' | 'all' | undefined;
+
+    /**
+     * For edge cases only: Whether the inner content of the component should be
+     * treated as inline content or as "block" content, to be wrapped in `<p>`
+     * tags.
+     *
+     * @remarks
+     * If this property is defined, it takes precedence over the value returned
+     * by the
+     * {@link MarkdownCommonConfiguration.prefersInline | `MarkdownCommonConfiguration.prefersInline`}
+     * function for the component's tag.
+     *
+     * @example
+     * Content like
+     *
+     * ```md
+     * <Example>
+     *
+     * test
+     *
+     * </Example>
+     * ```
+     *
+     * or
+     *
+     * ```md
+     * <Example>test</Example>
+     * ```
+     *
+     * isn't affected by this option. However, content like
+     * `<Example>\ntest\n</Example>` will be transformed before being passed to
+     * the markdown processor, becoming `<Example>test</Example>` (and remaining
+     * `<Example>test</Example>` after processing by the markdown processor) if
+     * `prefersInline` is `true`, and `<Example>\n\ntest\n\n</Example>` (and
+     * `<Example>\n<p>test</p>\n</Example>` after processing by the markdown
+     * processor) if `prefersInline` is `false`.
+     *
+     * @defaultValue
+     * ```ts
+     * undefined
+     * ```
+     */
+    prefersInline?: boolean | undefined;
 }

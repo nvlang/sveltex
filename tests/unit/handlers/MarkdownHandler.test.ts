@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { sveltex } from '$base/Sveltex.js';
 import type { MarkdownBackend, MarkdownConfiguration } from '$mod.js';
-import { uuid, type MdastRoot } from '$deps.js';
+import { inspect, type MdastRoot } from '$deps.js';
 import { markdownBackends } from '$utils/diagnosers/backendChoices.js';
 import {
     hastscriptH,
@@ -14,9 +14,14 @@ import {
     retextIndefiniteArticle,
     unistVisit,
 } from '$dev_deps.js';
-import { countNewlines } from '$handlers/MarkdownHandler.js';
+import {
+    adjustHtmlSpacingAndEscape,
+    countNewlines,
+} from '$handlers/MarkdownHandler.js';
 import { isArray } from '$typeGuards/utils.js';
 import { spy } from '$tests/unit/fixtures.js';
+import { generateId } from '$utils/escape.js';
+import { cartesianProduct } from '$tests/unit/utils.js';
 
 describe('MarkdownHandler<MarkdownBackend>', () => {
     describe.each([
@@ -28,8 +33,70 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
         [
             '{ prefersInline: () => false }',
             { prefersInline: () => false },
-            [['<div>\n*a*\n</div>', '<div>\n<p><em>a</em></p>\n</div>']],
+            [
+                ['<div>\n*a*\n</div>', '<div>\n<p><em>a</em></p>\n</div>'],
+                ['<div>*a*</div>', '<div><em>a</em></div>'],
+                ['<span>\n*a*\n</span>', '<span><em>a</em></span>'],
+            ],
         ],
+        [
+            '{}',
+            {},
+            [
+                [
+                    '<span><p>*text*</p></span>',
+                    /<span>\n*<em>text<\/em>\n*<\/span>/,
+                ],
+            ],
+        ],
+        ...cartesianProduct(
+            ['Foo'],
+            ['default', 'phrasing', 'sectioning', 'all', 'none'] as const,
+            [true, false],
+        ).map(([name, type, prefersInline]) => {
+            const settings = {
+                components: [{ name, type, prefersInline }],
+            };
+            const testCases = cartesianProduct(
+                [0, 1, 2],
+                [0, 1, 2],
+                ['', 'a '],
+                ['', ' b'],
+            ).map(([x, y, before, after]) => {
+                const parInside =
+                    ['sectioning', 'all', 'default'].includes(type) &&
+                    ((x === 1 && !prefersInline) || x > 1);
+                const parOutside =
+                    !parInside &&
+                    (['phrasing', 'all'].includes(type) ||
+                        (type === 'default' &&
+                            (before !== '' || after !== '')));
+                const input = `${before}<${name}>${'\n'.repeat(x)}*test*${'\n'.repeat(y)}</${name}>${after}`;
+                const expected = new RegExp(
+                    (parOutside
+                        ? '<p>' + before
+                        : before.trim()
+                          ? '<p>' + before.trim() + '</p>'
+                          : before) +
+                        '\\n*' +
+                        `<${name}>` +
+                        '\\n*' +
+                        (parInside ? '<p>' : '') +
+                        '<em>test<\\/em>' +
+                        (parInside ? '<\\/p>' : '') +
+                        '\\n*' +
+                        `<\\/${name}>` +
+                        '\\n*' +
+                        (parOutside
+                            ? after + '<\\/p>'
+                            : after.trim()
+                              ? '<p>' + after.trim() + '</p>'
+                              : after),
+                );
+                return [input, expected];
+            });
+            return [inspect(settings), settings, testCases];
+        }),
         [
             '{ transformers: { pre: (str) => `*${str}*` } }',
             { transformers: { pre: (str) => `*${str}*` } },
@@ -56,7 +123,7 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
                 let output =
                     (
                         await processor.markup({
-                            filename: uuid() + '.sveltex',
+                            filename: generateId() + '.sveltex',
                             content: input,
                         })
                     )?.code ?? input;
@@ -66,6 +133,14 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
                     // affect how the output is eventually rendered, we make the
                     // test insensitive to this.
                     output = output.replaceAll(/\n{2,}/g, '\n');
+
+                    // Marked also doesn't currently trim some irrelevant
+                    // whitespace. Since this doesn't affect how the output is
+                    // eventually rendered, we make the test insensitive to
+                    // this.
+                    output = output
+                        .replace(/[ ]+<\//g, '</')
+                        .replace(/(<[^/]*>)[ ]+/g, '$1');
                 }
                 expect(output).toMatch(expected);
             });
@@ -79,7 +154,7 @@ describe.each([
         [
             [
                 { options: { gfm: true, breaks: true } },
-                [['a\nb', '<p>a<br>b</p>\n']],
+                [['a\nb', '<p>a<br />b</p>\n']],
             ],
             [
                 { options: { gfm: false, breaks: false } },
@@ -133,10 +208,6 @@ describe.each([
                 { options: { breaks: true, xhtmlOut: true } },
                 [['a\nb', '<p>a<br />\nb</p>\n']],
             ],
-            [
-                { options: { breaks: true, xhtmlOut: false } },
-                [['a\nb', '<p>a<br>\nb</p>\n']],
-            ],
             [{ options: { breaks: false } }, [['a\nb', '<p>a\nb</p>\n']]],
             [
                 {
@@ -176,6 +247,24 @@ describe.each([
         [
             [{}, [['abc', 'abc']]],
             [
+                {
+                    rehypePlugins: [
+                        () => {
+                            throw new Error(
+                                'fed48803-7ecc-4621-a721-f30868f7cf13',
+                            );
+                        },
+                    ],
+                },
+                [
+                    [
+                        'a *b* c',
+                        undefined,
+                        'fed48803-7ecc-4621-a721-f30868f7cf13',
+                    ],
+                ],
+            ],
+            [
                 { rehypePlugins: [rehypeSlug] },
                 [
                     [
@@ -198,7 +287,32 @@ describe.each([
                 [
                     [
                         ':::note{.example}\ntext {mustacheTag} :hr text\n:::',
-                        '<div class="example"><p>text {mustacheTag} <div></div> text</p></div>',
+                        '<div class="example">text {mustacheTag} <div></div> text</div>',
+                    ],
+                    [
+                        ':::note{.example}\ntext {mustacheTag} text\n:::',
+                        '<div class="example"><p>text {mustacheTag} text</p></div>',
+                    ],
+                    [
+                        ':::note{.example}\ntext {mustacheTag}\n\n:hr\n\ntext\n:::',
+                        '<div class="example"><p>text {mustacheTag}</p><div></div><p>text</p></div>',
+                    ],
+                ],
+            ],
+            [
+                {
+                    remarkRehypeOptions: {},
+                    rehypeStringifyOptions: { allowParseErrors: true },
+                    remarkPlugins: [
+                        remarkDirective,
+                        remarkDirectiveExamplePluginError,
+                    ],
+                },
+                [
+                    [
+                        ':::note{.example}\ntext {mustacheTag} :hr text\n:::\n\n<<a_bc>>>">></a<>%<&><;;;><<<>',
+                        undefined,
+                        'fca3ad7c-8e6d-40c1-a0a1-93450744c214',
                     ],
                 ],
             ],
@@ -207,7 +321,11 @@ describe.each([
                 [
                     [
                         ':::note{.example}\ntext {mustacheTag} :hr text\n:::',
-                        '<div><p>text {mustacheTag} <div></div> text</p></div>',
+                        '<div>text {mustacheTag} <div></div> text</div>',
+                    ],
+                    [
+                        ':::note{.example}\n\n\ntext {mustacheTag} :hr text\n\n\n:::',
+                        '<div>text {mustacheTag} <div></div> text</div>',
                     ],
                 ],
             ],
@@ -247,7 +365,11 @@ describe.each([
     MarkdownBackend,
     [
         MarkdownConfiguration<MarkdownBackend> | undefined,
-        [string, (string | RegExp) | (string | RegExp)[], (string | RegExp)?][],
+        [
+            string,
+            (string | RegExp | undefined) | (string | RegExp)[],
+            (string | RegExp)?,
+        ][],
     ][],
 ][])('MarkdownHandler<%o>', (markdownBackend, tests) => {
     test.each(tests)('%o', async (configuration, samples) => {
@@ -259,7 +381,7 @@ describe.each([
         for (const [input, expected, logged] of samples) {
             const output = (
                 await processor.markup({
-                    filename: uuid() + '.sveltex',
+                    filename: generateId() + '.sveltex',
                     content: input,
                 })
             )?.code;
@@ -267,6 +389,8 @@ describe.each([
                 for (const e of expected) {
                     expect(output).toMatch(e);
                 }
+            } else if (expected === undefined) {
+                expect(output).toBeUndefined();
             } else {
                 expect(output).toMatch(expected);
             }
@@ -277,6 +401,28 @@ describe.each([
                 );
             }
         }
+    });
+});
+
+describe('adjustHtmlSpacingAndEscape', () => {
+    test.each([
+        [
+            '<div><Foo a={b} c="{d}" e {f} g="h">\ntest</Foo></div>',
+            /<div>\n{2,}<Foo a=\{b\} c="\{d\}" e \{f\} g="h">\n{2,}test\n{2,}<\/Foo>\n{2,}<\/div>/,
+        ],
+        [
+            '<p><p>a<p>b</p>c<p>d</p>e</p></p>',
+            /<p>\s*a\s*b\s*c\s*d\s*e\s*<\/p>/,
+        ],
+        [
+            '<p><pre>a\n\n<div>\nb\n</div>c</pre></p>',
+            /^\s*<pre>a\n\n<div>\nb\n<\/div>c<\/pre>\s*$/,
+        ],
+    ])('%o → %o', (input, expected) => {
+        const res = adjustHtmlSpacingAndEscape(input, () => true, [
+            { name: 'Foo', type: 'default', prefersInline: false },
+        ]);
+        expect(res.cleanup(res.content)).toMatch(expected);
     });
 });
 
@@ -306,6 +452,12 @@ function remarkDirectiveExamplePlugin(): (tree: MdastRoot) => void {
                 ).properties;
             }
         });
+    };
+}
+
+function remarkDirectiveExamplePluginError(): (tree: MdastRoot) => void {
+    return () => {
+        throw new Error('fca3ad7c-8e6d-40c1-a0a1-93450744c214');
     };
 }
 

@@ -53,8 +53,7 @@ describe('getLocationUnist', () => {
     });
     describe('error handling', () => {
         it('no position prop → throw error', () => {
-            const node = { type: 'test' };
-            expect(() => getLocationUnist(node, [''])).toThrowError(
+            expect(() => getLocationUnist({}, [''])).toThrowError(
                 /Could not determine location of node:/,
             );
         });

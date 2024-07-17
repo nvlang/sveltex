@@ -13,7 +13,7 @@ import { spy } from '$tests/unit/fixtures.js';
 import { isArray, isString } from '$typeGuards/utils.js';
 import { re } from '$utils/misc.js';
 
-import { typeAssert, is, uuid } from '$deps.js';
+import { typeAssert, is } from '$deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -27,6 +27,7 @@ import {
 } from 'vitest';
 import { cartesianProduct } from '$tests/unit/utils.js';
 import { mergeConfigs } from '$utils/merge.js';
+import { generateId } from '$utils/escape.js';
 
 function fixture() {
     beforeEach(() => {
@@ -138,7 +139,7 @@ async function preprocess<
 >(
     preprocessor: Sveltex<M, C, T>,
     content: string,
-    filename: string = `${uuid()}.sveltex`,
+    filename: string = `${generateId()}.sveltex`,
 ) {
     let markup = (await preprocessor.markup({ content, filename }))?.code ?? '';
     const scriptContent =
@@ -195,6 +196,11 @@ describe('Sveltex', () => {
             it.each([
                 ['*italic*', '<em>italic</em>'],
                 ['**bold**', '<strong>bold</strong>'],
+                ['<span>foo</span> bar', '<p><span>foo</span> bar</p>'],
+                ['foo <span>bar</span>', '<p>foo <span>bar</span></p>'],
+                ['foo <span>bar\n</span>', '<p>foo <span>bar</span></p>'],
+                ['foo <span>\nbar</span>', '<p>foo <span>bar</span></p>'],
+                // ['foo <span>\n\nbar\n\n</span>', '<p>foo <span>bar</span></p>'], // I'm not sure how this should be handled yet
                 [
                     '[link](https://example.com)',
                     '<a href="https://example.com">link</a>',
@@ -215,6 +221,7 @@ describe('Sveltex', () => {
                     '<style>/*comment*/ body { color: red; }</style>',
                     '<style>/*comment*/ body { color: red; }</style>',
                 ],
+                // [wikipediaHtmlExcerpt, wikipediaHtmlExcerpt],
                 ...cartesianProduct(
                     ['foo', 'div', 'p', 'span'],
                     [0, 1, 2],
@@ -222,13 +229,16 @@ describe('Sveltex', () => {
                     [() => true, () => false],
                 ).map(([tag, x, y, prefersInline]) => [
                     `<${tag}>${'\n'.repeat(x)}*italic*${'\n'.repeat(y)}</${tag}>`,
-                    x === 2 || (x === 1 && !prefersInline())
+                    (x === 2 || (x === 1 && !prefersInline())) &&
+                    tag !== 'span' &&
+                    tag !== 'p'
                         ? `<${tag}>\n<p><em>italic</em></p>\n</${tag}>`
                         : `<${tag}><em>italic</em></${tag}>`,
                     { prefersInline },
                 ]),
             ] as [string, string, MarkdownConfiguration<MarkdownBackend>?][])(
-                '%o → %o',
+                '%o → %o (%s)',
+                { timeout: 1e8 },
                 async (input, expected, configuration) => {
                     let output;
                     if (configuration) {

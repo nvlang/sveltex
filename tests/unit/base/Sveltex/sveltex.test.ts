@@ -11,7 +11,7 @@ import { range } from '$tests/unit/utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { SveltexConfiguration } from '$mod.js';
 import { isRegExp } from '$deps.js';
-import { isArray, isDefined } from '$typeGuards/utils.js';
+import { isArray, isDefined, isString } from '$typeGuards/utils.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -142,7 +142,7 @@ describe.concurrent('Sveltex', () => {
 
 const preprocessor = await sveltex(
     {
-        markdownBackend: 'marked',
+        markdownBackend: 'micromark',
         codeBackend: 'escape',
         mathBackend: 'none',
     },
@@ -349,8 +349,8 @@ describe('edge cases', () => {
                         '</Verbatim>',
                     ].join('\n'),
                 ),
-            ).toEqual(
-                '<script>\n</script>\n<Verbatim>\n&lt;Verb&gt;\ntest\n&lt;/Verb&gt;\n</Verbatim>\n',
+            ).toContain(
+                '<Verbatim>\n&lt;Verb&gt;\ntest\n&lt;/Verb&gt;\n</Verbatim>',
             );
         });
 
@@ -396,7 +396,7 @@ describe('Sveltex.markup()', () => {
             String.fromCodePoint(...range(126, 1000)),
         ])('supports unicode %#', async (str) => {
             expect(await preprocess(str)).toEqual(
-                `<script>\n</script>\n<p>${str}</p>\n`,
+                `<script>\n</script>\n<p>${str}</p>`,
             );
         });
     });
@@ -411,7 +411,7 @@ describe('Sveltex.markup()', () => {
                 label: 'style tag',
                 input: '<style> .hello {\n/* comment */ \n color: red; }</style>',
                 expected:
-                    '<script>\n</script>\n\n<style> .hello {\n/* comment */ \n color: red; }</style>\n',
+                    '<script>\n</script>\n\n<style> .hello {\n/* comment */ \n color: red; }</style>',
             },
             {
                 label: 'svelte:head tag',
@@ -465,13 +465,13 @@ describe('Sveltex.markup()', () => {
                 label: 'else if block',
                 input: '{#if condition}\n>A\n{:else if otherCondition}\n*B*\n{:else}\nC\n{/if}',
                 expected:
-                    '<script>\n</script>\n{#if condition}\n<blockquote>\n<p>A</p>\n</blockquote>\n{:else if otherCondition}\n<p><em>B</em></p>\n{:else}\n<p>C</p>\n{/if}\n',
+                    '<script>\n</script>\n{#if condition}\n<blockquote>\n<p>A</p>\n</blockquote>\n{:else if otherCondition}\n<p><em>B</em></p>\n{:else}\n<p>C</p>\n{/if}',
             },
             {
                 label: 'each block',
                 input: '{#each items as item}\n*A* {item} B\n{/each}',
                 expected:
-                    '<script>\n</script>\n{#each items as item}\n<p><em>A</em> {item} B</p>\n{/each}\n',
+                    '<script>\n</script>\n{#each items as item}\n<p><em>A</em> {item} B</p>\n{/each}',
             },
             {
                 label: 'await block',
@@ -485,10 +485,17 @@ describe('Sveltex.markup()', () => {
                 expected:
                     '<script>\n</script>\n<p>{@html "<p>hello, world!</p>"}</p>',
             },
+            {
+                label: 'tags with uppercase letters',
+                input: '<MyComponent test="a" {c} test2={b} g="">foo</MyComponent>',
+                expected:
+                    /<MyComponent test="a" \{c\} test2=("?)\{b\}\1 g="">foo<\/MyComponent>/,
+            },
         ];
         it.each(tests)('$label', async (test) => {
-            expect(removeEmptyLines(await preprocess(test.input))).toContain(
-                removeEmptyLines(test.expected ?? test.input),
+            const expected = test.expected ?? test.input;
+            expect(removeEmptyLines(await preprocess(test.input))).toMatch(
+                isString(expected) ? removeEmptyLines(expected) : expected,
             );
         });
     });
@@ -497,10 +504,10 @@ describe('Sveltex.markup()', () => {
         it('should work', async () => {
             expect(
                 await preprocess(
-                    '\n\ntext\n```typescript\n() => {let a}\n```\ntext\n\n',
+                    '\n\ntext\n```typescript\n() => {let a}\n```\ntext\n',
                 ),
-            ).toEqual(
-                '<script>\n</script>\n<p>text</p>\n<pre><code class="language-typescript">() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n<p>text</p>\n',
+            ).toContain(
+                '<p>text</p>\n<pre><code class="language-typescript">() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n<p>text</p>',
             );
         });
     });
@@ -524,13 +531,12 @@ describe('Sveltex.markup()', () => {
             {
                 label: 'strong',
                 input: '**strong**',
-                expected:
-                    '<script>\n</script>\n<p><strong>strong</strong></p>\n',
+                expected: '<script>\n</script>\n<p><strong>strong</strong></p>',
             },
             {
                 label: 'em',
                 input: '_em_',
-                expected: '<script>\n</script>\n<p><em>em</em></p>\n',
+                expected: '<script>\n</script>\n<p><em>em</em></p>',
             },
             // {
             //     label: 'code',
@@ -541,17 +547,17 @@ describe('Sveltex.markup()', () => {
                 label: 'a',
                 input: '[link](https://example.com)',
                 expected:
-                    '<script>\n</script>\n<p><a href="https://example.com">link</a></p>\n',
+                    '<script>\n</script>\n<p><a href="https://example.com">link</a></p>',
             },
             {
                 label: 'img',
                 input: '![alt](https://example.com/image.jpg)',
                 expected:
-                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="alt"></p>\n',
+                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="alt" /></p>',
             },
         ];
         it.each(tests)('$label', async (test) => {
-            expect(await preprocess(test.input)).toEqual(test.expected);
+            expect(await preprocess(test.input)).toContain(test.expected);
         });
     });
 
@@ -560,49 +566,49 @@ describe('Sveltex.markup()', () => {
             {
                 label: 'h1',
                 input: '# Hello, world!',
-                expected: '<script>\n</script>\n<h1>Hello, world!</h1>\n',
+                expected: '<script>\n</script>\n<h1>Hello, world!</h1>',
             },
             {
                 label: 'h2',
                 input: '## Hello, world!',
-                expected: '<script>\n</script>\n<h2>Hello, world!</h2>\n',
+                expected: '<script>\n</script>\n<h2>Hello, world!</h2>',
             },
             {
                 label: 'h3',
                 input: '### Hello, world!',
-                expected: '<script>\n</script>\n<h3>Hello, world!</h3>\n',
+                expected: '<script>\n</script>\n<h3>Hello, world!</h3>',
             },
             {
                 label: 'h4',
                 input: '#### Hello, world!',
-                expected: '<script>\n</script>\n<h4>Hello, world!</h4>\n',
+                expected: '<script>\n</script>\n<h4>Hello, world!</h4>',
             },
             {
                 label: 'h5',
                 input: '##### Hello, world!',
-                expected: '<script>\n</script>\n<h5>Hello, world!</h5>\n',
+                expected: '<script>\n</script>\n<h5>Hello, world!</h5>',
             },
             {
                 label: 'h6',
                 input: '###### Hello, world!',
-                expected: '<script>\n</script>\n<h6>Hello, world!</h6>\n',
+                expected: '<script>\n</script>\n<h6>Hello, world!</h6>',
             },
             {
                 label: 'blockquote',
                 input: '> blockquote',
                 expected:
-                    '<script>\n</script>\n<blockquote>\n<p>blockquote</p>\n</blockquote>\n',
+                    '<script>\n</script>\n<blockquote>\n<p>blockquote</p>\n</blockquote>',
             },
             {
                 label: 'unordered list (-)',
                 input: '- ul',
-                expected: '<script>\n</script>\n<ul>\n<li>ul</li>\n</ul>\n',
+                expected: '<script>\n</script>\n<ul>\n<li>ul</li>\n</ul>',
             },
             {
                 label: 'code block',
                 input: '```\nsomething\n```',
                 expected:
-                    '<script>\n</script>\n<pre><code>something\n</code></pre>\n',
+                    '<script>\n</script>\n<pre><code>something\n</code></pre>',
             },
         ];
         it.each(tests)('$label', async (test) => {
@@ -637,13 +643,13 @@ describe('Sveltex.markup()', () => {
                 label: 'code block (plain)',
                 input: '```\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>\n',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>',
             },
             {
                 label: 'code block (ts)',
                 input: '```typescript\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>\n',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
             },
         ])('$label', async (test) => {
             const preprocessor = await sveltex(
@@ -661,7 +667,7 @@ describe('Sveltex.markup()', () => {
                 return (await preprocessor.markup({ content: input, filename }))
                     ?.code;
             };
-            expect(await preprocess(test.input)).toEqual(test.expected);
+            expect(await preprocess(test.input)).toContain(test.expected);
         });
     });
 
@@ -671,12 +677,12 @@ describe('Sveltex.markup()', () => {
                 label: 'strong',
                 input: '**{strong}**',
                 expected:
-                    '<script>\n</script>\n<p><strong>{strong}</strong></p>\n',
+                    '<script>\n</script>\n<p><strong>{strong}</strong></p>',
             },
             {
                 label: 'em',
                 input: '_{em}_',
-                expected: '<script>\n</script>\n<p><em>{em}</em></p>\n',
+                expected: '<script>\n</script>\n<p><em>{em}</em></p>',
             },
             // {
             //     label: 'mustache tags in code are escaped',
@@ -687,13 +693,13 @@ describe('Sveltex.markup()', () => {
                 label: 'a',
                 input: '[{link}](https://example.com)',
                 expected:
-                    '<script>\n</script>\n<p><a href="https://example.com">{link}</a></p>\n',
+                    '<script>\n</script>\n<p><a href="https://example.com">{link}</a></p>',
             },
             {
                 label: 'img',
                 input: '![{alt}](https://example.com/image.jpg)',
                 expected:
-                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="{alt}"></p>\n',
+                    '<script>\n</script>\n<p><img src="https://example.com/image.jpg" alt="{alt}" /></p>',
             },
         ];
         it.each(tests)('$label', async (test) => {

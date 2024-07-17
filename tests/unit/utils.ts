@@ -9,6 +9,9 @@ export function range(start: number, end: number, step: number = 1): number[] {
 export const uuidV4Regexp =
     /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}/;
 
+export const idRegexp =
+    /id[a-f0-9]{8}[a-f0-9]{4}4[a-f0-9]{3}[89ab][a-f0-9]{3}[a-f0-9]{12}/;
+
 export function cartesianProduct<X1>(x1: X1[]): [X1][];
 export function cartesianProduct<X1, X2>(x1: X1[], x2: X2[]): [X1, X2][];
 export function cartesianProduct<X1, X2, X3>(

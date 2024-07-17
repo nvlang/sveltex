@@ -33,6 +33,14 @@ describe('Sveltex', () => {
                 mathBackend: 'katex',
             },
             {
+                markdown: {
+                    components: [
+                        {
+                            name: 'Example',
+                            importPath: '$lib/components/Example.svelte',
+                        },
+                    ],
+                },
                 math: {
                     css: {
                         type: 'hybrid',
@@ -91,7 +99,7 @@ describe('Sveltex', () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
-                markup: '<tex ref="something">x</tex> `code`',
+                markup: markupOut?.code ?? '',
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
@@ -114,7 +122,7 @@ describe('Sveltex', () => {
                     await sp.script({
                         content: '',
                         attributes: {},
-                        markup: 'something',
+                        markup: markupOut?.code ?? '',
                         filename:
                             '7a541239-3058-460b-b3c6-5076a2f3f73b.sveltex',
                     })
@@ -139,7 +147,7 @@ describe('Sveltex', () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: {},
-                markup: '<tex ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>`code`$x$',
+                markup: markupOut?.code ?? '',
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
@@ -163,13 +171,35 @@ describe('Sveltex', () => {
             const scriptOut = await sp.script({
                 content: '',
                 attributes: { lang: 'coffeescript' },
-                markup: '<tex ref-without-quotation-marks id="something" caption="some text here" caption:id="caption-id" >x</tex>',
+                markup: markupOut?.code ?? '',
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
             expect((scriptOut as Processed).code).toEqual(
                 "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\n```\n",
             );
 
+            existsSync.mockReset();
+        });
+
+        it('auto-importing some components', async () => {
+            existsSync.mockReturnValue(true);
+            const markupOut = await sp.markup({
+                content: '<Example />',
+                filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\n</script>\n<Example />',
+            );
+
+            const scriptOut = await sp.script({
+                content: '',
+                attributes: {},
+                markup: markupOut?.code ?? '',
+                filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
+            });
+            expect((scriptOut as Processed).code).toEqual(
+                "\nimport Example from '$lib/components/Example.svelte';\n",
+            );
             existsSync.mockReset();
         });
     });
