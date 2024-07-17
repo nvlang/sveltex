@@ -32,7 +32,6 @@ preprocessor can take over.
 
 <div class="features-list mt-8">
 
-
 -   <PhMarkdownLogo :size="28" weight="duotone"/>
 
     **Markdown-in-Svelte:** Intersperse markdown and Svelte syntax for a better
@@ -74,8 +73,9 @@ preprocessor can take over.
 -   <PhBooks :size="28" weight="duotone"/>
 
     **Extensive documentation:** With these docs and the extensive IntelliSense
-    that 7,000+ lines of comments provides, you'll find that almost every
-    function or type in SvelTeX is documented, be it user-facing or internal.
+    and hints that 8,000+ lines of comments provides, you'll find that almost
+    every function or type in SvelTeX is documented, be it user-facing or
+    internal.
 
 -   <PhFeather :size="28" weight="duotone"/>
 
@@ -100,7 +100,7 @@ preprocessor can take over.
     **Robust:** [Fuzzy](https://en.wikipedia.org/wiki/Fuzzing) testing with
     [fast-check](https://github.com/dubzzz/fast-check), E2E visual regression
     tests with [Playwright](https://playwright.dev/) (1,000+ snapshots), and
-    5,000+ unit tests with [Vitest](https://vitest.dev/) provide 100% code
+    7,000+ unit tests with [Vitest](https://vitest.dev/) provide 100% code
     coverage.
 
 -   <PhInfo :size="28" weight="duotone"/>
@@ -111,7 +111,8 @@ preprocessor can take over.
 
 </div>
 
-[^1]: Lines of code in `src` directory, excluding `src/data` directory. This
-    count excludes comments and blank lines.
+[^1]:
+    Lines of code in `src` directory, excluding `src/data` directory. This count
+    excludes comments, blank lines, and markdown.
 
 [VS Code extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
