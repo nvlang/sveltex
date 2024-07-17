@@ -6,7 +6,6 @@
 import { canBeInParagraph, canContainParagraph } from '$data/markdown.js';
 import {
     hastFromHtml,
-    inspect,
     is,
     MagicString,
     nodeAssert,
@@ -137,14 +136,6 @@ export function adjustHtmlSpacing(
                     (leadingNewlines === 0 ||
                         (leadingNewlines === 1 && prefIn)));
 
-            console.log({
-                canContainParagraph: canContainParagraph(tagName, components),
-                inline,
-                noPar,
-                leadingNewlines,
-                prefIn,
-            });
-
             const inNoParRange = noParRanges.some(
                 ([start, end]) => loc.start >= start && loc.end <= end,
             );
@@ -152,8 +143,6 @@ export function adjustHtmlSpacing(
             if (noPar && !inNoParRange) {
                 noParRanges.push([loc.start, loc.end]);
             }
-
-            console.log({ noPar, inNoParRange, leadingNewlines, prefIn });
 
             if (
                 noPar ||
@@ -200,9 +189,6 @@ export function adjustHtmlSpacing(
         }
         return true;
     });
-    console.log(
-        `adjustHtmlSpacing(${inspect(document)}) → ${inspect(s.toString())}`,
-    );
     return s.toString();
 }
 

@@ -413,10 +413,7 @@ export function getSvelteES(document: string): EscapableSnippet<'svelte'>[] {
             `svelte${colonId}options`,
         ]),
     ].forEach((regExp) => {
-        // console.log('document: ', document);
-        // console.log('regExp: ', regExp.source);
         for (const match of document.matchAll(regExp)) {
-            // console.log('match: ', match[0]);
             const { index, 0: outerContent } = match;
             const loc = {
                 start: index,
@@ -463,13 +460,11 @@ export function getColonES(document: string): EscapableSnippet<'svelte'>[] {
     ].forEach((regExp) => {
         for (const match of document.matchAll(regExp)) {
             const { index, 0: outerContent } = match;
-            // console.log(match);
             const firstColonIdx = outerContent.indexOf(':');
             const locFirst = {
                 start: index + firstColonIdx,
                 end: index + firstColonIdx + 1,
             };
-            // console.log(locFirst);
             addColon(locFirst);
             const lastColonIdx = outerContent.lastIndexOf(':');
             if (lastColonIdx !== firstColonIdx) {
