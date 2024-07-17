@@ -256,7 +256,7 @@ interface MarkdownCommonConfiguration {
      *
      * @defaultValue
      * ```ts
-     * false
+     * false // recommended
      * ```
      */
     strict?: boolean | undefined;
@@ -357,7 +357,7 @@ export interface ComponentInfo {
      * 'MyComponent'
      * ```
      */
-    name: Capitalize<string>;
+    name: `${UppercaseLetter}${string}`;
 
     /**
      * The path from which the component can be imported. Should use an alias.
@@ -447,3 +447,31 @@ export interface ComponentInfo {
      */
     prefersInline?: boolean | undefined;
 }
+
+type UppercaseLetter =
+    | 'A'
+    | 'B'
+    | 'C'
+    | 'D'
+    | 'E'
+    | 'F'
+    | 'G'
+    | 'H'
+    | 'I'
+    | 'J'
+    | 'K'
+    | 'L'
+    | 'M'
+    | 'N'
+    | 'O'
+    | 'P'
+    | 'Q'
+    | 'R'
+    | 'S'
+    | 'T'
+    | 'U'
+    | 'V'
+    | 'W'
+    | 'X'
+    | 'Y'
+    | 'Z';

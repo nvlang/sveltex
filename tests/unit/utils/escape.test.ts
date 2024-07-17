@@ -34,7 +34,7 @@ import type {
 } from '$types/utils/Escape.js';
 import { isArray, isString } from '$typeGuards/utils.js';
 import type { FullVerbEnvConfig } from '$types/handlers/Verbatim.js';
-import { getDefaultMathConfiguration } from '$mod.js';
+import { getDefaultMathConfig } from '$mod.js';
 import { mergeConfigs } from '$utils/merge.js';
 import type { WithDelims } from '$types/handlers/Math.js';
 
@@ -165,7 +165,7 @@ describe.concurrent.shuffle('escape()', () => {
                     raw,
                     [],
                     mergeConfigs(
-                        getDefaultMathConfiguration('custom').delims,
+                        getDefaultMathConfig('custom').delims,
                         texEscapeSettings ?? {},
                     ),
                     verbEnvs,
@@ -301,7 +301,7 @@ describe.concurrent.shuffle('escape()', () => {
                 const res = escape(
                     str,
                     [],
-                    getDefaultMathConfiguration('custom').delims,
+                    getDefaultMathConfig('custom').delims,
                     verbEnvs,
                     {},
                 );
@@ -954,8 +954,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings:
-                            getDefaultMathConfiguration('custom').delims,
+                        texSettings: getDefaultMathConfig('custom').delims,
                         document,
                         lines: document.split('\n'),
                         directiveSettings: {},
@@ -1004,8 +1003,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                         ast: parseToMdast(document),
                         document,
                         lines: document.split('\n'),
-                        texSettings:
-                            getDefaultMathConfiguration('custom').delims,
+                        texSettings: getDefaultMathConfig('custom').delims,
                         directiveSettings: {},
                     }),
                 ).toMatchObject(escapedSnippets);
@@ -1056,8 +1054,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings:
-                            getDefaultMathConfiguration('custom').delims,
+                        texSettings: getDefaultMathConfig('custom').delims,
                         document,
                         lines: document.split('\n'),
                         directiveSettings: {},
@@ -1108,8 +1105,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document.replaceAll('␠', ' ')),
-                        texSettings:
-                            getDefaultMathConfiguration('custom').delims,
+                        texSettings: getDefaultMathConfig('custom').delims,
                         document,
                         lines: document.split('\n'),
                         directiveSettings: {},
@@ -1162,8 +1158,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                 expect(
                     getMdastES({
                         ast: parseToMdast(document),
-                        texSettings:
-                            getDefaultMathConfiguration('custom').delims,
+                        texSettings: getDefaultMathConfig('custom').delims,
                         document,
                         lines: document.split('\n'),
                         directiveSettings: {},
@@ -1366,8 +1361,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                             getMdastES({
                                 ast,
                                 texSettings:
-                                    getDefaultMathConfiguration('custom')
-                                        .delims,
+                                    getDefaultMathConfig('custom').delims,
                                 document,
                                 lines: document.split('\n'),
                                 directiveSettings: {},
@@ -1458,15 +1452,14 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                 document,
                                 undefined,
                                 mergeConfigs(
-                                    getDefaultMathConfiguration('custom')
-                                        .delims,
+                                    getDefaultMathConfig('custom').delims,
                                     texEscapeSettings ?? {},
                                 ),
                             ),
                             document,
                             lines: document.split('\n'),
                             texSettings: mergeConfigs(
-                                getDefaultMathConfiguration('custom').delims,
+                                getDefaultMathConfig('custom').delims,
                                 texEscapeSettings ?? {},
                             ),
                             directiveSettings: {},

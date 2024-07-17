@@ -1,5 +1,7 @@
 // File description: Types related to the `MathHandler` class.
 
+/* eslint-disable tsdoc/syntax */
+
 // Types
 import { type Equals, typeAssert } from '$deps.js';
 import type { MathHandler } from '$handlers/MathHandler.js';
@@ -30,12 +32,12 @@ export type MathBackend = 'katex' | 'mathjax' | 'custom' | 'none';
  *
  * @typeParam T - The type of the math processor.
  * @returns Depending on `T`:
- * - `katex`: The module's `KatexOptions` type.
- * - `mathjax`: Type with an optional `outputFormat` property of type
- *   `'svg' | 'chtml'` and an optional `mathjaxConfiguration` property of type
- *   {@link MathjaxConfiguration | `MathjaxConfiguration`}.
- * - `custom`: `Record<string, unknown>`.
- * - `none`: `Record<string, unknown>`.
+ * -   `katex`: The module's `KatexOptions` type.
+ * -   `mathjax`: Type with an optional `outputFormat` property of type `'svg' |
+ *     'chtml'` and an optional `mathjaxConfiguration` property of type
+ *     {@link MathjaxConfiguration | `MathjaxConfiguration`}.
+ * -   `custom`: `Record<string, unknown>`.
+ * -   `none`: `Record<string, unknown>`.
  *
  * @remarks This is the type of the argument passed to the math handler's
  * `configure` function.
@@ -54,8 +56,8 @@ export type MathConfiguration<B extends MathBackend> = B extends 'katex'
 interface SveltexKatexConfig {
     katex?: Omit<import('katex').KatexOptions, 'displayMode'> | undefined;
     /**
-     * KaTeX needs CSS to work properly. By default, Sveltex takes care
-     * of this itself. This property allows you to configure this behavior.
+     * KaTeX needs CSS to work properly. By default, Sveltex takes care of this
+     * itself. This property allows you to configure this behavior.
      */
     css?:
         | ({
@@ -93,8 +95,8 @@ interface SveltexMathjaxConfig {
     mathjax?: MathjaxConfiguration | undefined;
 
     /**
-     * MathJax needs CSS to work properly. By default, Sveltex takes care
-     * of this itself. This property allows you to configure this behavior.
+     * MathJax needs CSS to work properly. By default, Sveltex takes care of
+     * this itself. This property allows you to configure this behavior.
      */
     css?:
         | ({
@@ -196,118 +198,128 @@ export interface WithDelims {
     /**
      * Enable or disable delimiters for math.
      */
-    delims?: {
-        /**
-         * If this is set to `false`, content inside `$...$`, `$$...$$`,
-         * `$$$...$$$`, etc. will not be processed by the math processor, and
-         * won't be escaped either, meaning that the markdown processor will
-         * process it however it sees fit.
-         *
-         * @remarks
-         * Setting this to `false` renders `inline.singleDollar` and
-         * `doubleDollarSignsDisplay` useless.
-         *
-         * @defaultValue
-         * `true` if and only if the math backend isn't `'none'`.
-         */
-        dollars?: boolean | undefined;
+    delims?:
+        | {
+              /**
+               * If this is set to `false`, content inside `$...$`, `$$...$$`,
+               * `$$$...$$$`, etc. will not be processed by the math processor,
+               * and won't be escaped either, meaning that the markdown
+               * processor will process it however it sees fit.
+               *
+               * @remarks
+               * Setting this to `false` renders `inline.singleDollar` and
+               * `doubleDollarSignsDisplay` useless.
+               *
+               * @defaultValue
+               * `true` if and only if the math backend isn't `'none'`.
+               */
+              dollars?: boolean | undefined;
 
-        /**
-         * Delimiters that can be enabled or disabled whose content will always
-         * be treated as _inline_ math.
-         */
-        inline?: {
-            /**
-             * TODO: Improve documentation here.
-             *
-             * Whether `$...$` should be treated as math (`true`) or not
-             * (`false`).
-             *
-             * @remarks
-             * You can always write `\$` to escape a dollar sign outside of math
-             * mode. Inside of math mode, this won't work, but there are a few
-             * possible remedies:
-             *
-             * -   If this option is set to `false`, you can surround the inline
-             *     math with _n_ ≥ 2 dollar signs, and then use up to _n_ - 1
-             *     consecutive dollar signs inside the math without having to
-             *     worry about escaping them. This mirrors the behavior of
-             *     backticks in markdown. For example: `$$\text{Let $x = 2$}$$`.
-             *     Note, however, that `\n$$\n123\n$$\n` will be rendered as
-             *     display math.
-             *
-             * @defaultValue
-             * ```
-             * true
-             * ```
-             */
-            singleDollar?: boolean;
+              /**
+               * Delimiters that can be enabled or disabled whose content will
+               * always be treated as _inline_ math.
+               */
+              inline?: {
+                  /**
+                   * TODO: Improve documentation here.
+                   *
+                   * Whether `$...$` should be treated as math (`true`) or not
+                   * (`false`).
+                   *
+                   * @remarks
+                   * You can always write `\$` to escape a dollar sign outside
+                   * of math mode. Inside of math mode, this won't work, but
+                   * there are a few possible remedies:
+                   *
+                   * -   If this option is set to `false`, you can surround the
+                   *     inline math with _n_ ≥ 2 dollar signs, and then use up
+                   *     to _n_ - 1 consecutive dollar signs inside the math
+                   *     without having to worry about escaping them. This
+                   *     mirrors the behavior of backticks in markdown. For
+                   *     example: `$$\text{Let $x = 2$}$$`. Note, however, that
+                   *     `\n$$\n123\n$$\n` will be rendered as display math.
+                   *
+                   * @defaultValue
+                   * ```
+                   * true
+                   * ```
+                   */
+                  singleDollar?: boolean | undefined;
 
-            /**
-             * Whether `\(...\)` should be treated as math (`true`) or regular
-             * text (`false`). If it _is_ interpreted as math, it will always be
-             * interpreted as inline math.
-             *
-             * @defaultValue
-             * ```
-             * true
-             * ```
-             */
-            escapedParentheses?: boolean;
-        };
-        /**
-         * Delimiters that can be enabled or disabled whose content will always
-         * be treated as _display_ math.
-         */
-        display?: {
-            /**
-             * Whether `\[...\]` should be treated as math (`true`) or regular
-             * text (`false`). If it _is_ interpreted as math, it will always be
-             * interpreted as display math.
-             *
-             * @defaultValue
-             * ```
-             * true
-             * ```
-             */
-            escapedSquareBrackets?: boolean;
-        };
-        /**
-         * Controls when dollar-delimited math should be treated as display
-         * math.
-         *
-         * - `'always'`: Always display `$$...$$` as display math.
-         * - `'newline'`: Display `$$...$$` as display math iff it's on its own
-         *   line(s) (i.e., if it matches `/^\s*\$\$.*?\$\$\s*$/msu`).
-         * - `'fenced'`: Display `$$...$$` as display math iff the opening and
-         *   closing delimiters each have an entire line for themselves.
-         *
-         * @defaultValue `'fenced'`
-         *
-         * @example
-         * Consider the following markdown:
-         *
-         * ```md
-         * text $$ a $$ text
-         *
-         * $$ b $$
-         *
-         * $$
-         * c
-         * $$
-         * ```
-         *
-         * The following table shows how the `isDisplayMath` setting would
-         * affect the rendering of the math blocks:
-         *
-         * |     | `'always'` | `'newline'` | `'fenced'` |
-         * |-----|:----------:|:-----------:|:----------:|
-         * | `a` | display    | inline      | inline     |
-         * | `b` | display    | display     | inline     |
-         * | `c` | display    | display     | display    |
-         */
-        doubleDollarSignsDisplay?: 'always' | 'newline' | 'fenced' | undefined;
-    };
+                  /**
+                   * Whether `\(...\)` should be treated as math (`true`) or
+                   * regular text (`false`). If it _is_ interpreted as math, it
+                   * will always be interpreted as inline math.
+                   *
+                   * @defaultValue
+                   * ```
+                   * true
+                   * ```
+                   */
+                  escapedParentheses?: boolean | undefined;
+              };
+              /**
+               * Delimiters that can be enabled or disabled whose content will
+               * always be treated as _display_ math.
+               */
+              display?:
+                  | {
+                        /**
+                         * Whether `\[...\]` should be treated as math (`true`)
+                         * or regular text (`false`). If it _is_ interpreted as
+                         * math, it will always be interpreted as display math.
+                         *
+                         * @defaultValue
+                         * ```
+                         * true
+                         * ```
+                         */
+                        escapedSquareBrackets?: boolean | undefined;
+                    }
+                  | undefined;
+              /**
+               * Controls when dollar-delimited math should be treated as
+               * display math.
+               *
+               * - `'always'`: Always display `$$...$$` as display math.
+               * - `'newline'`: Display `$$...$$` as display math iff it's on
+               *   its own line(s) (i.e., if it matches
+               *   `/^\s*\$\$.*?\$\$\s*$/msu`).
+               * - `'fenced'`: Display `$$...$$` as display math iff the opening
+               *   and closing delimiters each have an entire line for
+               *   themselves.
+               *
+               * @defaultValue `'fenced'`
+               *
+               * @example
+               * Consider the following markdown:
+               *
+               * ```md
+               * text $$ a $$ text
+               *
+               * $$ b $$
+               *
+               * $$
+               * c
+               * $$
+               * ```
+               *
+               * The following table shows how the `isDisplayMath` setting would
+               * affect the rendering of the math blocks:
+               *
+               * |     | `'always'` | `'newline'` | `'fenced'` |
+               * |-----|:----------:|:-----------:|:----------:|
+               * | `a` | display    | inline      | inline     |
+               * | `b` | display    | display     | inline     |
+               * | `c` | display    | display     | display    |
+               */
+              doubleDollarSignsDisplay?:
+                  | 'always'
+                  | 'newline'
+                  | 'fenced'
+                  | undefined;
+          }
+        | undefined;
 }
 
 interface WithTransformers<T extends MathBackend> {

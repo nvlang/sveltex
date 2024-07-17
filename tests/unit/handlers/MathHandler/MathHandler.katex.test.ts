@@ -164,6 +164,19 @@ describe("MathHandler<'katex'>", () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
+            it('should skip math if math config is invalid', async () => {
+                const handler = await MathHandler.create('katex', {
+                    transformers: {
+                        pre: 'invalid' as unknown as [string, string],
+                    },
+                });
+                expect(
+                    (await handler.process('a{b}c', { inline: false }))
+                        .processed,
+                ).toEqual('a&lbrace;b&rbrace;c');
+                expect(log).toHaveBeenCalled();
+            });
+
             it('should support CSS color variables', async () => {
                 expect(
                     (

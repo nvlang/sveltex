@@ -1,7 +1,7 @@
 // File description: Caching mechanism for `TexHandler`.
 
 // Internal dependencies
-import { defaultCacheDirectory } from '$base/defaults.js';
+import { getDefaultCacheDirectory } from '$base/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs } from '$utils/fs.js';
 
@@ -59,7 +59,7 @@ export class SveltexCache {
 
     static async load(
         outputDirectory: string,
-        cacheDirectory: string = defaultCacheDirectory,
+        cacheDirectory: string = getDefaultCacheDirectory(),
     ): Promise<SveltexCache> {
         const pathToCacheJson = join(cacheDirectory, 'cache.json');
         try {

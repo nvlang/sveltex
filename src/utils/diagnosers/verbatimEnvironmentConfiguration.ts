@@ -17,7 +17,11 @@ import {
     isVerbatimType,
     verbatimTypes,
 } from '$typeGuards/verbatim.js';
-import { Diagnoser, insteadGot } from '$utils/diagnosers/Diagnoser.js';
+import {
+    checkTransformers,
+    Diagnoser,
+    insteadGot,
+} from '$utils/diagnosers/Diagnoser.js';
 import { log } from '$utils/debug.js';
 import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';
 import { getDefaultVerbEnvConfig } from '$base/defaults.js';
@@ -63,12 +67,7 @@ export function diagnoseVerbEnvConfig(
             ? (x.type as VerbatimType)
             : undefined;
 
-    d.ifPresent(
-        'transformers',
-        'an object with "pre" and "post" properties',
-        (obj) => isRecord(obj, ([k]) => k === 'pre' || k === 'post'),
-        'object',
-    );
+    checkTransformers(d);
 
     d.ifPresent(
         'defaultAttributes',

@@ -21,10 +21,10 @@ export type { Sveltex } from '$base/Sveltex.js';
 export {
     getDefaultCodeConfig,
     getDefaultMarkdownConfig,
-    getDefaultMathConfiguration,
+    getDefaultMathConfig,
     getDefaultSveltexConfig,
     getDefaultTexConfig,
     getDefaultVerbEnvConfig,
     getTexPresetDefaults,
-    defaultCacheDirectory,
+    getDefaultCacheDirectory,
 } from '$base/defaults.js';

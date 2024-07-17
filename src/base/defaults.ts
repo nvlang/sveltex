@@ -60,7 +60,7 @@ import {
  * @returns The default configuration for the given math backend and CSS
  * approach.
  */
-export function getDefaultMathConfiguration<
+export function getDefaultMathConfig<
     T extends MathBackend,
     CA extends 'cdn' | 'hybrid' | 'none' = T extends 'mathjax'
         ? 'hybrid'
@@ -162,10 +162,6 @@ export function getDefaultMathConfiguration<
     }
 }
 
-const cacheDir: string | undefined = findCacheDirectory({
-    name: '@nvl/sveltex',
-});
-
 /**
  * The default cache directory for SvelTeX.
  *
@@ -174,12 +170,22 @@ const cacheDir: string | undefined = findCacheDirectory({
  * 'node_modules/.cache/@nvl/sveltex'
  * ```
  */
-export const defaultCacheDirectory: string = cacheDir
-    ? relative(process.cwd(), cacheDir)
-    : resolve(
-          process.env['XDG_CACHE_HOME'] ?? join(homedir(), '.cache'),
-          'sveltex',
-      );
+export function getDefaultCacheDirectory(): string {
+    if (defaultCacheDirectory === undefined) {
+        const cacheDir: string | undefined = findCacheDirectory({
+            name: '@nvl/sveltex',
+        });
+        defaultCacheDirectory = cacheDir
+            ? relative(process.cwd(), cacheDir)
+            : resolve(
+                  process.env['XDG_CACHE_HOME'] ?? join(homedir(), '.cache'),
+                  'sveltex',
+              );
+    }
+    return defaultCacheDirectory;
+}
+
+let defaultCacheDirectory: string | undefined = undefined;
 
 /**
  * Get the default TeX configuration.
@@ -189,7 +195,7 @@ export const defaultCacheDirectory: string = cacheDir
 export function getDefaultTexConfig(): FullTexConfiguration {
     return {
         caching: {
-            cacheDirectory: defaultCacheDirectory,
+            cacheDirectory: getDefaultCacheDirectory(),
             enabled: true,
         },
         compilation: {
@@ -483,7 +489,7 @@ export function getDefaultSveltexConfig<
 ): FullSveltexConfiguration<MD, C, MT> {
     return {
         extensions: ['.sveltex'] as `.${string}`[],
-        math: getDefaultMathConfiguration(mathBackend),
+        math: getDefaultMathConfig(mathBackend),
         code: getDefaultCodeConfig(codeBackend),
         markdown: getDefaultMarkdownConfig(markdownBackend),
         tex: getDefaultTexConfig(),

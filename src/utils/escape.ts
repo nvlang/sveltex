@@ -51,7 +51,7 @@ import {
 import { micromarkSkip } from '$utils/micromark/syntax.js';
 import type { MdastJson, MdastToml } from '$types/utils/Frontmatter.js';
 import type { VerbatimHandler } from '$handlers/VerbatimHandler.js';
-import { type CodeBackend, getDefaultMathConfiguration } from '$mod.js';
+import { type CodeBackend, getDefaultMathConfig } from '$mod.js';
 import { log, prettifyError } from '$utils/debug.js';
 import type { WithFullDelims } from '$types/handlers/Math.js';
 
@@ -959,7 +959,7 @@ export function unescapeSnippets(
 export function parseToMdast(
     document: string,
     verbatimTags: string[] | undefined = undefined,
-    mathDelims: WithFullDelims['delims'] = getDefaultMathConfiguration('custom')
+    mathDelims: WithFullDelims['delims'] = getDefaultMathConfig('custom')
         .delims,
     directiveSettings: DirectiveEscapeSettings = {},
 ): MdastRoot {

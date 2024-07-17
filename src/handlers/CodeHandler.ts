@@ -76,7 +76,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         ) => {
             if (this.configIsValid === undefined) {
                 this.configIsValid =
-                    diagnoseCodeConfiguration(this.backend, this.configuration)
+                    diagnoseCodeConfiguration(this.backend, this._configuration)
                         .errors === 0;
             }
 

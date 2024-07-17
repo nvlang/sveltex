@@ -16,7 +16,6 @@ import {
 import {
     isArray,
     isBoolean,
-    isFunction,
     isNonNullObject,
     isNumber,
     isOneOf,
@@ -24,10 +23,15 @@ import {
     isString,
 } from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
-import { Diagnoser, enquote, insteadGot } from '$utils/diagnosers/Diagnoser.js';
+import {
+    checkTransformers,
+    Diagnoser,
+    enquote,
+    insteadGot,
+} from '$utils/diagnosers/Diagnoser.js';
 
 // External dependencies
-import { isRegExp, nodeAssert } from '$deps.js';
+import { nodeAssert } from '$deps.js';
 
 export function diagnoseCodeConfiguration(
     backend: CodeBackend,
@@ -47,23 +51,7 @@ export function diagnoseCodeConfiguration(
         (v) => isString(v) || isBoolean(v),
         ['string', 'boolean'],
     );
-    d.ifPresent('transformers', 'a non-null object', isNonNullObject, 'object');
-    const is2Tuple = (v: unknown) =>
-        isArray(v) &&
-        v.length === 2 &&
-        (isString(v[0]) || isRegExp(v[0])) &&
-        isString(v[1]);
-    ['pre', 'post'].forEach((key) => {
-        d.ifPresent(
-            `transformers.${key}`,
-            'a function, a 2-tuple [string | RegExp, string], or an array of either',
-            (v) =>
-                isFunction(v) ||
-                is2Tuple(v) ||
-                isArray(v, (x) => isFunction(x) || is2Tuple(x)),
-            ['function', 'object'],
-        );
-    });
+    checkTransformers(d);
     if (isPresentAndDefined(x, 'theme')) {
         if (isCodeBackendWithCss(backend)) {
             nodeAssert('theme' in x);

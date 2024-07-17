@@ -2,7 +2,7 @@
 
 // Internal dependencies
 import { process, resolve } from '$deps.js';
-import { defaultCacheDirectory } from '$base/defaults.js';
+import { getDefaultCacheDirectory } from '$base/defaults.js';
 import { log, prettifyError } from '$utils/debug.js';
 import { fs, pathExists } from '$utils/fs.js';
 
@@ -18,7 +18,7 @@ export async function getVersion(pkg: string): Promise<string | undefined> {
     let backendVersion: string | undefined;
     try {
         const prefix =
-            /(.*?)\/node_modules/.exec(defaultCacheDirectory)?.[1] ?? '';
+            /(.*?)\/node_modules/.exec(getDefaultCacheDirectory())?.[1] ?? '';
         const path = resolve(prefix, 'node_modules', pkg, 'package.json');
         const fileContents = await fs.readFile(path, 'utf-8');
         if (fileContents) {

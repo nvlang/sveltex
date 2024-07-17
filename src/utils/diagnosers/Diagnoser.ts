@@ -6,11 +6,14 @@ import {
     isString,
     ifPresentAndDefined,
     isArray,
+    isNonNullObject,
+    isFunction,
+    isPresentAndDefined,
 } from '$typeGuards/utils.js';
 import { log } from '$utils/debug.js';
 
 // External dependencies
-import { inspect, getProperty } from '$deps.js';
+import { inspect, getProperty, isRegExp } from '$deps.js';
 
 /**
  * A class to diagnose problems in an object.
@@ -154,6 +157,47 @@ export class Diagnoser {
      *
      * @example
      * ```ts
+     * d.isPresent('a', 'a string', isString);
+     * d.isPresent('b', 'a positive number', (v) => isNumber(v) && v > 0, 'number');
+     * ```
+     */
+    isPresent(
+        prop: PropertyKey,
+        expect: string,
+        typeGuard: (x: unknown) => boolean,
+        expectType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
+        severity: 'error' | 'warn' = 'error',
+    ) {
+        let passed = true;
+        const subject = this.subject;
+        if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+            const propValue = getProperty<unknown>(subject, prop, undefined);
+            passed = typeGuard(propValue);
+        } else {
+            passed =
+                isPresentAndDefined(subject, prop) &&
+                ifPresentAndDefined(subject, prop, typeGuard);
+        }
+        if (!passed) {
+            this.problems.push({
+                severity,
+                message: `Expected "${String(prop)}" to be ${expect}. ${insteadGot(subject[prop as keyof typeof subject], expectType)}`,
+            });
+        }
+    }
+
+    /**
+     * @param prop - Property key to check. Can be nested (e.g. `'a.b.c[0]'`).
+     * @param expect - String representing what was expected.
+     * @param typeGuard - Type guard to check the property against.
+     * @param expectType - Expected type of the property. This is used to provide
+     *
+     * @param severity - Severity of the problem. Either `'error'` or `'warn'`.
+     * Default: `'error'`.
+     *
+     * @example
+     * ```ts
      * d.ifPresent('a', 'a string', isString);
      * d.ifPresent('b', 'a positive number', (v) => isNumber(v) && v > 0, 'number');
      * ```
@@ -219,4 +263,30 @@ export function insteadGot(
 
 export function enquote(str: unknown): string {
     return `"${String(str)}"`;
+}
+
+function is2Tuple(v: unknown): v is [string | RegExp, string] {
+    return (
+        isArray(v) &&
+        v.length === 2 &&
+        (isString(v[0]) || isRegExp(v[0])) &&
+        isString(v[1])
+    );
+}
+
+export function checkTransformers(d: Diagnoser) {
+    d.ifPresent('transformers', 'a non-null object', isNonNullObject, 'object');
+
+    ['pre', 'post'].forEach((key) => {
+        d.ifPresent(
+            `transformers.${key}`,
+            'a function, a 2-tuple [string | RegExp, string], an array of either, or null',
+            (v) =>
+                v === null ||
+                isFunction(v) ||
+                is2Tuple(v) ||
+                isArray(v, (x) => isFunction(x) || is2Tuple(x)),
+            ['function', 'object', 'null'],
+        );
+    });
 }

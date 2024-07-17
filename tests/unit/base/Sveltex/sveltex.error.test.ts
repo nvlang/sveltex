@@ -50,6 +50,38 @@ describe('Sveltex.markup()', () => {
 });
 
 describe('Sveltex.create()', () => {
+    beforeAll(async () => {
+        await spy('log');
+    });
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
+    describe('rethrows unknown errors it catches', () => {
+        test('bad configuration', async () => {
+            await expect(
+                async () =>
+                    await sveltex(
+                        {
+                            markdownBackend: 'markdown-it',
+                            codeBackend: 'highlight.js',
+                            mathBackend: 'katex',
+                        },
+                        {
+                            // @ts-expect-error For testing purposes
+                            math: null,
+                            // @ts-expect-error For testing purposes
+                            markdown: null,
+                            // @ts-expect-error For testing purposes
+                            code: null,
+                            // @ts-expect-error For testing purposes
+                            tex: null,
+                            // @ts-expect-error For testing purposes
+                            verbatim: null,
+                        },
+                    ),
+            ).rejects.toThrowError(/Failed to create SvelTeX preprocessor\./);
+        });
+    });
     describe('logs error about missing dependencies', () => {
         test.each(
             cartesianProduct(
@@ -84,7 +116,7 @@ describe('Sveltex.create()', () => {
                         codeBackend,
                     }),
             ).rejects.toThrowError(
-                /Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:/,
+                /Failed to create SvelTeX preprocessor\.\n\nPlease install the necessary dependencies by running:/,
             );
             expect(missingDeps).toContain(markdownBackend);
             expect(missingDeps).toContain(

@@ -37,6 +37,7 @@ import {
     tagsThatCannotContainParagraphs,
 } from '$data/markdown.js';
 import { generateId } from '$utils/escape.js';
+import { diagnoseMarkdownConfiguration } from '$utils/diagnosers/markdownConfiguration.js';
 
 /**
  * Markdown handler, i.e., the class to which Sveltex delegates the processing
@@ -67,6 +68,8 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
         };
     }
 
+    private configIsValid: boolean | undefined = undefined;
+
     override get process(): (
         content: string,
         options: MarkdownProcessOptions,
@@ -75,6 +78,25 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
         unescapeOptions: UnescapeOptions;
     }> {
         return async (content: string, options: MarkdownProcessOptions) => {
+            if (this.configIsValid === undefined) {
+                this.configIsValid =
+                    diagnoseMarkdownConfiguration(
+                        this.backend,
+                        this._configuration,
+                    ).errors === 0;
+            }
+
+            if (!this.configIsValid) {
+                log(
+                    'error',
+                    'Invalid markdown configuration. Skipping markdown processing.',
+                );
+                return {
+                    processed: content,
+                    unescapeOptions: { removeParagraphTag: true },
+                };
+            }
+
             let unescapeTags: (str: string) => string = (str) => str;
 
             if (!this._configuration.strict) {

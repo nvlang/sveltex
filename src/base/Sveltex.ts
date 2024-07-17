@@ -585,17 +585,27 @@ export class Sveltex<
         }
 
         if (errors.length > 0) {
-            const install =
-                '\n\nPlease install the necessary dependencies by running:\n\n' +
-                `${await detectPackageManager()} add -D ${missingDeps.join(' ')}`;
+            if (missingDeps.length > 0) {
+                const install =
+                    '\n\nPlease install the necessary dependencies by running:\n\n' +
+                    `${await detectPackageManager()} add -D ${missingDeps.join(' ')}`;
 
-            throw Error(`Failed to create Sveltex preprocessor.` + install, {
-                cause:
-                    'The following dependencies could not be found: ' +
-                    missingDeps.map(enquote).join(', ') +
-                    '.\n\nCaught errors:\n' +
-                    errors.join('\n\n'),
-            });
+                throw Error(
+                    `Failed to create SvelTeX preprocessor.` + install,
+                    {
+                        cause:
+                            'The following dependencies could not be found: ' +
+                            missingDeps.map(enquote).join(', ') +
+                            '.\n\nCaught errors:\n' +
+                            errors.join('\n\n'),
+                    },
+                );
+            } else {
+                throw Error(
+                    `Failed to create SvelTeX preprocessor.\n\n` +
+                        errors.join('\n\n'),
+                );
+            }
         }
 
         sveltex._texHandler = await TexHandler.create(

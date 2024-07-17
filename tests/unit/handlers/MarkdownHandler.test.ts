@@ -25,6 +25,7 @@ import { cartesianProduct } from '$tests/unit/utils.js';
 
 describe('MarkdownHandler<MarkdownBackend>', () => {
     describe.each([
+        ['{ components: [{}] }', { components: [{}] }, [['*a*', '*a*']]],
         [
             '{ prefersInline: () => true }',
             { prefersInline: () => true },

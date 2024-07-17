@@ -11,7 +11,7 @@ import type {
 import type { ProcessedSnippet } from '$types/utils/Escape.js';
 
 // Internal dependencies
-import { getDefaultMathConfiguration } from '$base/defaults.js';
+import { getDefaultMathConfig } from '$base/defaults.js';
 import { Handler } from '$handlers/Handler.js';
 import { isArray } from '$typeGuards/utils.js';
 import { cdnLink, fancyFetch, fancyWrite } from '$utils/cdn.js';
@@ -26,6 +26,7 @@ import { applyTransformations } from '$utils/transformers.js';
 // External dependencies
 import { inspect, is, join, nodeAssert, typeAssert } from '$deps.js';
 import { log } from '$utils/debug.js';
+import { diagnoseMathConfiguration } from '$utils/diagnosers/mathConfiguration.js';
 
 export class MathHandler<B extends MathBackend> extends Handler<
     B,
@@ -39,6 +40,23 @@ export class MathHandler<B extends MathBackend> extends Handler<
         options?: MathProcessOptions<B>,
     ) => Promise<ProcessedSnippet> {
         return async (tex: string, options?: MathProcessOptions<B>) => {
+            if (this.configIsValid === undefined) {
+                this.configIsValid =
+                    diagnoseMathConfiguration(this.backend, this._configuration)
+                        .errors === 0;
+            }
+
+            if (!this.configIsValid) {
+                log(
+                    'error',
+                    'Invalid math configuration. Skipping math processing.',
+                );
+                return {
+                    processed: escapeBraces(tex),
+                    unescapeOptions: { removeParagraphTag: true },
+                };
+            }
+
             await this.handleCss();
 
             // Apply pre-transformers
@@ -116,6 +134,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
         };
     }
 
+    private configIsValid: boolean | undefined = undefined;
+
     /**
      * Lines of code that should be added to the `<svelte:head>` component
      * of any page that contains any TeX on which this handler ran. This
@@ -179,7 +199,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
             // Merge user-provided configuration into the default configuration.
             const configuration = mergeConfigs(
-                getDefaultMathConfiguration('custom'),
+                getDefaultMathConfig('custom'),
                 userConfig ?? {},
             );
 
@@ -213,7 +233,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
             // Merge user-provided configuration into the default configuration.
             const configuration = mergeConfigs(
-                getDefaultMathConfiguration('katex', userConfig?.css?.type),
+                getDefaultMathConfig('katex', userConfig?.css?.type),
                 userConfig ?? {},
             );
 
@@ -378,7 +398,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
             // Merge user-provided configuration into the default configuration.
             let configuration = mergeConfigs(
-                getDefaultMathConfiguration('mathjax', userConfig?.css?.type),
+                getDefaultMathConfig('mathjax', userConfig?.css?.type),
                 userConfig ?? {},
             );
 
@@ -607,7 +627,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
         // Merge user-provided configuration into the default configuration.
         const configuration = mergeConfigs(
-            getDefaultMathConfiguration('none'),
+            getDefaultMathConfig('none'),
             userConfig ?? {},
         );
 
