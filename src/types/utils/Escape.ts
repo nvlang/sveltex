@@ -221,7 +221,7 @@ export interface DirectiveEscapeSettings {
      *
      * @defaultValue
      * ```ts
-     * true
+     * false
      * ```
      */
     enabled?: boolean | undefined;

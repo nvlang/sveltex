@@ -519,7 +519,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
@@ -533,7 +533,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
@@ -551,7 +551,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
@@ -563,7 +563,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
@@ -576,7 +576,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
@@ -588,7 +588,7 @@ export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
                 strict: false,
                 transformers: { post: [], pre: [] },
                 directives: {
-                    enabled: true,
+                    enabled: false,
                     bracesArePartOfDirective: null,
                 },
                 components: [],
