@@ -49,6 +49,7 @@ import { applyTransformations } from '$utils/transformers.js';
 import { enquote } from '$utils/diagnosers/Diagnoser.js';
 import { deepClone } from '$handlers/Handler.js';
 import { copyTransformations } from '$utils/misc.js';
+import { detectAndImportComponents } from '$utils/markdown.js';
 
 /**
  * Returns a promise that resolves to a new instance of `Sveltex`.
@@ -143,6 +144,7 @@ export class Sveltex<
         content,
         attributes,
         filename,
+        markup,
     }: {
         content: string;
         attributes: Record<string, string | boolean>;
@@ -190,8 +192,17 @@ export class Sveltex<
         if (this.codePresent[filename]) {
             script.push(...this._codeHandler.scriptLines);
         }
+
         // From frontmatter
         script.push(...(this.scriptLines[filename] ?? []));
+
+        script.push(
+            ...detectAndImportComponents(
+                markup,
+                this._configuration.markdown.components,
+                script,
+            ),
+        );
 
         if (script.length === 0) return;
 

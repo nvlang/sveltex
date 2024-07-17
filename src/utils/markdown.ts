@@ -12,6 +12,7 @@ import {
     type HastElement,
 } from '$deps.js';
 import { countNewlines } from '$handlers/MarkdownHandler.js';
+import { isPresentAndDefined } from '$typeGuards/utils.js';
 import type { ComponentInfo } from '$types/handlers/Markdown.js';
 import { getLocationUnist, walkUnist } from '$utils/ast.js';
 import { re } from '$utils/misc.js';
@@ -203,9 +204,62 @@ export function adjustHtmlSpacing(
     return s.toString();
 }
 
-// function isWhitespace(str: unknown): str is ' ' | '\n' | '\t' | '\r' {
-//     return str === ' ' || str === '\n' || str === '\t' || str === '\r';
-// }
+/**
+ * Detects components used in the given Svelte document, sees if they're
+ * imported yet, and, if not, returns lines to append to the `<script>` tag to
+ * import them. Only checks for components that are present in the array from
+ * the `markdown.components` SvelTeX configuration property, and have the
+ * `importPath` property set therein.
+ *
+ * @param markup - The Svelte document to search for components in, after
+ * SvelTeX's `markup` function has processed it.
+ * @param components - Value of `markdown.components` SvelTeX configuration
+ * property.
+ * @param script - The content of the `<script>` tag in the document, split by
+ * lines.
+ *
+ * @returns Lines to append to the `<script>` tag to import the detected and
+ * not-yet-imported components.
+ */
+export function detectAndImportComponents(
+    markup: string,
+    components: ComponentInfo[],
+    script: string[],
+): string[] {
+    const append: string[] = [];
+    const scriptStr = script.join('\n');
+    components.forEach((componentInfo) => {
+        if (
+            isPresentAndDefined(componentInfo, 'importPath') &&
+            !isImported(scriptStr, componentInfo) &&
+            isUsed(
+                scriptStr ? markup.replace(scriptStr, '') : markup,
+                componentInfo,
+            )
+        ) {
+            append.push(
+                `import ${componentInfo.name} from '${componentInfo.importPath}';`,
+            );
+        }
+    });
+    return append;
+}
+
+function isImported(
+    script: string,
+    componentInfo: { name: string; importPath: string },
+): boolean {
+    return new RegExp(
+        `import\\s*(?:\\s${componentInfo.name}\\s|\\{\\s*default as ${componentInfo.name}\\s*\\})\\s*from\\s*['"]`,
+    ).test(script);
+}
+
+function isUsed(markup: string, componentInfo: { name: string }): boolean {
+    return new RegExp(
+        `<\\s*${componentInfo.name}(\\s[^>]*?)?\\s*/?>`,
+        'u',
+    ).test(markup);
+}
 
 /**
  * Regular expression for parsing a component from an HTML string. The regular
