@@ -1,4 +1,4 @@
-import { Extends, htmlTagNames, typeAssert } from '$deps.js';
+import { type Extends, htmlTagNames, typeAssert } from '$deps.js';
 import { isString } from '$typeGuards/utils.js';
 import type { ComponentInfo } from '$types/handlers/Markdown.js';
 
