@@ -23,7 +23,7 @@ internally throughout Sveltex.
 | [`escape.ts`](escape.ts) | Escape and unescape different kinds of content in a Sveltex file. |
 | [`frontmatter.ts`](frontmatter.ts) |  Parse frontmatter from a Sveltex file. |
 | [`fs.ts`](fs.ts) | File system operations (re-exported from `node:fs` and `node:fs/promises` for easier mocking in test files). |
-| [`markdown.ts`](markdown.ts) | `remark` and `micromark` extensions to disable autolinks and indented code blocks. |
+| [`markdown.ts`](markdown.ts) | `remark` and `micromark` extensions to disable autolinks and indented code blocks. Also, `adjustHtmlSpacing` and `detectAndImportComponents` functions to adjust whitespace in markup and detect and import (some) components, respectively. |
 | [`merge.ts`](merge.ts) | Custom deep merge function intended for merging user-provided configuration with default configuration. |
 | [`misc.ts`](misc.ts) | Miscellaneous utility functions. |
 | [`parseComponent.ts`](parseComponent.ts) | Parse a generic HTML component into its tag name, attributes, and inner content. |

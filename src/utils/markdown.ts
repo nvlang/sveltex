@@ -1,5 +1,7 @@
 // File description: `remark` and `micromark` extensions to disable autolinks
-// and indented code blocks.
+// and indented code blocks. Also, `adjustHtmlSpacing` and
+// `detectAndImportComponents` functions to adjust whitespace in markup and
+// detect and import (some) components, respectively.
 
 import { canBeInParagraph, canContainParagraph } from '$data/markdown.js';
 import {

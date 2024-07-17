@@ -1,3 +1,6 @@
+// File description: HTML tags by whether they can be in- or contain paragraphs.
+// Also, list of "type 6" HTML blocks, as per CommonMark spec.
+
 import { type Extends, htmlTagNames, typeAssert } from '$deps.js';
 import { isString } from '$typeGuards/utils.js';
 import type { ComponentInfo } from '$types/handlers/Markdown.js';
