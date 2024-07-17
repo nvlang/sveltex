@@ -203,6 +203,29 @@ describe('Sveltex', () => {
             existsSync.mockReset();
         });
 
+        it('auto-importing some components (non-empty script tag)', async () => {
+            existsSync.mockReturnValue(true);
+            const markupOut = await sp.markup({
+                content:
+                    '<script>\nconst something = 0;\n</script>\n<Example />',
+                filename: 'e2468a1e-9389-4537-b6ee-ffd9b4499c4b.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\nconst something = 0;\n</script>\n<Example />',
+            );
+
+            const scriptOut = await sp.script({
+                content: '\nconst something = 0;\n',
+                attributes: {},
+                markup: markupOut?.code ?? '',
+                filename: 'e2468a1e-9389-4537-b6ee-ffd9b4499c4b.sveltex',
+            });
+            expect((scriptOut as Processed).code).toEqual(
+                "\nconst something = 0;\n\nimport Example from '$lib/components/Example.svelte';\n",
+            );
+            existsSync.mockReset();
+        });
+
         it('auto-importing some components (already imported)', async () => {
             existsSync.mockReturnValue(true);
             const markupOut = await sp.markup({
