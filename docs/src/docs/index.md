@@ -79,8 +79,8 @@ preprocessor can take over.
 
 -   <PhFeather :size="28" weight="duotone"/>
 
-    **Small codebase:** At under 10,000 lines of code[^1], SvelTeX's core is
-    relatively small, making it easier to maintain and contribute to.
+    **Small codebase:** At just north of 10,000 lines of code[^1], SvelTeX's
+    core is relatively small, making it easier to maintain and contribute to.
 
 -   <PhShieldCheck :size="28" weight="duotone"/>
 
@@ -100,7 +100,7 @@ preprocessor can take over.
     **Robust:** [Fuzzy](https://en.wikipedia.org/wiki/Fuzzing) testing with
     [fast-check](https://github.com/dubzzz/fast-check), E2E visual regression
     tests with [Playwright](https://playwright.dev/) (1,000+ snapshots), and
-    7,000+ unit tests with [Vitest](https://vitest.dev/) provide 100% code
+    8,000+ unit tests with [Vitest](https://vitest.dev/) provide 100% code
     coverage.
 
 -   <PhInfo :size="28" weight="duotone"/>
