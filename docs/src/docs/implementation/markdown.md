@@ -191,7 +191,14 @@ following:
 
 ## Directives
 
-Markdown directives are great. They're also somewhat tricky for us, since they can contain curly brackets, which could be mistaken for e.g. Svelte mustache tags. There
+Markdown directives are great. They're also somewhat tricky for us, since they
+can contain curly brackets, which could be mistaken for e.g. Svelte mustache
+tags. To deal with this, we provide the configuration option
+`markdown.directives.enabled`, which can be set to `true` to enable correct
+directive parsing despite any potential curly brackets. To loosen the default
+directive syntax a bit, one can furthermore set the property
+`markdown.directives.bracesArePartOfDirective` to a function which defines a
+looser syntax for directives when it comes to curly brackets.
 
 
 
