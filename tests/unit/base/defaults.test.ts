@@ -7,7 +7,6 @@ import {
     beforeEach,
     afterEach,
     beforeAll,
-    type MockInstance,
 } from 'vitest';
 import {
     getDefaultCodeConfig,
@@ -52,10 +51,8 @@ function fixture() {
 }
 
 describe.concurrent('config/defaults', () => {
-    let log: MockInstance;
     beforeAll(async () => {
-        const mocks = await spy(['log']);
-        log = mocks.log;
+        await spy('log');
     });
     afterAll(() => {
         vi.restoreAllMocks();
