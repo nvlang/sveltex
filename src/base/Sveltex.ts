@@ -168,7 +168,7 @@ export class Sveltex<
 
         // This array represents the code that will be appended to the <script>
         // tag in the Svelte file.
-        const script = tcInfos.map((info) => TexComponent.importSvg(info));
+        const script = [];
 
         // For info on the language aliases being used here, see
         // https://github.com/sveltejs/svelte-preprocess/blob/c2107e529da9438ea5b8060aa471119940896e40/src/modules/language.ts#L29-L39
@@ -184,8 +184,11 @@ export class Sveltex<
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
         if (attributes['context'] === 'module') {
+            // From frontmatter
             script.push(...(this.scriptModuleLines[filename] ?? []));
         } else {
+            script.push(...tcInfos.map((info) => TexComponent.importSvg(info)));
+
             if (this.mathPresent[filename]) {
                 script.push(...this._mathHandler.scriptLines);
             }
