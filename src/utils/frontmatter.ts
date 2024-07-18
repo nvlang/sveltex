@@ -240,17 +240,21 @@ function addMetaHttpEquiv(
 export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
     headLines: string[];
     scriptLines: string[];
+    scriptModuleLines: string[];
     frontmatter: Frontmatter | undefined;
 } {
     const frontmatter = interpretFrontmatter(parseFrontmatter(snippet));
     const headLines: string[] = [];
     const scriptLines: string[] = [];
+    const scriptModuleLines: string[] = [];
     if (frontmatter === undefined)
-        return { headLines, scriptLines, frontmatter };
+        return { headLines, scriptLines, scriptModuleLines, frontmatter };
     const { title, base, noscript, link, meta, imports } = frontmatter;
 
     Object.entries(frontmatter).forEach(([key, value]) => {
-        scriptLines.push(`const ${key} = ${JSON.stringify(value)};`);
+        scriptModuleLines.push(
+            `export const ${key} = ${JSON.stringify(value)};`,
+        );
     });
 
     // Imports
@@ -324,5 +328,5 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
         });
     }
 
-    return { headLines, scriptLines, frontmatter };
+    return { headLines, scriptLines, scriptModuleLines, frontmatter };
 }

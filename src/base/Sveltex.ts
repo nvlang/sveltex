@@ -183,24 +183,28 @@ export class Sveltex<
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
-        if (this.mathPresent[filename]) {
-            script.push(...this._mathHandler.scriptLines);
-        }
-        if (this.codePresent[filename]) {
-            script.push(...this._codeHandler.scriptLines);
-        }
+        if (attributes['context'] === 'module') {
+            script.push(...(this.scriptModuleLines[filename] ?? []));
+        } else {
+            if (this.mathPresent[filename]) {
+                script.push(...this._mathHandler.scriptLines);
+            }
+            if (this.codePresent[filename]) {
+                script.push(...this._codeHandler.scriptLines);
+            }
 
-        // From frontmatter
-        script.push(...(this.scriptLines[filename] ?? []));
+            // From frontmatter
+            script.push(...(this.scriptLines[filename] ?? []));
 
-        script.push(
-            ...detectAndImportComponents(
-                markup,
-                this._configuration.markdown.components,
-                content,
-                script,
-            ),
-        );
+            script.push(
+                ...detectAndImportComponents(
+                    markup,
+                    this._configuration.markdown.components,
+                    content,
+                    script,
+                ),
+            );
+        }
 
         if (script.length === 0) return;
 
@@ -257,10 +261,16 @@ export class Sveltex<
 
     /**
      * Lines to add to the `<script>` tag in the Svelte file, e.g. `import`
-     * statements for the TeX components or variable definitions from the
-     * frontmatter.
+     * statements for the TeX components.
      */
     private scriptLines: Record<string, string[]> = {};
+
+    /**
+     * Lines to add to the `<script context="module">` tag in the Svelte file,
+     * e.g. `export const` statements for the metadata defined in the
+     * frontmatter.
+     */
+    private scriptModuleLines: Record<string, string[]> = {};
 
     /**
      * @param content - The whole Svelte file content.
@@ -313,6 +323,7 @@ export class Sveltex<
             let headId: string | undefined = undefined;
             let headSnippet: ProcessedSnippet | undefined = undefined;
             let scriptPresent: boolean = false;
+            let scriptModulePresent: boolean = false;
             const prependToProcessed: string[] = [];
             let frontmatter: Frontmatter | undefined = undefined;
 
@@ -365,6 +376,8 @@ export class Sveltex<
                         headLines.push(...handledFrontmatter.headLines);
                         this.scriptLines[filename] =
                             handledFrontmatter.scriptLines;
+                        this.scriptModuleLines[filename] =
+                            handledFrontmatter.scriptModuleLines;
                         frontmatter = handledFrontmatter.frontmatter;
                         processedSnippet = {
                             processed: '',
@@ -382,8 +395,19 @@ export class Sveltex<
                             ) {
                                 headId = uuid;
                             } else if (
+                                !scriptModulePresent &&
+                                processed.startsWith('<script') &&
+                                /^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/.test(
+                                    processed,
+                                )
+                            ) {
+                                scriptModulePresent = true;
+                            } else if (
                                 !scriptPresent &&
-                                processed.startsWith('<script')
+                                processed.startsWith('<script') &&
+                                !/^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/.test(
+                                    processed,
+                                )
                             ) {
                                 scriptPresent = true;
                             }
@@ -432,6 +456,14 @@ export class Sveltex<
                         `</svelte:head>`,
                     );
                 }
+            }
+
+            // Add <script context="module"> tag if not present
+            if (!scriptModulePresent) {
+                prependToProcessed.push(
+                    '<script context="module">',
+                    '</script>',
+                );
             }
 
             // Add <script> tag if not present

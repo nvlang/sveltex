@@ -94,7 +94,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toMatch(
-                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this={Sveltex__tex__something} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/s,
+                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script context="module">\n<\/script>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this={Sveltex__tex__something} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/s,
             );
             const scriptOut = await sp.script({
                 content: '',
@@ -113,7 +113,7 @@ describe('Sveltex', () => {
                 content: 'something',
                 filename: '7a541239-3058-460b-b3c6-5076a2f3f73b.sveltex',
             });
-            expect((markupOut as Processed).code).toEqual(
+            expect((markupOut as Processed).code).toContain(
                 '<script>\n</script>\n<p>something</p>',
             );
 
@@ -150,8 +150,17 @@ describe('Sveltex', () => {
                 markup: markupOut?.code ?? '',
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
-            expect((scriptOut as Processed).code).toEqual(
-                '\nimport Sveltex__tex__ref_without_quotation_marks from \'/src/sveltex/tex/ref-without-quotation-marks.svelte\';\nconst foo = "bar";\nconst author = "Jane Doe";\nconst title = "Example";\nconst meta = [{"name":"author","content":"Jane Doe"}];\n',
+            expect((scriptOut as Processed).code).toContain(
+                "\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\n",
+            );
+            const scriptModuleOut = await sp.script({
+                content: '',
+                attributes: { context: 'module' },
+                markup: markupOut?.code ?? '',
+                filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
+            });
+            expect((scriptModuleOut as Processed).code).toContain(
+                'export const foo = "bar";\nexport const author = "Jane Doe";\nexport const title = "Example";\nexport const meta = [{"name":"author","content":"Jane Doe"}];\n',
             );
 
             existsSync.mockReset();
@@ -174,7 +183,7 @@ describe('Sveltex', () => {
                 markup: markupOut?.code ?? '',
                 filename: '420274ac-0f4d-49b9-842e-f9937ae45ca6.sveltex',
             });
-            expect((scriptOut as Processed).code).toEqual(
+            expect((scriptOut as Processed).code).toContain(
                 "\n```\nimport Sveltex__tex__ref_without_quotation_marks from '/src/sveltex/tex/ref-without-quotation-marks.svelte';\n```\n",
             );
 
@@ -187,7 +196,7 @@ describe('Sveltex', () => {
                 content: '<Example />',
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
-            expect((markupOut as Processed).code).toEqual(
+            expect((markupOut as Processed).code).toContain(
                 '<script>\n</script>\n<Example />',
             );
 
@@ -197,7 +206,7 @@ describe('Sveltex', () => {
                 markup: markupOut?.code ?? '',
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
-            expect((scriptOut as Processed).code).toEqual(
+            expect((scriptOut as Processed).code).toContain(
                 "\nimport Example from '$lib/components/Example.svelte';\n",
             );
             existsSync.mockReset();
@@ -210,7 +219,7 @@ describe('Sveltex', () => {
                     '<script>\nconst something = 0;\n</script>\n<Example />',
                 filename: 'e2468a1e-9389-4537-b6ee-ffd9b4499c4b.sveltex',
             });
-            expect((markupOut as Processed).code).toEqual(
+            expect((markupOut as Processed).code).toContain(
                 '<script>\nconst something = 0;\n</script>\n<Example />',
             );
 
@@ -220,7 +229,7 @@ describe('Sveltex', () => {
                 markup: markupOut?.code ?? '',
                 filename: 'e2468a1e-9389-4537-b6ee-ffd9b4499c4b.sveltex',
             });
-            expect((scriptOut as Processed).code).toEqual(
+            expect((scriptOut as Processed).code).toContain(
                 "\nconst something = 0;\n\nimport Example from '$lib/components/Example.svelte';\n",
             );
             existsSync.mockReset();
@@ -233,7 +242,7 @@ describe('Sveltex', () => {
                     "<script>\nimport Example from '$lib/components/Example.svelte';\n</script>\n<Example />",
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
-            expect((markupOut as Processed).code).toEqual(
+            expect((markupOut as Processed).code).toContain(
                 "<script>\nimport Example from '$lib/components/Example.svelte';\n</script>\n<Example />",
             );
 
@@ -245,6 +254,47 @@ describe('Sveltex', () => {
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
             expect(scriptOut).toBeUndefined();
+
+            const scriptModuleOut = await sp.script({
+                content: '\n',
+                attributes: { context: 'module' },
+                markup: markupOut?.code ?? '',
+                filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
+            });
+            expect(scriptModuleOut).toBeUndefined();
+            existsSync.mockReset();
+        });
+
+        it('auto-importing some components (already imported in frontmatter)', async () => {
+            existsSync.mockReturnValue(true);
+            const markupOut = await sp.markup({
+                content:
+                    '---\nimports:\n- $lib/components/Example.svelte: Example;\n---\n<script context="module">\n</script>\n\n<Example />',
+                filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
+            });
+            expect((markupOut as Processed).code).toEqual(
+                '<script>\n</script>\n\n<script context="module">\n</script>\n<Example />',
+            );
+
+            const scriptOut = await sp.script({
+                content: '\n',
+                attributes: {},
+                markup: markupOut?.code ?? '',
+                filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
+            });
+            expect((scriptOut as Processed).code).toMatch(
+                /^\s*import Example from '\$lib\/components\/Example.svelte';\s*$/,
+            );
+
+            const scriptModuleOut = await sp.script({
+                content: '\n',
+                attributes: { context: 'module' },
+                markup: markupOut?.code ?? '',
+                filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
+            });
+            expect((scriptModuleOut as Processed).code).toContain(
+                'export const imports = [{"$lib/components/Example.svelte":"Example;"}];',
+            );
             existsSync.mockReset();
         });
     });

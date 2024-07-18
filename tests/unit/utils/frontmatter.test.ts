@@ -339,8 +339,6 @@ describe('handleFrontmatter()', () => {
                 innerContent: undefined,
                 optionsForProcessor: { type: 'yaml' },
             },
-            headLines: [],
-            scriptLines: [],
         },
         {
             label: 'foo: bar',
@@ -348,8 +346,7 @@ describe('handleFrontmatter()', () => {
                 innerContent: 'foo: bar',
                 optionsForProcessor: { type: 'yaml' },
             },
-            headLines: [],
-            scriptLines: ['const foo = "bar";'],
+            scriptModuleLines: ['export const foo = "bar";'],
         },
         {
             label: 'base',
@@ -362,8 +359,8 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com" target="_blank">'],
-            scriptLines: [
-                'const base = {"href":"https://example.com","target":"_blank"};',
+            scriptModuleLines: [
+                'export const base = {"href":"https://example.com","target":"_blank"};',
             ],
         },
         {
@@ -373,7 +370,9 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
-            scriptLines: ['const base = {"href":"https://example.com"};'],
+            scriptModuleLines: [
+                'export const base = {"href":"https://example.com"};',
+            ],
         },
         {
             label: 'base (invalid target)',
@@ -386,7 +385,9 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
-            scriptLines: ['const base = {"href":"https://example.com"};'],
+            scriptModuleLines: [
+                'export const base = {"href":"https://example.com"};',
+            ],
         },
         {
             label: 'base (invalid href)',
@@ -397,7 +398,7 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base target="_blank">'],
-            scriptLines: ['const base = {"target":"_blank"};'],
+            scriptModuleLines: ['export const base = {"target":"_blank"};'],
         },
         {
             label: 'meta object',
@@ -416,9 +417,9 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="...">',
                 '<meta http-equiv="default-style" content="styles.css">',
             ],
-            scriptLines: [
-                'const author = "...";',
-                'const meta = [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}];',
+            scriptModuleLines: [
+                'export const author = "...";',
+                'export const meta = [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}];',
             ],
         },
         {
@@ -433,9 +434,9 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta name="author" content="Jane Doe">'],
-            scriptLines: [
-                'const author = "...";',
-                'const meta = [{"name":"author","content":"Jane Doe"}];',
+            scriptModuleLines: [
+                'export const author = "...";',
+                'export const meta = [{"name":"author","content":"Jane Doe"}];',
             ],
         },
         {
@@ -444,8 +445,6 @@ describe('handleFrontmatter()', () => {
                 innerContent: ['meta:', '- name: author'].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
-            headLines: [],
-            scriptLines: [],
         },
         {
             label: 'meta object + keywords array',
@@ -463,8 +462,8 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
             ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+            scriptModuleLines: [
+                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
             ],
         },
         {
@@ -485,8 +484,8 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
             ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+            scriptModuleLines: [
+                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
             ],
         },
         {
@@ -511,8 +510,8 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="c, d">',
             ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}];',
+            scriptModuleLines: [
+                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}];',
             ],
         },
         {
@@ -533,9 +532,9 @@ describe('handleFrontmatter()', () => {
                 '<link rel="stylesheet" href="styles.css">',
                 '<link rel="stylesheet" href="styles2.css">',
             ],
-            scriptLines: [
-                'const title = "...";',
-                'const link = [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}];',
+            scriptModuleLines: [
+                'export const title = "...";',
+                'export const link = [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}];',
             ],
         },
         {
@@ -545,7 +544,7 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<noscript>...</noscript>'],
-            scriptLines: ['const noscript = "...";'],
+            scriptModuleLines: ['export const noscript = "...";'],
         },
         {
             label: 'http-equiv with array',
@@ -559,8 +558,8 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta http-equiv="default-style" content="a, b">'],
-            scriptLines: [
-                'const meta = [{"http-equiv":"default-style","content":"a, b"}];',
+            scriptModuleLines: [
+                'export const meta = [{"http-equiv":"default-style","content":"a, b"}];',
             ],
         },
         {
@@ -575,11 +574,12 @@ describe('handleFrontmatter()', () => {
                 ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
-            headLines: [],
             scriptLines: [
-                'const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
                 "import { b, c } from '$lib/utils.js';",
                 "import Something from './Something.svelte';",
+            ],
+            scriptModuleLines: [
+                'export const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
             ],
         },
     ] as {
@@ -587,10 +587,12 @@ describe('handleFrontmatter()', () => {
         snippet: ProcessableSnippet<'frontmatter'>;
         headLines?: string[];
         scriptLines?: string[];
-    }[])('$label', ({ snippet, headLines, scriptLines }) => {
+        scriptModuleLines?: string[];
+    }[])('$label', ({ snippet, headLines, scriptLines, scriptModuleLines }) => {
         expect(handleFrontmatter(snippet)).toMatchObject({
-            headLines,
-            scriptLines,
+            headLines: headLines ?? [],
+            scriptLines: scriptLines ?? [],
+            scriptModuleLines: scriptModuleLines ?? [],
         });
     });
 });

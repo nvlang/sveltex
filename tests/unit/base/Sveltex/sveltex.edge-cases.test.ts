@@ -116,6 +116,7 @@ describe('specific examples', () => {
                 expect(result).toEqual(
                     sanitizeHtml(result, {
                         allowedTags: false,
+                        allowedAttributes: false,
                         allowVulnerableTags: true,
                     }),
                 );

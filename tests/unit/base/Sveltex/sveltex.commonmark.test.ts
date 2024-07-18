@@ -100,6 +100,10 @@ describe('CommonMark compliance', () => {
                         expect(actual).toBeDefined();
                         nodeAssert(actual !== undefined);
                         actual = actual.replace('<script>\n</script>\n', '');
+                        actual = actual.replace(
+                            '<script context="module">\n</script>\n',
+                            '',
+                        );
                         actual = normalizeHtml(actual, s.markdownBackend);
                         expect(actual).toEqual(expected);
                         vi.restoreAllMocks();
@@ -147,7 +151,7 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
                 // (highlighting tags) = (original code, with special characters
                 // escaped)".
                 let actual = code
-                    .replace(/<script>.*?<\/script>\n/s, '')
+                    .replace(/<script[^>]*>.*?<\/script>\n/gs, '')
                     .replace(/<svelte:head>.*?<\/svelte:head>\n/s, '')
                     .replaceAll(/<\/?span[^>]*>/g, '')
                     .replaceAll(/class="(language-\S+)?.*?"/g, 'class="$1"')
@@ -237,6 +241,10 @@ describe('CommonMark non-compliance', () => {
                         expect(actual).toBeDefined();
                         nodeAssert(actual !== undefined);
                         actual = actual.replace('<script>\n</script>\n', '');
+                        actual = actual.replace(
+                            '<script context="module">\n</script>\n',
+                            '',
+                        );
                         actual = normalizeHtml(actual, s.markdownBackend);
                         expect(actual).not.toEqual(expected);
                     },
