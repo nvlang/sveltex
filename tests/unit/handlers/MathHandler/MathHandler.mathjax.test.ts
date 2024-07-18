@@ -10,8 +10,6 @@ import {
 } from 'vitest';
 import { MathHandler } from '$handlers/MathHandler.js';
 import { spy } from '$tests/unit/fixtures.js';
-import { v4 as uuid } from 'uuid';
-import { consoles } from '$utils/debug.js';
 import type { SupportedCdn } from '$types/handlers/Css.js';
 import type { PossibleMathCssApproach } from '$types/handlers/Math.js';
 import { sveltex } from '$base/Sveltex.js';

@@ -252,10 +252,14 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
     const { title, base, noscript, link, meta, imports } = frontmatter;
 
     Object.entries(frontmatter).forEach(([key, value]) => {
-        scriptModuleLines.push(
-            `export const ${key} = ${JSON.stringify(value)};`,
-        );
+        scriptModuleLines.push(`${key}: ${JSON.stringify(value)},`);
+        scriptLines.push(`const ${key} = ${JSON.stringify(value)};`);
     });
+
+    if (scriptModuleLines.length > 0) {
+        scriptModuleLines.unshift('export const metadata = {');
+        scriptModuleLines.push('};');
+    }
 
     // Imports
     if (

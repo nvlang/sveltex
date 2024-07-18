@@ -160,7 +160,7 @@ describe('Sveltex', () => {
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptModuleOut as Processed).code).toContain(
-                'export const foo = "bar";\nexport const author = "Jane Doe";\nexport const title = "Example";\nexport const meta = [{"name":"author","content":"Jane Doe"}];\n',
+                'export const metadata = {\nfoo: "bar",\nauthor: "Jane Doe",\ntitle: "Example",\nmeta: [{"name":"author","content":"Jane Doe"}],\n};',
             );
 
             existsSync.mockReset();
@@ -283,7 +283,7 @@ describe('Sveltex', () => {
                 filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
             });
             expect((scriptOut as Processed).code).toMatch(
-                /^\s*import Example from '\$lib\/components\/Example.svelte';\s*$/,
+                /^\s*const imports = \[\{"\$lib\/components\/Example.svelte":"Example;"\}\];\n+import Example from '\$lib\/components\/Example.svelte';\s*$/,
             );
 
             const scriptModuleOut = await sp.script({
@@ -293,7 +293,7 @@ describe('Sveltex', () => {
                 filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
             });
             expect((scriptModuleOut as Processed).code).toContain(
-                'export const imports = [{"$lib/components/Example.svelte":"Example;"}];',
+                'export const metadata = {\nimports: [{"$lib/components/Example.svelte":"Example;"}],\n};',
             );
             existsSync.mockReset();
         });

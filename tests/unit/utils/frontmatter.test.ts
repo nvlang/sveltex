@@ -339,6 +339,9 @@ describe('handleFrontmatter()', () => {
                 innerContent: undefined,
                 optionsForProcessor: { type: 'yaml' },
             },
+            headLines: [],
+            scriptLines: [],
+            scriptModuleLines: [],
         },
         {
             label: 'foo: bar',
@@ -346,70 +349,83 @@ describe('handleFrontmatter()', () => {
                 innerContent: 'foo: bar',
                 optionsForProcessor: { type: 'yaml' },
             },
-            scriptModuleLines: ['export const foo = "bar";'],
+            headLines: [],
+            scriptLines: ['const foo = "bar";'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'foo: "bar",',
+                '};',
+            ],
         },
         {
             label: 'base',
             snippet: {
-                innerContent: [
-                    'base:',
-                    '  href: https://example.com',
-                    '  target: _blank',
-                ].join('\n'),
+                innerContent:
+                    'base:\n  href: https://example.com\n  target: _blank',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com" target="_blank">'],
+            scriptLines: [
+                'const base = {"href":"https://example.com","target":"_blank"};',
+            ],
             scriptModuleLines: [
-                'export const base = {"href":"https://example.com","target":"_blank"};',
+                'export const metadata = {',
+                'base: {"href":"https://example.com","target":"_blank"},',
+                '};',
             ],
         },
         {
             label: 'base (string)',
             snippet: {
-                innerContent: ['base: https://example.com'].join('\n'),
+                innerContent: 'base: https://example.com',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
+            scriptLines: ['const base = {"href":"https://example.com"};'],
             scriptModuleLines: [
-                'export const base = {"href":"https://example.com"};',
+                'export const metadata = {',
+                'base: {"href":"https://example.com"},',
+                '};',
             ],
         },
         {
             label: 'base (invalid target)',
             snippet: {
-                innerContent: [
-                    'base:',
-                    '  href: https://example.com',
-                    '  target: 123',
-                ].join('\n'),
+                innerContent:
+                    'base:\n  href: https://example.com\n  target: 123',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
+            scriptLines: ['const base = {"href":"https://example.com"};'],
             scriptModuleLines: [
-                'export const base = {"href":"https://example.com"};',
+                'export const metadata = {',
+                'base: {"href":"https://example.com"},',
+                '};',
             ],
         },
         {
             label: 'base (invalid href)',
             snippet: {
-                innerContent: ['base:', '  href: 123', '  target: _blank'].join(
-                    '\n',
-                ),
+                innerContent: 'base:\n  href: 123\n  target: _blank',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base target="_blank">'],
-            scriptModuleLines: ['export const base = {"target":"_blank"};'],
+            scriptLines: ['const base = {"target":"_blank"};'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'base: {"target":"_blank"},',
+                '};',
+            ],
         },
         {
             label: 'meta object',
             snippet: {
-                innerContent: [
-                    'author: ...',
-                    'meta:',
-                    '  author: Jane Doe',
-                    '  description: ...',
+                innerContent:
+                    'author: ...\n' +
+                    'meta:\n' +
+                    '  author: Jane Doe\n' +
+                    '  description: ...\n' +
                     '  default-style: styles.css',
-                ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
@@ -417,114 +433,132 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="...">',
                 '<meta http-equiv="default-style" content="styles.css">',
             ],
+            scriptLines: [
+                'const author = "...";',
+                'const meta = [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}];',
+            ],
             scriptModuleLines: [
-                'export const author = "...";',
-                'export const meta = [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}];',
+                'export const metadata = {',
+                'author: "...",',
+                'meta: [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}],',
+                '};',
             ],
         },
         {
             label: 'meta array',
             snippet: {
-                innerContent: [
-                    'author: ...',
-                    'meta:',
-                    '- name: author',
-                    '  content: Jane Doe',
-                ].join('\n'),
+                innerContent:
+                    'author: ...\nmeta:\n- name: author\n  content: Jane Doe',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta name="author" content="Jane Doe">'],
+            scriptLines: [
+                'const author = "...";',
+                'const meta = [{"name":"author","content":"Jane Doe"}];',
+            ],
             scriptModuleLines: [
-                'export const author = "...";',
-                'export const meta = [{"name":"author","content":"Jane Doe"}];',
+                'export const metadata = {',
+                'author: "...",',
+                'meta: [{"name":"author","content":"Jane Doe"}],',
+                '};',
             ],
         },
         {
             label: 'meta array (no content)',
             snippet: {
-                innerContent: ['meta:', '- name: author'].join('\n'),
+                innerContent: 'meta:\n- name: author',
                 optionsForProcessor: { type: 'yaml' },
             },
+            headLines: [],
+            scriptLines: [],
+            scriptModuleLines: [],
         },
         {
             label: 'meta object + keywords array',
             snippet: {
-                innerContent: [
-                    'meta:',
-                    '  description: This is a test page.',
-                    '  keywords:',
-                    '  - a',
-                    '  - b',
-                ].join('\n'),
+                innerContent:
+                    'meta:\n  description: This is a test page.\n  keywords:\n  - a\n  - b',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
             ],
+            scriptLines: [
+                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+            ],
             scriptModuleLines: [
-                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+                'export const metadata = {',
+                'meta: [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}],',
+                '};',
             ],
         },
         {
             label: 'meta array + keywords array',
             snippet: {
-                innerContent: [
-                    'meta:',
-                    '- name: description',
-                    '  content: This is a test page.',
-                    '- name: keywords',
-                    '  content:',
-                    '  - a',
+                innerContent:
+                    'meta:\n' +
+                    '- name: description\n' +
+                    '  content: This is a test page.\n' +
+                    '- name: keywords\n' +
+                    '  content:\n' +
+                    '  - a\n' +
                     '  - b',
-                ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
             ],
+            scriptLines: [
+                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+            ],
             scriptModuleLines: [
-                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
+                'export const metadata = {',
+                'meta: [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}],',
+                '};',
             ],
         },
         {
             label: 'last value takes precedence',
             snippet: {
-                innerContent: [
-                    'meta:',
-                    '- name: description',
-                    '  content: ...',
-                    '- name: description',
-                    '  content: This is a test page.',
-                    '- name: keywords',
-                    '  content:',
-                    '  - a',
-                    '  - b',
-                    '- name: keywords',
+                innerContent:
+                    'meta:\n' +
+                    '- name: description\n' +
+                    '  content: ...\n' +
+                    '- name: description\n' +
+                    '  content: This is a test page.\n' +
+                    '- name: keywords\n' +
+                    '  content:\n' +
+                    '  - a\n' +
+                    '  - b\n' +
+                    '- name: keywords\n' +
                     '  content: c, d',
-                ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="c, d">',
             ],
+            scriptLines: [
+                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}];',
+            ],
             scriptModuleLines: [
-                'export const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}];',
+                'export const metadata = {',
+                'meta: [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}],',
+                '};',
             ],
         },
         {
             label: 'title + links',
             snippet: {
-                innerContent: [
-                    'title: ...',
-                    'link:',
-                    '- rel: stylesheet',
-                    '  href: styles.css',
-                    '- rel: stylesheet',
+                innerContent:
+                    'title: ...\n' +
+                    'link:\n' +
+                    '- rel: stylesheet\n' +
+                    '  href: styles.css\n' +
+                    '- rel: stylesheet\n' +
                     '  href: styles2.css',
-                ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
@@ -532,54 +566,68 @@ describe('handleFrontmatter()', () => {
                 '<link rel="stylesheet" href="styles.css">',
                 '<link rel="stylesheet" href="styles2.css">',
             ],
+            scriptLines: [
+                'const title = "...";',
+                'const link = [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}];',
+            ],
             scriptModuleLines: [
-                'export const title = "...";',
-                'export const link = [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}];',
+                'export const metadata = {',
+                'title: "...",',
+                'link: [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}],',
+                '};',
             ],
         },
         {
             label: 'noscript',
             snippet: {
-                innerContent: ['noscript: ...'].join('\n'),
+                innerContent: 'noscript: ...',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<noscript>...</noscript>'],
-            scriptModuleLines: ['export const noscript = "...";'],
+            scriptLines: ['const noscript = "...";'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'noscript: "...",',
+                '};',
+            ],
         },
         {
             label: 'http-equiv with array',
             snippet: {
-                innerContent: [
-                    'meta:',
-                    '  default-style:',
-                    '  - a',
-                    '  - b',
-                ].join('\n'),
+                innerContent: 'meta:\n  default-style:\n  - a\n  - b',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta http-equiv="default-style" content="a, b">'],
+            scriptLines: [
+                'const meta = [{"http-equiv":"default-style","content":"a, b"}];',
+            ],
             scriptModuleLines: [
-                'export const meta = [{"http-equiv":"default-style","content":"a, b"}];',
+                'export const metadata = {',
+                'meta: [{"http-equiv":"default-style","content":"a, b"}],',
+                '};',
             ],
         },
         {
             label: 'imports',
             snippet: {
-                innerContent: [
-                    'imports:',
-                    '  $lib/utils.js:',
-                    '    - b',
-                    '    - c',
+                innerContent:
+                    'imports:\n' +
+                    '  $lib/utils.js:\n' +
+                    '    - b\n' +
+                    '    - c\n' +
                     '  ./Something.svelte: Something',
-                ].join('\n'),
                 optionsForProcessor: { type: 'yaml' },
             },
+            headLines: [],
             scriptLines: [
+                'const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
                 "import { b, c } from '$lib/utils.js';",
                 "import Something from './Something.svelte';",
             ],
             scriptModuleLines: [
-                'export const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
+                'export const metadata = {',
+                'imports: {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"},',
+                '};',
             ],
         },
     ] as {
