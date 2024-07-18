@@ -247,20 +247,6 @@ describe("MathHandler<'mathjax'>", () => {
                 );
             });
 
-            it.skip('should throw error if MathJax did not return a valid node', async () => {
-                // const handler = await MathHandler.create('mathjax');
-                // handler.processor = {
-                //     convert: () => null,
-                //     outputJax: { styleSheet: () => ({ children: [] }) },
-                // } as unknown as MathDocument<unknown, unknown, unknown>;
-                // await expect(
-                //     async () => await handler.process('abcde'),
-                // ).rejects.toThrowError(
-                //     'MathJax did not return a valid node (result: null).',
-                // );
-                // expect(log).not.toHaveBeenCalled();
-            });
-
             it('should support CSS color variables (CHTML)', async () => {
                 const handler = await MathHandler.create('mathjax', {
                     outputFormat: 'chtml',
@@ -317,67 +303,6 @@ describe("MathHandler<'mathjax'>", () => {
                     '<mjx-container class="MathJax mathjax-transformed" jax="CHTML"><mjx-math class=" MJX-TEX mathjax-transformed"><mjx-mi class="mjx-i mathjax-transformed"><mjx-c class="mjx-c1D450 TEX-I mathjax-transformed"></mjx-c></mjx-mi><mjx-mo class="mjx-n mathjax-transformed" space="3"><mjx-c class="mjx-c22C5 mathjax-transformed"></mjx-c></mjx-mo><mjx-mi class="mjx-i mathjax-transformed" space="3"><mjx-c class="mjx-c1D450 TEX-I mathjax-transformed"></mjx-c></mjx-mi></mjx-math></mjx-container>',
                 ]);
                 expect(log).not.toHaveBeenCalled();
-            });
-        });
-
-        describe('error handling during stylesheet generation', () => {
-            it.skip("should silently log error if there's a problem writing stylesheet", async () => {
-                const id = uuid();
-                // `log` mock is not enough here, since `runWithSpinner` is
-                // defined in the same file as `log` (`src/utils/debug.ts`),
-                // i.e., it doesn't `import` `log`, and so it doesn't use the
-                // mock. At least I think that's what's going on --- on the
-                // other hand, `consoles` is also defined in
-                // `src/utils/debug.ts`... I'm guessing that our approach here
-                // works because it's actually `console.error` that we're
-                // mocking in this case, and because `console.error` is _not_
-                // defined in `src/utils/debug.ts`.
-                const consoleErrorMock = vi
-                    .spyOn(consoles, 'error')
-                    .mockImplementation(() => undefined);
-                fancyWrite.mockRejectedValueOnce(new Error(id));
-                await (await MathHandler.create('mathjax')).process('');
-                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-                expect(consoleErrorMock).toHaveBeenNthCalledWith(
-                    1,
-                    expect.stringContaining(id),
-                );
-                consoleErrorMock.mockRestore();
-            });
-            it.skip('should gracefully deal with unexpected behavior from MathJax', async () => {
-                // `log` mock is not enough here, see previous test for details
-                const consoleErrorMock = vi
-                    .spyOn(consoles, 'error')
-                    .mockImplementation(() => undefined);
-                const liteAdaptorClass = (
-                    await vi.importActual<
-                        typeof import('mathjax-full/js/adaptors/liteAdaptor.js')
-                    >('mathjax-full/js/adaptors/liteAdaptor.js')
-                ).LiteAdaptor;
-                const liteAdaptorMock = vi
-                    .spyOn(
-                        await import('mathjax-full/js/adaptors/liteAdaptor.js'),
-                        'liteAdaptor',
-                    )
-                    .mockImplementationOnce(() => {
-                        const adaptor = new liteAdaptorClass();
-                        adaptor.textContent = vi.fn().mockImplementation(() => {
-                            throw new Error(
-                                'cba98c7d-4d92-44fa-b853-bd8883af8ec5',
-                            );
-                        });
-                        return adaptor;
-                    });
-                await (await MathHandler.create('mathjax')).process('');
-                expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-                expect(consoleErrorMock).toHaveBeenNthCalledWith(
-                    1,
-                    expect.stringContaining(
-                        'cba98c7d-4d92-44fa-b853-bd8883af8ec5',
-                    ),
-                );
-                liteAdaptorMock.mockRestore();
-                consoleErrorMock.mockRestore();
             });
         });
 

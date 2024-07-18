@@ -211,25 +211,4 @@ describe("MathHandler<'katex'>", () => {
             });
         });
     });
-
-    describe('error handling', () => {
-        fixture();
-        it.skip("should silently log error if there's a problem writing stylesheet", async () => {
-            fancyWrite.mockRestore();
-            const id = uuid();
-            writeFileEnsureDir.mockImplementationOnce(() => {
-                throw new Error(id);
-            });
-            const th = await MathHandler.create('katex', {
-                css: { type: 'hybrid' },
-            });
-            await th.process('');
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining(id),
-            );
-        });
-    });
 });

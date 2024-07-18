@@ -371,29 +371,6 @@ describe.concurrent('config/defaults', () => {
 
     describe('handleAttributes', () => {
         fixture();
-        it.skip('should complain if non-string attributes are passed', async () => {
-            const texHandler = await TexHandler.create();
-            const tc = TexComponent.create({
-                texHandler,
-                tex: 'test',
-                attributes: { ref: 'ref', something: 123 },
-                filename: 'test.sveltex',
-                tag: 'tex',
-                // outerContent: '<tex ref="ref">test</tex>',
-                config: getDefaultVerbEnvConfig('tex'),
-            });
-            expect(tc.handledAttributes).toEqual({
-                caption: undefined,
-                captionAttributes: {},
-                figureAttributes: {},
-            });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenNthCalledWith(
-                1,
-                'error',
-                expect.stringContaining('Expected string'),
-            );
-        });
         it('should handle attributes correctly', async () => {
             const attributes = {
                 class: 'figure',
