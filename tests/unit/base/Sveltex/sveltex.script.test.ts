@@ -261,7 +261,9 @@ describe('Sveltex', () => {
                 markup: markupOut?.code ?? '',
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
-            expect(scriptModuleOut).toBeUndefined();
+            expect(scriptModuleOut?.code).toMatch(
+                /^\s*export const metadata = undefined;\s*$/,
+            );
             existsSync.mockReset();
         });
 

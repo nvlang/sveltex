@@ -185,7 +185,11 @@ export class Sveltex<
 
         if (attributes['context'] === 'module') {
             // From frontmatter
-            script.push(...(this.scriptModuleLines[filename] ?? []));
+            script.push(
+                ...(this.scriptModuleLines[filename] ?? [
+                    'export const metadata = undefined;',
+                ]),
+            );
         } else {
             script.push(...tcInfos.map((info) => TexComponent.importSvg(info)));
 
