@@ -14,3 +14,10 @@ Initial release.
 ### Documentation
 
 -   Added `CHANGELOG.md`.
+
+## [0.1.2] - 2024-09-01
+
+### Fixes
+
+-   Fixed issue #9 by hard-coding `inquirer` version in `package.json` as a
+    workaround for https://github.com/plopjs/plop/issues/445.
