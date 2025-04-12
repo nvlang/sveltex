@@ -60,7 +60,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
      */
     private readonly texHandler: TexHandler;
 
-    static create<C extends CodeBackend>(
+    public static create<C extends CodeBackend>(
         codeHandler: CodeHandler<C>,
         texHandler: TexHandler,
         userConfig: VerbatimConfiguration = {},
@@ -163,7 +163,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                     // at the (self-closing) input tag and check if there was
                     // whitespace before the closing slash.
                     const hadSpaceBeforeSlash =
-                        !!outerContent?.match(/\s+\/>\s*$/);
+                        !!outerContent?.match(/\s+\/>\s*$/u);
                     closingBracket = hadSpaceBeforeSlash ? ' />' : '/>';
                 } else {
                     // selfCloseOutputWith is one of: '/>', ' />'
@@ -384,7 +384,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
      * the first place). If aliases conflict, the last one defined will take
      * precedence.
      */
-    private _aliasMap: Map<string, string> = new Map<string, string>();
+    private readonly _aliasMap: Map<string, string> = new Map<string, string>();
 
     /**
      * Verbatim environments.
@@ -393,7 +393,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
      * Mutating this object won't have any effect on the
      * {@link _verbEnvs | `_verbEnvs`} property.
      */
-    get verbEnvs(): Map<string, FullVerbEnvConfig> {
+    public get verbEnvs(): Map<string, FullVerbEnvConfig> {
         return deepClone(this._verbEnvs);
     }
 }

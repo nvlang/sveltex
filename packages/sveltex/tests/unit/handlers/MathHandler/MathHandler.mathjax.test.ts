@@ -8,11 +8,11 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import { MathHandler } from '$handlers/MathHandler.js';
-import { spy } from '$tests/unit/fixtures.js';
-import type { SupportedCdn } from '$types/handlers/Css.js';
-import type { PossibleMathCssApproach } from '$types/handlers/Math.js';
-import { sveltex } from '$base/Sveltex.js';
+import { MathHandler } from '../../../../src/handlers/MathHandler.js';
+import { spy } from '../../fixtures.js';
+import type { SupportedCdn } from '../../../../src/types/handlers/Css.js';
+import type { PossibleMathCssApproach } from '../../../../src/types/handlers/Math.js';
+import { sveltex } from '../../../../src/base/Sveltex.js';
 
 function fixture() {
     beforeEach(() => {
@@ -28,7 +28,10 @@ describe("MathHandler<'mathjax'>", () => {
     let existsSync: MockInstance;
     let writeFileEnsureDirSync: MockInstance;
     beforeAll(async () => {
-        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+        vi.spyOn(
+            await import('../../../../src/deps.js'),
+            'ora',
+        ).mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
                 stop: vi.fn(),
                 text: vi.fn(),
@@ -79,7 +82,7 @@ describe("MathHandler<'mathjax'>", () => {
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/,
+                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/u,
                 ),
                 expect.stringContaining('[jax='),
             );
@@ -98,7 +101,7 @@ describe("MathHandler<'mathjax'>", () => {
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/,
+                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/u,
                 ),
                 expect.stringContaining('[jax='),
             );
@@ -211,7 +214,9 @@ describe("MathHandler<'mathjax'>", () => {
                         if (mockFancyFetch) {
                             fancyFetch = vi
                                 .spyOn(
-                                    await import('$utils/cdn.js'),
+                                    await import(
+                                        '../../../../src/utils/cdn.js'
+                                    ),
                                     'fancyFetch',
                                 )
                                 .mockResolvedValue(undefined);
@@ -282,13 +287,13 @@ describe("MathHandler<'mathjax'>", () => {
                 const handler = await MathHandler.create('mathjax', {
                     transformers: {
                         pre: [
-                            [/\*/g, '\\cdot'],
+                            [/\*/gu, '\\cdot'],
                             ['a', 'b'],
                             ['b', 'c'],
                         ],
                         post: [
                             [
-                                / class="(.*?)"/g,
+                                / class="(.*?)"/gu,
                                 ' class="$1 mathjax-transformed"',
                             ],
                         ],

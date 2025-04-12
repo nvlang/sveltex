@@ -1,5 +1,5 @@
-import { missingDeps } from '$utils/env.js';
-import { sveltex } from '$base/Sveltex.js';
+import { missingDeps } from '../../../../src/utils/env.js';
+import { sveltex } from '../../../../src/base/Sveltex.js';
 import {
     afterAll,
     beforeAll,
@@ -10,8 +10,8 @@ import {
     vi,
     type MockInstance,
 } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
-import { cartesianProduct } from '$tests/unit/utils.js';
+import { spy } from '../../fixtures.js';
+import { cartesianProduct } from '../../utils.js';
 
 describe('Sveltex.markup()', () => {
     let log: MockInstance;
@@ -79,7 +79,7 @@ describe('Sveltex.create()', () => {
                             verbatim: null,
                         },
                     ),
-            ).rejects.toThrowError(/Failed to create SvelTeX preprocessor\./);
+            ).rejects.toThrowError(/Failed to create SvelTeX preprocessor\./u);
         });
     });
     describe('logs error about missing dependencies', () => {
@@ -116,7 +116,7 @@ describe('Sveltex.create()', () => {
                         codeBackend,
                     }),
             ).rejects.toThrowError(
-                /Failed to create SvelTeX preprocessor\.\n\nPlease install the necessary dependencies by running:/,
+                /Failed to create SvelTeX preprocessor\.\n\nPlease install the necessary dependencies by running:/u,
             );
             expect(missingDeps).toContain(markdownBackend);
             expect(missingDeps).toContain(

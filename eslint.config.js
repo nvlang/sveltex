@@ -14,6 +14,7 @@ export default tseslint.config(
             '**/coverage/**',
             '**/html/**',
             '**/tests/e2e/**',
+            'docs/**',
         ],
     },
     eslint.configs.recommended,
@@ -297,6 +298,13 @@ export default tseslint.config(
         files: ['packages/*/tests/e2e/**/*.{test,spec}.ts'],
         plugins: { playwright },
         extends: [playwright.configs.recommended.rules],
+    },
+    {
+        // VS Code extension, unfortunately, uses `require()`
+        files: ['packages/vscode-sveltex/**/*.ts'],
+        rules: {
+            '@typescript-eslint/no-require-imports': 'off',
+        },
     },
     // prettierConfig,
 );

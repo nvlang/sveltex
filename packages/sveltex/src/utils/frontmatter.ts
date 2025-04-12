@@ -310,9 +310,9 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
 
     // Links
     if (link) {
-        link.forEach((link) => {
+        link.forEach((l) => {
             let linkString = '<link';
-            Object.entries(link).forEach(([key, value]) => {
+            Object.entries(l).forEach(([key, value]) => {
                 linkString += ` ${key}="${String(value)}"`;
             });
             linkString += '>';

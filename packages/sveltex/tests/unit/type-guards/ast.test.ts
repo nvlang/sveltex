@@ -1,4 +1,4 @@
-import { hasStartEnd_LineColumn, hasStartEnd_Offset } from '$typeGuards/ast.js';
+import { hasStartEnd_LineColumn, hasStartEnd_Offset } from '../../../src/typeGuards/ast.js';
 
 import { describe, expect, it } from 'vitest';
 

@@ -36,21 +36,21 @@ export class Diagnoser {
     /**
      * The object being diagnosed.
      */
-    private subject: object;
+    private readonly subject: object;
 
     /**
      * @param subject - The object to diagnose.
      */
-    constructor(subject: object) {
+    public constructor(subject: object) {
         this.subject = subject;
     }
 
     /**
      * Array of problems found during diagnosis.
      */
-    problems: { message: string; severity: 'error' | 'warn' }[] = [];
+    public problems: { message: string; severity: 'error' | 'warn' }[] = [];
 
-    get stats(): { errors: number; warnings: number; problems: number } {
+    public get stats(): { errors: number; warnings: number; problems: number } {
         return {
             errors: this.problems.filter((p) => p.severity === 'error').length,
             warnings: this.problems.filter((p) => p.severity === 'warn').length,
@@ -58,7 +58,7 @@ export class Diagnoser {
         };
     }
 
-    noteUnexpectedProperties(
+    public noteUnexpectedProperties(
         expected: string[],
         severity: 'error' | 'warn' = 'warn',
     ): void {
@@ -76,7 +76,7 @@ export class Diagnoser {
     /**
      * Whether the object passed the diagnosis.
      */
-    get passed(): boolean {
+    public get passed(): boolean {
         return this.problems.length === 0;
     }
 
@@ -94,7 +94,7 @@ export class Diagnoser {
      * @param prefix - Prefix to add to each problem message before logging it.
      * Default: `'- '`.
      */
-    printProblems(
+    public printProblems(
         what: 'errors' | 'warnings' | 'both' = 'both',
         grouped: boolean = true,
         order: 'unmodified' | 'reversed' | 'asc' | 'desc' = 'asc',
@@ -142,7 +142,10 @@ export class Diagnoser {
      * d.addProblem('Expected "a" to be a string. Instead, got a number.', 'warn')
      * ```
      */
-    addProblem(message: string, severity: 'error' | 'warn' = 'error'): void {
+    public addProblem(
+        message: string,
+        severity: 'error' | 'warn' = 'error',
+    ): void {
         this.problems.push({ message, severity });
     }
 
@@ -161,14 +164,14 @@ export class Diagnoser {
      * d.isPresent('b', 'a positive number', (v) => isNumber(v) && v > 0, 'number');
      * ```
      */
-    isPresent(
+    public isPresent(
         prop: PropertyKey,
         expect: string,
         typeGuard: (x: unknown) => boolean,
         expectType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
         severity: 'error' | 'warn' = 'error',
     ) {
-        let passed = true;
+        let passed: boolean;
         const subject = this.subject;
         if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
@@ -202,14 +205,14 @@ export class Diagnoser {
      * d.ifPresent('b', 'a positive number', (v) => isNumber(v) && v > 0, 'number');
      * ```
      */
-    ifPresent(
+    public ifPresent(
         prop: PropertyKey,
         expect: string,
         typeGuard: (x: unknown) => boolean,
         expectType?: NameOfPrimitiveTypeOrNull | NameOfPrimitiveTypeOrNull[],
         severity: 'error' | 'warn' = 'error',
     ) {
-        let passed = true;
+        let passed: boolean;
         const subject = this.subject;
         if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments

@@ -1,8 +1,4 @@
-// Types
-import type { UserConfig } from '@commitlint/types';
-
-// External dependencies
-import { RuleConfigSeverity } from '@commitlint/types';
+import { type UserConfig, RuleConfigSeverity } from '@commitlint/types';
 
 /**
  *

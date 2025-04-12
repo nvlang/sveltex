@@ -1,8 +1,6 @@
 // File description: Walk MDASTs.
 
-// Types
 import type { LineColumn, Offsets } from '../types/utils/Ast.js';
-import type { UnistNode } from '../deps.js';
 
 // Internal dependencies
 import {
@@ -11,7 +9,7 @@ import {
 } from '../typeGuards/ast.js';
 
 // External dependencies
-import { inspect } from '../deps.js';
+import { type UnistNode, inspect } from '../deps.js';
 
 /**
  * Converts a range given with line-column numbers to a location object.

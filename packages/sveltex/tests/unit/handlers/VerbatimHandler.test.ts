@@ -10,8 +10,8 @@ import {
     vi,
 } from 'vitest';
 
-import { sveltex } from '$base/Sveltex.js';
-import { spy } from '$tests/unit/fixtures.js';
+import { sveltex } from '../../../src/base/Sveltex.js';
+import { spy } from '../fixtures.js';
 
 const sveltexPreprocessor = await sveltex(
     { codeBackend: 'highlight.js' },
@@ -246,7 +246,7 @@ describe('VerbatimHandler', () => {
                                     Code: {
                                         type: 'code',
                                         transformers: {
-                                            pre: [/\/\/(.*)/, ''],
+                                            pre: [/\/\/(.*)/u, ''],
                                             post: [
                                                 'class="pl-',
                                                 'class="code-',

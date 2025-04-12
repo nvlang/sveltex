@@ -2,10 +2,10 @@
  * Realistic tests for the Sveltex processor.
  */
 
-import { sveltex } from '$base/Sveltex.js';
-import { nodeAssert, sanitizeHtml } from '$deps.js';
-import { fc, fuzzyTest } from '$dev_deps.js';
-import { generateId } from '$utils/escape.js';
+import { sveltex } from '../../../../src/base/Sveltex.js';
+import { nodeAssert, sanitizeHtml } from '../../../../src/deps.js';
+import { fc, fuzzyTest } from '../../../../src/dev_deps.js';
+import { generateId } from '../../../../src/utils/escape.js';
 import { describe, expect, test } from 'vitest';
 
 const arr: string[] = [];
@@ -97,7 +97,7 @@ describe('specific examples', () => {
                         '</div>',
                         '</div>',
                     ].join('\n'),
-                    /<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>\n+<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>/,
+                    /<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>\n+<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>/u,
                 ],
             ])('%o', async (input, expected) => {
                 const p = await sveltex(

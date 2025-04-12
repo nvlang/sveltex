@@ -11,17 +11,13 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 
 // Types
-import type {
-    MicromarkCode as Code,
-    MicromarkConstruct as Construct,
-    MicromarkEffects as Effects,
-    MicromarkState as State,
-    MicromarkTokenizeContext as TokenizeContext,
-    MicromarkTokenTypeMap as TokenTypeMap,
-} from '../../deps.js';
-
-// External dependencies
 import {
+    type MicromarkCode as Code,
+    type MicromarkConstruct as Construct,
+    type MicromarkEffects as Effects,
+    type MicromarkState as State,
+    type MicromarkTokenizeContext as TokenizeContext,
+    type MicromarkTokenTypeMap as TokenTypeMap,
     micromarkMarkdownLineEnding as markdownLineEnding,
     micromarkMarkdownLineEndingOrSpace as markdownLineEndingOrSpace,
     asciiCodes as codes,
@@ -56,8 +52,9 @@ export function tokenizeSkipFlowFactory(
         ok: State,
         nok: State,
     ): State {
+        // eslint-disable-next-line no-invalid-this
         const self = this;
-        let closingTag: boolean;
+        const closingTag: boolean = false; // TODO: why is closingTag not reassigned anywhere?
         let buffer: string;
         let openingTagString: string = '';
 
@@ -343,6 +340,7 @@ function tokenizeNonLazyContinuationStart(
     ok: State,
     nok: State,
 ): State {
+    // eslint-disable-next-line no-invalid-this
     const self = this;
     return start;
 

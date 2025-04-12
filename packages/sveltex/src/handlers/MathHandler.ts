@@ -35,16 +35,14 @@ export class MathHandler<B extends MathBackend> extends Handler<
     FullMathConfiguration<B>,
     MathHandler<B>
 > {
-    override get process(): (
+    public override get process(): (
         tex: string,
         options?: MathProcessOptions<B>,
     ) => Promise<ProcessedSnippet> {
         return async (tex: string, options?: MathProcessOptions<B>) => {
-            if (this.configIsValid === undefined) {
-                this.configIsValid =
-                    diagnoseMathConfiguration(this.backend, this._configuration)
-                        .errors === 0;
-            }
+            this.configIsValid ??=
+                diagnoseMathConfiguration(this.backend, this._configuration)
+                    .errors === 0;
 
             if (!this.configIsValid) {
                 log(
@@ -85,9 +83,10 @@ export class MathHandler<B extends MathBackend> extends Handler<
         };
     }
 
-    private _handleCss: (mathHandler: this) => Promise<void> = () =>
-        Promise.resolve();
-    get handleCss(): () => Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+    private readonly _handleCss: (mathHandler: this) => Promise<void> =
+        async () => Promise.resolve();
+    public get handleCss(): () => Promise<void> {
         return async () => {
             if (this._handledCss) {
                 return;
@@ -118,9 +117,10 @@ export class MathHandler<B extends MathBackend> extends Handler<
     // getter only calls `_updateCss` if MathJax and CHTML are being used, in
     // which case `_updateCss` is overridden in the constructor.
     /* v8 ignore next 2 (unreachable code) */
-    private _updateCss: (mathHandler: this) => void = () => undefined;
+    // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+    private readonly _updateCss: (mathHandler: this) => void = () => undefined;
 
-    get updateCss(): () => void {
+    public get updateCss(): () => void {
         return () => {
             if (
                 this.backend === 'mathjax' &&
@@ -143,7 +143,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
      * handler is being used on.
      */
     private _headLines: string[] = [];
-    get headLines(): string[] {
+    public get headLines(): string[] {
         return this._headLines;
     }
 
@@ -156,8 +156,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
      * the only ones that don't depend on further details about the TeX content
      * of the page.
      */
-    private _scriptLines: string[] = [];
-    get scriptLines(): string[] {
+    private readonly _scriptLines: string[] = [];
+    public get scriptLines(): string[] {
         return this._scriptLines;
     }
 
@@ -185,7 +185,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
      * @param backend - The type of the tex processor to create.
      * @returns A promise that resolves to a math handler of the specified type.
      */
-    static async create<B extends MathBackend>(
+    public static async create<B extends MathBackend>(
         backend: B,
         userConfig?: MathConfiguration<B>,
     ): Promise<MathHandler<B>> {
@@ -392,6 +392,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 import('mathjax-full/js/adaptors/lite/Element.js').LiteElement;
 
             const adaptor = liteAdaptor();
+            // eslint-disable-next-line new-cap
             RegisterHTMLHandler(adaptor);
             // // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
             // AssistiveMmlHandler(adaptor as any);
@@ -418,7 +419,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 // mathjax.chtml.fontURL is set correctly.
                 const { cdn } = configuration.css;
                 const firstCdn = isArray(cdn) ? cdn[0] : cdn;
-                const isV4 = version && /^[^\d]*4\.\d+\.\d+/.test(version);
+                const isV4 = version && /^[^\d]*4\.\d+\.\d+/u.test(version);
                 const linkPrefix = ensureEndsWith(
                     // We don't test two MathJax versions at the same time, so
                     // one of these branches will always be missed.

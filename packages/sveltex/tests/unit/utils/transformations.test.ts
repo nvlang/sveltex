@@ -8,9 +8,9 @@ import {
     it,
     vi,
 } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
-import { applyTransformations } from '$utils/transformers.js';
-import type { Transformer } from '$types/handlers/Handler.js';
+import { spy } from '../fixtures.js';
+import { applyTransformations } from '../../../src/utils/transformers.js';
+import type { Transformer } from '../../../src/types/handlers/Handler.js';
 
 function fixture() {
     beforeEach(() => {
@@ -42,9 +42,9 @@ describe('applyTransformations()', () => {
     describe('input: Transformation', () => {
         fixture();
         it.each([
-            [[/a.*e/, 'a.e'], 'a.e'],
-            [[/a.*e/g, 'a.e'], 'a.e'],
-            [[/a(.*)e/g, '$1'], 'bcd'],
+            [[/a.*e/u, 'a.e'], 'a.e'],
+            [[/a.*e/gu, 'a.e'], 'a.e'],
+            [[/a(.*)e/gu, '$1'], 'bcd'],
             [['b', '.'], 'a.cde'],
             [(s: string) => s.replace('d', '.'), 'abc.e'],
         ] as [Transformer, string][])('%s', (transformation, expected) => {
@@ -57,7 +57,7 @@ describe('applyTransformations()', () => {
     describe('input: Transformation[]', () => {
         fixture();
         it.each([
-            [[[/a.*e/, 'a.e']], 'a.e'],
+            [[[/a.*e/u, 'a.e']], 'a.e'],
             [[['b', '.']], 'a.cde'],
             [
                 [

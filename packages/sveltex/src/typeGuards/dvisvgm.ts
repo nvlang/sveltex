@@ -11,15 +11,10 @@ import type {
     TexDimUnit,
     TexDimUnitless,
     TexDimWithUnit,
-} from '$types/utils/DvisvgmOptions.js';
+} from '../types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import {
-    isArray,
-    isNonNullObject,
-    isNumber,
-    isString,
-} from '$typeGuards/utils.js';
+import { isArray, isNonNullObject, isNumber, isString } from './utils.js';
 
 export function isTexDimUnitless(value: unknown): value is TexDimUnitless {
     return isNumber(value);
@@ -66,7 +61,7 @@ export function isBoundingBox(value: unknown): value is BoundingBox {
 }
 
 function isDinIsoPaperSize(value: unknown): value is DinIsoPaperSize {
-    return isString(value) && /^[A-D](\d|10)$/.test(value);
+    return isString(value) && /^[A-D](\d|10)$/u.test(value);
 }
 
 function isNorthAmericanPaperSize(

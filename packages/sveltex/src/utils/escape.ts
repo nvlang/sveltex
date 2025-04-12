@@ -51,7 +51,7 @@ import {
 import { micromarkSkip } from './micromark/syntax.js';
 import type { MdastJson, MdastToml } from '../types/utils/Frontmatter.js';
 import type { VerbatimHandler } from '../handlers/VerbatimHandler.js';
-import { type CodeBackend, getDefaultMathConfig } from '../mod.ts';
+import { type CodeBackend, getDefaultMathConfig } from '../mod.js';
 import { log, prettifyError } from './debug.js';
 import type { WithFullDelims } from '../types/handlers/Math.js';
 
@@ -129,15 +129,15 @@ export function outermostRanges<
         if (startDiff !== 0) return startDiff;
         return getLoc(b).end - getLoc(a).end; // Prefer larger ranges
     });
-    const outermostRanges: Range[] = [];
+    const outermostRanges_: Range[] = [];
     let currentPos = 0;
     for (const range of sortedRanges) {
         if (getLoc(range).start >= currentPos) {
-            outermostRanges.push(range);
+            outermostRanges_.push(range);
             currentPos = getLoc(range).end;
         }
     }
-    return outermostRanges;
+    return outermostRanges_;
 }
 
 /**
@@ -192,6 +192,7 @@ function normalComponentsRegExp(rawTags: string[]): RegExp {
         'Empty tags array passed to regularTagsRegExp',
     );
     const tags = rawTags.map(escapeStringForRegExp).map((s) => s.trim());
+    // eslint-disable-next-line new-cap
     const r = XRegExp(
         `
             <                       # (opening delimiter of opening tag)
@@ -233,6 +234,7 @@ function normalAndSelfClosingComponentsRegExp(rawTags: string[]): RegExp {
         'Empty tags array passed to allTagsRegExp',
     );
     const tags = rawTags.map(escapeStringForRegExp).map((s) => s.trim());
+    // eslint-disable-next-line new-cap
     return XRegExp(
         `
             <                       # (opening delimiter of opening tag)
@@ -283,7 +285,7 @@ function normalAndSelfClosingComponentsRegExp(rawTags: string[]): RegExp {
 function getVerbatimES(
     content: string,
     verbatimTags: string[],
-    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
+    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'],
 ): EscapableSnippet<'verbatim'>[] {
     const es: EscapableSnippet<'verbatim'>[] = [];
     if (verbatimTags.length === 0) return es;
@@ -304,7 +306,7 @@ function getVerbatimES(
         // Get line at which match starts
         const lineOffset: number = content
             .slice(0, content.lastIndexOf(innerContent, end))
-            .split(/\r\n?|\n/).length;
+            .split(/\r\n?|\n/u).length;
 
         const loc: Offsets = { start, end, lineOffset };
 
@@ -348,14 +350,14 @@ export function getMathInSpecialDelimsES(
             [!!display.escapedSquareBrackets, '\\\\\\[', '\\\\\\]', false],
             [!!inline.escapedParentheses, '\\\\\\(', '\\\\\\)', true],
         ] as const
-    ).forEach(([enabled, ldelim, rdelim, inline]) => {
+    ).forEach(([enabled, ldelim, rdelim, inline_]) => {
         if (enabled) {
             es.push(
                 ...XRegExp.matchRecursive(document, ldelim, rdelim, 'gmu', {
                     unbalanced: 'skip',
                     valueNames: [null, null, 'math', null],
                 }).map((match) => {
-                    const pad = inline ? 0 : 2;
+                    const pad = inline_ ? 0 : 2;
                     const innerContent = match.value.replace(
                         /^(?: |\r\n?|\n)(.*)(?: |\r\n?|\n)$/su,
                         '$1',
@@ -369,10 +371,10 @@ export function getMathInSpecialDelimsES(
                         },
                         processable: {
                             innerContent,
-                            optionsForProcessor: { inline },
+                            optionsForProcessor: { inline: inline_ },
                         },
                         escapeOptions: { pad },
-                        unescapeOptions: { removeParagraphTag: !inline },
+                        unescapeOptions: { removeParagraphTag: !inline_ },
                         type: 'math',
                     } as EscapableSnippet<'math'>;
                 }),
@@ -644,9 +646,9 @@ export function getMdastES({
             // should be treated as plain text, just like mustache tags, and so
             // we don't remove any <p>...</p> tags or add any padding.
             if (
-                /^\s*[#/](?:if|each|await|key)/.test(node.value) ||
-                /^\s*[:](?:else|then|catch)/.test(node.value) ||
-                /^\s*[@](?!html)/.test(node.value)
+                /^\s*[#/](?:if|each|await|key)/u.test(node.value) ||
+                /^\s*[:](?:else|then|catch)/u.test(node.value) ||
+                /^\s*[@](?!html)/u.test(node.value)
             ) {
                 // We don't want a logic block to be caught within a paragraph
                 // tag with other content, so we pad the escape string with
@@ -722,7 +724,7 @@ function calcPadding(
     nodeAssert(lineEnd !== undefined, 'expected ending line to be defined');
     const leadingStart = lineStart.slice(0, start.column);
     // Padding before
-    if (/^\s*$/.test(leadingStart)) {
+    if (/^\s*$/u.test(leadingStart)) {
         // /^\s*START/m
         padding[0] = '\n' + leadingStart;
         const lineBefore = lines[start.line - 1];
@@ -731,7 +733,7 @@ function calcPadding(
             padding[0] = leadingStart;
         }
     }
-    if (/^\s*(>|- |\d+. )/.test(lineStart)) {
+    if (/^\s*(>|- |\d+. )/u.test(lineStart)) {
         padding[0] = 0;
     }
     // Padding after
@@ -739,7 +741,7 @@ function calcPadding(
         // /END\s*$/m
         padding[1] = 1;
         const lineAfter = lines[end.line + 1];
-        if (!lineAfter || /^\s*(>|- |\d+. |$)/.test(lineAfter)) {
+        if (!lineAfter || /^\s*(>|- |\d+. |$)/u.test(lineAfter)) {
             padding[1] = 0;
         }
     }
@@ -844,7 +846,7 @@ export function escape(
     document: string,
     verbatimTags: string[],
     texSettings: WithFullDelims['delims'],
-    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'] | undefined,
+    verbEnvs?: VerbatimHandler<CodeBackend>['verbEnvs'],
     directiveSettings: DirectiveEscapeSettings = {},
 ): { escapedDocument: string; escapedSnippets: [string, EscapedSnippet][] } {
     // Escape colons inside special Svelte elements (e.g. <svelte:component>) so
@@ -872,7 +874,7 @@ export function escape(
             directiveSettings,
         );
 
-        const lines = escapedDocument.split(/\r\n?|\n/);
+        const lines = escapedDocument.split(/\r\n?|\n/u);
         return escapeSnippets(escapedDocument, [
             ...getMdastES({
                 ast,
@@ -906,15 +908,14 @@ export function unescapeSnippets(
     document: string,
     processedSnippets: [string, ProcessedSnippet][],
 ): string {
-    let unescaped = document;
     const keys: string[] = processedSnippets.map((v) => v[0]);
     const processedSnippetsRecord = Object.fromEntries(processedSnippets);
     if (keys.length === 0) return document;
-    unescaped = XRegExp.replace(
+    const unescaped = XRegExp.replace(
         document,
         new RegExp(
             `(?:(<p>\\s*)(${keys.join('|')})(\\s*</p>))|(${keys.join('|')})`,
-            'g',
+            'gu',
         ),
         (...match) => {
             typeAssert(is<(string | undefined)[]>(match));

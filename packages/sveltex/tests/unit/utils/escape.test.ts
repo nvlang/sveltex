@@ -8,7 +8,7 @@ import {
     it,
     vi,
 } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
+import { spy } from '../fixtures.js';
 import {
     colonId,
     escape,
@@ -22,21 +22,21 @@ import {
     padString,
     parseToMdast,
     unescapeSnippets,
-} from '$utils/escape.js';
-import { cartesianProduct, range, idRegexp } from '$tests/unit/utils.js';
-import { typeAssert, is } from '$deps.js';
+} from '../../../src/utils/escape.js';
+import { cartesianProduct, range, idRegexp } from '../utils.js';
+import { typeAssert, is } from '../../../src/deps.js';
 import type {
     EscapableSnippet,
     EscapedSnippet,
     ProcessedSnippet,
     Snippet,
     UnescapeOptions,
-} from '$types/utils/Escape.js';
-import { isArray, isString } from '$typeGuards/utils.js';
-import type { FullVerbEnvConfig } from '$types/handlers/Verbatim.js';
-import { getDefaultMathConfig } from '$mod.js';
-import { mergeConfigs } from '$utils/merge.js';
-import type { WithDelims } from '$types/handlers/Math.js';
+} from '../../../src/types/utils/Escape.js';
+import { isArray, isString } from '../../../src/typeGuards/utils.js';
+import type { FullVerbEnvConfig } from '../../../src/types/handlers/Verbatim.js';
+import { getDefaultMathConfig } from '../../../src/mod.js';
+import { mergeConfigs } from '../../../src/utils/merge.js';
+import type { WithDelims } from '../../../src/types/handlers/Math.js';
 
 function fixture() {
     beforeEach(() => {
@@ -178,6 +178,7 @@ describe.concurrent.shuffle('escape()', () => {
                                 '□',
                                 idRegexp.source,
                             ),
+                            'u',
                         ),
                     ) as unknown,
                 );
@@ -311,6 +312,7 @@ describe.concurrent.shuffle('escape()', () => {
                             '□',
                             idRegexp.source,
                         ),
+                        'u',
                     ),
                 );
                 expect(res.escapedSnippets.length).toEqual(snippets.length);
@@ -518,6 +520,7 @@ describe.concurrent.shuffle('escapeSnippets()', () => {
                         '□',
                         idRegexp.source,
                     ),
+                    'u',
                 ),
             ) as unknown,
             escapedSnippets: test.escapedSnippets.map(
@@ -1491,7 +1494,7 @@ function generateTexTests(): [
     return isDisplayMath.map((doubleDollarSignsDisplay) => [
         `tex (${doubleDollarSignsDisplay})`,
         cartesianProduct(delims, range(0, 1), range(0, 2), range(0, 2)).map(
-            ([delims, inner, leftOuter, rightOuter]) =>
+            ([delims_, inner, leftOuter, rightOuter]) =>
                 texTest({
                     input: {
                         padding: {
@@ -1508,7 +1511,7 @@ function generateTexTests(): [
                             outer: { before: 'a', after: 'c' },
                             inner: 'b',
                         },
-                        delims: isString(delims) ? delims : ['$', delims],
+                        delims: isString(delims_) ? delims_ : ['$', delims_],
                     },
                     settings: {
                         dollars: true,

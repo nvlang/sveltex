@@ -1,7 +1,5 @@
 // File description: Miscellaneous utility functions.
 
-// Types
-import type { BinaryToTextEncoding } from '../deps.js';
 import type { Transformer } from '../types/handlers/Handler.js';
 
 // Internal dependencies
@@ -9,7 +7,11 @@ import { isArray, isString } from '../typeGuards/utils.js';
 import { log } from './debug.js';
 
 // External dependencies
-import { createHash, htmlTagNames } from '../deps.js';
+import {
+    type BinaryToTextEncoding,
+    createHash,
+    htmlTagNames,
+} from '../deps.js';
 
 /**
  * Check if a string is a valid name for a component. For this to be the case,
@@ -27,7 +29,7 @@ import { createHash, htmlTagNames } from '../deps.js';
  * ```
  */
 export function isValidComponentName(name: string): boolean {
-    return /^[a-zA-Z][a-zA-Z0-9]*$/.test(name) && !htmlTagNames.includes(name);
+    return /^[a-zA-Z][a-zA-Z0-9]*$/u.test(name) && !htmlTagNames.includes(name);
 }
 
 /**
@@ -99,12 +101,12 @@ export function re(strings: TemplateStringsArray, ...flags: string[]): RegExp {
         strings.raw
             .join('')
             // Remove comments.
-            .replace(/(?<=^|[^\\])((?:\\\\)*)(?<!\(\?)#.*$/gm, '$1')
+            .replace(/(?<=^|[^\\])((?:\\\\)*)(?<!\(\?)#.*$/gmu, '$1')
             // Unescape hashtags and backticks.
-            .replace(/(?<=^|[^\\])((?:\\\\)*)\\([#`])/gm, '$1$2')
+            .replace(/(?<=^|[^\\])((?:\\\\)*)\\([#`])/gmu, '$1$2')
             // Remove all whitespace except for escaped spaces.
             .replace(
-                /(?<=^|[^\\])((?:\\\\)*)(\\[ ])|\s+/gm,
+                /(?<=^|[^\\])((?:\\\\)*)(\\[ ])|\s+/gmu,
                 (_match, pairsOfBackslashes, whitespace) => {
                     const pairsOfBackslashesString =
                         typeof pairsOfBackslashes === 'string'

@@ -31,12 +31,12 @@ function isMockableArray(target: unknown): target is Mockable[] {
 
 export async function spy<M extends Mockable[]>(
     target: M,
-    fn?: ((...args: unknown[]) => unknown) | boolean | undefined,
+    fn?: ((...args: unknown[]) => unknown) | boolean,
 ): Promise<Record<M[number], MockInstance>>;
 
 export async function spy(
     target: Mockable,
-    fn?: ((...args: unknown[]) => unknown) | boolean | undefined,
+    fn?: ((...args: unknown[]) => unknown) | boolean,
 ): Promise<MockInstance>;
 
 export async function spy(

@@ -1,4 +1,4 @@
-import { adjustHtmlSpacing, isImported } from '$utils/markdown.js';
+import { adjustHtmlSpacing, isImported } from '../../../src/utils/markdown.js';
 import { describe, it, expect } from 'vitest';
 
 describe('adjustHtmlSpacing', () => {
@@ -10,11 +10,11 @@ describe('adjustHtmlSpacing', () => {
         ],
         [
             '<divABC123>\n\ntext</divABC123>',
-            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/u,
         ],
         [
             '<divABC123>\n\n\ntext</divABC123>',
-            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/u,
         ],
         [
             '<divABC123>\ntext</divABC123>',
@@ -23,22 +23,22 @@ describe('adjustHtmlSpacing', () => {
         ],
         [
             '<divABC123>\ntext</divABC123>',
-            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/u,
             () => false,
         ],
         [
             '<divABC123>\ntext</divABC123>',
-            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}text\n{2,}<\/divABC123>/u,
             () => false,
         ],
         ['<spanABC123>text\n\n</spanABC123>', '<spanABC123>text</spanABC123>'],
         [
             '<divABC123>\n<divABC123>\n\ntest\n</divABC123>\n</divABC123>',
-            /<divABC123>\n{2,}<divABC123>\n{2,}test\n{2,}<\/divABC123>\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}<divABC123>\n{2,}test\n{2,}<\/divABC123>\n{2,}<\/divABC123>/u,
         ],
         [
             '<divABC123>\n<divABC123>\ntest\n</divABC123>\n</divABC123>\n\n<divABC123>\n<divABC123>\ntest\n</divABC123>\n</divABC123>',
-            /<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>\n{2,}<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>/,
+            /<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>\n{2,}<divABC123>\n{2,}<divABC123>test<\/divABC123>\n{2,}<\/divABC123>/u,
         ],
     ] as [string, string, ((str: string) => boolean)?][])(
         '%o → %o',
@@ -59,7 +59,7 @@ describe('adjustHtmlSpacing', () => {
 describe('isImported', () => {
     it.each([
         [
-            "// something\n    import Example from '$lib/components/Example.svelte';\nconst title = 'Something';\n",
+            "// something\n    import Example from '../../../src/lib/components/Example.svelte';\nconst title = 'Something';\n",
             { name: 'Example', importPath: '$lib/components/Example.svelte' },
             true,
         ],

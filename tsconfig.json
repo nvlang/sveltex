@@ -54,6 +54,6 @@
     "packages/*/*.config.ts",
     "packages/*/src",
     "packages/*/tests",
-    "scripts"
+    "**/scripts"
   ]
 }

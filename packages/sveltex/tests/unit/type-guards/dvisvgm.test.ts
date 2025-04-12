@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isPaperSize } from '$typeGuards/dvisvgm.js';
+import { isPaperSize } from '../../../src/typeGuards/dvisvgm.js';
 
 describe('isPaperSize', () => {
     it('should return true for valid paper size strings', () => {

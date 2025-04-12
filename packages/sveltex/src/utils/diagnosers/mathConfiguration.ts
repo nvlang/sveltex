@@ -1,7 +1,7 @@
 // File description: Diagnoser for `MathConfiguration` type.
 
 // Types
-import type { MathBackend } from '$types/handlers/Math.js';
+import type { MathBackend } from '../../types/handlers/Math.js';
 
 // Internal dependencies
 import {
@@ -9,14 +9,10 @@ import {
     isFunction,
     isNonNullObject,
     isOneOf,
-} from '$typeGuards/utils.js';
-import { log } from '$utils/debug.js';
-import {
-    checkTransformers,
-    Diagnoser,
-    insteadGot,
-} from '$utils/diagnosers/Diagnoser.js';
-import { getDefaultMathConfig } from '$base/defaults.js';
+} from '../../typeGuards/utils.js';
+import { log } from '../debug.js';
+import { checkTransformers, Diagnoser, insteadGot } from './Diagnoser.js';
+import { getDefaultMathConfig } from '../../base/defaults.js';
 
 export function diagnoseMathConfiguration(
     backend: MathBackend,

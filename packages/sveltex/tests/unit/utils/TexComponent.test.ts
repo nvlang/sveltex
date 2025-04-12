@@ -2,7 +2,12 @@ import {
     getDefaultTexConfig,
     getDefaultVerbEnvConfig,
 } from '../../../src/base/defaults.js';
-import { texBaseCommand, type TexLogSeverity } from '../../../src/data/tex.js';
+import {
+    texBaseCommand,
+    type TexLogSeverity,
+    type SupportedTexEngine,
+    texEngines,
+} from '../../../src/data/tex.js';
 import {
     readFile as nodeReadFile,
     readFileSync,
@@ -10,12 +15,11 @@ import {
     rimraf,
     spawn,
     writeFile,
+    uuid,
 } from '../../../src/deps.js';
 import { TexHandler } from '../../../src/handlers/TexHandler.js';
 import { spy } from '../fixtures.js';
 import { cartesianProduct } from '../utils.js';
-import { texEngines } from '../../../src/data/tex.js';
-import type { SupportedTexEngine } from '../../../src/data/tex.js';
 import type { Problem } from '../../../src/types/handlers/Tex.js';
 import type { VerbEnvConfigTex } from '../../../src/types/handlers/Verbatim.js';
 import type { CliInstruction } from '../../../src/types/utils/CliInstruction.js';
@@ -38,9 +42,8 @@ import {
     it,
     vi,
 } from 'vitest';
-import { uuid } from '../../../src/deps.js';
 
-function realSpawnCliInstruction(
+async function realSpawnCliInstruction(
     instr: CliInstruction,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
     const silent = instr.silent ?? false;
@@ -55,7 +58,7 @@ function realSpawnCliInstruction(
         ...instrOpts,
         env: { ...process.env, ...instr.env },
     });
-    return new Promise((resolve) => {
+    return new Promise((resolve_) => {
         spawnedProcess.stdout.on('data', (x) => {
             if (typeof x === 'string' || x instanceof Uint8Array) {
                 stdout += x.toString();
@@ -69,7 +72,7 @@ function realSpawnCliInstruction(
             }
         });
         spawnedProcess.on('exit', (code) => {
-            resolve({ code, stdout, stderr });
+            resolve_({ code, stdout, stderr });
         });
     });
 }
@@ -268,7 +271,7 @@ describe('compile(): catches errors', () => {
                 opts?.['verbosity']
                     ? 'error'
                     : { severity: 'error', style: 'dim' },
-                expect.stringMatching(/example|no stderr/),
+                expect.stringMatching(/example|no stderr/u),
             );
         },
     );
@@ -326,7 +329,7 @@ describe('compile(): catches errors', () => {
                 },
             });
             const {
-                writeFile,
+                writeFile: writeFile_,
                 spawnCliInstruction: spawnCliInstructionMock,
                 readFile,
                 log,
@@ -338,7 +341,7 @@ describe('compile(): catches errors', () => {
             if (!custom) {
                 readFile.mockResolvedValueOnce('test-pdf');
                 spawnCliInstructionMock.mockImplementation(
-                    (instr: CliInstruction) => {
+                    async (instr: CliInstruction) => {
                         if (instr.command === 'dvisvgm') {
                             return Promise.resolve({
                                 code: 1,
@@ -364,12 +367,12 @@ describe('compile(): catches errors', () => {
                     'The conversion was attempted by running the following command',
                 ),
             );
-            expect(writeFile).toHaveBeenCalledTimes(2);
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFile_).toHaveBeenCalledTimes(2);
+            expect(writeFile_).toHaveBeenNthCalledWith(
                 2,
                 `tmp/tests/${id}/cache/cache.json`,
                 expect.stringMatching(
-                    /{"int":{"tex\/ref":{"sourceHash":"[\w-]{43}","hash":"[\w-]{43}"}},"svg":{}}/,
+                    /\{"int":\{"tex\/ref":\{"sourceHash":"[\w-]{43}","hash":"[\w-]{43}"\}\},"svg":\{\}\}/u,
                 ),
                 'utf8',
             );
@@ -377,7 +380,10 @@ describe('compile(): catches errors', () => {
     );
 
     it('no DVI/PDF found', { timeout: 1e9 }, async () => {
-        const { writeFile, log } = await spy(['writeFile', 'log'], false);
+        const { writeFile: writeFile_, log } = await spy(
+            ['writeFile', 'log'],
+            false,
+        );
         log.mockImplementation(() => undefined);
         const id = uuid();
         const ref = 'ref';
@@ -405,8 +411,8 @@ describe('compile(): catches errors', () => {
             expect.stringContaining('Error: ENOENT: no such file or directory'),
         );
 
-        expect(writeFile).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenLastCalledWith(
+        expect(writeFile_).toHaveBeenCalled();
+        expect(writeFile_).toHaveBeenLastCalledWith(
             `tmp/tests/${id}/cache/tex/ref/root.tex`,
             '\\documentclass[dvisvgm]{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\n\n\n\\begin{document}\n$x$\n\\end{document}\n',
             'utf8',
@@ -414,7 +420,10 @@ describe('compile(): catches errors', () => {
     });
 
     it('no SVG found', async () => {
-        const { writeFile, log } = await spy(['writeFile', 'log'], false);
+        const { writeFile: writeFile_, log } = await spy(
+            ['writeFile', 'log'],
+            false,
+        );
         log.mockImplementation(() => undefined);
         const id = uuid();
         const ref = 'ref';
@@ -443,21 +452,24 @@ describe('compile(): catches errors', () => {
         expect(log).toHaveBeenCalledWith(
             'info',
             expect.stringMatching(
-                /deleting.*\/tmp\/tests\/.{1,100}\/cache\/tex\//i,
+                /deleting.*\/tmp\/tests\/.{1,100}\/cache\/tex\//iu,
             ),
         );
-        expect(writeFile).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenLastCalledWith(
+        expect(writeFile_).toHaveBeenCalled();
+        expect(writeFile_).toHaveBeenLastCalledWith(
             `tmp/tests/${id}/cache/cache.json`,
             expect.stringMatching(
-                /{"int":{"tex\/ref":{"sourceHash":".+?","hash":".+?"}},"svg":{}}/,
+                /\{"int":\{"tex\/ref":\{"sourceHash":".+?","hash":".+?"\}\},"svg":\{\}\}/u,
             ),
             'utf8',
         );
     });
 
     it('empty SVG found', async () => {
-        const { writeFile, log } = await spy(['writeFile', 'log'], false);
+        const { writeFile: writeFile_, log } = await spy(
+            ['writeFile', 'log'],
+            false,
+        );
         log.mockImplementation(() => undefined);
         const id = uuid();
         const ref = 'ref';
@@ -491,26 +503,29 @@ describe('compile(): catches errors', () => {
             2,
             'info',
             expect.stringMatching(
-                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//,
+                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//u,
             ),
         );
-        expect(writeFile).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenCalledWith(
+        expect(writeFile_).toHaveBeenCalled();
+        expect(writeFile_).toHaveBeenCalledWith(
             `tmp/tests/${id}/cache/tex/ref/root.tex`,
             '\\documentclass[dvisvgm]{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\n\n\n\\begin{document}\n$x$\n\\end{document}\n',
             'utf8',
         );
-        expect(writeFile).toHaveBeenLastCalledWith(
+        expect(writeFile_).toHaveBeenLastCalledWith(
             `tmp/tests/${id}/cache/cache.json`,
             expect.stringMatching(
-                /{"int":{"tex\/ref":{"sourceHash":".+?","hash":".+?"}},"svg":{}}/,
+                /\{"int":\{"tex\/ref":\{"sourceHash":".+?","hash":".+?"\}\},"svg":\{\}\}/u,
             ),
             'utf8',
         );
     });
 
     it('SVG → Svelte (custom)', async () => {
-        const { writeFile, log } = await spy(['writeFile', 'log'], false);
+        const { writeFile: writeFile_, log } = await spy(
+            ['writeFile', 'log'],
+            false,
+        );
         log.mockImplementation(() => undefined);
         const id = uuid();
         const ref = 'ref';
@@ -547,19 +562,19 @@ describe('compile(): catches errors', () => {
             2,
             'info',
             expect.stringMatching(
-                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//,
+                /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//u,
             ),
         );
-        expect(writeFile).toHaveBeenCalled();
-        expect(writeFile).toHaveBeenCalledWith(
+        expect(writeFile_).toHaveBeenCalled();
+        expect(writeFile_).toHaveBeenCalledWith(
             `tmp/tests/${id}/cache/tex/ref/root.tex`,
             '\\documentclass[dvisvgm]{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\n\n\n\\begin{document}\n$x$\n\\end{document}\n',
             'utf8',
         );
-        expect(writeFile).toHaveBeenLastCalledWith(
+        expect(writeFile_).toHaveBeenLastCalledWith(
             `tmp/tests/${id}/cache/cache.json`,
             expect.stringMatching(
-                /{"int":{"tex\/ref":{"sourceHash":".+?","hash":".+?"}},"svg":{}}/,
+                /\{"int":\{"tex\/ref":\{"sourceHash":".+?","hash":".+?"\}\},"svg":\{\}\}/u,
             ),
             'utf8',
         );
@@ -611,10 +626,11 @@ describe('TexHandler.process()', () => {
                 },
                 debug: { verbosity: 'box' },
             });
-            const { writeFile, spawnCliInstruction, log } = await spy(
-                ['writeFile', 'spawnCliInstruction', 'log'],
-                false,
-            );
+            const {
+                writeFile: writeFile_,
+                spawnCliInstruction,
+                log,
+            } = await spy(['writeFile', 'spawnCliInstruction', 'log'], false);
             await ath.process('test', {
                 attributes: { ref: 'ref' },
                 filename: 'test.sveltex',
@@ -646,28 +662,28 @@ describe('TexHandler.process()', () => {
                 env: { SOURCE_DATE_EPOCH: '1' },
                 silent: true,
             });
-            expect(writeFile).toHaveBeenCalledTimes(3);
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFile_).toHaveBeenCalledTimes(3);
+            expect(writeFile_).toHaveBeenNthCalledWith(
                 1,
                 `tmp/tests/${id}/cache/tex/ref/root.tex`,
                 '\\documentclass{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\n\n\n\\begin{document}\ntest\n\\end{document}\n',
                 'utf8',
             );
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFile_).toHaveBeenNthCalledWith(
                 2,
                 `tmp/tests/${id}/output/tex/ref.svg`,
-                expect.stringMatching(/^<svg fill="currentColor"/),
+                expect.stringMatching(/^<svg fill="currentColor"/u),
                 'utf8',
             );
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFile_).toHaveBeenNthCalledWith(
                 3,
                 `tmp/tests/${id}/cache/cache.json`,
                 expect.stringMatching(
-                    /{"int":{"tex\/ref":{"sourceHash":"[\w-]{43}","hash":"([\w-]{43})"}},"svg":{"tex\/ref":{"sourceHash":"\1"}}}/,
+                    /\{"int":\{"tex\/ref":\{"sourceHash":"[\w-]{43}","hash":"([\w-]{43})"\}\},"svg":\{"tex\/ref":\{"sourceHash":"\1"\}\}\}/u,
                 ),
                 'utf8',
             );
-            writeFile.mockRestore();
+            writeFile_.mockRestore();
             spawnCliInstruction.mockRestore();
         });
     });
@@ -841,7 +857,7 @@ describe.concurrent('compile()', () => {
                             `tmp/tests/${id}/output/tex/${ref}.svelte`,
                             'utf8',
                         ),
-                    ).toMatch(/^<svg.*<linearGradient/is);
+                    ).toMatch(/^<svg.*<linearGradient/isu);
                 },
             );
         });
@@ -901,14 +917,14 @@ describe.concurrent('compile()', () => {
                             `tmp/tests/${id}/output/tex/${ref}.svelte`,
                             'utf8',
                         ),
-                    ).toMatch(/^<svg.*fill-opacity/is);
+                    ).toMatch(/^<svg.*fill-opacity/isu);
                 },
             );
         });
     });
 
+    /* eslint-disable vitest/valid-describe-callback */
     describe.sequential(
-        // eslint-disable-next-line vitest/valid-describe-callback
         'caching',
         { timeout: 15e3, sequential: true, retry: 2 },
         () => {
@@ -924,7 +940,11 @@ describe.concurrent('compile()', () => {
                 '%s (%s) + %s',
                 { timeout: 300e3, retry: 2, sequential: true },
                 async (engine, intermediateFiletype, converter) => {
-                    const { writeFile, spawnCliInstruction, log } = await spy(
+                    const {
+                        writeFile: writeFile_,
+                        spawnCliInstruction,
+                        log,
+                    } = await spy(
                         ['writeFile', 'spawnCliInstruction', 'log'],
                         false,
                     );
@@ -992,30 +1012,31 @@ describe.concurrent('compile()', () => {
                     // 6. 4th `writeFile`, to write cache to `cache.json`.
                     //
                     // expect(writeFile).toHaveBeenCalledTimes(4);
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         1,
                         `tmp/tests/${id}/cache/cache.json`,
-                        expect.stringMatching(/{"int":{},"svg":{}}/is),
+                        expect.stringMatching(/\{"int":\{\},"svg":\{\}\}/isu),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         2,
                         `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
                         expect.stringContaining('\\documentclass'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         3,
                         `tmp/tests/${id}/output/tex/${ref}.svg`,
                         expect.stringContaining('<svg'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         4,
                         `tmp/tests/${id}/cache/cache.json`,
                         expect.stringMatching(
                             new RegExp(
-                                `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
+                                `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
+                                'u',
                             ),
                         ),
                         'utf8',
@@ -1043,21 +1064,21 @@ describe.concurrent('compile()', () => {
                         1,
                         'info',
                         expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/test\/?$/,
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/test\/?$/u,
                         ),
                     );
                     expect(log).toHaveBeenNthCalledWith(
                         2,
                         'info',
                         expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/a\/?$/,
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/a\/?$/u,
                         ),
                     );
                     expect(log).toHaveBeenNthCalledWith(
                         3,
                         'info',
                         expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/tex\/ref\/a(\/?)$/,
+                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/tex\/ref\/a(\/?)$/u,
                         ),
                     );
 
@@ -1072,7 +1093,7 @@ describe.concurrent('compile()', () => {
                         config,
                     });
 
-                    expect(writeFile).toHaveBeenCalledTimes(0);
+                    expect(writeFile_).toHaveBeenCalledTimes(0);
                     expect(spawnCliInstruction).toHaveBeenCalledTimes(0);
                     expect(log).toHaveBeenCalledTimes(0);
 
@@ -1089,19 +1110,20 @@ describe.concurrent('compile()', () => {
                     });
 
                     expect(log).toHaveBeenCalledTimes(0);
-                    expect(writeFile).toHaveBeenCalledTimes(2);
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenCalledTimes(2);
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         1,
                         `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
                         expect.stringContaining('\\documentclass'),
                         'utf8',
                     );
-                    expect(writeFile).toHaveBeenNthCalledWith(
+                    expect(writeFile_).toHaveBeenNthCalledWith(
                         2,
                         `tmp/tests/${id}/cache/cache.json`,
                         expect.stringMatching(
                             new RegExp(
-                                `{"int":{"tex/${ref}":{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"}},"svg":{"tex/${ref}":{"sourceHash":"\\1"}}}`,
+                                `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
+                                'u',
                             ),
                         ),
                         'utf8',
@@ -1119,6 +1141,7 @@ describe.concurrent('compile()', () => {
             );
         },
     );
+    /* eslint-enable vitest/valid-describe-callback */
 
     describe.sequential('overriding commands', () => {
         fixture();
@@ -1130,7 +1153,11 @@ describe.concurrent('compile()', () => {
                     outputDirectory: `tmp/tests/${id}/output`,
                 },
             });
-            const { writeFile, spawnCliInstruction, readFile } = await spy(
+            const {
+                writeFile: writeFile_,
+                spawnCliInstruction,
+                readFile,
+            } = await spy(
                 ['writeFile', 'spawnCliInstruction', 'readFile'],
                 false,
             );
@@ -1175,8 +1202,8 @@ describe.concurrent('compile()', () => {
                 args: [`tmp/tests/${id}/output/tex/ref.svg`],
                 silent: true,
             });
-            expect(writeFile).toHaveBeenCalledTimes(3);
-            expect(writeFile).toHaveBeenNthCalledWith(
+            expect(writeFile_).toHaveBeenCalledTimes(3);
+            expect(writeFile_).toHaveBeenNthCalledWith(
                 2,
                 `tmp/tests/${id}/output/tex/ref.svg`,
                 'optimized svg',
@@ -1200,7 +1227,7 @@ describe('extendedPreamble()', () => {
                 libraries: { graphdrawing: { routing: true } },
             };
             expect(extendedPreamble(verbEnvConfig, texConfig)).toMatch(
-                /\\usepackage{tikz}.*\\usetikzlibrary{.*graphdrawing.*}.*\\usegdlibrary{routing}/is,
+                /\\usepackage\{tikz\}.*\\usetikzlibrary\{.*graphdrawing.*\}.*\\usegdlibrary\{routing\}/isu,
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -1317,7 +1344,7 @@ describe('printLogProblems()', () => {
             ],
             {},
             'info',
-            ['something', /\d+/],
+            ['something', /\d+/u],
         ],
     ] as [
         string,

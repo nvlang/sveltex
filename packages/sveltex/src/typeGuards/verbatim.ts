@@ -1,15 +1,11 @@
 // File description:
 
-// Types
-import type { SupportedTexEngine } from '../data/tex.js';
 import type {
     SimpleEscapeInstruction,
     VerbatimType,
 } from '../types/handlers/Verbatim.js';
 import type { CliInstruction } from '../types/utils/CliInstruction.js';
 import type { DvisvgmOptions } from '../types/utils/DvisvgmOptions.js';
-
-// Internal dependencies
 import {
     ifPresentAndDefined,
     isBoolean,
@@ -18,7 +14,7 @@ import {
     isString,
     isStringArray,
 } from './utils.js';
-import { texEngines } from '../data/tex.js';
+import { type SupportedTexEngine, texEngines } from '../data/tex.js';
 
 // External dependencies
 import { type Equals, typeAssert } from '../deps.js';

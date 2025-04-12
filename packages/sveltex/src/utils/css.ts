@@ -149,7 +149,7 @@ export function unescapeCssColorVars(
 
 export function getHexRegExp(hex: string): RegExp | undefined {
     if (hex.startsWith('#')) hex = hex.slice(1);
-    if (!/^[0-9A-Fa-f]+$/i.test(hex)) {
+    if (!/^[0-9A-Fa-f]+$/iu.test(hex)) {
         const name = hex.toLowerCase();
         if (!isNamedColor(name)) return undefined;
         hex = hexOfNamedColor[name];
@@ -192,7 +192,7 @@ export function getHexRegExp(hex: string): RegExp | undefined {
             `(${names.join('|')})` + // Color (e.g., (#000|#000000|black))
             `[ ]?` + // Optional space
             `(?=(?:[="'&;:<>(){}\\[\\]\\s]|$))`, // Positive lookahead
-        'gi',
+        'giu',
     );
 }
 

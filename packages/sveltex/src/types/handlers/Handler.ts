@@ -1,7 +1,7 @@
 // File description: Types related to the `Handler` class.
 
 /* eslint-disable tsdoc/syntax */
-import type { ProcessedSnippet } from '$types/utils/Escape.js';
+import type { ProcessedSnippet } from '../utils/Escape.js';
 
 /**
  * A transformer. Two types of transformers are supported:

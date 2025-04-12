@@ -15,8 +15,7 @@ export default defineConfig({
         coverage: {
             reporter: ['text', 'json', 'html', 'lcov'],
             enabled: true,
-            processingConcurrency:
-                os.availableParallelism?.() ?? os.cpus().length,
+            processingConcurrency: os.availableParallelism(),
             include: ['src/**/*.ts'],
             exclude: [
                 '**/node_modules/**',

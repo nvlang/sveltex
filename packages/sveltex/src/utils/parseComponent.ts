@@ -285,14 +285,14 @@ export function interpretString(
             return Infinity;
     }
     if (trimmedStr.endsWith('Infinity')) {
-        if (/^[+]\s*Infinity$/.test(trimmedStr)) {
+        if (/^[+]\s*Infinity$/u.test(trimmedStr)) {
             return +Infinity;
         }
-        if (/^[-]\s*Infinity$/.test(trimmedStr)) {
+        if (/^[-]\s*Infinity$/u.test(trimmedStr)) {
             return -Infinity;
         }
     }
-    if (/^[+-]?(\d+|\d*.\d+)$/.test(trimmedStr.replace(/\s*/g, ''))) {
+    if (/^[+-]?(\d+|\d*.\d+)$/u.test(trimmedStr.replace(/\s*/gu, ''))) {
         const num = Number(trimmedStr);
         if (!isNaN(num)) {
             return num;

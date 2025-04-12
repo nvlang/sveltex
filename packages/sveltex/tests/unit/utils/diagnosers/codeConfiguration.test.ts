@@ -1,7 +1,7 @@
-import { spy } from '$tests/unit/fixtures.js';
-import { isCodeBackendWithCss } from '$typeGuards/code.js';
-import { codeBackends } from '$utils/diagnosers/backendChoices.js';
-import { diagnoseCodeConfiguration } from '$utils/diagnosers/codeConfiguration.js';
+import { spy } from '../../fixtures.js';
+import { isCodeBackendWithCss } from '../../../../src/typeGuards/code.js';
+import { codeBackends } from '../../../../src/utils/diagnosers/backendChoices.js';
+import { diagnoseCodeConfiguration } from '../../../../src/utils/diagnosers/codeConfiguration.js';
 import {
     it,
     expect,
@@ -44,7 +44,7 @@ describe('utils/diagnosers/codeConfiguration', () => {
                     transformers: {
                         pre: [
                             ['a', 'b'],
-                            [/a/, 'b'],
+                            [/a/u, 'b'],
                         ],
                         post: '',
                     },

@@ -1,10 +1,10 @@
-import type { BackendChoices } from '$types/SveltexConfiguration.js';
-import type { CodeBackend } from '$types/handlers/Code.js';
-import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { MathBackend } from '$types/handlers/Math.js';
+import type { BackendChoices } from '../../../../src/types/SveltexConfiguration.js';
+import type { CodeBackend } from '../../../../src/types/handlers/Code.js';
+import type { MarkdownBackend } from '../../../../src/types/handlers/Markdown.js';
+import type { MathBackend } from '../../../../src/types/handlers/Math.js';
 
-import { spy } from '$tests/unit/fixtures.js';
-import { diagnoseBackendChoices } from '$utils/diagnosers/backendChoices.js';
+import { spy } from '../../fixtures.js';
+import { diagnoseBackendChoices } from '../../../../src/utils/diagnosers/backendChoices.js';
 import {
     it,
     expect,

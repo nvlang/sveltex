@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVersion } from '$utils/env.js';
-import { spy } from '$tests/unit/fixtures.js';
+import { getVersion } from '../../../src/utils/env.js';
+import { spy } from '../fixtures.js';
 
 describe('getVersion', () => {
     it("works'", async () => {
-        vi.mock('$base/defaults.js', () => {
+        vi.mock('../../../../src/base/defaults.js', () => {
             return {
                 getDefaultCacheDirectory: () => 'a/b/c/node_modules/d/e/f',
             };

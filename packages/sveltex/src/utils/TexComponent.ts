@@ -81,12 +81,12 @@ export class TexComponent {
      * ```
      *
      */
-    static id({ ref, name }: { ref: string; name: string }): string {
+    public static id({ ref, name }: { ref: string; name: string }): string {
         return (
             'Sveltex__' +
-            name.replace(/[^\w]/g, '_') +
+            name.replace(/[^\w]/gu, '_') +
             `__` +
-            ref.replace(/[^\w]/g, '_')
+            ref.replace(/[^\w]/gu, '_')
         );
     }
 
@@ -97,7 +97,7 @@ export class TexComponent {
      * 'Sveltex_tikz_myfig'
      *
      */
-    get id(): string {
+    public get id(): string {
         return TexComponent.id({
             name: this.tag,
             ref: this.ref,
@@ -111,13 +111,13 @@ export class TexComponent {
      * @returns A string to import the TeX component output as a Svelte
      * component.
      */
-    static importSvg(tcii: TexComponentImportInfo): string {
+    public static importSvg(tcii: TexComponentImportInfo): string {
         return `import ${tcii.id} from '/${relative(process.cwd(), tcii.path)}';`;
     }
 
     /**
      */
-    static svgComponentTag({
+    public static svgComponentTag({
         ref,
         name,
     }: {
@@ -129,7 +129,7 @@ export class TexComponent {
 
     /**
      */
-    get svgComponentTag(): string {
+    public get svgComponentTag(): string {
         return TexComponent.svgComponentTag({
             ref: this.ref,
             name: this.tag,
@@ -138,13 +138,13 @@ export class TexComponent {
 
     /**
      */
-    get outputString(): string {
+    public get outputString(): string {
         return this.configuration.postprocess(this.svgComponentTag, this);
     }
 
     /**
      */
-    tag: string;
+    public tag: string;
 
     /**
      * TeX component config to use to render this component.
@@ -164,7 +164,7 @@ export class TexComponent {
      * be ignored.
      *
      */
-    set configuration(config: VerbEnvConfigTex) {
+    public set configuration(config: VerbEnvConfigTex) {
         this._configuration = mergeConfigs(this._configuration, config);
         let needsCorrection = false;
         const { compilation: compilation, conversion: conversion } =
@@ -197,7 +197,7 @@ export class TexComponent {
      * so changes to the object will affect the component.
      *
      */
-    get configuration(): FullVerbEnvConfigTex {
+    public get configuration(): FullVerbEnvConfigTex {
         return this._configuration;
     }
 
@@ -206,11 +206,11 @@ export class TexComponent {
      * created this component.
      *
      */
-    get cache(): SveltexCache {
+    public get cache(): SveltexCache {
         return this.texHandler.cache;
     }
 
-    get texConfig(): FullTexConfiguration {
+    public get texConfig(): FullTexConfiguration {
         return mergeConfigs(
             this.texHandler.configuration,
             this._configuration.overrides,
@@ -223,7 +223,7 @@ export class TexComponent {
      * escaping CSS variables.
      *
      */
-    private texDocumentBodyWithCssVars: string;
+    private readonly texDocumentBodyWithCssVars: string;
 
     /**
      * The name of the directory to create in the cache for files associated
@@ -257,7 +257,7 @@ export class TexComponent {
      * @throws If `this._ref` is not set.
      * @example 'myfig'
      */
-    get ref(): string {
+    public get ref(): string {
         return this._ref;
     }
 
@@ -267,13 +267,13 @@ export class TexComponent {
      *
      * @readonly
      */
-    readonly jobname = 'root';
+    public readonly jobname = 'root';
 
     /**
      * Get the locations of the source files for the component, and related
      * info.
      */
-    get source(): {
+    public get source(): {
         /* eslint-disable tsdoc/syntax */
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/ref'
@@ -336,7 +336,7 @@ export class TexComponent {
      * Output directory and paths for the rendered SVG and the Svelte component
      * file, as well as related info.
      */
-    get out(): {
+    public get out(): {
         /**
          * @example 'src/sveltex/tikz'
          */
@@ -420,7 +420,7 @@ export class TexComponent {
      * @throws If the `attributes` object passed to this method has neither a
      * `ref` attribute nor any valueless attribute.
      */
-    static create({
+    public static create({
         attributes,
         tex,
         texHandler,
@@ -452,8 +452,8 @@ export class TexComponent {
         return tc;
     }
 
-    lineOffset?: number | undefined;
-    filename!: string;
+    public lineOffset?: number | undefined;
+    public filename!: string;
 
     /**
      * Handle the attributes that the user provided to the component. This is
@@ -468,7 +468,7 @@ export class TexComponent {
      *    returned by the previous step.
      *
      */
-    get handleAttributes(): (
+    public get handleAttributes(): (
         attributes: Record<
             string,
             string | number | boolean | null | undefined
@@ -499,7 +499,7 @@ export class TexComponent {
      * Getter for the {@link _handledAttributes | `_handledAttributes`} object.
      *
      */
-    get handledAttributes(): Record<string, unknown> {
+    public get handledAttributes(): Record<string, unknown> {
         return this._handledAttributes;
     }
 
@@ -528,7 +528,7 @@ export class TexComponent {
      * files' directory relative to the cache directory.
      *
      */
-    get keyPath(): KeyPath {
+    public get keyPath(): KeyPath {
         return join(this.tag, this.ref) as KeyPath;
     }
 
@@ -551,7 +551,7 @@ export class TexComponent {
      * ```
      *
      */
-    get contentWithCssVars(): string {
+    public get contentWithCssVars(): string {
         return [
             this.documentClass,
             this.preamble,
@@ -561,7 +561,7 @@ export class TexComponent {
         ].join('\n');
     }
 
-    get documentClass(): string {
+    public get documentClass(): string {
         const texConfig = this.texConfig;
         const documentClass = this.configuration.documentClass;
         const propIsString = isString(documentClass);
@@ -581,7 +581,7 @@ export class TexComponent {
         return `\\documentclass[${options.join(',')}]{${name}}`;
     }
 
-    get preamble(): string {
+    public get preamble(): string {
         return extendedPreamble(this.configuration, this.texConfig);
     }
 
@@ -594,7 +594,7 @@ export class TexComponent {
      * 4.  Save the SVG to the specified output directory.
      *
      */
-    readonly compile = async (): Promise<number | null> => {
+    public readonly compile = async (): Promise<number | null> => {
         // 1. Get the escaped TeX content.
         const { escaped: compilableTexContent, cssColorVars } =
             escapeCssColorVars(this.contentWithCssVars, this.preamble);
@@ -703,11 +703,11 @@ export class TexComponent {
             // Compile the TeX file
             const compilation = await spawnCliInstruction(compileCmd);
 
-            const texLines = compilableTexContent.split(/\r\n?|\n/);
+            const texLines = compilableTexContent.split(/\r\n?|\n/u);
             const leadingWhitespaceInner =
-                /^\s+/.exec(this.texDocumentBodyWithCssVars)?.[0] ?? '';
+                /^\s+/u.exec(this.texDocumentBodyWithCssVars)?.[0] ?? '';
             const additionalTexLineOffset =
-                leadingWhitespaceInner.split(/\r\n?|\n/).length;
+                leadingWhitespaceInner.split(/\r\n?|\n/u).length;
 
             const texLineOffset =
                 texLines.indexOf('\\begin{document}') + additionalTexLineOffset;
@@ -839,7 +839,7 @@ export class TexComponent {
             return 0;
         }
 
-        let svg: string | undefined = undefined;
+        let svg: string | undefined;
 
         // Start timer
         const startSvg = time();
@@ -1031,7 +1031,7 @@ export class TexComponent {
      * CLI instruction with which to convert the TeX output DVI/PDF/XDV to an SVG.
      *
      */
-    get convertCmd(): CliInstruction {
+    public get convertCmd(): CliInstruction {
         const texConfig = this.texConfig;
         const { overrideConversion: overrideConversion } = texConfig.conversion;
         const { svgExt, svgBaseName, svgName, svgPath, dir: svgDir } = this.out;
@@ -1073,7 +1073,7 @@ export class TexComponent {
     /**
      * CLI instruction with which to compile the `.tex` file.
      */
-    get compileCmd(): CliInstruction {
+    public get compileCmd(): CliInstruction {
         const texConfig = this.texConfig;
         const {
             engine,
@@ -1324,7 +1324,7 @@ export function enactPresets(
 export function parseLatexLog(
     stdout: string,
     texLineOffset: number,
-    svelteLineOffset?: number | undefined,
+    svelteLineOffset?: number,
 ): Problem[] {
     const problems: Problem[] = [];
     specialCases.forEach((specialCase) => {
@@ -1705,7 +1705,7 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
 
             // Determine message to use
             let message = match[1] + (match[6] ?? '');
-            if (/\r\n?|\n/.test(message)) {
+            if (/\r\n?|\n/u.test(message)) {
                 const regexp = new RegExp(
                     '^\\((?:' +
                         match[2] +
@@ -1769,7 +1769,7 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
 
             // Determine message to use
             let message = match[2];
-            if (/\r\n?|\n/.test(message) && match[3]) {
+            if (/\r\n?|\n/u.test(message) && match[3]) {
                 const regexp = new RegExp(
                     '^\\((?:' + match[3] + ')\\)\\s*(.*?)$',
                     'gmu',

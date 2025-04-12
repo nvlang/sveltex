@@ -1,7 +1,7 @@
 // File description:  Set command-line flags for `dvisvgm`.
 
 // Types
-import type { CliInstruction } from '$types/utils/CliInstruction.js';
+import type { CliInstruction } from '../types/utils/CliInstruction.js';
 import type {
     BBox,
     BitmapFormat,
@@ -10,19 +10,19 @@ import type {
     FilepathWithExtension,
     Flag,
     TexDim,
-} from '$types/utils/DvisvgmOptions.js';
+} from '../types/utils/DvisvgmOptions.js';
 
 // Internal dependencies
-import { getDefaultTexConfig } from '$base/defaults.js';
+import { getDefaultTexConfig } from '../base/defaults.js';
 import {
     isBoundingBox,
     isPaperSize,
     isTexDim,
     isTexDimUnitless,
-} from '$typeGuards/dvisvgm.js';
-import { isString } from '$typeGuards/utils.js';
-import { mergeConfigs } from '$utils/merge.js';
-import { ensureWithinRange } from '$utils/misc.js';
+} from '../typeGuards/dvisvgm.js';
+import { isString } from '../typeGuards/utils.js';
+import { mergeConfigs } from './merge.js';
+import { ensureWithinRange } from './misc.js';
 
 /**
  * Convert a {@link BitmapFormat | `BitmapFormat`} to a string that can be

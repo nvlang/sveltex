@@ -1,5 +1,5 @@
-import { mockFs } from '$dev_deps.js';
-import { fs, pathExists } from '$utils/fs.js';
+import { mockFs } from '../../../src/dev_deps.js';
+import { fs, pathExists } from '../../../src/utils/fs.js';
 import {
     describe,
     it,
@@ -10,7 +10,7 @@ import {
     beforeAll,
     afterEach,
 } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
+import { spy } from '../fixtures.js';
 
 describe('filesystem utils (`src/utils/fs.ts`)', () => {
     beforeAll(() => {

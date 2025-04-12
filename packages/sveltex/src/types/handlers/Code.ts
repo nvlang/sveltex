@@ -7,15 +7,15 @@ import type {
     HighlightJsThemeName,
     StarryNightLanguage,
     StarryNightThemeName,
-} from '$data/code.js';
-import type { SimpleEscapeInstruction } from '$types/handlers/Verbatim.js';
-import type { CssConfiguration } from '$types/handlers/Css.js';
+} from '../../data/code.js';
+import type { SimpleEscapeInstruction } from './Verbatim.js';
+import type { CssConfiguration } from './Css.js';
 import type {
     DeepRequiredDefined,
     RequiredDefinedNotNull,
     StringLiteralUnion,
-} from '$types/utils/utility-types.js';
-import type { Transformers } from '$types/handlers/Handler.js';
+} from '../utils/utility-types.js';
+import type { Transformers } from './Handler.js';
 
 /**
  * Union type of supported code backends.

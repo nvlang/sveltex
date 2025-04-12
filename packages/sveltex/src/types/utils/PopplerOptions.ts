@@ -1,7 +1,7 @@
 // File description: Types describing the options that can be passed to
 // `node-poppler`'s `Poppler.pdfToCairo` instance method via SvelTeX.
 
-import type { PropertiesDefinedNotNull } from '$types/utils/utility-types.js';
+import type { PropertiesDefinedNotNull } from './utility-types.js';
 
 export type CleanPopplerSvgOptions =
     PropertiesDefinedNotNull<ExtendedPopplerSvgOptions>;

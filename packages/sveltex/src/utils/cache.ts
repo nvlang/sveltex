@@ -35,11 +35,11 @@ interface SveltexCacheJson {
 }
 
 export class SveltexCache {
-    readonly outputDirAbs: string;
-    readonly cacheDirAbs: string;
-    readonly cacheDirGlob: Glob<{ follow: false; maxDepth: 100 }>;
-    readonly pathToCacheJson: string;
-    readonly data: SveltexCacheJson;
+    public readonly outputDirAbs: string;
+    public readonly cacheDirAbs: string;
+    public readonly cacheDirGlob: Glob<{ follow: false; maxDepth: 100 }>;
+    public readonly pathToCacheJson: string;
+    public readonly data: SveltexCacheJson;
 
     private constructor(
         outputDirectory: string,
@@ -57,7 +57,7 @@ export class SveltexCache {
         });
     }
 
-    static async load(
+    public static async load(
         outputDirectory: string,
         cacheDirectory: string = getDefaultCacheDirectory(),
     ): Promise<SveltexCache> {
@@ -87,7 +87,7 @@ export class SveltexCache {
         }
     }
 
-    async save(): Promise<0 | 1> {
+    public async save(): Promise<0 | 1> {
         try {
             await fs.writeFile(
                 this.pathToCacheJson,
@@ -110,13 +110,13 @@ export class SveltexCache {
      * that if anyone tries to serialize a `SvelteCache` object (which Vite
      * will), we exclude the `cacheDirGlob` property.
      */
-    toJSON(): object {
+    public toJSON(): object {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { cacheDirGlob: _cacheDirGlob, ...otherProps } = this;
         return otherProps;
     }
 
-    async cleanup(): Promise<void> {
+    public async cleanup(): Promise<void> {
         const cachedPaths = await this.cacheDirGlob.walk();
         const usedKeyPaths = Object.keys(this.data.svg).map((kp) =>
             join(this.cacheDirAbs, kp),

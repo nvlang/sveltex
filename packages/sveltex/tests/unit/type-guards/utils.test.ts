@@ -19,7 +19,7 @@ import {
     isPresentAndDefined,
     isRecord,
     isString,
-} from '$typeGuards/utils.js';
+} from '../../../src/typeGuards/utils.js';
 import { describe, expect, it } from 'vitest';
 
 describe('isNonNullObject', () => {

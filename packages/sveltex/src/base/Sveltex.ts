@@ -1,12 +1,6 @@
 // File description: Definition of the `Sveltex` class, which implements
 // Svelte's `PreprocessorGroup` interface.
 
-// Types
-import type {
-    MarkupPreprocessor,
-    Preprocessor,
-    PreprocessorGroup,
-} from '../deps.js';
 import type { Processed } from '../types/Sveltex.js';
 import type {
     BackendChoices,
@@ -21,8 +15,6 @@ import type {
     MathProcessOptions,
 } from '../types/handlers/Math.js';
 import type { ProcessedSnippet, Snippet } from '../types/utils/Escape.js';
-
-// Internal dependencies
 import { getDefaultSveltexConfig } from './defaults.js';
 import { TexHandler } from '../handlers/TexHandler.js';
 import { CodeHandler } from '../handlers/CodeHandler.js';
@@ -40,9 +32,15 @@ import {
     unescapeSnippets,
 } from '../utils/escape.js';
 import { mergeConfigs } from '../utils/merge.js';
-
-// External dependencies
-import { MagicString, is, resolve, typeAssert } from '../deps.js';
+import {
+    type MarkupPreprocessor,
+    type Preprocessor,
+    type PreprocessorGroup,
+    MagicString,
+    is,
+    resolve,
+    typeAssert,
+} from '../deps.js';
 import { handleFrontmatter } from '../utils/frontmatter.js';
 import type { Frontmatter } from '../types/utils/Frontmatter.js';
 import { applyTransformations } from '../utils/transformers.js';
@@ -68,8 +66,8 @@ export async function sveltex<
     C extends CodeBackend,
     T extends MathBackend,
 >(
-    backendChoices?: BackendChoices<M, C, T> | undefined,
-    configuration?: SveltexConfiguration<M, C, T> | undefined,
+    backendChoices?: BackendChoices<M, C, T>,
+    configuration?: SveltexConfiguration<M, C, T>,
 ): Promise<Sveltex<M, C, T>> {
     if (backendChoices && diagnoseBackendChoices(backendChoices).errors !== 0) {
         throw new Error('Invalid backend choices. See console for details.');
@@ -105,29 +103,29 @@ export class Sveltex<
     /**
      * The name of the preprocessor group.
      */
-    readonly name = 'sveltex';
+    public readonly name = 'sveltex';
 
     /**
      * The markdown backend used by the Sveltex instance.
      */
-    readonly markdownBackend: M;
+    public readonly markdownBackend: M;
 
     /**
      * The code backend used by the Sveltex instance.
      */
-    readonly codeBackend: C;
+    public readonly codeBackend: C;
 
     /**
      * The TeX backend used by the Sveltex instance.
      */
-    readonly mathBackend: T;
+    public readonly mathBackend: T;
 
     // We can safely add the definite assignment assertions here, since Sveltex
     // instances can only be created through the static `Sveltex.create` method
     // (the Sveltex constructor itself is private), which ensures that all
     // handlers are set.
     private _markdownHandler!: MarkdownHandler<M>;
-    private _codeHandler!: CodeHandler<C>;
+    private readonly _codeHandler!: CodeHandler<C>;
     private _mathHandler!: MathHandler<T>;
     private _texHandler!: TexHandler;
     private _verbatimHandler!: VerbatimHandler<C>;
@@ -140,7 +138,7 @@ export class Sveltex<
     /**
      *
      */
-    readonly script: Preprocessor = ({
+    public readonly script: Preprocessor = ({
         content,
         attributes,
         filename,
@@ -293,7 +291,7 @@ export class Sveltex<
      * 2. `script`
      * 3. `style`
      */
-    readonly markup: MarkupPreprocessor = async ({
+    public readonly markup: MarkupPreprocessor = async ({
         content,
         filename,
     }: {
@@ -344,7 +342,7 @@ export class Sveltex<
             const processEscapedSnippets = escapedSnippets.map(
                 async ([uuid, snippet]) => {
                     let processedSnippet: ProcessedSnippet;
-                    let processed = '';
+                    let processed: string;
                     const unescapeOptions = snippet.unescapeOptions ?? {
                         removeParagraphTag: true,
                     };
@@ -404,7 +402,7 @@ export class Sveltex<
                             } else if (
                                 !scriptModulePresent &&
                                 processed.startsWith('<script') &&
-                                /^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/.test(
+                                /^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/u.test(
                                     processed,
                                 )
                             ) {
@@ -412,7 +410,7 @@ export class Sveltex<
                             } else if (
                                 !scriptPresent &&
                                 processed.startsWith('<script') &&
-                                !/^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/.test(
+                                !/^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/u.test(
                                     processed,
                                 )
                             ) {
@@ -453,7 +451,7 @@ export class Sveltex<
                 }
                 if (headSnippet) {
                     headSnippet.processed = headSnippet.processed.replace(
-                        new RegExp(`</\\s*svelte${colonId}head\\s*>`),
+                        new RegExp(`</\\s*svelte${colonId}head\\s*>`, 'u'),
                         headLines.join('\n') + '\n$0',
                     );
                 } else {
@@ -525,7 +523,7 @@ export class Sveltex<
      * ⚠ **Warning**: Mutating this object will have no effect on the Sveltex
      * instance.
      */
-    get configuration(): FullSveltexConfiguration<M, C, T> {
+    public get configuration(): FullSveltexConfiguration<M, C, T> {
         const clone = deepClone(this._configuration);
         const { markdown, code, math, verbatim } = this._configuration;
 
@@ -579,21 +577,18 @@ export class Sveltex<
         mathBackend: T,
         userConfig: SveltexConfiguration<M, C, T>,
     ): Promise<Sveltex<M, C, T>> {
-        const sveltex = new Sveltex<M, C, T>(
+        const s = new Sveltex<M, C, T>(
             markdownBackend,
             codeBackend,
             mathBackend,
         );
-        sveltex._configuration = mergeConfigs(
-            sveltex._configuration,
-            userConfig,
-        );
+        s._configuration = mergeConfigs(s._configuration, userConfig);
 
         const errors = [];
 
         // Markdown handler
         try {
-            sveltex._markdownHandler = await MarkdownHandler.create(
+            s._markdownHandler = await MarkdownHandler.create(
                 markdownBackend,
                 userConfig.markdown,
             );
@@ -603,9 +598,9 @@ export class Sveltex<
 
         // Code handler
         try {
-            (sveltex._codeHandler as unknown) = await CodeHandler.create(
+            (s._codeHandler as unknown) = await CodeHandler.create(
                 codeBackend,
-                sveltex._configuration.code as CodeConfiguration<C>,
+                s._configuration.code as CodeConfiguration<C>,
             );
         } catch (err) {
             errors.push(err);
@@ -613,9 +608,9 @@ export class Sveltex<
 
         // Math handler
         try {
-            sveltex._mathHandler = await MathHandler.create(
+            s._mathHandler = await MathHandler.create(
                 mathBackend,
-                sveltex._configuration.math as unknown as MathConfiguration<T>,
+                s._configuration.math as unknown as MathConfiguration<T>,
             );
         } catch (err) {
             errors.push(err);
@@ -645,17 +640,15 @@ export class Sveltex<
             }
         }
 
-        sveltex._texHandler = await TexHandler.create(
-            sveltex._configuration.tex,
-        );
+        s._texHandler = await TexHandler.create(s._configuration.tex);
 
-        sveltex._verbatimHandler = VerbatimHandler.create(
-            sveltex._codeHandler,
-            sveltex._texHandler,
+        s._verbatimHandler = VerbatimHandler.create(
+            s._codeHandler,
+            s._texHandler,
             userConfig.verbatim,
         );
 
-        return sveltex;
+        return s;
     }
 
     private constructor(markdownBackend: M, codeBackend: C, mathBackend: T) {

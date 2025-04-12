@@ -1,12 +1,12 @@
-import * as vscode from 'vscode';
-import { readFileSync, writeFileSync } from 'fs';
-import { randomUUID } from 'node:crypto';
-import { join } from 'path';
+import vscode = require('vscode');
+import fs = require('node:fs');
+import crypto = require('node:crypto');
+import path = require('node:path');
 
 const defaultLatexTags = ['tex', 'latex', 'tikz'];
 const defaultEscapeTags = ['verb', 'verbatim'];
 
-const tagRegex = /[a-zA-Z][-.:0-9_a-zA-Z]*/;
+const tagRegex = /[a-zA-Z][-.:0-9_a-zA-Z]*/u;
 
 /**
  * Idea: start with two copies of the same grammar, `sveltex.tmLanguage.json`
@@ -17,25 +17,25 @@ const tagRegex = /[a-zA-Z][-.:0-9_a-zA-Z]*/;
  * the process of updating the grammar file, namely by providing an easy way to
  * enact the `latexTags` and `escapeTags` settings.
  *
- * @param grammarDir The directory containing the grammar files.
- * @param latexTagsIn The LaTeX tags to use for syntax highlighting.
- * @param escapeTagsIn The verbatim tags to use for syntax highlighting.
+ * @param grammarDir - The directory containing the grammar files.
+ * @param latexTagsIn - The LaTeX tags to use for syntax highlighting.
+ * @param escapeTagsIn - The verbatim tags to use for syntax highlighting.
  */
 function updateGrammarFile(
     grammarDir: string,
     latexTagsIn: string[],
     escapeTagsIn: string[],
 ) {
-    let grammar = readFileSync(
-        join(grammarDir, 'sveltex.tmLanguage.json_default'),
+    let grammar = fs.readFileSync(
+        path.join(grammarDir, 'sveltex.tmLanguage.json_default'),
         'utf8',
     );
 
-    const latexTags = [...latexTagsIn].filter(tagRegex.test);
-    const escapeTags = [...escapeTagsIn].filter(tagRegex.test);
+    const latexTags = [...latexTagsIn].filter((tag) => tagRegex.test(tag));
+    const escapeTags = escapeTagsIn.filter((tag) => tagRegex.test(tag));
 
-    if (latexTags.length === 0) latexTags.push(randomUUID());
-    if (escapeTags.length === 0) escapeTags.push(randomUUID());
+    if (latexTags.length === 0) latexTags.push(crypto.randomUUID());
+    if (escapeTags.length === 0) escapeTags.push(crypto.randomUUID());
 
     grammar = grammar.replaceAll(
         defaultLatexTags.join('|'),
@@ -48,11 +48,11 @@ function updateGrammarFile(
     );
 
     // Write the modified grammar to the dynamically set grammar file
-    writeFileSync(join(grammarDir, 'sveltex.tmLanguage.json'), grammar);
+    fs.writeFileSync(path.join(grammarDir, 'sveltex.tmLanguage.json'), grammar);
 }
 
-export function activate(context: vscode.ExtensionContext) {
-    const grammarDir = join(context.extensionPath, 'syntaxes');
+function activate(context: vscode.ExtensionContext) {
+    const grammarDir = path.join(context.extensionPath, 'syntaxes');
 
     const updateGrammar = () => {
         const latexTags = vscode.workspace
@@ -86,4 +86,10 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-export function deactivate() {}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function deactivate() {}
+
+export = {
+    activate,
+    deactivate,
+};

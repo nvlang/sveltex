@@ -1,3 +1,4 @@
+/* eslint-disable require-unicode-regexp */
 import {
     ensureDoesNotStartWith,
     ensureWithinRange,
@@ -8,8 +9,8 @@ import {
     copyTransformations,
     ensureEndsWith,
     ensureStartsWith,
-} from '$utils/misc.js';
-import { spy } from '$tests/unit/fixtures.js';
+} from '../../../src/utils/misc.js';
+import { spy } from '../fixtures.js';
 import {
     describe,
     it,
@@ -20,7 +21,7 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import type { Transformer } from '$types/handlers/Handler.js';
+import type { Transformer } from '../../../src/types/handlers/Handler.js';
 
 describe.concurrent('utils/misc', () => {
     let log: MockInstance;
@@ -180,7 +181,7 @@ describe.concurrent('utils/misc', () => {
     );
 
     describe.each([
-        [[/a/, 'b']],
+        [[/a/u, 'b']],
         [[/.*(\[)-+/gmsu, 'b']],
         [['abc', 'def']],
     ] as Transformer[][])('copyTransformations([%o, %o])', (t) => {

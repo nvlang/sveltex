@@ -82,7 +82,7 @@ export function diagnoseTexConfig(x: object): Diagnoser {
     d.ifPresent(
         'optimization.currentColor',
         'a string in the format "#rgb" or "#rrggbb"',
-        (v) => isString(v) && /^#[0-9a-f]{3,8}$/i.test(v),
+        (v) => isString(v) && /^#[0-9a-f]{3,8}$/iu.test(v),
         'string',
     );
     d.ifPresent(

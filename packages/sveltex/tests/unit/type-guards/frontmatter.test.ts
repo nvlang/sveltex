@@ -1,4 +1,7 @@
-import { isMetaHttpEquiv, isMetaName } from '$typeGuards/frontmatter.js';
+import {
+    isMetaHttpEquiv,
+    isMetaName,
+} from '../../../src/typeGuards/frontmatter.js';
 import { describe, it, expect } from 'vitest';
 
 describe('isMetaName', () => {

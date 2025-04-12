@@ -1,8 +1,8 @@
-import { sveltex } from '$base/Sveltex.js';
+import { sveltex } from '../../../../src/base/Sveltex.js';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
-import { cartesianProduct } from '$tests/unit/utils.js';
-import { markdownBackends } from '$utils/diagnosers/backendChoices.js';
+import { spy } from '../../fixtures.js';
+import { cartesianProduct } from '../../utils.js';
+import { markdownBackends } from '../../../../src/utils/diagnosers/backendChoices.js';
 
 function fixture() {
     beforeEach(() => {

@@ -8,9 +8,13 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import { spy } from '$tests/unit/fixtures.js';
-import { componentRegExp, parseComponent } from '$utils/parseComponent.js';
-import { interpretString, interpretAttributes } from '$utils/parseComponent.js';
+import { spy } from '../fixtures.js';
+import {
+    componentRegExp,
+    parseComponent,
+    interpretString,
+    interpretAttributes,
+} from '../../../src/utils/parseComponent.js';
 
 describe.concurrent('utils/misc', () => {
     let log: MockInstance;

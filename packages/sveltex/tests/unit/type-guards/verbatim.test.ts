@@ -1,10 +1,10 @@
-import { texEngines } from '$data/tex.js';
+import { texEngines } from '../../../src/data/tex.js';
 import {
     isCliInstruction,
     isDvisvgmOptions,
     isSimpleEscapeInstruction,
     isSupportedTexEngine,
-} from '$typeGuards/verbatim.js';
+} from '../../../src/typeGuards/verbatim.js';
 import { describe, expect, it } from 'vitest';
 
 describe('isCliInstruction', () => {

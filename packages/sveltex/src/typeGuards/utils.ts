@@ -1,7 +1,7 @@
 // File description:
 
 // Types
-import type { Defined, UnknownFunction } from '$types/utils/utility-types.js';
+import type { Defined, UnknownFunction } from '../types/utils/utility-types.js';
 
 /**
  * Type guard to check that an input is defined (i.e., not `undefined`).
@@ -229,7 +229,7 @@ export function isOneOf<T>(
 export function isPresent<T extends PropertyKey>(
     obj: object,
     prop: T,
-): obj is { [key in T]: unknown } {
+): obj is Record<T, unknown> {
     return isNonNullObject(obj) && prop in obj;
 }
 
@@ -255,7 +255,7 @@ export function isPresent<T extends PropertyKey>(
 export function isPresentAndDefined<T extends PropertyKey>(
     obj: object,
     prop: T,
-): obj is { [key in T]: Defined } {
+): obj is Record<T, Defined> {
     return isPresent(obj, prop) && isDefined(obj[prop]);
 }
 

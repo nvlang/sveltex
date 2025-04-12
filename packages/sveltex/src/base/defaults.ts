@@ -345,11 +345,11 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         let lang: string | undefined;
         let meta: string | undefined;
         if (code.startsWith('{')) {
-            const m = /^\{(.+?)\}\s(\s*\S[\w\W]*)$/.exec(code);
+            const m = /^\{(.+?)\}\s(\s*\S[\w\W]*)$/u.exec(code);
             const specialCandidate = m?.[1];
             const codeCandidate = m?.[2];
             if (specialCandidate && codeCandidate) {
-                const space = /\s/.exec(specialCandidate)?.index;
+                const space = /\s/u.exec(specialCandidate)?.index;
                 const tag = specialCandidate.slice(0, space);
                 if (validLanguageTag(tag)) {
                     code = codeCandidate;
@@ -358,7 +358,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                 }
             }
         } else {
-            const m = /^([\w-]['\w-]*)\s(\s*\S[\w\W]*)$/.exec(code);
+            const m = /^([\w-]['\w-]*)\s(\s*\S[\w\W]*)$/u.exec(code);
             const tag = m?.[1];
             const codeCandidate = m?.[2];
             if (tag && codeCandidate && validLanguageTag(tag)) {
@@ -385,7 +385,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                             ) => {
                                 const [key, value] = curr.split('=');
                                 const isNormalKey =
-                                    key && /^[A-Z0-9]+$/i.test(key);
+                                    key && /^[A-Z0-9]+$/iu.test(key);
                                 if (isNormalKey)
                                     prev = [...prev, [key, value ?? true]];
                                 return prev;
@@ -667,15 +667,15 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                         if (lowercaseKey === 'caption') {
                             caption = String(value);
                         } else if (
-                            /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/.exec(
+                            /^((fig|figure)[-_:.@#+]?)?caption[-_:.@#+]/u.exec(
                                 lowercaseKey,
                             ) !== null
                         ) {
                             captionAttributes[
-                                key.replace(/^.*?caption./i, '')
+                                key.replace(/^.*?caption./iu, '')
                             ] = value;
                         } else if (key !== 'ref') {
-                            const dottedKey = key.replace(/[-_:.@#+]/g, '.');
+                            const dottedKey = key.replace(/[-_:.@#+]/gu, '.');
                             // If the key is a property of the configuration
                             // object that can be configured ad hoc, set it.
                             // tc.texConfig;
@@ -768,7 +768,7 @@ export function getDefaultVerbEnvConfig<T extends VerbatimType>(
                         isPresentAndDefined(attributes, 'caption') &&
                         isString(attributes.caption)
                     ) {
-                        let captionAttributesString = '';
+                        let captionAttributesString: string;
                         if (
                             isPresentAndDefined(
                                 attributes,
@@ -827,6 +827,7 @@ export function sanitizePopplerSvgOptions(
  */
 export function getTexPresetDefaults(presetName: PresetName): Preset {
     switch (presetName) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         case 'tikz':
             return {
                 name: 'tikz',

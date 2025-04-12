@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { getLocationUnist, lineColToLocation } from '$utils/ast.js';
-import type { UnistNode } from '$deps.js';
-import { cartesianProduct, range } from '$tests/unit/utils.js';
-import type { LineColumn, Offsets } from '$types/utils/Ast.js';
+import { getLocationUnist, lineColToLocation } from '../../../src/utils/ast.js';
+import type { UnistNode } from '../../../src/deps.js';
+import { cartesianProduct, range } from '../utils.js';
+import type { LineColumn, Offsets } from '../../../src/types/utils/Ast.js';
 
 describe('getLocationUnist', () => {
     describe('core functionality', () => {
@@ -54,7 +54,7 @@ describe('getLocationUnist', () => {
     describe('error handling', () => {
         it('no position prop → throw error', () => {
             expect(() => getLocationUnist({}, [''])).toThrowError(
-                /Could not determine location of node:/,
+                /Could not determine location of node:/u,
             );
         });
     });

@@ -8,9 +8,9 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import { MathHandler } from '$handlers/MathHandler.js';
-import { spy } from '$tests/unit/fixtures.js';
-import type { MathConfiguration } from '$types/handlers/Math.js';
+import { MathHandler } from '../../../../src/handlers/MathHandler.js';
+import { spy } from '../../fixtures.js';
+import type { MathConfiguration } from '../../../../src/types/handlers/Math.js';
 
 function fixture() {
     beforeEach(() => {
@@ -26,7 +26,10 @@ describe("MathHandler<'katex'>", () => {
     let existsSync: MockInstance;
     fixture();
     beforeAll(async () => {
-        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+        vi.spyOn(
+            await import('../../../../src/deps.js'),
+            'ora',
+        ).mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
                 stop: vi.fn(),
                 text: vi.fn(),
@@ -65,7 +68,7 @@ describe("MathHandler<'katex'>", () => {
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
+                    /sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/u,
                 ),
                 expect.stringContaining('font-style'),
             );
@@ -73,16 +76,16 @@ describe("MathHandler<'katex'>", () => {
         });
 
         it("doesn't generate CSS twice", async () => {
-            const handler = await MathHandler.create('katex', {
+            const h = await MathHandler.create('katex', {
                 css: { type: 'hybrid' },
             });
-            await handler.process('');
-            await handler.process('');
+            await h.process('');
+            await h.process('');
             expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/,
+                    /sveltex\/katex@\d+\.\d+\.\d+.*\.min\.css/u,
                 ),
                 expect.stringContaining('font-style'),
             );
@@ -101,10 +104,10 @@ describe("MathHandler<'katex'>", () => {
 
         it("doesn't generate CSS if `configuration.css.type` is 'none'", async () => {
             existsSync.mockReturnValueOnce(true);
-            const handler = await MathHandler.create('katex', {
+            const h = await MathHandler.create('katex', {
                 css: { type: 'none' },
             });
-            await handler.process('');
+            await h.process('');
             expect(writeFileEnsureDir).not.toHaveBeenCalled();
             expect(log).not.toHaveBeenCalled();
         });
@@ -134,11 +137,8 @@ describe("MathHandler<'katex'>", () => {
                 ] as [MathConfiguration<'katex'>?, (string | RegExp)?][])(
                     '%o',
                     async (config, expected) => {
-                        const handler = await MathHandler.create(
-                            'katex',
-                            config,
-                        );
-                        expect((await handler.process('x')).processed).toMatch(
+                        const h = await MathHandler.create('katex', config);
+                        expect((await h.process('x')).processed).toMatch(
                             expected ??
                                 '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>',
                         );
@@ -164,14 +164,13 @@ describe("MathHandler<'katex'>", () => {
             });
 
             it('should skip math if math config is invalid', async () => {
-                const handler = await MathHandler.create('katex', {
+                const h = await MathHandler.create('katex', {
                     transformers: {
                         pre: 'invalid' as unknown as [string, string],
                     },
                 });
                 expect(
-                    (await handler.process('a{b}c', { inline: false }))
-                        .processed,
+                    (await h.process('a{b}c', { inline: false })).processed,
                 ).toEqual('a&lbrace;b&rbrace;c');
                 expect(log).toHaveBeenCalled();
             });
@@ -190,19 +189,18 @@ describe("MathHandler<'katex'>", () => {
             });
 
             it('should support transformers', async () => {
-                const handler = await MathHandler.create('katex', {
+                const h = await MathHandler.create('katex', {
                     transformers: {
                         pre: [
-                            [/\*/g, '\\cdot'],
+                            [/\*/gu, '\\cdot'],
                             ['a', 'b'],
                             ['b', 'c'],
                         ],
-                        post: [[/ xmlns:xlink=".*?"/g, '']],
+                        post: [[/ xmlns:xlink=".*?"/gu, '']],
                     },
                 });
                 expect(
-                    (await handler.process('a * b', { inline: true }))
-                        .processed,
+                    (await h.process('a * b', { inline: true })).processed,
                 ).toEqual(
                     '<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi><mo>⋅</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">c \\cdot c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>',
                 );

@@ -73,7 +73,7 @@ export class Handler<
      * parameter {@link ActualBackend | `B`}.
      * @readonly
      */
-    readonly backend: ActualBackend;
+    public readonly backend: ActualBackend;
 
     /**
      * To ensure that handler instances can be constructed with `process`
@@ -102,7 +102,7 @@ export class Handler<
      * @param options - Options to pass to the processor.
      * @returns The processed content, or promise resolving to it.
      */
-    get process(): SimplerProcessFn<ProcessOptions> {
+    public get process(): SimplerProcessFn<ProcessOptions> {
         return async (content: string, options: ProcessOptions) => {
             const res = await this._process(
                 content,
@@ -140,7 +140,7 @@ export class Handler<
      * itself. This is because the backend's configuration is only set once, at
      * the time of the handler's creation, and never updated after that.
      */
-    get configuration(): FullConfiguration {
+    public get configuration(): FullConfiguration {
         return this._configuration;
     }
 
@@ -174,7 +174,7 @@ export class Handler<
      *
      * @returns A new instance of {@link Handler | `Handler`}
      */
-    constructor({
+    public constructor({
         backend,
         process,
         configuration,

@@ -11,7 +11,7 @@
     "markdown",
     "vscode"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "publisher": "sveltex-preprocessor",
   "icon": "res/icon@256.png",
   "pricing": "Free",
@@ -40,7 +40,7 @@
   ],
   "scripts": {
     "vscode:prepublish": "pnpm build",
-    "build": "node scripts/build.mjs && tsc -p tsconfig.json"
+    "build": "tsx scripts/build.mjs && tsc -p tsconfig.json --include src"
   },
   "extensionDependencies": [
     "svelte.svelte-vscode"
@@ -175,8 +175,10 @@
     ]
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.14.10",
     "@types/vscode": "^1.67.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "tsx": "^4.19.3"
   }
 }

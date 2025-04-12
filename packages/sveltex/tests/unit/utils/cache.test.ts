@@ -8,9 +8,9 @@ import {
     beforeAll,
 } from 'vitest';
 
-import { spy } from '$tests/unit/fixtures.js';
-import { mockFs } from '$dev_deps.js';
-import { SveltexCache } from '$utils/cache.js';
+import { spy } from '../fixtures.js';
+import { mockFs } from '../../../src/dev_deps.js';
+import { SveltexCache } from '../../../src/utils/cache.js';
 
 describe('SveltexCache', () => {
     let writeFile: MockInstance;

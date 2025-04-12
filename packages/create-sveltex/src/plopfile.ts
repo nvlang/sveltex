@@ -4,7 +4,7 @@ import { spawnCliInstruction } from './child_process.js';
 import pc from 'picocolors';
 
 export default function (plop: NodePlopAPI) {
-    plop.setHelper('contains', (array, value) => {
+    plop.setHelper('contains', (array: unknown[], value: unknown) => {
         return array.includes(value);
     });
     plop.setHelper('equals', (a, b) => {
@@ -18,12 +18,12 @@ export default function (plop: NodePlopAPI) {
                 name: 'projectName',
                 message: 'Project name',
                 default: 'my-sveltex-app',
-                validate: (value) => {
+                validate: (value: string) => {
                     if (value.length === 0) return 'Project name is required';
                     value = value.replaceAll(' ', '-');
                     // The regex is from the package.json JSON schema
                     if (
-                        !/^(?:(?:@(?:[a-z0-9-*~][a-z0-9-*._~]*)?\/[a-z0-9-._~])|[a-z0-9-~])[a-z0-9-._~]*/.test(
+                        !/^(?:(?:@(?:[a-z0-9-*~][a-z0-9-*._~]*)?\/[a-z0-9-._~])|[a-z0-9-~])[a-z0-9-._~]*/u.test(
                             value,
                         )
                     ) {
@@ -31,15 +31,16 @@ export default function (plop: NodePlopAPI) {
                     }
                     return true;
                 },
-                transformer: (value) => value.replaceAll(' ', '-'),
-                filter: (value) => value.replaceAll(' ', '-'),
+                transformer: (value: string) => value.replaceAll(' ', '-'),
+                filter: (value: string) => value.replaceAll(' ', '-'),
             },
             {
                 type: 'input',
                 name: 'dir',
                 message: 'Directory',
                 default: (ans: Record<string, unknown>) => ans['projectName'],
-                filter: (value) => resolve(value.replace(/[\\/]*$/, '')),
+                filter: (value: string) =>
+                    resolve(value.replace(/[\\/]*$/u, '')),
             },
             {
                 type: 'list',
@@ -368,9 +369,12 @@ export default function (plop: NodePlopAPI) {
                     type: 'modify',
                     path: '{{dir}}/package.json',
                     transform: (content) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         const pkg = JSON.parse(content);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         pkg.scripts = scripts;
                         if (husky) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             pkg['lint-staged'] = {
                                 '*.{js,ts,svelte}': [
                                     'prettier --write',

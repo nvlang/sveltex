@@ -99,7 +99,7 @@ describe('TexHandler', () => {
         );
         writeFile = mocks.writeFile;
         log = mocks.log;
-        existsSync = mocks.existsSync;
+        existsSync_ = mocks.existsSync;
         spawnCliInstruction = mocks.spawnCliInstruction;
     });
     afterAll(() => {
@@ -108,7 +108,7 @@ describe('TexHandler', () => {
     fixture();
     let writeFile: MockInstance;
     let log: MockInstance;
-    let existsSync: MockInstance;
+    let existsSync_: MockInstance;
     let spawnCliInstruction: MockInstance;
 
     describe.each([{}])('texHandler.noteTcInFile', (config) => {
@@ -164,7 +164,7 @@ describe('TexHandler', () => {
         fixture(config);
 
         it('if no .svelte file exists at the end, return empty string', async () => {
-            existsSync.mockReturnValue(false);
+            existsSync_.mockReturnValue(false);
             expect(
                 (
                     await ath.process('x', {
@@ -183,7 +183,7 @@ describe('TexHandler', () => {
         });
 
         it('should work with self-closing components', async () => {
-            existsSync.mockReturnValue(true);
+            existsSync_.mockReturnValue(true);
             expect(
                 (
                     await ath.process('x', {
@@ -202,7 +202,7 @@ describe('TexHandler', () => {
             expect(log).not.toHaveBeenCalled();
             expect(writeFile).not.toHaveBeenCalled();
             expect(spawnCliInstruction).not.toHaveBeenCalled();
-            existsSync.mockRestore();
+            existsSync_.mockRestore();
         });
 
         it('works', async () => {
@@ -233,7 +233,7 @@ describe('TexHandler', () => {
                 1,
                 `${tmpTestsDir}/cache/Example/ref/root.tex`,
                 expect.stringMatching(
-                    /\\documentclass\[dvisvgm\]{standalone}\n\\usepackage{microtype}\n\\makeatletter\n\\@ifpackageloaded{xcolor}{}{\\usepackage{xcolor}}\n\\makeatother\n\s*\\begin{document}\nx\n\\end{document}\n/s,
+                    /\\documentclass\[dvisvgm\]\{standalone\}\n\\usepackage\{microtype\}\n\\makeatletter\n\\@ifpackageloaded\{xcolor\}\{\}\{\\usepackage\{xcolor\}\}\n\\makeatother\n\s*\\begin\{document\}\nx\n\\end\{document\}\n/su,
                 ),
                 'utf8',
             );
@@ -241,7 +241,7 @@ describe('TexHandler', () => {
                 2,
                 `${tmpTestsDir}/output/Example/ref.svg`,
                 expect.stringMatching(
-                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64/,
+                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64/u,
                 ),
                 'utf8',
             );
@@ -257,7 +257,7 @@ describe('TexHandler', () => {
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
                 expect.stringMatching(
-                    /\{"int":\{"Example\/ref":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"Example\/ref":\{"sourceHash":"\1"\}\}\}/,
+                    /\{"int":\{"Example\/ref":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"Example\/ref":\{"sourceHash":"\1"\}\}\}/u,
                 ),
                 'utf8',
             );
@@ -339,7 +339,7 @@ describe('TexHandler', () => {
                 2,
                 `${tmpTestsDir}/output/tex/ath-something-test-348902.svg`,
                 expect.stringMatching(
-                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64,/,
+                    /<svg xmlns=".+?" xmlns:xlink=".+?" width=".+?" height=".+?" viewBox=".+?"><style>@font-face\{font-family:.+?;src:url\(data:application\/x-font-woff2;base64,/u,
                 ),
                 'utf8',
             );
@@ -355,7 +355,7 @@ describe('TexHandler', () => {
                 3,
                 `${tmpTestsDir}/cache/cache.json`,
                 expect.stringMatching(
-                    /\{"int":\{"tex\/ath-something-test-348902":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"tex\/ath-something-test-348902":\{"sourceHash":"\1"\}\}\}/,
+                    /\{"int":\{"tex\/ath-something-test-348902":\{"sourceHash":".+?","hash":"(.+?)"\}\},"svg":\{"tex\/ath-something-test-348902":\{"sourceHash":"\1"\}\}\}/u,
                 ),
                 'utf8',
             );

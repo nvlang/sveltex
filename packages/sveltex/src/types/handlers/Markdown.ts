@@ -1,10 +1,10 @@
 // File description: Types related to the `MarkdownHandler` class.
 
-import type { MarkdownHandler } from '$handlers/MarkdownHandler.js';
-import type { ProcessFn, Transformers } from '$types/handlers/Handler.js';
-import type { DirectiveEscapeSettings } from '$types/utils/Escape.js';
-import type { Frontmatter } from '$types/utils/Frontmatter.js';
-import type { RequiredDefined } from '$types/utils/utility-types.js';
+import type { MarkdownHandler } from '../../handlers/MarkdownHandler.js';
+import type { ProcessFn, Transformers } from './Handler.js';
+import type { DirectiveEscapeSettings } from '../utils/Escape.js';
+import type { Frontmatter } from '../utils/Frontmatter.js';
+import type { RequiredDefined } from '../utils/utility-types.js';
 
 /**
  * Supported markdown processors.

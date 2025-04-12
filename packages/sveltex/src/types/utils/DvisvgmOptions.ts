@@ -1,7 +1,7 @@
 // File description: Types describing the options that can be passed to
 // `dvisvgm` via SvelTeX.
 
-import type { StringLiteralUnion } from '$types/utils/utility-types.js';
+import type { StringLiteralUnion } from './utility-types.js';
 
 /* eslint-disable tsdoc/syntax */
 export type TexDimUnit =

@@ -6,14 +6,14 @@ import type {
     BoundingBox,
     PaperSize,
     TexDim,
-} from '$types/utils/DvisvgmOptions.js';
+} from '../../../src/types/utils/DvisvgmOptions.js';
 
 import {
     bboxToFlagValue,
     bitmapFormatToFlagValue,
     buildDvisvgmInstruction,
-} from '$utils/dvisvgm.js';
-import { getDefaultTexConfig } from '$base/defaults.js';
+} from '../../../src/utils/dvisvgm.js';
+import { getDefaultTexConfig } from '../../../src/base/defaults.js';
 
 describe.concurrent('bboxToFlagValue', () => {
     it('should return the string representation of a TexDim', () => {

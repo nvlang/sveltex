@@ -13,29 +13,26 @@
  * user will see when configuring SvelTeX in their Svelte project.
  */
 
-import type {
-    TexConfiguration,
-    FullTexConfiguration,
-} from '$types/handlers/Tex.js';
+import type { TexConfiguration, FullTexConfiguration } from './handlers/Tex.js';
 import type {
     CodeBackend,
     CodeConfiguration,
     FullCodeConfiguration,
-} from '$types/handlers/Code.js';
+} from './handlers/Code.js';
 import type {
     FullMarkdownConfiguration,
     MarkdownBackend,
     MarkdownConfiguration,
-} from '$types/handlers/Markdown.js';
+} from './handlers/Markdown.js';
 import type {
     FullMathConfiguration,
     MathBackend,
     MathConfiguration,
-} from '$types/handlers/Math.js';
+} from './handlers/Math.js';
 import type {
     FullVerbatimConfiguration,
     VerbatimConfiguration,
-} from '$types/handlers/Verbatim.js';
+} from './handlers/Verbatim.js';
 
 export interface BackendChoices<
     M extends MarkdownBackend,

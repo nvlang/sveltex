@@ -1,22 +1,20 @@
 // File description: Types related to the `VerbatimHandler` class.
 
 /* eslint-disable tsdoc/syntax */
-import type { TexConfiguration } from '$types/handlers/Tex.js';
-import type { Transformers } from '$types/handlers/Handler.js';
-import type {
-    EscapeOptions,
-    InterpretedAttributes,
-} from '$types/utils/Escape.js';
+import type { TexConfiguration } from './Tex.js';
+import type { Transformers } from './Handler.js';
+import type { EscapeOptions, InterpretedAttributes } from '../utils/Escape.js';
 import type {
     FirstTwoLevelsRequiredDefined,
     RequiredDefinedNotNull,
-} from '$types/utils/utility-types.js';
-import type { TexComponent } from '$utils/TexComponent.js';
+} from '../utils/utility-types.js';
+import type { TexComponent } from '../../utils/TexComponent.js';
 
 // For TSDoc comments
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { CompilationOptions as _CompilationOptions } from '$types/handlers/Tex.js';
-import type { SveltexConfiguration as _SveltexConfiguration } from '$types/SveltexConfiguration.js';
+// eslint-disable-next-line no-duplicate-imports
+import type { CompilationOptions as _CompilationOptions } from './Tex.js';
+import type { SveltexConfiguration as _SveltexConfiguration } from '../SveltexConfiguration.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 export interface VerbatimProcessOptions {

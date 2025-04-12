@@ -1,10 +1,10 @@
 // File description: Types related to CSS handling by the `MathHandler` and
 // `CssHandler` classes.
 
-import type { SupportedCdn } from '$data/cdn.js';
-import type { RequiredDefinedNotNull } from '$types/utils/utility-types.js';
+import type { SupportedCdn } from '../../data/cdn.js';
+import type { RequiredDefinedNotNull } from '../utils/utility-types.js';
 
-export type { SupportedCdn } from '$data/cdn.js';
+export type { SupportedCdn } from '../../data/cdn.js';
 
 export interface NoneConfiguration {
     type: 'none';

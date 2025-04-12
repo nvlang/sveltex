@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 import minimist from 'minimist';
 import { Plop, run } from 'plop';

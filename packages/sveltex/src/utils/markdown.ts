@@ -24,6 +24,7 @@ import { re } from './misc.js';
 export function remarkDisableIndentedCodeBlocksAndAutolinks(
     this: import('unified').Processor,
 ): void {
+    // eslint-disable-next-line no-invalid-this
     const data = this.data();
     const micromarkExtensions =
         data.micromarkExtensions ?? (data.micromarkExtensions = []);
@@ -55,7 +56,7 @@ export function adjustHtmlSpacing(
     id: string,
 ): string {
     const hast = hastFromHtml(document, { fragment: true, verbose: true });
-    const lines = document.split(/\r\n?|\n/);
+    const lines = document.split(/\r\n?|\n/u);
     const s = new MagicString(document);
     const noParRanges: [number, number][] = [];
     walkUnist(hast, (node) => {
@@ -69,7 +70,7 @@ export function adjustHtmlSpacing(
                 lines,
             );
 
-            const match = new RegExp(node.tagName, 'i').exec(
+            const match = new RegExp(node.tagName, 'iu').exec(
                 document.slice(locOpeningTag.start, locOpeningTag.end),
             );
             nodeAssert(match !== null);
@@ -110,8 +111,8 @@ export function adjustHtmlSpacing(
             );
 
             /* v8 ignore next 2 (unreachable branches due to regex format) */
-            const leadingWhitespace = /^(\s*)/.exec(innerContent)?.[0] ?? '';
-            const trailingWhitespace = /(\s*)$/.exec(innerContent)?.[0] ?? '';
+            const leadingWhitespace = /^(\s*)/u.exec(innerContent)?.[0] ?? '';
+            const trailingWhitespace = /(\s*)$/u.exec(innerContent)?.[0] ?? '';
             const leadingNewlines = countNewlines(leadingWhitespace);
             let prefIn = prefersInline(tagName);
 
@@ -124,10 +125,10 @@ export function adjustHtmlSpacing(
             }
 
             const inline =
-                /[^ \t\r\n][ \t]*$/.test(
+                /[^ \t\r\n][ \t]*$/u.test(
                     document.slice(0, locOpeningTag.start),
                 ) ||
-                /^[ \t]*[^ \t\r\n]/.test(document.slice(locClosingTag.end));
+                /^[ \t]*[^ \t\r\n]/u.test(document.slice(locClosingTag.end));
 
             const noPar =
                 !canContainParagraph(tagName, components) ||
@@ -220,7 +221,7 @@ export function detectAndImportComponents(
     components.forEach((componentInfo) => {
         if (
             isPresentAndDefined(componentInfo, 'name') &&
-            /[A-Z][0-9_a-zA-Z]*/.test(componentInfo.name) &&
+            /[A-Z][0-9_a-zA-Z]*/u.test(componentInfo.name) &&
             isPresentAndDefined(componentInfo, 'importPath') &&
             !isImported(scriptFullStr, componentInfo) &&
             isUsed(script ? markup.replace(script, '') : markup, componentInfo)
@@ -239,7 +240,7 @@ export function isImported(
 ): boolean {
     return new RegExp(
         `^\\s*import\\s*(?:\\s${componentInfo.name}\\s|\\{\\s*default as ${componentInfo.name}\\s*\\})\\s*from\\s*['"]`,
-        'm',
+        'mu',
     ).test(script);
 }
 

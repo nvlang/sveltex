@@ -1,5 +1,5 @@
-import { fancyFetch, fetchWithTimeout } from '$utils/cdn.js';
-import { spy } from '$tests/unit/fixtures.js';
+import { fancyFetch, fetchWithTimeout } from '../../../src/utils/cdn.js';
+import { spy } from '../fixtures.js';
 import {
     describe,
     it,
@@ -80,7 +80,7 @@ describe.sequential('utils/cdn', () => {
         fixture();
         it('should fail gracefully (2)', async () => {
             vi.spyOn(
-                await import('$utils/cdn.js'),
+                await import('../../../src/utils/cdn.js'),
                 'fetchWithTimeout',
             ).mockImplementationOnce(() => {
                 throw new Error('346ca4ae-c33c-487a-8d61-d907cc2e239e');

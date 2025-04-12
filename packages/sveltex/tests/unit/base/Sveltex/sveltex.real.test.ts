@@ -1,19 +1,19 @@
 /**
  * Realistic tests for the Sveltex processor.
  */
-import type { CodeBackend } from '$types/handlers/Code.js';
+import type { CodeBackend } from '../../../../src/types/handlers/Code.js';
 import type {
     MarkdownBackend,
     MarkdownConfiguration,
-} from '$types/handlers/Markdown.js';
-import type { MathBackend } from '$types/handlers/Math.js';
+} from '../../../../src/types/handlers/Markdown.js';
+import type { MathBackend } from '../../../../src/types/handlers/Math.js';
 
-import { type Sveltex, sveltex } from '$base/Sveltex.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { isArray, isString } from '$typeGuards/utils.js';
-import { re } from '$utils/misc.js';
+import { type Sveltex, sveltex } from '../../../../src/base/Sveltex.js';
+import { spy } from '../../fixtures.js';
+import { isArray, isString } from '../../../../src/typeGuards/utils.js';
+import { re } from '../../../../src/utils/misc.js';
 
-import { typeAssert, is } from '$deps.js';
+import { typeAssert, is } from '../../../../src/deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -25,9 +25,9 @@ import {
     it,
     vi,
 } from 'vitest';
-import { cartesianProduct } from '$tests/unit/utils.js';
-import { mergeConfigs } from '$utils/merge.js';
-import { generateId } from '$utils/escape.js';
+import { cartesianProduct } from '../../utils.js';
+import { mergeConfigs } from '../../../../src/utils/merge.js';
+import { generateId } from '../../../../src/utils/escape.js';
 
 function fixture() {
     beforeEach(() => {
@@ -145,7 +145,7 @@ async function preprocess<
     const scriptContent =
         splitContent(content)
             .find((c) => c.startsWith('<script'))
-            ?.match(/<script[^>]*>([\w\W]*)<\/script>/i)?.[1] ?? '';
+            ?.match(/<script[^>]*>([\w\W]*)<\/script>/iu)?.[1] ?? '';
     const resultScript = await preprocessor.script({
         content: scriptContent,
         filename,
@@ -155,7 +155,7 @@ async function preprocess<
     const script = resultScript?.code;
     if (script) {
         markup = markup.replace(
-            /(<script[^>]*?>)[\w\W]*?(<\/script>)/i,
+            /(<script[^>]*?>)[\w\W]*?(<\/script>)/iu,
             `$1${script}$2`,
         );
     }
@@ -260,7 +260,7 @@ describe('Sveltex', () => {
                     if (p.markdownBackend === 'marked') {
                         // Marked doesn't currently collapse consecutive '\n's,
                         // contrary to CommonMark specification.
-                        output = output.replaceAll(/\n{2,}/g, '\n');
+                        output = output.replaceAll(/\n{2,}/gu, '\n');
                     }
                     expect(output).toMatch(expected);
                     expect(log).not.toHaveBeenCalled();
@@ -372,7 +372,7 @@ describe('Sveltex', () => {
                     logCalls.forEach(([index, call]) => {
                         expect(log).toHaveBeenNthCalledWith(
                             index,
-                            expect.stringMatching(/warn|error/),
+                            expect.stringMatching(/warn|error/u),
                             expect.stringMatching(call),
                         );
                     });
@@ -399,12 +399,12 @@ function expectedCode<
         // head
         if (theme.type === 'cdn' && isString(theme.cdn)) {
             expected.push(
-                /<link rel=["']stylesheet["'] href=["']https:.*starry-night.*css.*["']/,
+                /<link rel=["']stylesheet["'] href=["']https:.*starry-night.*css.*["']/u,
             );
         }
         // script
         if (theme.type === 'self-hosted') {
-            expected.push(/<link .*starry-night.*css.*/);
+            expected.push(/<link .*starry-night.*css.*/u);
         }
     } else if (p.codeBackend === 'highlight.js') {
         typeAssert(is<Sveltex<M, 'highlight.js', T>>(p));
@@ -412,12 +412,12 @@ function expectedCode<
         // head
         if (theme.type === 'cdn' && isString(theme.cdn)) {
             expected.push(
-                /<link rel=["']stylesheet["'] href=["']https:.*highlight.js.*css.*["']/,
+                /<link rel=["']stylesheet["'] href=["']https:.*highlight.js.*css.*["']/u,
             );
         }
         // script
         if (theme.type === 'self-hosted') {
-            expected.push(/<link .*highlight.js.*css.*/);
+            expected.push(/<link .*highlight.js.*css.*/u);
         }
     }
     if (p.codeBackend !== 'none') {
@@ -453,11 +453,13 @@ function expectedTex<
             p.configuration.math.css.type === 'cdn' &&
             isString(p.configuration.math.css.cdn)
         ) {
-            expected.push(/<link rel="stylesheet" href="https:.*katex.*css.*"/);
+            expected.push(
+                /<link rel="stylesheet" href="https:.*katex.*css.*"/u,
+            );
         }
         // script
         if (p.configuration.math.css.type === 'hybrid') {
-            expected.push(/<link rel="stylesheet" href=".*katex.*css.*"/);
+            expected.push(/<link rel="stylesheet" href=".*katex.*css.*"/u);
         }
         // content
         expected.push('<span class="katex');

@@ -76,11 +76,11 @@ export function diagnoseBackendChoices(
         return { errors: 1, warnings: 0, problems: 1 };
     }
     const d = new Diagnoser(choices);
-    backendChoices.forEach(([key, backendChoices]) => {
+    backendChoices.forEach(([key, bc]) => {
         d.ifPresent(
             key,
-            `one of: "${backendChoices.join('", "')}"`,
-            (v) => isOneOf(v, backendChoices),
+            `one of: "${bc.join('", "')}"`,
+            (v) => isOneOf(v, bc),
             'string',
         );
     });

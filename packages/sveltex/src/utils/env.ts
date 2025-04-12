@@ -18,7 +18,7 @@ export async function getVersion(pkg: string): Promise<string | undefined> {
     let backendVersion: string | undefined;
     try {
         const prefix =
-            /(.*?)\/node_modules/.exec(getDefaultCacheDirectory())?.[1] ?? '';
+            /(.*?)\/node_modules/u.exec(getDefaultCacheDirectory())?.[1] ?? '';
         const path = resolve(prefix, 'node_modules', pkg, 'package.json');
         const fileContents = await fs.readFile(path, 'utf-8');
         if (fileContents) {

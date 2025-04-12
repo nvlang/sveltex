@@ -49,7 +49,7 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
             [
                 [
                     '<span><p>*text*</p></span>',
-                    /<span>\n*<em>text<\/em>\n*<\/span>/,
+                    /<span>\n*<em>text<\/em>\n*<\/span>/u,
                 ],
             ],
         ],
@@ -96,6 +96,7 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
                             : after.trim()
                               ? '<p>' + after.trim() + '</p>'
                               : after),
+                    'u',
                 );
                 return [input, expected];
             });
@@ -109,7 +110,7 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
         [
             '{ transformers: { post: (str) => `*${str}*` } }',
             { transformers: { post: (str) => `*${str}*` } },
-            [['abc', /\*\n?<p>abc<\/p>\n?\*/]],
+            [['abc', /\*\n?<p>abc<\/p>\n?\*/u]],
         ],
     ] as [
         string,
@@ -136,15 +137,15 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
                     // contrary to CommonMark specification. Since this doesn't
                     // affect how the output is eventually rendered, we make the
                     // test insensitive to this.
-                    output = output.replaceAll(/\n{2,}/g, '\n');
+                    output = output.replaceAll(/\n{2,}/gu, '\n');
 
                     // Marked also doesn't currently trim some irrelevant
                     // whitespace. Since this doesn't affect how the output is
                     // eventually rendered, we make the test insensitive to
                     // this.
                     output = output
-                        .replace(/[ ]+<\//g, '</')
-                        .replace(/(<[^/]*>)[ ]+/g, '$1');
+                        .replace(/[ ]+<\//gu, '</')
+                        .replace(/(<[^/]*>)[ ]+/gu, '$1');
                 }
                 expect(output).toMatch(expected);
             });
@@ -417,15 +418,15 @@ describe('adjustHtmlSpacingAndEscape', () => {
     test.each([
         [
             '<div><Foo a={b} c="{d}" e {f} g="h">\ntest</Foo></div>',
-            /<div>\n{2,}<Foo a=\{b\} c="\{d\}" e \{f\} g="h">\n{2,}test\n{2,}<\/Foo>\n{2,}<\/div>/,
+            /<div>\n{2,}<Foo a=\{b\} c="\{d\}" e \{f\} g="h">\n{2,}test\n{2,}<\/Foo>\n{2,}<\/div>/u,
         ],
         [
             '<p><p>a<p>b</p>c<p>d</p>e</p></p>',
-            /<p>\s*a\s*b\s*c\s*d\s*e\s*<\/p>/,
+            /<p>\s*a\s*b\s*c\s*d\s*e\s*<\/p>/u,
         ],
         [
             '<p><pre>a\n\n<div>\nb\n</div>c</pre></p>',
-            /^\s*<pre>a\n\n<div>\nb\n<\/div>c<\/pre>\s*$/,
+            /^\s*<pre>a\n\n<div>\nb\n<\/div>c<\/pre>\s*$/u,
         ],
     ])('%o → %o', (input, expected) => {
         const res = adjustHtmlSpacingAndEscape(input, () => true, [

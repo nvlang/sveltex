@@ -1,6 +1,6 @@
-import { type Sveltex, sveltex } from '$base/Sveltex.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { mockFs } from '$dev_deps.js';
+import { type Sveltex, sveltex } from '../../../../src/base/Sveltex.js';
+import { spy } from '../../fixtures.js';
+import { mockFs } from '../../../../src/dev_deps.js';
 import type { Processed } from 'svelte/compiler';
 import {
     type MockInstance,
@@ -94,7 +94,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toMatch(
-                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script context="module">\n<\/script>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this={Sveltex__tex__something} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/s,
+                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script context="module">\n<\/script>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this=\{Sveltex__tex__something\} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/su,
             );
             const scriptOut = await sp.script({
                 content: '',
@@ -138,10 +138,10 @@ describe('Sveltex', () => {
             });
             const res = (markupOut as Processed).code;
             expect(res).toMatch(
-                /<svelte:head>\n<title>Example<\/title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href=".{1,100}\.css">\n/,
+                /<svelte:head>\n<title>Example<\/title>\n<meta name="author" content="Jane Doe">\n<link rel="stylesheet" href=".{1,100}\.css">\n/u,
             );
             expect(res).toMatch(
-                /<figure id="something">\n<svelte:component this={Sveltex__tex__ref_without_quotation_marks} \/>\n<figcaption id="caption-id">some text here<\/figcaption>\n<\/figure>\n<p><code>code<\/code>\n<span class="katex">/,
+                /<figure id="something">\n<svelte:component this=\{Sveltex__tex__ref_without_quotation_marks\} \/>\n<figcaption id="caption-id">some text here<\/figcaption>\n<\/figure>\n<p><code>code<\/code>\n<span class="katex">/u,
             );
 
             const scriptOut = await sp.script({
@@ -262,7 +262,7 @@ describe('Sveltex', () => {
                 filename: '6f85b451-6ae9-42c4-a03b-cca772ef7455.sveltex',
             });
             expect(scriptModuleOut?.code).toMatch(
-                /^\s*export const metadata = undefined;\s*$/,
+                /^\s*export const metadata = undefined;\s*$/u,
             );
             existsSync.mockReset();
         });
@@ -285,7 +285,7 @@ describe('Sveltex', () => {
                 filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
             });
             expect((scriptOut as Processed).code).toMatch(
-                /^\s*const imports = \[\{"\$lib\/components\/Example.svelte":"Example;"\}\];\n+import Example from '\$lib\/components\/Example.svelte';\s*$/,
+                /^\s*const imports = \[\{"\$lib\/components\/Example.svelte":"Example;"\}\];\n+import Example from '\$lib\/components\/Example.svelte';\s*$/u,
             );
 
             const scriptModuleOut = await sp.script({

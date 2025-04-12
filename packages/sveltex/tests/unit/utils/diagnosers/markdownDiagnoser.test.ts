@@ -1,7 +1,7 @@
-import { getDefaultMarkdownConfig } from '$base/defaults.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { markdownBackends } from '$utils/diagnosers/backendChoices.js';
-import { diagnoseMarkdownConfiguration } from '$utils/diagnosers/markdownConfiguration.js';
+import { getDefaultMarkdownConfig } from '../../../../src/base/defaults.js';
+import { spy } from '../../fixtures.js';
+import { markdownBackends } from '../../../../src/utils/diagnosers/backendChoices.js';
+import { diagnoseMarkdownConfiguration } from '../../../../src/utils/diagnosers/markdownConfiguration.js';
 import {
     it,
     expect,

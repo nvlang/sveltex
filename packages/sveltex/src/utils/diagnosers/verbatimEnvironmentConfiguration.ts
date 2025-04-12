@@ -11,21 +11,17 @@ import {
     isRecord,
     isString,
     isStringArray,
-} from '$typeGuards/utils.js';
+} from '../../typeGuards/utils.js';
 import {
     isSimpleEscapeInstruction,
     isVerbatimType,
     verbatimTypes,
-} from '$typeGuards/verbatim.js';
-import {
-    checkTransformers,
-    Diagnoser,
-    insteadGot,
-} from '$utils/diagnosers/Diagnoser.js';
-import { log } from '$utils/debug.js';
-import { diagnoseTexConfig } from '$utils/diagnosers/texConfiguration.js';
-import { getDefaultVerbEnvConfig } from '$base/defaults.js';
-import type { VerbatimType } from '$types/handlers/Verbatim.js';
+} from '../../typeGuards/verbatim.js';
+import { checkTransformers, Diagnoser, insteadGot } from './Diagnoser.js';
+import { log } from '../debug.js';
+import { diagnoseTexConfig } from './texConfiguration.js';
+import { getDefaultVerbEnvConfig } from '../../base/defaults.js';
+import type { VerbatimType } from '../../types/handlers/Verbatim.js';
 
 /**
  * Diagnose whether a given object is a valid verbatim environment
@@ -139,10 +135,10 @@ export function diagnoseVerbEnvConfig(
                 isString(v) ||
                 isRecord(
                     v,
-                    ([k, v]) =>
-                        (k === 'name' && (v === undefined || isString(v))) ||
+                    ([k, v_]) =>
+                        (k === 'name' && (v_ === undefined || isString(v_))) ||
                         (k === 'options' &&
-                            (v === undefined || isStringArray(v))),
+                            (v_ === undefined || isStringArray(v_))),
                 ),
             ['string', 'object'],
         );

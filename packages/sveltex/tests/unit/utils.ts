@@ -7,10 +7,10 @@ export function range(start: number, end: number, step: number = 1): number[] {
 }
 
 export const uuidV4Regexp =
-    /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}/;
+    /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}/u;
 
 export const idRegexp =
-    /id[a-f0-9]{8}[a-f0-9]{4}4[a-f0-9]{3}[89ab][a-f0-9]{3}[a-f0-9]{12}/;
+    /id[a-f0-9]{8}[a-f0-9]{4}4[a-f0-9]{3}[89ab][a-f0-9]{3}[a-f0-9]{12}/u;
 
 export function cartesianProduct<X1>(x1: X1[]): [X1][];
 export function cartesianProduct<X1, X2>(x1: X1[], x2: X2[]): [X1, X2][];
@@ -41,5 +41,5 @@ export function cartesianProduct<X1, X2, X3, X4, X5, X6>(
     x6: X6[],
 ): [X1, X2, X3, X4, X5, X6][];
 export function cartesianProduct(...a: unknown[][]) {
-    return a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
+    return a.reduce((a_, b) => a_.flatMap((d) => b.map((e) => [d, e].flat())));
 }

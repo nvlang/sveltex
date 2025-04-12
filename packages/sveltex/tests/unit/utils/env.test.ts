@@ -14,11 +14,11 @@ import {
     getPmFromLockfile,
     getPmFromPackageJson,
     getVersion,
-} from '$utils/env.js';
+} from '../../../src/utils/env.js';
 
-import { mockFs } from '$dev_deps.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { readFileSync } from '$deps.js';
+import { mockFs } from '../../../src/dev_deps.js';
+import { spy } from '../fixtures.js';
+import { readFileSync } from '../../../src/deps.js';
 
 function fixture() {
     beforeEach(() => {
@@ -31,14 +31,16 @@ function fixture() {
 
 let existsSync: MockInstance;
 beforeAll(async () => {
-    vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
-        start: vi.fn().mockReturnValue({
-            stop: vi.fn(),
-            text: vi.fn(),
-            succeed: vi.fn(),
-            fail: vi.fn(),
-        }),
-    })) as unknown as typeof import('ora').default);
+    vi.spyOn(await import('../../../src/deps.js'), 'ora').mockImplementation(
+        (() => ({
+            start: vi.fn().mockReturnValue({
+                stop: vi.fn(),
+                text: vi.fn(),
+                succeed: vi.fn(),
+                fail: vi.fn(),
+            }),
+        })) as unknown as typeof import('ora').default,
+    );
     const mocks = await spy(['existsSync'], false);
     existsSync = mocks.existsSync;
     existsSync.mockImplementation((path: string) => {
@@ -56,7 +58,7 @@ describe('getVersion', () => {
     it.each(['katex', 'highlight.js', 'mathjax-full'] as const)(
         'getVersion(%o) has format "x.y.z"',
         async (dep) => {
-            expect(await getVersion(dep)).toMatch(/(\d+\.\d+\.\d+)/);
+            expect(await getVersion(dep)).toMatch(/(\d+\.\d+\.\d+)/u);
         },
     );
 });

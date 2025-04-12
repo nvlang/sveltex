@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { sveltex } from '$base/Sveltex.js';
-import { cartesianProduct } from '$tests/unit/utils.js';
+import { sveltex } from '../../../../src/base/Sveltex.js';
+import { cartesianProduct } from '../../utils.js';
 import {
     codeBackends,
     markdownBackends,
-} from '$utils/diagnosers/backendChoices.js';
-import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import { nodeAssert } from '$deps.js';
-import { commonMarkSpec } from '$tests/unit/base/Sveltex/commonmark.js';
+} from '../../../../src/utils/diagnosers/backendChoices.js';
+import type { MarkdownBackend } from '../../../../src/types/handlers/Markdown.js';
+import { nodeAssert } from '../../../../src/deps.js';
+import { commonMarkSpec } from '../../base/Sveltex/commonmark.js';
 
 function fixture() {
     beforeEach(() => {
@@ -74,7 +74,7 @@ describe('CommonMark compliance', () => {
                     commonMarkSpec.filter(
                         ({ section: sec, markdown, example }) =>
                             sec === section &&
-                            !/(^|\n|-|>)\s*([ ]{4,}|\t)/.test(markdown) &&
+                            !/(^|\n|-|>)\s*([ ]{4,}|\t)/u.test(markdown) &&
                             !exceptions.all.includes(example) &&
                             !exceptions[s.markdownBackend].includes(example),
                     ),
@@ -122,7 +122,7 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
                 commonMarkSpec.filter(
                     ({ section: sec, markdown, example }) =>
                         sec === section &&
-                        !/(^|\n|-|>)\s*([ ]{4,}|\t)/.test(markdown) &&
+                        !/(^|\n|-|>)\s*([ ]{4,}|\t)/u.test(markdown) &&
                         !exceptions.all.includes(example) &&
                         !exceptions[s.markdownBackend].includes(example),
                 ),
@@ -151,16 +151,16 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
                 // (highlighting tags) = (original code, with special characters
                 // escaped)".
                 let actual = code
-                    .replace(/<script[^>]*>.*?<\/script>\n/gs, '')
-                    .replace(/<svelte:head>.*?<\/svelte:head>\n/s, '')
-                    .replaceAll(/<\/?span[^>]*>/g, '')
-                    .replaceAll(/class="(language-\S+)?.*?"/g, 'class="$1"')
+                    .replace(/<script[^>]*>.*?<\/script>\n/gsu, '')
+                    .replace(/<svelte:head>.*?<\/svelte:head>\n/su, '')
+                    .replaceAll(/<\/?span[^>]*>/gu, '')
+                    .replaceAll(/class="(language-\S+)?.*?"/gu, 'class="$1"')
                     .replaceAll(' class=""', '');
                 if (s.codeBackend === 'shiki') {
                     actual = actual
-                        .replaceAll(/ style=".*?"/g, '')
-                        .replaceAll(/ tabindex=".*?"/g, '')
-                        .replaceAll(/ startline=".*?"/g, '')
+                        .replaceAll(/ style=".*?"/gu, '')
+                        .replaceAll(/ tabindex=".*?"/gu, '')
+                        .replaceAll(/ startline=".*?"/gu, '')
                         // shiki escapes double quotes. Since this shouldn't
                         // make any difference in practice, it seems acceptable
                         // to me to ignore that discrepancy in the test.
@@ -344,13 +344,13 @@ function normalizeHtml(html: string, backend?: MarkdownBackend) {
 
         //
         .replace(
-            /<(div|p|blockquote|h\d|li)>\s*(\S.*?\S)\s*<\/\1>/gs,
+            /<(div|p|blockquote|h\d|li)>\s*(\S.*?\S)\s*<\/\1>/gsu,
             '<$1>$2</$1>',
         )
         // collapse spaces
-        .replace(/(\s)\1*/g, '$1')
-        .replace(/[ \t\r]*\n[ \t\r]*/g, '\n')
-        .replace(/\n/g, '')
+        .replace(/(\s)\1*/gu, '$1')
+        .replace(/[ \t\r]*\n[ \t\r]*/gu, '\n')
+        .replace(/\n/gu, '')
         .replaceAll('&#x3C;', '&lt;')
         .replaceAll('&#x3E;', '&gt;')
         .replaceAll('&#x26;', '&amp;')

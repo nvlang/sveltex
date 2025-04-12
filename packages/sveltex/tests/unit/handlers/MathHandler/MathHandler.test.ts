@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, test } from 'vitest';
-import { MathHandler } from '$handlers/MathHandler.js';
-import { mathBackends } from '$utils/diagnosers/backendChoices.js';
+import { MathHandler } from '../../../../src/handlers/MathHandler.js';
+import { mathBackends } from '../../../../src/utils/diagnosers/backendChoices.js';
 
 describe("MathHandler<'none'>", () => {
     let handler: MathHandler<'none'>;

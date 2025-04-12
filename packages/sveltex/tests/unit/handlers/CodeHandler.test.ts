@@ -8,14 +8,17 @@ import {
     afterAll,
     afterEach,
 } from 'vitest';
-import { CodeHandler } from '$handlers/CodeHandler.js';
-import { consoles } from '$utils/debug.js';
-import type { CodeBackend, CodeConfiguration } from '$types/handlers/Code.js';
-import { codeBackends } from '$utils/diagnosers/backendChoices.js';
-import { getDefaultCodeConfig } from '$base/defaults.js';
-import { nodeAssert } from '$deps.js';
-import { isFunction, isString } from '$typeGuards/utils.js';
-import { mergeConfigs } from '$utils/merge.js';
+import { CodeHandler } from '../../../src/handlers/CodeHandler.js';
+import { consoles } from '../../../src/utils/debug.js';
+import type {
+    CodeBackend,
+    CodeConfiguration,
+} from '../../../src/types/handlers/Code.js';
+import { codeBackends } from '../../../src/utils/diagnosers/backendChoices.js';
+import { getDefaultCodeConfig } from '../../../src/base/defaults.js';
+import { nodeAssert } from '../../../src/deps.js';
+import { isFunction, isString } from '../../../src/typeGuards/utils.js';
+import { mergeConfigs } from '../../../src/utils/merge.js';
 import { bundledLanguages, bundledThemes } from 'shiki';
 
 import {
@@ -23,12 +26,15 @@ import {
     fc,
     shikiTransformerMetaHighlight,
     shikiTransformerNotationDiff,
-} from '$dev_deps.js';
-import { escapeStringForRegExp, generateId } from '$utils/escape.js';
-import { sveltex } from '$base/Sveltex.js';
-import type { SupportedCdn } from '$types/handlers/Css.js';
-import { supportedCdns } from '$typeGuards/code.js';
-import { spy } from '$tests/unit/fixtures.js';
+} from '../../../src/dev_deps.js';
+import {
+    escapeStringForRegExp,
+    generateId,
+} from '../../../src/utils/escape.js';
+import { sveltex } from '../../../src/base/Sveltex.js';
+import type { SupportedCdn } from '../../../src/types/handlers/Css.js';
+import { supportedCdns } from '../../../src/typeGuards/code.js';
+import { spy } from '../fixtures.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
@@ -43,8 +49,8 @@ describe('CodeHandler.create', () => {
                     addLanguageClass: 'something',
                     appendNewline: false,
                     transformers: {
-                        post: [() => '', ['a', 'b'], [/a/, 'b']],
-                        pre: [/a/, 'b'],
+                        post: [() => '', ['a', 'b'], [/a/u, 'b']],
+                        pre: [/a/u, 'b'],
                     },
                 } as CodeConfiguration<CodeBackend>,
             ],
@@ -60,7 +66,7 @@ describe('CodeHandler.create', () => {
             const handler = await CodeHandler.create(backend, config);
             expect(handler).toBeDefined();
             expect(() => JSON.stringify(handler)).not.toThrow();
-            expect(JSON.stringify(handler)).not.toMatch(/circular|circle/i);
+            expect(JSON.stringify(handler)).not.toMatch(/circular|circle/iu);
         });
         test(`.backend → '${backend}'`, async () => {
             const handler = await CodeHandler.create(backend, config);
@@ -139,7 +145,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                     const handler = await CodeHandler.create(backend, {});
                     const output = await handler.process(input, opts);
                     expect(output.processed).toMatch(
-                        /^<pre[^>]*?><code[^>]*?>.*<\/code[^>]*?><\/pre[^>]*?>/s,
+                        /^<pre[^>]*?><code[^>]*?>.*<\/code[^>]*?><\/pre[^>]*?>/su,
                     );
                 });
             }
@@ -189,7 +195,10 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                             expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
                                 1,
                                 expect.stringMatching(
-                                    new RegExp(`sveltex/${backend}@.*\\.css`),
+                                    new RegExp(
+                                        `sveltex/${backend}@.*\\.css`,
+                                        'u',
+                                    ),
                                 ),
                                 expect.stringContaining('color:'),
                             );
@@ -220,7 +229,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                         test("should work even if version can't be fetched", async () => {
                             const getVersionMock = vi
                                 .spyOn(
-                                    await import('$utils/env.js'),
+                                    await import('../../../src/utils/env.js'),
                                     'getVersion',
                                 )
                                 .mockResolvedValueOnce(undefined);
@@ -234,6 +243,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 expect.stringMatching(
                                     new RegExp(
                                         `static/sveltex/${backend}@latest.*\\.css`,
+                                        'u',
                                     ),
                                 ),
                                 expect.stringContaining('color:'),
@@ -244,7 +254,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                         test("should return early if CSS can't be fetched", async () => {
                             const fetchCssMock = vi
                                 .spyOn(
-                                    await import('$utils/cdn.js'),
+                                    await import('../../../src/utils/cdn.js'),
                                     'fancyFetch',
                                 )
                                 .mockResolvedValueOnce(undefined);
@@ -259,7 +269,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                         test('should return early if CSS file is already present', async () => {
                             const fetchCssMock = vi
                                 .spyOn(
-                                    await import('$utils/cdn.js'),
+                                    await import('../../../src/utils/cdn.js'),
                                     'fancyFetch',
                                 )
                                 .mockResolvedValueOnce(undefined);
@@ -288,7 +298,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                             expect(
                                 (await handler.process(`a ${char} b`))
                                     .processed,
-                            ).toMatch(new RegExp(escaped.join('|')));
+                            ).toMatch(new RegExp(escaped.join('|'), 'u'));
                             if (backend !== 'escape') {
                                 expect(
                                     (
@@ -296,7 +306,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                             lang: 'js',
                                         })
                                     ).processed,
-                                ).toMatch(new RegExp(escaped.join('|')));
+                                ).toMatch(new RegExp(escaped.join('|'), 'u'));
                             }
                         },
                     );
@@ -321,7 +331,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 );
                             } else {
                                 expect(output.processed).not.toMatch(
-                                    /class=".*(js|javascript)("| .*")/,
+                                    /class=".*(js|javascript)("| .*")/u,
                                 );
                             }
                         },
@@ -335,10 +345,10 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 fc.constantFrom(
                                     ...Object.keys(bundledLanguages),
                                 ),
-                                fc.fullUnicodeString({ minLength: 1 }),
+                                fc.string({ minLength: 1 }),
                                 fc.boolean(),
                             ],
-                            { errorWithCause: true, verbose: 2 },
+                            { verbose: 2 },
                         )(
                             'fuzzy: (theme, lang, inline, code)',
                             async (theme, lang, code, inline) => {
@@ -360,7 +370,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                     pre = `<pre class="`;
                                 }
                                 expect(output.processed).toMatch(
-                                    new RegExp(`^${pre}shiki ${theme}`),
+                                    new RegExp(`^${pre}shiki ${theme}`, 'u'),
                                 );
                                 expect(output.processed).toContain(
                                     '<span style="color:',
@@ -373,7 +383,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                             [
                                 fc.constantFrom(...Object.keys(bundledThemes)),
                                 fc.dictionary(
-                                    fc.stringMatching(/^[\w-]+$/),
+                                    fc.stringMatching(/^[\w-]+$/u),
                                     fc.constantFrom(
                                         ...Object.keys(bundledThemes),
                                     ),
@@ -382,10 +392,10 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 fc.constantFrom(
                                     ...Object.keys(bundledLanguages),
                                 ),
-                                fc.fullUnicodeString({ minLength: 1 }),
+                                fc.string({ minLength: 1 }),
                                 fc.boolean(),
                             ],
-                            { errorWithCause: true, verbose: 2 },
+                            { verbose: 2 },
                         )(
                             'fuzzy: (themes, lang, inline, code)',
                             async (light, otherThemes, lang, code, inline) => {
@@ -415,6 +425,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                     pre = `<pre class="`;
                                 }
                                 expect(output.processed).toMatch(
+                                    // eslint-disable-next-line require-unicode-regexp
                                     new RegExp(
                                         `^${pre}shiki shiki-themes ${light}${str ? ' ' + str : ''}`,
                                     ),
@@ -741,7 +752,7 @@ describe('fixtures', () => {
                     {
                         transformers: {
                             pre: ['var', 'let'],
-                            post: [/$/m, '\n // comment'],
+                            post: [/$/mu, '\n // comment'],
                         },
                     },
                     [['```js\nvar a\n```', '\nlet a\n']],

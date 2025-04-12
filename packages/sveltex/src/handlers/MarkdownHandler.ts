@@ -55,7 +55,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     FullMarkdownConfiguration<B>,
     MarkdownHandler<B>
 > {
-    override get configuration(): FullMarkdownConfiguration<B> {
+    public override get configuration(): FullMarkdownConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
         const { pre, post } = this._configuration.transformers;
         return {
@@ -70,7 +70,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
 
     private configIsValid: boolean | undefined = undefined;
 
-    override get process(): (
+    public override get process(): (
         content: string,
         options: MarkdownProcessOptions,
     ) => Promise<{
@@ -78,13 +78,9 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
         unescapeOptions: UnescapeOptions;
     }> {
         return async (content: string, options: MarkdownProcessOptions) => {
-            if (this.configIsValid === undefined) {
-                this.configIsValid =
-                    diagnoseMarkdownConfiguration(
-                        this.backend,
-                        this._configuration,
-                    ).errors === 0;
-            }
+            this.configIsValid ??=
+                diagnoseMarkdownConfiguration(this.backend, this._configuration)
+                    .errors === 0;
 
             if (!this.configIsValid) {
                 log(
@@ -131,7 +127,7 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
      * @returns A promise that resolves to a markdown handler of the specified
      * type.
      */
-    static async create<B extends MarkdownBackend>(
+    public static async create<B extends MarkdownBackend>(
         backend: B,
         userConfig?: MarkdownConfiguration<B>,
     ): Promise<MarkdownHandler<B>> {
@@ -448,9 +444,9 @@ export function adjustHtmlSpacingAndEscape(
                 match.toString(),
                 /(?:(["'])\{.*\}\1)|(?:\{.*\})/gsu,
                 (m) => {
-                    const id = generateId();
-                    escaped[id] = m.toString();
-                    return id;
+                    const id_ = generateId();
+                    escaped[id_] = m.toString();
+                    return id_;
                 },
             );
         },
@@ -525,13 +521,13 @@ export function adjustHtmlSpacingAndEscape(
         });
 
         // Unescape mustache tags in attributes.
-        Object.entries(escaped).forEach(([id, mt]) => {
+        Object.entries(escaped).forEach(([id_, mt]) => {
             str = str.replace(
                 // The escaped attribute might've been wrapped in quotes, so we
                 // need to remove those if present, restoring instead the
                 // original quotes, if there were any, or otherwise the original
                 // lack of quotes.
-                new RegExp(`(["'])${id}\\1|${id}`, 'gsu'),
+                new RegExp(`(["'])${id_}\\1|${id_}`, 'gsu'),
                 mt,
             );
         });
@@ -618,6 +614,7 @@ export function removeBadParagraphs(
             ...tagsThatCannotBeInParagraphs,
             ...opts.componentsThatCannotBeInParagraphs,
         ].join('|')})(?:\\s+[^>]*?)?\\s*/?>`,
+        'u',
     );
 
     content = XRegExp.replace(content, /<p>(.*?)<\/p>/gsu, (match, inner) => {

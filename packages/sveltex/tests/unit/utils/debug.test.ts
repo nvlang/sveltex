@@ -1,4 +1,4 @@
-import { mockFs } from '$dev_deps.js';
+import { mockFs } from '../../../src/dev_deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -16,8 +16,8 @@ import {
     log,
     prettifyError,
     runWithSpinner,
-} from '$utils/debug.js';
-import { spy } from '$tests/unit/fixtures.js';
+} from '../../../src/utils/debug.js';
+import { spy } from '../fixtures.js';
 
 import { readFileSync } from 'node:fs';
 import pc from 'picocolors';
@@ -25,7 +25,10 @@ import pc from 'picocolors';
 describe('debug', () => {
     let existsSync: MockInstance;
     beforeAll(async () => {
-        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+        vi.spyOn(
+            await import('../../../src/deps.js'),
+            'ora',
+        ).mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
                 stop: vi.fn(),
                 text: vi.fn(),

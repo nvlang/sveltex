@@ -46,11 +46,11 @@ export class TexHandler extends Handler<
      * @param options - Options to pass to the processor.
      * @returns The processed content, or promise resolving to it.
      */
-    override get process(): (
+    public override get process(): (
         content: string,
         options: TexProcessOptions,
     ) => ProcessedSnippet | Promise<ProcessedSnippet> {
-        return (content: string, options: TexProcessOptions) => {
+        return async (content: string, options: TexProcessOptions) => {
             return super.process(content, options);
         };
     }
@@ -92,7 +92,7 @@ export class TexHandler extends Handler<
      * behavior is guaranteed by Svelte itself, see [Svelte
      * docs](https://svelte.dev/docs/svelte-compiler#preprocess).
      */
-    texComponents: Record<string, TexComponentImportInfo[]>;
+    public texComponents: Record<string, TexComponentImportInfo[]>;
 
     /**
      * Notes a tex component in a file.
@@ -100,7 +100,7 @@ export class TexHandler extends Handler<
      * @param filename - The name of the file.
      * @param tc - The tex component to note.
      */
-    noteTcInFile(filename: string, tc: TexComponentImportInfo): void {
+    public noteTcInFile(filename: string, tc: TexComponentImportInfo): void {
         if (
             filename in this.texComponents &&
             this.texComponents[filename] !== undefined
@@ -144,7 +144,7 @@ export class TexHandler extends Handler<
         this.texComponents = texComponents;
     }
 
-    poppler?: Poppler | undefined;
+    public poppler?: Poppler | undefined;
 
     /**
      * Creates a tex handler of the specified type.
@@ -152,7 +152,9 @@ export class TexHandler extends Handler<
      * @param backend - The type of the tex processor to create.
      * @returns A promise that resolves to a tex handler of the specified type.
      */
-    static async create(userConfig?: TexConfiguration): Promise<TexHandler> {
+    public static async create(
+        userConfig?: TexConfiguration,
+    ): Promise<TexHandler> {
         // Merge user-provided configuration into the default configuration.
         const configuration = mergeConfigs(
             getDefaultTexConfig(),

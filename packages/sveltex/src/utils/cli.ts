@@ -13,7 +13,7 @@ import { process, spawn } from '../deps.js';
  * @returns A promise that resolves with the exit code, `stdout`, and `stderr`
  * of the process.
  */
-export function spawnCliInstruction(
+export async function spawnCliInstruction(
     instr: CliInstruction,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
     let stdout = '';

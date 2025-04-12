@@ -1,10 +1,10 @@
 // File description: Types related to SvelTeX's escaping mechanism.
 
 /* eslint-disable tsdoc/syntax */
-import type { CodeProcessOptionsBase } from '$types/handlers/Code.js';
-import type { MathBackend, MathProcessOptions } from '$types/handlers/Math.js';
-import type { VerbatimProcessOptions } from '$types/handlers/Verbatim.js';
-import type { Offsets } from '$types/utils/Ast.js';
+import type { CodeProcessOptionsBase } from '../handlers/Code.js';
+import type { MathBackend, MathProcessOptions } from '../handlers/Math.js';
+import type { VerbatimProcessOptions } from '../handlers/Verbatim.js';
+import type { Offsets } from './Ast.js';
 
 /**
  * Vernacular:

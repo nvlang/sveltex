@@ -1,8 +1,5 @@
 // File description: Log messages to console.
 
-// Types
-import type { Colors, Ora } from '../deps.js';
-
 // Internal dependencies
 import {
     ifPresentAndDefined,
@@ -14,7 +11,7 @@ import {
 } from '../typeGuards/utils.js';
 
 // External dependencies
-import { inspect, ora, pc, process } from '../deps.js';
+import { type Colors, type Ora, inspect, ora, pc, process } from '../deps.js';
 
 type SpecialWhitespaceCharacter = '\t' | '\n' | '\r' | '\f';
 
@@ -30,7 +27,7 @@ const escapedSpecialWhitespaceCharacters: Record<
 
 export function escapeWhitespace(input: string): string {
     return input.replace(
-        /[\n\t\r\f]/g,
+        /[\n\t\r\f]/gu,
         (match) =>
             escapedSpecialWhitespaceCharacters[
                 match as SpecialWhitespaceCharacter
@@ -46,8 +43,8 @@ export function timeSince(start: bigint): bigint {
     return process.hrtime.bigint() - start;
 }
 
-export function timeToString(time: bigint): string {
-    const ms = Math.round(Number(time / BigInt(1e6)));
+export function timeToString(t: bigint): string {
+    const ms = Math.round(Number(t / BigInt(1e6)));
     let timeString: string;
     if (ms > 1000) {
         timeString = `${(ms / 1000).toFixed(2)}s`;
@@ -203,7 +200,7 @@ function prettifyStackTrace(stack: string): string {
         stack
             .split('\n')
             .map((line) => {
-                const match = /\s*at\s.*\/node_modules\//.exec(line);
+                const match = /\s*at\s.*\/node_modules\//u.exec(line);
                 if (match) {
                     return pc.dim(line);
                 }

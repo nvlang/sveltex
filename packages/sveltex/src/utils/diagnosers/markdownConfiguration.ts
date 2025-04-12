@@ -1,7 +1,7 @@
 // File description: Diagnoser for `MarkdownConfiguration` type.
 
 // Types
-import type { MarkdownBackend } from '$types/handlers/Markdown.js';
+import type { MarkdownBackend } from '../../types/handlers/Markdown.js';
 
 // Internal dependencies
 import {
@@ -12,14 +12,10 @@ import {
     isOneOf,
     isPresentAndDefined,
     isString,
-} from '$typeGuards/utils.js';
-import { log } from '$utils/debug.js';
-import {
-    checkTransformers,
-    Diagnoser,
-    insteadGot,
-} from '$utils/diagnosers/Diagnoser.js';
-import { getDefaultMarkdownConfig } from '$base/defaults.js';
+} from '../../typeGuards/utils.js';
+import { log } from '../debug.js';
+import { checkTransformers, Diagnoser, insteadGot } from './Diagnoser.js';
+import { getDefaultMarkdownConfig } from '../../base/defaults.js';
 
 export function diagnoseMarkdownConfiguration(
     backend: MarkdownBackend,
@@ -52,7 +48,7 @@ export function diagnoseMarkdownConfiguration(
             d.isPresent(
                 `components[${String(index)}].name`,
                 'a string matching the regex /^[A-Z][-.:0-9_a-zA-Z]*/',
-                (v) => isString(v) && /^[A-Z][-.:0-9_a-zA-Z]*/.test(v),
+                (v) => isString(v) && /^[A-Z][-.:0-9_a-zA-Z]*/u.test(v),
                 'string',
             );
             d.ifPresent(

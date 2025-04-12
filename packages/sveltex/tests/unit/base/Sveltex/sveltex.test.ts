@@ -1,17 +1,21 @@
 /* eslint-disable vitest/no-commented-out-tests */
 
-import type { CodeBackend } from '$types/handlers/Code.js';
-import type { MarkdownBackend } from '$types/handlers/Markdown.js';
-import type { MathBackend } from '$types/handlers/Math.js';
+import type { CodeBackend } from '../../../../src/types/handlers/Code.js';
+import type { MarkdownBackend } from '../../../../src/types/handlers/Markdown.js';
+import type { MathBackend } from '../../../../src/types/handlers/Math.js';
 
-import { sveltex, Sveltex } from '$base/Sveltex.js';
+import { sveltex, Sveltex } from '../../../../src/base/Sveltex.js';
 
-import { removeEmptyLines, spy } from '$tests/unit/fixtures.js';
-import { range } from '$tests/unit/utils.js';
+import { removeEmptyLines, spy } from '../../fixtures.js';
+import { range } from '../../utils.js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { SveltexConfiguration } from '$mod.js';
-import { isRegExp } from '$deps.js';
-import { isArray, isDefined, isString } from '$typeGuards/utils.js';
+import type { SveltexConfiguration } from '../../../../src/mod.js';
+import { isRegExp } from '../../../../src/deps.js';
+import {
+    isArray,
+    isDefined,
+    isString,
+} from '../../../../src/typeGuards/utils.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -22,24 +26,24 @@ describe.concurrent('Sveltex', () => {
     });
     describe('misc', () => {
         it('should throw if backend is not recognized', async () => {
-            await expect(() =>
+            await expect(async () =>
                 sveltex({
                     markdownBackend: 'unknown' as 'none',
                     codeBackend: 'unknown' as 'none',
                     mathBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
-            await expect(() =>
+            await expect(async () =>
                 sveltex({
                     markdownBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
-            await expect(() =>
+            await expect(async () =>
                 sveltex({
                     codeBackend: 'unknown' as 'none',
                 }),
             ).rejects.toThrowError();
-            await expect(() =>
+            await expect(async () =>
                 sveltex({
                     mathBackend: 'unknown' as 'none',
                 }),
@@ -51,19 +55,19 @@ describe.concurrent('Sveltex', () => {
         it('returns copy of configuration, not reference', async () => {
             const config = {
                 markdown: {
-                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                    transformers: { pre: [/a/u, 'b'], post: () => 'c' },
                 },
                 code: {
-                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                    transformers: { pre: [/a/u, 'b'], post: () => 'c' },
                 },
                 math: {
-                    transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                    transformers: { pre: [/a/u, 'b'], post: () => 'c' },
                 },
                 tex: {},
                 verbatim: {
                     Example: {
                         type: 'code',
-                        transformers: { pre: [/a/, 'b'], post: () => 'c' },
+                        transformers: { pre: [/a/u, 'b'], post: () => 'c' },
                     },
                     Example2: {
                         type: 'tex',
@@ -157,9 +161,9 @@ function preprocessFn<
     M extends MarkdownBackend,
     C extends CodeBackend,
     T extends MathBackend,
->(preprocessor: Sveltex<M, C, T>) {
+>(p: Sveltex<M, C, T>) {
     return async (input: string, filename: string = 'test.sveltex') => {
-        return (await preprocessor.markup({ content: input, filename }))?.code;
+        return (await p.markup({ content: input, filename }))?.code;
     };
 }
 
@@ -341,7 +345,7 @@ describe('Sveltex.markup()', () => {
                 label: 'tags with uppercase letters',
                 input: '<MyComponent test="a" {c} test2={b} g="">foo</MyComponent>',
                 expected:
-                    /<MyComponent test="a" \{c\} test2=("?)\{b\}\1 g="">foo<\/MyComponent>/,
+                    /<MyComponent test="a" \{c\} test2=("?)\{b\}\1 g="">foo<\/MyComponent>/u,
             },
         ];
         it.each(tests)('$label', async (test) => {
@@ -366,16 +370,16 @@ describe('Sveltex.markup()', () => {
 
     // eslint-disable-next-line vitest/valid-describe-callback
     describe.concurrent('transforms inline markdown', async () => {
-        const preprocessor = await sveltex({
+        const preprocessor_ = await sveltex({
             markdownBackend: 'marked',
             codeBackend: 'escape',
             mathBackend: 'none',
         });
-        const preprocess = async (
+        const preprocess_ = async (
             input: string,
             filename: string = 'test.sveltex',
         ) => {
-            return (await preprocessor.markup({ content: input, filename }))
+            return (await preprocessor_.markup({ content: input, filename }))
                 ?.code;
         };
 
@@ -409,7 +413,7 @@ describe('Sveltex.markup()', () => {
             },
         ];
         it.each(tests)('$label', async (test) => {
-            expect(await preprocess(test.input)).toContain(test.expected);
+            expect(await preprocess_(test.input)).toContain(test.expected);
         });
     });
 
@@ -468,7 +472,7 @@ describe('Sveltex.markup()', () => {
 
     describe('works with code blocks', () => {
         it('starry night should work with this', async () => {
-            const preprocessor = await sveltex(
+            const preprocessor_ = await sveltex(
                 {
                     markdownBackend: 'marked',
                     codeBackend: 'starry-night',
@@ -478,7 +482,7 @@ describe('Sveltex.markup()', () => {
             );
             expect(
                 (
-                    await preprocessor.markup({
+                    await preprocessor_.markup({
                         filename: 'test.sveltex',
                         content: '```typescript\n() => {let a}\n```',
                     })
@@ -502,7 +506,7 @@ describe('Sveltex.markup()', () => {
                     '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script context="module">\n</script>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
             },
         ])('$label', async (test) => {
-            const preprocessor = await sveltex(
+            const preprocessor_ = await sveltex(
                 {
                     markdownBackend: 'marked',
                     codeBackend: 'starry-night',
@@ -510,14 +514,15 @@ describe('Sveltex.markup()', () => {
                 },
                 { code: { languages: 'common' } },
             );
-            const preprocess = async (
+            const preprocess_ = async (
                 input: string,
                 filename: string = 'test.sveltex',
             ) => {
-                return (await preprocessor.markup({ content: input, filename }))
-                    ?.code;
+                return (
+                    await preprocessor_.markup({ content: input, filename })
+                )?.code;
             };
-            expect(await preprocess(test.input)).toContain(test.expected);
+            expect(await preprocess_(test.input)).toContain(test.expected);
         });
     });
 
@@ -608,7 +613,7 @@ describe('Sveltex.markup()', () => {
         });
 
         it('should work with TeX verbatim environments', async () => {
-            const preprocessor = await sveltex(
+            const preprocessor_ = await sveltex(
                 {},
                 {
                     verbatim: {
@@ -622,8 +627,8 @@ describe('Sveltex.markup()', () => {
                     },
                 },
             );
-            const preprocess = preprocessFn(preprocessor);
-            expect(await preprocess('$x$')).toContain(
+            const preprocess_ = preprocessFn(preprocessor_);
+            expect(await preprocess_('$x$')).toContain(
                 '<script>\n</script>\n$x$',
             );
         });
@@ -631,12 +636,12 @@ describe('Sveltex.markup()', () => {
 
     describe('frontmatter', () => {
         it('frontmatter metadata', async () => {
-            const preprocessor = await sveltex({
+            const preprocessor_ = await sveltex({
                 markdownBackend: 'micromark',
             });
-            const preprocess = preprocessFn(preprocessor);
+            const preprocess_ = preprocessFn(preprocessor_);
             expect(
-                await preprocess(
+                await preprocess_(
                     [
                         '---',
                         'foo: bar',
@@ -657,32 +662,32 @@ describe('Sveltex.markup()', () => {
             it.each([
                 [
                     '<script>\n</script>',
-                    /^\n*<script context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/,
+                    /^\n*<script context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script lang="ts">\n</script>',
-                    /^\n*<script context="module">\n+<\/script>\n+<script lang="ts">\n+<\/script>\n*$/,
+                    /^\n*<script context="module">\n+<\/script>\n+<script lang="ts">\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script context="module">\n</script>',
-                    /^\n*<script>\n+<\/script>\n+<script context="module">\n+<\/script>\n*$/,
+                    /^\n*<script>\n+<\/script>\n+<script context="module">\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script context="module">\n</script>\n<script>\n</script>',
-                    /^\n*<script context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/,
+                    /^\n*<script context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script context="module" lang="ts">\n</script>\n<script>\n</script>',
-                    /^\n*<script context="module" lang="ts">\n+<\/script>\n+<script>\n+<\/script>\n*$/,
+                    /^\n*<script context="module" lang="ts">\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script lang="ts" context="module">\n</script>\n<script>\n</script>',
-                    /^\n*<script lang="ts" context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/,
+                    /^\n*<script lang="ts" context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
                 ],
             ])('%o → %o', async (input, expected) => {
-                const preprocessor = await sveltex();
-                const preprocess = preprocessFn(preprocessor);
-                expect(await preprocess(input)).toMatch(expected);
+                const preprocessor_ = await sveltex();
+                const preprocess_ = preprocessFn(preprocessor_);
+                expect(await preprocess_(input)).toMatch(expected);
             });
         });
     });

@@ -37,19 +37,19 @@ interface Benchmarks {
 
 const compilation = JSON.parse(
     await readFile('results/benchmarks-compilation.json', 'utf-8'),
-);
+) as BenchmarkJson;
 
 const conversion = JSON.parse(
     await readFile('results/benchmarks-conversion.json', 'utf-8'),
-);
+) as BenchmarkJson;
 
 const filesize = JSON.parse(
     await readFile('results/benchmarks-filesize.json', 'utf-8'),
-);
+) as Filesize[];
 
 const filesizeOptimized = JSON.parse(
     await readFile('results/benchmarks-filesize-optimized.json', 'utf-8'),
-);
+) as Filesize[];
 
 /* ------------------------------- Initialize ------------------------------- */
 
@@ -128,8 +128,8 @@ function interpretCompilationCommand(command: string): {
     } else if (command.startsWith('xelatex')) {
         return { engine: 'xelatex', format: 'pdf' };
     } else {
-        const match = command.match(
-            /(lualatex|pdflatex) -?-output-format=(\w+)/,
+        const match = /(lualatex|pdflatex) -?-output-format=(\w+)/u.exec(
+            command,
         );
         if (match) {
             const engine = match[1] as Engine;
@@ -156,7 +156,7 @@ function compilationResultToTableRow(
 }
 
 function nsToMs(x: number): string {
-    return (x * 1000).toLocaleString('en-US').replace(/\.\d+$/, '');
+    return (x * 1000).toLocaleString('en-US').replace(/\.\d+$/u, '');
 }
 
 function compilationTableRowToString(row: CompilationTableRow): string {
@@ -250,7 +250,7 @@ function interpretConversionCommand(command: string): {
     engine: Engine;
 } {
     if (command.startsWith('dvisvgm')) {
-        const match = command.match(/--output=svg\/(\w+)-(\w+)-dvisvgm\.svg/);
+        const match = /--output=svg\/(\w+)-(\w+)-dvisvgm\.svg/u.exec(command);
         if (match) {
             const engine = match[1] as Engine;
             const format =
@@ -261,7 +261,7 @@ function interpretConversionCommand(command: string): {
             return { converter, format, engine };
         }
     } else if (command.startsWith('pdftocairo')) {
-        const match = command.match(/(\w+)-(\w+)-pdftocairo\.svg/);
+        const match = /(\w+)-(\w+)-pdftocairo\.svg/u.exec(command);
         if (match) {
             const engine = match[1] as Engine;
             const format = match[2] as Format;
@@ -288,7 +288,7 @@ await Promise.all(
             /(.*)<style>(.*)<\/style>(.*)/su,
             '<style scoped>\n$2\n</style>\n$1$3',
         );
-        svg = svg.replace(/&quot;woff2&quot;/g, '"woff2"');
+        svg = svg.replace(/&quot;woff2&quot;/gu, '"woff2"');
         await writeFile(`markdown/res/benchmarks/${capitalize(file)}.vue`, svg);
     }),
 );
@@ -345,7 +345,7 @@ ${(
     await Promise.all(
         files.map(async (file) =>
             [
-                `## ${file.replace(/^\w/, (m) => m.toUpperCase())}`,
+                `## ${file.replace(/^\w/u, (m) => m.toUpperCase())}`,
                 '',
                 `:::: details \`${file}.tex\``,
                 '',

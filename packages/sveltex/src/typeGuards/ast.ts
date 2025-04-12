@@ -6,7 +6,7 @@ import type {
     LineColumn,
     StartEnd_LineColumn,
     StartEnd_Offset,
-} from '$types/utils/Ast.js';
+} from '../types/utils/Ast.js';
 
 /**
  * Checks that the given object has `start` and `end` properties, no matter

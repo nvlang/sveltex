@@ -54,7 +54,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     FullCodeConfiguration<B>,
     CodeHandler<B>
 > {
-    override get configuration(): FullCodeConfiguration<B> {
+    public override get configuration(): FullCodeConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually
         const { pre, post } = this._configuration.transformers;
         return {
@@ -66,19 +66,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         };
     }
 
-    override get process(): (
+    public override get process(): (
         code: string,
-        options?: CodeProcessOptionsBase | undefined,
+        options?: CodeProcessOptionsBase,
     ) => Promise<ProcessedSnippet> {
-        return async (
-            code: string,
-            options?: CodeProcessOptionsBase | undefined,
-        ) => {
-            if (this.configIsValid === undefined) {
-                this.configIsValid =
-                    diagnoseCodeConfiguration(this.backend, this._configuration)
-                        .errors === 0;
-            }
+        return async (code: string, options?: CodeProcessOptionsBase) => {
+            this.configIsValid ??=
+                diagnoseCodeConfiguration(this.backend, this._configuration)
+                    .errors === 0;
 
             let mergedOpts: CodeProcessOptionsBase = { inline: false };
 
@@ -156,7 +151,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * variable must be set at most once.
      */
     private _headLines: string[] = [];
-    get headLines(): string[] {
+    public get headLines(): string[] {
         return this._headLines;
     }
 
@@ -169,12 +164,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * the only ones that don't depend on further details about the content of
      * the page.
      */
-    private _scriptLines: string[] = [];
-    get scriptLines(): string[] {
+    private readonly _scriptLines: string[] = [];
+    public get scriptLines(): string[] {
         return this._scriptLines;
     }
 
-    get handleCss(): () => Promise<void> {
+    public get handleCss(): () => Promise<void> {
         return async () => {
             if (this._handledCss) return;
             if (this._handlingCss) {
@@ -216,7 +211,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
         if (theme.type === 'none') return;
 
-        let links: string[] = [];
+        let links: string[];
         let v: string;
         let resourceName: string;
 
@@ -307,7 +302,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * @param backend - The type of the code processor to create.
      * @returns A promise that resolves to a code handler of the specified type.
      */
-    static async create<B extends CodeBackend>(
+    public static async create<B extends CodeBackend>(
         backend: B,
         userConfig?: CodeConfiguration<B>,
     ): Promise<CodeHandler<B>> {
@@ -316,7 +311,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         // ------------------------------------------------------------------ //
         if (backend === 'highlight.js') {
             type Backend = 'highlight.js';
-            const backend: Backend = 'highlight.js';
+            const b: Backend = 'highlight.js';
             typeAssert(is<CodeConfiguration<Backend> | undefined>(userConfig));
             let processor;
             try {
@@ -326,7 +321,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 throw error;
             }
             const configuration = mergeConfigs(
-                getDefaultCodeConfig(backend),
+                getDefaultCodeConfig(b),
                 userConfig ?? {},
             );
             if (configuration['highlight.js']) {
@@ -381,13 +376,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         : '';
                 if (!inline) {
                     processed = processed.replace(
-                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
+                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/su,
                         '$1',
                     );
                     if (
                         configuration.appendNewline &&
                         processed !== '' &&
-                        !/(?:\r\n?|\n)$/.test(processed)
+                        !/(?:\r\n?|\n)$/u.test(processed)
                     ) {
                         processed += '\n';
                     }
@@ -400,7 +395,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 return processed;
             };
             return new CodeHandler<Backend>({
-                backend,
+                backend: b,
                 configuration,
                 process,
             }) as unknown as CodeHandler<B>;
@@ -414,7 +409,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 is<CodeConfiguration<'starry-night'> | undefined>(userConfig),
             );
             type Backend = 'starry-night';
-            const backend: Backend = 'starry-night';
+            const b: Backend = 'starry-night';
 
             let processor, findAndReplace, toHtml;
             try {
@@ -436,7 +431,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
             // Merge user-provided configuration into the default configuration.
             const configuration = mergeConfigs(
-                getDefaultCodeConfig(backend),
+                getDefaultCodeConfig(b),
                 userConfig ?? {},
             );
 
@@ -481,11 +476,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     let scopes = languageNames.map(
                         (name) => starryNightLanguages[name],
                     );
-                    let deps: StarryNightScope[] = [];
                     const grammars: Grammar[] = [];
+                    let deps: StarryNightScope[] = [];
                     while (scopes.length > 0) {
                         grammars.push(
                             ...(await Promise.all(
+                                // eslint-disable-next-line @typescript-eslint/no-loop-func
                                 scopes.map(async (scope) => {
                                     const grammar = (
                                         (await import(
@@ -578,13 +574,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
 
                 if (!inline) {
                     processed = processed.replace(
-                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/s,
+                        /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/su,
                         '$1',
                     );
                     if (
                         configuration.appendNewline &&
                         processed !== '' &&
-                        !/(?:\r\n?|\n)$/.test(processed)
+                        !/(?:\r\n?|\n)$/u.test(processed)
                     ) {
                         processed += '\n';
                     }
@@ -598,7 +594,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 return processed;
             };
             return new CodeHandler<Backend>({
-                backend,
+                backend: b,
                 configuration: configuration,
                 process,
             }) as unknown as CodeHandler<B>;
@@ -649,7 +645,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     }
                 } else if (shouldAddNewline) {
                     shouldAddNewline =
-                        code !== '' && !/(?:\r\n?|\n)$/.test(code);
+                        code !== '' && !/(?:\r\n?|\n)$/u.test(code);
                 }
                 lang = (
                     (lang ? (config.langAlias?.[lang] ?? lang) : lang) ??
@@ -742,7 +738,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         '</code>';
                 } else {
                     if (shouldAddNewline) {
-                        processed = processed.replace(/(<\/code>.+?)/, '\n$1');
+                        processed = processed.replace(/(<\/code>.+?)/u, '\n$1');
                     }
                     if (prefix !== false && !langUndefined) {
                         const m = /^(<pre[^>]*?>\s*)?(<code[^>]*>)/u.exec(
@@ -797,7 +793,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                     !inline &&
                     appendNewline &&
                     code !== '' &&
-                    !/(?:\r\n?|\n)$/.test(code);
+                    !/(?:\r\n?|\n)$/u.test(code);
                 // NB: It's important to escape braces _after_ escaping HTML,
                 // since escaping braces will introduce ampersands which
                 // escapeHtml would escape

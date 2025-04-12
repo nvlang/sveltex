@@ -8,11 +8,11 @@ import {
     beforeAll,
     type MockInstance,
 } from 'vitest';
-import { MathHandler } from '$handlers/MathHandler.js';
-import { spy } from '$tests/unit/fixtures.js';
+import { MathHandler } from '../../../../src/handlers/MathHandler.js';
+import { spy } from '../../fixtures.js';
 import fetch, { type Response } from 'node-fetch';
 import { v4 as uuid } from 'uuid';
-import { range } from '$tests/unit/utils.js';
+import { range } from '../../utils.js';
 
 describe("MathHandler<'katex'>", () => {
     beforeEach(() => {
@@ -20,7 +20,10 @@ describe("MathHandler<'katex'>", () => {
     });
     let log: MockInstance;
     beforeAll(async () => {
-        vi.spyOn(await import('$deps.js'), 'ora').mockImplementation((() => ({
+        vi.spyOn(
+            await import('../../../../src/deps.js'),
+            'ora',
+        ).mockImplementation((() => ({
             start: vi.fn().mockReturnValue({
                 stop: vi.fn(),
                 text: vi.fn(),

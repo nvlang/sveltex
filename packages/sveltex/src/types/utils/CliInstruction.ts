@@ -117,11 +117,11 @@ export type ConversionCliInstruction = (opts: {
         /**
          * @example 'src/sveltex/tex/ref.svg'
          */
-        path: `${string}.${'svg'}`;
+        path: `${string}.svg`;
         /**
          * @example 'ref.svg'
          */
-        name: `${string}.${'svg'}`;
+        name: `${string}.svg`;
         /**
          * @example 'svg'
          */

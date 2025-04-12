@@ -1,7 +1,7 @@
-import { getDefaultMathConfig } from '$base/defaults.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { mathBackends } from '$utils/diagnosers/backendChoices.js';
-import { diagnoseMathConfiguration } from '$utils/diagnosers/mathConfiguration.js';
+import { getDefaultMathConfig } from '../../../../src/base/defaults.js';
+import { spy } from '../../fixtures.js';
+import { mathBackends } from '../../../../src/utils/diagnosers/backendChoices.js';
+import { diagnoseMathConfiguration } from '../../../../src/utils/diagnosers/mathConfiguration.js';
 import {
     it,
     expect,

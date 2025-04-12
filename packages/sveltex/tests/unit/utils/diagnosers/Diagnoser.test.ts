@@ -1,7 +1,7 @@
-import { range } from '$tests/unit/utils.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { isString } from '$typeGuards/utils.js';
-import { Diagnoser } from '$utils/diagnosers/Diagnoser.js';
+import { range } from '../../utils.js';
+import { spy } from '../../fixtures.js';
+import { isString } from '../../../../src/typeGuards/utils.js';
+import { Diagnoser } from '../../../../src/utils/diagnosers/Diagnoser.js';
 import {
     describe,
     it,
@@ -109,7 +109,7 @@ describe('Diagnoser', () => {
     it('should work with nested properties (pass)', () => {
         const x = { a: { b: { c: 123 } } };
         const d = new Diagnoser(x);
-        d.ifPresent('a.b.c', '123', (x) => x === 123);
+        d.ifPresent('a.b.c', '123', (n) => n === 123);
         expect(d.passed).toBe(true);
         expect(d.problems).toEqual([]);
         d.printProblems();
@@ -119,7 +119,7 @@ describe('Diagnoser', () => {
     it('should work with nested properties (fail)', () => {
         const x = { a: { b: { c: 'something' } } };
         const d = new Diagnoser(x);
-        d.ifPresent('a.b.c', '123', (x) => x === 123);
+        d.ifPresent('a.b.c', '123', (n) => n === 123);
         expect(d.passed).toBe(false);
         expect(d.problems.length).toEqual(1);
         d.printProblems();
@@ -134,7 +134,7 @@ describe('Diagnoser', () => {
     it('should be able to turn off colors', () => {
         const x = { a: { b: { c: 'something' } } };
         const d = new Diagnoser(x);
-        d.ifPresent('a.b.c', '123', (x) => x === 123);
+        d.ifPresent('a.b.c', '123', (n) => n === 123);
         expect(d.passed).toBe(false);
         expect(d.problems.length).toEqual(1);
         d.printProblems(undefined, undefined, undefined, false);
@@ -162,7 +162,7 @@ describe('Diagnoser', () => {
     it('should be able to change prefix', () => {
         const x = { a: { b: { c: 'something' } } };
         const d = new Diagnoser(x);
-        d.ifPresent('a.b.c', '123', (x) => x === 123);
+        d.ifPresent('a.b.c', '123', (n) => n === 123);
         expect(d.passed).toBe(false);
         expect(d.problems.length).toEqual(1);
         d.printProblems(undefined, undefined, undefined, undefined, 'prefix ');

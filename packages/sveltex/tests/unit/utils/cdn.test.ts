@@ -1,5 +1,9 @@
-import { fetchWithTimeout, cdnLink, fancyWrite } from '$utils/cdn.js';
-import { spy } from '$tests/unit/fixtures.js';
+import {
+    fetchWithTimeout,
+    cdnLink,
+    fancyWrite,
+} from '../../../src/utils/cdn.js';
+import { spy } from '../fixtures.js';
 import {
     describe,
     it,
@@ -54,7 +58,7 @@ describe('utils/cdn', () => {
                     expect(log).toHaveBeenCalledTimes(1);
                     expect(log).toHaveBeenNthCalledWith(
                         1,
-                        expect.stringMatching(/error|warn/),
+                        expect.stringMatching(/error|warn/u),
                         logMessage,
                     );
                 }

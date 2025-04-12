@@ -4,10 +4,10 @@ import {
     getHexRegExp,
     parseCssColorVarsFromTex,
     unescapeCssColorVars,
-} from '$utils/css.js';
-import { nodeAssert } from '$deps.js';
-import { sha256 } from '$utils/misc.js';
-import { hexOfNamedColor } from '$data/css.js';
+} from '../../../src/utils/css.js';
+import { nodeAssert } from '../../../src/deps.js';
+import { sha256 } from '../../../src/utils/misc.js';
+import { hexOfNamedColor } from '../../../src/data/css.js';
 
 describe.concurrent('getHexRegExp()', () => {
     describe.each([

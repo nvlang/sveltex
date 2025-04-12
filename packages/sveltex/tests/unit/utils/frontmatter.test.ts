@@ -12,11 +12,11 @@ import {
     handleFrontmatter,
     interpretFrontmatter,
     parseFrontmatter,
-} from '$utils/frontmatter.js';
-import type { Frontmatter } from '$types/utils/Frontmatter.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { isString } from '$typeGuards/utils.js';
-import type { ProcessableSnippet } from '$types/utils/Escape.js';
+} from '../../../src/utils/frontmatter.js';
+import type { Frontmatter } from '../../../src/types/utils/Frontmatter.js';
+import { spy } from '../fixtures.js';
+import { isString } from '../../../src/typeGuards/utils.js';
+import type { ProcessableSnippet } from '../../../src/types/utils/Escape.js';
 
 let log: MockInstance;
 beforeAll(async () => {
@@ -621,7 +621,7 @@ describe('handleFrontmatter()', () => {
             headLines: [],
             scriptLines: [
                 'const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
-                "import { b, c } from '$lib/utils.js';",
+                "import { b, c } from '../../../src/lib/utils.js';",
                 "import Something from './Something.svelte';",
             ],
             scriptModuleLines: [

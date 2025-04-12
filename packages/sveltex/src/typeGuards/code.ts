@@ -1,9 +1,6 @@
 // File description: Type guards some of the types defined in
 // [`Code.ts`](src/types/utils/Code.ts).
 
-// Types
-import type { Equals, Extends } from '../deps.js';
-
 // Internal dependencies
 import { isOneOf, isString } from './utils.js';
 import type {
@@ -19,7 +16,7 @@ import {
 } from '../data/code.js';
 
 // External dependencies
-import { typeAssert } from '../deps.js';
+import { type Equals, type Extends, typeAssert } from '../deps.js';
 
 export function isCodeBackendWithCss(
     input: unknown,

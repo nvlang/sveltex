@@ -15,31 +15,31 @@ import {
     sanitizePopplerSvgOptions,
     getTexPresetDefaults,
     getDefaultMarkdownConfig,
-} from '$base/defaults.js';
+} from '../../../src/base/defaults.js';
 import path from 'node:path';
 import os from 'node:os';
-import { TexHandler } from '$handlers/TexHandler.js';
-import { verbatimTypes } from '$typeGuards/verbatim.js';
-import { spy } from '$tests/unit/fixtures.js';
-import { diagnoseVerbEnvConfig } from '$utils/diagnosers/verbatimEnvironmentConfiguration.js';
+import { TexHandler } from '../../../src/handlers/TexHandler.js';
+import { verbatimTypes } from '../../../src/typeGuards/verbatim.js';
+import { spy } from '../fixtures.js';
+import { diagnoseVerbEnvConfig } from '../../../src/utils/diagnosers/verbatimEnvironmentConfiguration.js';
 import type {
     FullVerbEnvConfigTex,
     VerbatimType,
-} from '$types/handlers/Verbatim.js';
-import { isCodeBackendWithCss } from '$typeGuards/code.js';
-import { isPresentAndDefined } from '$typeGuards/utils.js';
+} from '../../../src/types/handlers/Verbatim.js';
+import { isCodeBackendWithCss } from '../../../src/typeGuards/code.js';
+import { isPresentAndDefined } from '../../../src/typeGuards/utils.js';
 import {
     codeBackends,
     markdownBackends,
-} from '$utils/diagnosers/backendChoices.js';
-import { is, typeAssert } from '$deps.js';
+} from '../../../src/utils/diagnosers/backendChoices.js';
+import { is, typeAssert } from '../../../src/deps.js';
 import type {
     CleanPopplerSvgOptions,
     PopplerSvgOptions,
-} from '$types/utils/PopplerOptions.js';
-import type { PropertiesDefined } from '$types/utils/utility-types.js';
-import { fc, fuzzyTest } from '$dev_deps.js';
-import { TexComponent } from '$utils/TexComponent.js';
+} from '../../../src/types/utils/PopplerOptions.js';
+import type { PropertiesDefined } from '../../../src/types/utils/utility-types.js';
+import { fc, fuzzyTest } from '../../../src/dev_deps.js';
+import { TexComponent } from '../../../src/utils/TexComponent.js';
 
 function fixture() {
     beforeEach(() => {
@@ -213,7 +213,7 @@ describe.concurrent('config/defaults', () => {
                 ).toBeDefined();
                 expect(
                     typeof getDefaultCodeConfig(backend).addLanguageClass,
-                ).toMatch(/string|boolean/);
+                ).toMatch(/string|boolean/u);
             });
 
             if (isCodeBackendWithCss(backend)) {
