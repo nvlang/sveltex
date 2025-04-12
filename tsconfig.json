@@ -21,14 +21,12 @@
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "./dist",
-    "paths": {
-      "$*": ["src/*"],
-      "$tests/*": ["tests/*"]
-    },
     "resolveJsonModule": true,
     // Basic settings
     "rootDir": ".",
@@ -36,20 +34,26 @@
     "strict": true,
     "strictNullChecks": true,
     // Versions and APIs
-    "target": "ES2018"
+    "target": "ES2018",
+    //
+    "noEmit": true
   },
   "exclude": [
     "coverage",
     "dist",
-    "e2e-old",
-    "examples",
     "external",
-    "ideas",
-    "legacy",
     "node_modules",
     "static",
     "tmp",
     "**/e2e/**"
   ],
-  "include": ["*.config.js", "*.config.ts", "src", "tests", "scripts"]
+  "include": [
+    "*.config.js",
+    "eslint.config.js",
+    "*.config.ts",
+    "packages/*/*.config.ts",
+    "packages/*/src",
+    "packages/*/tests",
+    "scripts"
+  ]
 }

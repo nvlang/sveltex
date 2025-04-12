@@ -1,0 +1,61 @@
+{
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
+  "name": "@nvl/sveltex",
+  "version": "0.4.1",
+  "exports": {
+    ".": "./src/mod.ts"
+  },
+  "lint": {
+    "include": ["src/**"],
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/docs/**",
+      "**/.github/**",
+      "**/.vscode/**",
+      "**/.svelte-kit/**"
+    ]
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true
+  },
+  "publish": {
+    "include": [
+      "src/**",
+      "package.json",
+      "README.md",
+      "LICENSE",
+      "CHANGELOG.md",
+      "tsconfig.json",
+      "deno.jsonc"
+    ],
+
+    "exclude": [
+      "**/tests/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/docs/**",
+      "**/.github/**",
+      "**/.vscode/**",
+      "**/.husky/**"
+    ]
+  },
+  "imports": {
+    "$Sveltex.js": "./src/Sveltex.ts",
+    "$base/": "./src/base/",
+    "$data/": "./src/data/",
+    "$deps.js": "./src/deps.ts",
+    "$dev_deps.js": "./src/dev_deps.ts",
+    "$handlers/": "./src/handlers/",
+    "$mod.js": "./src/mod.ts",
+    "$tests/": "./tests/",
+    "$typeGuards/": "./src/typeGuards/",
+    "$types/": "./src/types/",
+    "$utils/": "./src/utils/"
+  }
+}

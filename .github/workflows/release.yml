@@ -1,0 +1,113 @@
+---
+name: Test and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/*/src/**
+      - packages/*/pnpm-lock.yaml
+      - packages/*/tsconfig.json
+      - packages/*/tsconfig.*.json
+      - packages/*/package.json
+      - packages/*/jsr.json
+      - packages/*/README.md
+      - packages/*/LICENSE
+      - packages/*/CHANGELOG.md
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  publish:
+    name: Publish to NPM and JSR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: latest
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run Vitest unit tests
+        run: pnpm test
+
+      - name: Upload coverage reports for `packages/egal` to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/egal/coverage/
+          flags: egal
+
+      - name: Upload coverage reports for `packages/postcss-egal` to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/postcss-egal/coverage/
+          flags: postcss-egal
+
+      - name:
+          Upload coverage reports for `packages/lightningcss-plugin-egal` to
+          Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/lightningcss-plugin-egal/coverage/
+          flags: lightningcss-plugin-egal
+
+      - name: Determine current branch
+        run:
+          echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+
+      - name: Ensure current branch is main
+        run: |
+          if [ "$BRANCH_NAME" != "main" ]; then
+            echo "Not on main branch, exiting."
+            exit 1
+          fi
+
+      # When you push something to main, this action will first create a PR on a
+      # new branch (`changeset-release/main`), where it'll have applied the
+      # version bumps and changelog edits and such. Then, once you merge that
+      # PR, it'll rerun this action, but this time it'll be publishing the
+      # changes instead of creating a PR.
+      - name: Publish to NPM and JSR or create release PR
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          branch: main
+          version: pnpm ci:version
+          publish: pnpm ci:publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push git tags
+        # Don't run this step if the changesets action merely created a PR,
+        # since otherwise we'll get an error about the branch not having an
+        # upstream branch.
+        if: steps.changesets.outputs.published == 'true'
+        run: git push --follow-tags

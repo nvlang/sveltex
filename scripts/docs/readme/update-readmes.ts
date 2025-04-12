@@ -1,5 +1,5 @@
-import { basename, join, readFile, writeFile } from '$deps.js';
-import { ensureEndsWith } from '$utils/misc.js';
+import { basename, join, readFile, writeFile } from '../../../src/deps.js';
+import { ensureEndsWith } from '../../../src/utils/misc.js';
 import { glob } from 'glob';
 
 const readmes = await glob('../../../src/**/README.md', { maxDepth: 10 });
