@@ -34,7 +34,9 @@ function updateVersion(filePath: string, newVersion: string): void {
 }
 
 function syncVersions(): void {
-    const packageJsonFiles = globSync('packages/*/package.json');
+    const packageJsonFiles = globSync(
+        'packages/!(vscode-sveltex)/package.json',
+    );
 
     for (const packageJsonPath of packageJsonFiles) {
         const packageDir = dirname(packageJsonPath);

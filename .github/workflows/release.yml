@@ -32,6 +32,23 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
 
+      - name: Set up TeX Live
+        uses: teatimeguest/setup-texlive-action@v3
+        with:
+          packages: |
+            scheme-basic
+            luatex
+            xetex
+            latexmk
+            dvisvgm
+            standalone
+            pgf
+            microtype
+            mathtools
+            luatex85
+            lipsum
+            xcolor
+
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -49,34 +66,38 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
+
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
+
       - name: Build
         run: pnpm build
 
       - name: Run Vitest unit tests
         run: pnpm test
 
-      - name: Upload coverage reports for `packages/egal` to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: packages/egal/coverage/
-          flags: egal
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
 
-      - name: Upload coverage reports for `packages/postcss-egal` to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: packages/postcss-egal/coverage/
-          flags: postcss-egal
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
 
-      - name:
-          Upload coverage reports for `packages/lightningcss-plugin-egal` to
-          Codecov
+      - name: Upload coverage reports for `packages/sveltex` to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: packages/lightningcss-plugin-egal/coverage/
-          flags: lightningcss-plugin-egal
+          directory: packages/sveltex/coverage/
+          flags: sveltex
+
+      - name: Upload Vitest report for `packages/sveltex` to GitHub
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vitest-report
+          path: packages/sveltex/html/
+          retention-days: 30
 
       - name: Determine current branch
         run:

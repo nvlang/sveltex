@@ -6,6 +6,8 @@
 #                     Project-Specific                     #
 #——————————————————————————————————————————————————————————#
 
+codecov
+codecov.*
 coverage
 dist
 examples

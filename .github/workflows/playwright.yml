@@ -5,27 +5,17 @@ on:
   push:
     branches: [main]
     paths:
-      - src/**
-      - tests/e2e/**
-      - playwright.config.ts
-      - pnpm-lock.yaml
-      - tsconfig.json
-      - tsconfig.*.json
+      - packages/sveltex/src/**
+      - packages/sveltex/tests/e2e/**
+      - packages/sveltex/playwright.config.ts
+      - packages/sveltex/pnpm-lock.yaml
+      - packages/sveltex/tsconfig.json
   pull_request:
     branches: [main]
 
 permissions:
-  actions: write
-  checks: write
-  contents: write
-  deployments: write
-  discussions: write
-  issues: write
-  packages: write
-  pages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: read
+  contents: read
+  packages: read
   statuses: write
 
 jobs:
@@ -100,11 +90,11 @@ jobs:
 
       - name: Install Dependencies for Test Project
         run: pnpm install
-        working-directory: tests/e2e
+        working-directory: packages/sveltex/tests/e2e
 
       - name: Build Test Project
         run: pnpm build
-        working-directory: tests/e2e
+        working-directory: packages/sveltex/tests/e2e
 
       - name: Run Playwright tests
         run: pnpm playwright
@@ -122,5 +112,5 @@ jobs:
         if: always()
         with:
           name: actual-screenshots
-          path: tests/e2e/basic.spec.ts-snapshots/
+          path: packages/sveltex/tests/e2e/basic.spec.ts-snapshots/
           retention-days: 7

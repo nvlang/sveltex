@@ -29,6 +29,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up TeX Live
+        uses: teatimeguest/setup-texlive-action@v3
+        with:
+          packages: |
+            scheme-basic
+            luatex
+            xetex
+            latexmk
+            dvisvgm
+            standalone
+            pgf
+            microtype
+            mathtools
+            luatex85
+            lipsum
+            xcolor
+
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -44,6 +61,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
+
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
 
       - name: Build
         run: pnpm --filter "@nvl/egal" build
