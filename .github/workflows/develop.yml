@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    name: Lint code base
+    name: Lint code base and run unit tests
     runs-on: ubuntu-latest
 
     permissions:
