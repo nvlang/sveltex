@@ -183,7 +183,7 @@ export function customEscapeSequencesToHtml(escapedContent: string): string {
 //       <p>...</p> tag, if present, after unescaping)
 
 export function escapeStringForRegExp(str: string): string {
-    return str.replace(/([.*+?^${}()|[\]\\-])/gu, '\\$1');
+    return str.replace(/([.*+?^${}()|[\]\\])/gu, '\\$1');
 }
 
 function normalComponentsRegExp(rawTags: string[]): RegExp {
