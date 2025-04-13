@@ -5,7 +5,7 @@ import { spy } from '../fixtures.js';
 
 describe('getVersion', () => {
     it("works'", async () => {
-        vi.mock('../../../../src/base/defaults.js', () => {
+        vi.mock('../../../src/base/defaults.js', () => {
             return {
                 getDefaultCacheDirectory: () => 'a/b/c/node_modules/d/e/f',
             };

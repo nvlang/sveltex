@@ -621,7 +621,7 @@ describe('handleFrontmatter()', () => {
             headLines: [],
             scriptLines: [
                 'const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
-                "import { b, c } from '../../../src/lib/utils.js';",
+                "import { b, c } from '$lib/utils.js';",
                 "import Something from './Something.svelte';",
             ],
             scriptModuleLines: [
