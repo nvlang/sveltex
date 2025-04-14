@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
     paths:
+      - .github/workflows/playwright.yml
       - packages/sveltex/src/**
       - packages/sveltex/tests/e2e/**
       - packages/sveltex/playwright.config.ts
