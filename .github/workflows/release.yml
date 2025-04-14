@@ -78,12 +78,6 @@ jobs:
       - name: Run Vitest unit tests
         run: pnpm test
 
-      - name: Install Poppler
-        run: sudo apt-get install -y poppler-data poppler-utils
-
-      - name: Install MuPDF
-        run: sudo apt-get install -y mupdf mupdf-tools
-
       - name: Upload coverage reports for `packages/sveltex` to Codecov
         uses: codecov/codecov-action@v5
         with:
