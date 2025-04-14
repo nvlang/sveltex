@@ -24,6 +24,7 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true
   },
+  "license": "MIT",
   "publish": {
     "include": [
       "src/**",
