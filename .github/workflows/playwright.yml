@@ -84,13 +84,13 @@ jobs:
       - name: Setup Playwright
         if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
-        working-directory: packages/sveltex/tests/e2e
+        working-directory: packages/sveltex
 
       - name: Build SvelTeX
         run: pnpm build
 
       - name: Install Dependencies for Test Project
-        run: pnpm install
+        run: pnpm --ignore-workspace install
         working-directory: packages/sveltex/tests/e2e
 
       - name: Build Test Project
