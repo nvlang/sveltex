@@ -13,7 +13,7 @@ preprocessor for Svelte that aims to combine markdown, Svelte, and (some) LaTeX.
 -   `<script>` languages: JavaScript, TypeScript
 -   `<style>` languages: CSS, SCSS, SASS, PostCSS, Stylus
 
-![screenshot](https://raw.githubusercontent.com/nvlang/sveltex/main/extras/vscode-extension/res/screenshot-ayu-dark-bordered.png)
+![screenshot](https://raw.githubusercontent.com/nvlang/sveltex/main/packages/vscode-sveltex/res/screenshot-ayu-dark-bordered.png)
 
 ## Requirements
 

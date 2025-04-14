@@ -6,6 +6,7 @@ import { githubDarkDefault } from './theme/code-theme.js';
 import markdownItMultimdTable from 'markdown-it-multimd-table';
 import footnote from 'markdown-it-footnote';
 import { readFile } from 'fs/promises';
+import tailwindcss from '@tailwindcss/vite';
 
 export const ESBUILD_MODULES_TARGET = [
     'es2022',
@@ -20,6 +21,7 @@ export default defineConfig({
     title: 'SvelTeX',
     description: 'Flexible Svelte preprocessor with extensive LaTeX support.',
     vite: {
+        plugins: [tailwindcss() as any],
         optimizeDeps: {
             exclude: ['@nvl/sveltex'],
             esbuildOptions: { target: ESBUILD_MODULES_TARGET },
@@ -34,13 +36,13 @@ export default defineConfig({
         shikiSetup: async (shiki) => {
             const grammarSveltex = JSON.parse(
                 await readFile(
-                    '../extras/vscode-extension/syntaxes/sveltex.tmLanguage.json',
+                    '../packages/vscode-sveltex/syntaxes/sveltex.tmLanguage.json',
                     'utf8',
                 ),
             );
             const grammarMarkdownForSveltex = JSON.parse(
                 await readFile(
-                    '../extras/vscode-extension/syntaxes/markdown.tmLanguage.json',
+                    '../packages/vscode-sveltex/syntaxes/markdown.tmLanguage.json',
                     'utf8',
                 ),
             );
@@ -59,7 +61,7 @@ export default defineConfig({
             dark: githubDarkDefault,
         },
         math: true,
-        codeTransformers: [transformerTwoslash()],
+        codeTransformers: [transformerTwoslash() as any],
         config: (md) => {
             md.use(footnote as any);
             (md as any).use(markdownItMultimdTable, {
