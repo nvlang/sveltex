@@ -31,7 +31,7 @@ updates:
     # When to check for updates
     schedule:
       # How often to check for updates
-      interval: 'weekly'
+      interval: 'monthly'
 
       # Time of day to check for updates (hh:mm)
       time: '09:00'
@@ -52,7 +52,7 @@ updates:
     # When to check for updates
     schedule:
       # How often to check for updates
-      interval: 'weekly'
+      interval: 'monthly'
 
       # Time of day to check for updates (hh:mm)
       time: '09:00'
