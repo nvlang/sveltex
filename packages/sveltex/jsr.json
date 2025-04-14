@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "name": "@nvl/sveltex",
   "version": "0.4.1",
   "exports": {
