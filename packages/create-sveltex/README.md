@@ -1,5 +1,12 @@
 # `create-sveltex`
 
+> [!IMPORTANT]
+> The `create-sveltex` package will be deprecated in the future in favor of a
+> community adder / add-on for the official Svelte CLI (see
+> [#12](https://github.com/nvlang/sveltex/issues/12)), as soon as such add-ons
+> are [supported](https://github.com/sveltejs/cli/issues/184) (and I find the
+> time to do it).
+
 `create-sveltex` is a Node.js package intended to be run with `pnpm dlx`,
 `bunx`, `npx`, or `yarn dlx` to create a new SvelTeX project. It should not be
 used to add [SvelTeX] to an existing project.
