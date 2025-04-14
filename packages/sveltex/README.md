@@ -139,6 +139,6 @@ libraries. Some notable examples are MathJax and TikZ.
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 [`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
 [SvelTeX extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
-[TextMate grammar]: https://github.com/nvlang/sveltex/tree/main/extras/vscode-extension/syntaxes
+[TextMate grammar]: ../vscode-sveltex/syntaxes
 [request forwarding]: https://code.visualstudio.com/api/language-extensions/embedded-languages#request-forwarding
 [acknowledgments]: https://sveltex.dev/docs/acknowledgments
