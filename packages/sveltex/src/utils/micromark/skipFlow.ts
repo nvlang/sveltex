@@ -54,7 +54,6 @@ export function tokenizeSkipFlowFactory(
     ): State {
         // eslint-disable-next-line no-invalid-this
         const self = this;
-        const closingTag: boolean = false; // TODO: why is closingTag not reassigned anywhere?
         let buffer: string;
         let openingTagString: string = '';
 
@@ -135,11 +134,7 @@ export function tokenizeSkipFlowFactory(
                 } else {
                     openingTagString = buffer;
                 }
-                if (
-                    !slash &&
-                    !closingTag &&
-                    skipTags.includes(openingTagString)
-                ) {
+                if (!slash && skipTags.includes(openingTagString)) {
                     return self.interrupt ? ok(code) : continuation(code);
                 }
                 return nok(code);
