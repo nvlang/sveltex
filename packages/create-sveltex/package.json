@@ -65,8 +65,5 @@
     "node-plop": {
       "inquirer": "9.3.5"
     }
-  },
-  "resolutions": {
-    "inquirer": "9.3.5"
   }
 }
