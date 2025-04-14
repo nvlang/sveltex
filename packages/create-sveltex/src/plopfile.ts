@@ -62,12 +62,6 @@ export default function (plop: NodePlopAPI) {
                 default: false,
             },
             {
-                type: 'confirm',
-                name: 'svelte5',
-                message: 'Use Svelte 5 (beta)',
-                default: true,
-            },
-            {
                 type: 'list',
                 name: 'adapter',
                 message: 'Adapter',
@@ -154,12 +148,10 @@ export default function (plop: NodePlopAPI) {
                 // projectName,
                 git,
                 vscode,
-                svelte5,
                 tools,
             } = ans as {
                 git: boolean;
                 vscode: boolean;
-                svelte5: boolean;
                 tools: (
                     | 'prettier'
                     | 'eslint'
@@ -216,7 +208,7 @@ export default function (plop: NodePlopAPI) {
                 '@types/node',
                 'typescript',
                 'vite',
-                'svelte' + (svelte5 ? '@^5.0.0-next.1' : ''),
+                'svelte',
                 '@sveltejs/kit',
                 '@sveltejs/vite-plugin-svelte',
                 `@sveltejs/adapter-${adapter}`,
