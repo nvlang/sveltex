@@ -40,7 +40,7 @@
   ],
   "scripts": {
     "vscode:prepublish": "pnpm build",
-    "build": "tsx scripts/build.mjs && tsc -p tsconfig.json --include src"
+    "build": "tsx scripts/build.ts && tsc -p tsconfig.json"
   },
   "extensionDependencies": [
     "svelte.svelte-vscode"
