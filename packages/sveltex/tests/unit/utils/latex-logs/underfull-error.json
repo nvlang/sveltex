@@ -10,148 +10,54 @@
     "severity": "box"
   },
   {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\frac.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\overline.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\colon.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\ldots.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\dots.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\cdots.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Info: Redefining \\big.", "severity": "info" },
-  { "line": 1, "message": "LaTeX Info: Redefining \\Big.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\bigg.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\Bigg.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Redeclaring font encoding OML.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Redeclaring font encoding OMS.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\bmod.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\pmod.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\smash.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\relbar.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Info: Redefining \\Relbar.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Info: Redefining \\[.", "severity": "info" },
-  { "line": 1, "message": "LaTeX Info: Redefining \\].", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Trying to load font information for U+msa.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Redeclaring math symbol \\hbar.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Overwriting math alphabet `\\mathfrak' in version `bold' U/euf/m/n --> U/euf/b/n.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 3, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Trying to load font information for U+msa.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 3,
     "message": "LaTeX Font Info: Trying to load font information for U+msb.",
     "severity": "info"
   },
@@ -159,5 +65,111 @@
     "line": 5,
     "message": "Underfull \\hbox (badness 10000) in paragraph",
     "severity": "box"
-  }
+  },
+  {
+    "line": 98,
+    "message": "LaTeX Font Info: Redeclaring math symbol \\hbar.",
+    "severity": "info"
+  },
+  {
+    "line": 106,
+    "message": "LaTeX Font Info: Overwriting math alphabet `\\mathfrak' in version `bold' U/euf/m/n --> U/euf/b/n.",
+    "severity": "info"
+  },
+  {
+    "line": 234,
+    "message": "LaTeX Info: Redefining \\frac.",
+    "severity": "info"
+  },
+  {
+    "line": 397,
+    "message": "LaTeX Font Info: Trying to load font information for U+msa.",
+    "severity": "info"
+  },
+  {
+    "line": 399,
+    "message": "LaTeX Info: Redefining \\overline.",
+    "severity": "info"
+  },
+  {
+    "line": 410,
+    "message": "LaTeX Info: Redefining \\colon.",
+    "severity": "info"
+  },
+  {
+    "line": 496,
+    "message": "LaTeX Info: Redefining \\ldots.",
+    "severity": "info"
+  },
+  {
+    "line": 499,
+    "message": "LaTeX Info: Redefining \\dots.",
+    "severity": "info"
+  },
+  {
+    "line": 620,
+    "message": "LaTeX Info: Redefining \\cdots.",
+    "severity": "info"
+  },
+  {
+    "line": 722,
+    "message": "LaTeX Info: Redefining \\big.",
+    "severity": "info"
+  },
+  {
+    "line": 723,
+    "message": "LaTeX Info: Redefining \\Big.",
+    "severity": "info"
+  },
+  {
+    "line": 724,
+    "message": "LaTeX Info: Redefining \\bigg.",
+    "severity": "info"
+  },
+  {
+    "line": 725,
+    "message": "LaTeX Info: Redefining \\Bigg.",
+    "severity": "info"
+  },
+  {
+    "line": 743,
+    "message": "LaTeX Font Info: Redeclaring font encoding OML.",
+    "severity": "info"
+  },
+  {
+    "line": 744,
+    "message": "LaTeX Font Info: Redeclaring font encoding OMS.",
+    "severity": "info"
+  },
+  {
+    "line": 905,
+    "message": "LaTeX Info: Redefining \\bmod.",
+    "severity": "info"
+  },
+  {
+    "line": 910,
+    "message": "LaTeX Info: Redefining \\pmod.",
+    "severity": "info"
+  },
+  {
+    "line": 940,
+    "message": "LaTeX Info: Redefining \\smash.",
+    "severity": "info"
+  },
+  {
+    "line": 970,
+    "message": "LaTeX Info: Redefining \\relbar.",
+    "severity": "info"
+  },
+  {
+    "line": 971,
+    "message": "LaTeX Info: Redefining \\Relbar.",
+    "severity": "info"
+  },
+  {
+    "line": 2953,
+    "message": "LaTeX Info: Redefining \\[.",
+    "severity": "info"
+  },
+  { "line": 2954, "message": "LaTeX Info: Redefining \\].", "severity": "info" }
 ]

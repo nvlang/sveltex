@@ -2,7 +2,6 @@
 import {
     ensureDoesNotStartWith,
     ensureWithinRange,
-    re,
     sha256,
     copyTransformation,
     isValidComponentName,
@@ -87,39 +86,6 @@ describe.concurrent('utils/misc', () => {
             expect(sha256('', 'hex')).toEqual(
                 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
             );
-        });
-    });
-
-    describe('re', () => {
-        it('removes unescaped whitespace', () => {
-            expect(re` a  b `).toEqual(/ab/);
-            expect(re` a \\ b `).toEqual(/a\\b/);
-            expect(re` a \\\\ b `).toEqual(/a\\\\b/);
-            expect(
-                re`
-                    a\\\\ b \n
-
-                    \n
-                `,
-            ).toEqual(/a\\\\b\n\n/);
-        });
-        it('unescapes escaped whitespace', () => {
-            expect(re` a \   b `).toEqual(/a b/);
-            expect(re` a  \\\   b `).toEqual(/a\\ b/);
-        });
-        it('removes comments', () => {
-            expect(re` a \   b # abc `).toEqual(/a b/);
-            expect(
-                re` a  \\\   b # some comment \\ something \n\n\n c `,
-            ).toEqual(/a\\ b/);
-        });
-        it('unescapes escaped backticks and hashtags', () => {
-            expect(re` a \   b \# \\\# \\\\# abc \# \\\# \\\\#`).toEqual(
-                /a b#\\#\\\\/,
-            );
-            expect(
-                re` \`\\\` a  \\\   b # some comment \\ something \n\n\n c `,
-            ).toEqual(/`\\`a\\ b/);
         });
     });
 

@@ -2,14 +2,13 @@
 // attributes, and inner content.
 
 // Internal dependencies
-import { is, typeAssert } from '../deps.js';
+import { regex } from '../deps.js';
 import { isBoolean, isNumber, isString } from '../typeGuards/utils.js';
 import type {
     InterpretedAttributes,
     ParsedComponent,
 } from '../types/utils/Escape.js';
 import { escapeWhitespace } from './debug.js';
-import { re } from './misc.js';
 
 /**
  * Parses a component from an HTML string.
@@ -50,33 +49,17 @@ export function parseComponent(html: string): ParsedComponent {
         );
     }
 
-    // Match groups that weren't matched are set to the empty string, so all of
-    // the match groups are guaranteed to be defined.
-    typeAssert(
-        is<{
-            0: string;
-            1: string;
-            2: string;
-            3: string;
-            4: string;
-            5: string;
-            6: string;
-            index: number;
-            input: string;
-        }>(match),
-    );
-
     // According to node-html-parser, in this specific case at least, object
     // destructuring is faster than array destructuring (see
     // https://github.com/taoqf/node-html-parser/blob/29c0ac0866253077a1eb6260c455c4a9ad172c0f/src/nodes/html.ts#L1027).
     const {
-        1: leadingSlash,
-        2: tag,
-        3: attributesString,
-        4: closingSlash,
-        5: innerContent,
-        6: closingTag,
-    } = match;
+        leadingSlash,
+        tag,
+        attributes: attributesString,
+        closingSlash,
+        innerContent,
+        closingTag,
+    } = match.groups as unknown as ComponentRegExpMatchGroups;
     // < 1 2 3 4 > 5 6
 
     // Leading slash must be empty (i.e., must be `undefined`, `null`, or `''`).
@@ -112,23 +95,24 @@ export function parseComponent(html: string): ParsedComponent {
             (attMatch = attributesRegExp.exec(attributesString));
 
         ) {
-            let { 1: key, 2: val } = attMatch;
+            let { attribute_name, value } =
+                attMatch.groups as unknown as AttributesRegExpMatchGroups;
             /* v8 ignore next 6 (unreachable code) */
-            if (!key) {
+            if (!attribute_name) {
                 throw new Error(
                     'HTML syntax error: could not parse attribute key in the following:\n\n' +
                         attributesString,
                 );
             }
-            key = key.toLowerCase();
-            if (val) {
-                val =
-                    val.startsWith("'") || val.startsWith('"')
-                        ? val.slice(1, -1)
-                        : val;
+            attribute_name = attribute_name.toLowerCase();
+            if (value) {
+                value =
+                    value.startsWith("'") || value.startsWith('"')
+                        ? value.slice(1, -1)
+                        : value;
             }
             // if (val === undefined) val = 'true';
-            rawAttributes[key] = val;
+            rawAttributes[attribute_name] = value;
         }
     }
     const attributes: InterpretedAttributes =
@@ -145,105 +129,66 @@ export function parseComponent(html: string): ParsedComponent {
  *
  * @see {@link parseComponent | `parseComponent`}
  */
-const attributesRegExp: RegExp = re`
-    (                           # 1: attribute name
-        [                       # (first character)
-            a-zA-Z
-            \(\)
-            \[\]
-            @:
-            \$\.\?\#
-        ]
-        [                       # (remaining characters)
-            a-zA-Z
-            0-9
-            \(\)
-            \[\]
-            _:
-            \-\#
-        ]*
+const attributesRegExp: RegExp = regex('g')`
+    (?<attribute_name>
+        [a-zA-Z\(\)\[\]@:\$\.\?\#]
+        [a-zA-Z0-9\(\)\[\]_:\-\#]*
     )
-    (?:                         # -: optional "=value" part
-        \s*                     # (optional whitespace)
-        =                       # (equals sign)
-        \s*                     # (optional whitespace)
-        (                       # 2: value
+    (                           # optional "=value" part
+        \s* = \s*
+        (?<value>
             ' [^']* '           # (single-quoted value)
-            | " [^"]* "         # (double-quoted value)
-            | \S+               # (unquoted value)
+          | " [^"]* "           # (double-quoted value)
+          | \S+                 # (unquoted value)
         )
     )?
-
-                                # FLAGS
-    ${'gu'}                     # g = Global (find all matches)
-                                # u = Unicode support
     `;
 
+interface AttributesRegExpMatchGroups {
+    attribute_name: string;
+    value?: string;
+}
+
 /**
- * Regular expression for parsing a component from an HTML string. The regular
- * expression has six capture groups:
- *
- * 1. Leading slash (*optional;* `/` or empty string)
- * 2. Tag name *(required)*
- * 3. Attributes *(optional)*
- * 4. Closing slash (*optional;* `/` or empty string) (present iff tag is
- *    self-closing)
- * 5. Content (*optional;* present iff tag is not self-closing)
- * 6. Closing tag (*optional;* present iff tag is not self-closing)
+ * Regular expression for parsing a component from an HTML string.
  *
  * @see {@link parseComponent | `parseComponent`}
  */
-export const componentRegExp: RegExp = re`
-    ^                           # (start of string)
-    \s*                         # (optional leading whitespace)
-    <                           # (opening angle bracket)
-        (                       # 1: leading slash
-            /?                  # (optional slash)
-        )
-        (                       # 2: tag name
-            [a-zA-Z]            # (first character)
-            [-.:0-9_a-zA-Z]*    # (remaining characters)
-        )
-        (                       # 3: attributes
-            (?:                 # -: optional attribute(s)
-                \s              # (mandatory whitespace)
-                [^>]*?          # (any character except '>', lazy)
-                (?:
-                    (?:         # -: single-quoted attribute value
-                        '[^']*' # (any characters except "'", surrounded by "'"s)
-                    )
-                    | (?:       # -: double-quoted attribute value
-                        "[^"]*" # (any characters except '"', surrounded by '"'s)
-                    )
-                )?
-            )*
+export const componentRegExp: RegExp = regex('s')`
+    ^
+    \s*
+    <
+        (?<leadingSlash> \/ )?
+        (?<tag> [a-zA-Z] [\-\.:0-9_a-zA-Z]* )
+        (?<attributes>
+            ( \s [^>]*? ( ( '[^']*' ) | ( "[^"]*" ) )? )*
         )
         \s*
-        (                       # 4: optional closing slash
-            \/?                 # (optional slash)
-        )
+        (?<closingSlash> \/ )?
     >
-    (                           # 5: inner content (optional)
-        .*?                     # (any character, incl. newlines; lazy, so that
-                                # it doesn't eat the closing tag)
-    )
-    (                           # 6: closing tag (optional)
-        (?:                     # -: optional closing tag
-            <                   # (opening angle bracket)
-            /                   # (leading slash)
-            \s*                 # (optional whitespace)
-            \2                  # (tag name backreference)
-            \s*                 # (optional whitespace)
-            >                   # (closing angle bracket)
-        )?
-    )
-    \s*                         # (optional trailing whitespace)
-    $                           # (end of string)
-
-                                # FLAGS
-    ${'su'}                     # s = Single line (dot matches newline)
-                                # u = Unicode support
+    (?<innerContent> .*? )
+    (?<closingTag> <\/ \s* \k<tag> \s* > )?
+    \s*
+    $
 `;
+
+interface ComponentRegExpMatchGroups {
+    /** _(Optional)_ Leading slash. */
+    leadingSlash?: '/';
+    /** Tag name (e.g., `'span'`). */
+    tag: string;
+    /** Attributes. May be empty. */
+    attributes: string;
+    /** _(Optional)_ Closing slash. Present iff tag is self-closing. */
+    closingSlash?: '/';
+    /** _(Optional)_ Inner content. Present iff tag is not self-closing. */
+    innerContent: string;
+    /**
+     * _(Optional)_ Closing tag (e.g., `</span>`). Present iff tag is not
+     * self-closing.
+     */
+    closingTag?: `</${string}>`;
+}
 
 /**
  * "Interprets" a string as a boolean, number, null, or undefined, if

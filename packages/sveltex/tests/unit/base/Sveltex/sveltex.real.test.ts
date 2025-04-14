@@ -11,9 +11,8 @@ import type { MathBackend } from '../../../../src/types/handlers/Math.js';
 import { type Sveltex, sveltex } from '../../../../src/base/Sveltex.js';
 import { spy } from '../../fixtures.js';
 import { isArray, isString } from '../../../../src/typeGuards/utils.js';
-import { re } from '../../../../src/utils/misc.js';
 
-import { typeAssert, is } from '../../../../src/deps.js';
+import { typeAssert, is, regex } from '../../../../src/deps.js';
 import {
     type MockInstance,
     afterAll,
@@ -124,12 +123,12 @@ function splitContent(content: string): string[] {
     return content.match(splitContentRegExp) ?? [];
 }
 
-const splitContentRegExp = re`
-    (?:
+const splitContentRegExp = regex('gs')`
+    (
         <script [^>]* > .*? <\/script>  # script block
-        | <style [^>]* > .*? <\/style>  # style block
-        | .+? (?=<script|<style|$))
-    ${'gsu'}
+      | <style [^>]* > .*? <\/style>    # style block
+      | .+? (?=<script|<style|$)
+    )
 `;
 
 async function preprocess<

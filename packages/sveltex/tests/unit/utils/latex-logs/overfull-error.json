@@ -1,53 +1,53 @@
 [
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 2,
     "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
     "severity": "info"
   },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  { "line": 2, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
   {
-    "line": 1,
+    "line": 4,
     "message": "LaTeX Font Info: External font `cmex10' loaded for size <7>.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 4,
     "message": "LaTeX Font Info: External font `cmex10' loaded for size <5>.",
     "severity": "info"
   },

@@ -16,7 +16,6 @@ import { countNewlines } from '../handlers/MarkdownHandler.js';
 import { isPresentAndDefined } from '../typeGuards/utils.js';
 import type { ComponentInfo } from '../types/handlers/Markdown.js';
 import { getLocationUnist, walkUnist } from './ast.js';
-import { re } from './misc.js';
 
 /**
  * Small remark plugin to disable indented code blocks and autolinks.
@@ -250,64 +249,3 @@ function isUsed(markup: string, componentInfo: { name: string }): boolean {
         'u',
     ).test(markup);
 }
-
-/**
- * Regular expression for parsing a component from an HTML string. The regular
- * expression has six capture groups:
- *
- * 1. Opening tag *(required)*
- * 2. Tag name *(required)*
- * 3. Closing slash (*optional;* `/` or empty string) (present iff tag is
- *    self-closing)
- * 4. Leading whitespace in inner content *(optional)*
- *
- * @see {@link parseComponent | `parseComponent`}
- */
-export const componentRegExp: RegExp = re`
-    ^                               # (start of string)
-    (                               # 1: opening tag
-        <                           # (opening angle bracket)
-            \s*                     # (optional whitespace)
-            (                       # 2: tag name
-                [a-zA-Z]            # (first character)
-                [-.:0-9_a-zA-Z]*    # (remaining characters)
-            )
-            (?:                     # -: attributes
-                (?:                 # -: optional attribute(s)
-                    \s              # (mandatory whitespace)
-                    [^>]*?          # (any character except '>', lazy)
-                    (?:             # -: quoted attribute values (optional)
-                        (?:'[^']*')
-                      | (?:"[^"]*")
-                    )?
-                )*
-            )
-            \s*                     # (optional whitespace)
-            (                       # 3: optional closing slash
-                \/?                 # (optional slash)
-            )
-        >
-    )
-    (                           # 4: optional leading whitespace
-        \s*                     # (whitespace character, ≥0, greedy)
-    )
-    (?:                         # -: inner content (optional)
-        .*?                     # (any character, incl. newlines; lazy, so that
-                                # it doesn't eat the closing tag)
-    )
-    (?:                         # -: closing tag (optional)
-        (?:                     # -: optional closing tag
-            <                   # (opening angle bracket)
-            /                   # (leading slash)
-            \s*                 # (optional whitespace)
-            \2                  # (tag name backreference)
-            \s*                 # (optional whitespace)
-            >                   # (closing angle bracket)
-        )?
-    )
-    \s*                         # (optional trailing whitespace)
-
-                                # FLAGS
-    ${'su'}                     # s = Single line (dot matches newline)
-                                # u = Unicode support
-`;

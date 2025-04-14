@@ -42,7 +42,7 @@ import { insteadGot } from './diagnosers/Diagnoser.js';
 import { buildDvisvgmInstruction } from './dvisvgm.js';
 import { fs, pathExists } from './fs.js';
 import { mergeConfigs } from './merge.js';
-import { re, sha256 } from './misc.js';
+import { sha256 } from './misc.js';
 
 // External dependencies
 import {
@@ -56,6 +56,7 @@ import {
     pc,
     prettyBytes,
     process,
+    regex,
     relative,
     stat,
     svgoOptimize,
@@ -1380,302 +1381,150 @@ export function printLogProblems(
     });
 }
 
-/**
- * Match groups:
- *
- * 1.  Message
- * 2.  "LaTeX" / "Class" / "Package" / ...
- * 3.  _(Optional)_ Class/package/module name
- * 4.  Severity (`'Error'`, `'Warning'`, or `'Info'`)
- * 5.  _(Optional)_ Line number
- * 6.  _(Optional)_ Ending punctuation
- */
-const errorRegExp1: RegExp = re`
+const errorRegExp1: RegExp = regex('gm')`
     ^
-    (                           # 1: Message
-        (?:                     # -:
-            (                   # 2:
-                Class
-                | Package
-                | Module
-                | LaTeX
-                | LaTeX3
-            )
-            (?:                 # -: Extra context, optional
-                [\ ]
-                (               # 3: Class/package/module name
-                    \S+         # (non-whitespace characters, ≥1, greedy)
-                )
-            )?
+    (?<message>
+        (
+            (?<pkgType> Class | Package | Module | LaTeX | LaTeX3 )
+            ( \ (?<pkg> \S+ ) )?
         )
-        [\ ]                    # (space)
-        (                       # 4: Severity
-            Error
-          | Warning
-          | Info
-        ):
-        \s+                     # (whitespace characters, ≥1, greedy)
-        .*?                     # (any character (excl. newline), ≥0, lazy)
-        (?:                     # -: Extra lines, ≥0, greedy
-            (?:                 # -: cross-platform newline character
-                \r\n?           # (CR or CRLF)
-              | \n              # (LF)
-            )
-            \(                  # (opening parenthesis)
-            (?:                 # (backreference to group 2 or 3)
-                \2
-              | \3
-            )
-            \)                  # (closing parenthesis)
-            .+?                 # (any character (excl. newline), ≥1, lazy)
-        )*
+        \ (?<severity> Error | Warning | Info ) : \s+ .*?
+        ( (\r\n?|\n) \( ( \k<pkgType> | \k<pkg> ) \) .+? )*
     )
-    (?:                         # -: " on [input] line <n>"
-        [\ ] on                 # (" on")
-        (?:                     # -: " input", optional
-            [\ ] input          # (" input")
-        )?
-        [\ ] line [\ ]          # (" line ")
-        (                       # 5: Line number
-            \d+                 # (digit, ≥1, greedy)
-        )
-    )?
-    (                           # 6: Ending punctuation
-        \.                      # (period)
-      | \?                      # (question mark)
-    )?
-    $                           # (end of line)
-
-    # FLAGS
-    ${'gmu'}                    # g = Global (find all matches)
-                                # m = Multi-line (^/$ match start/end of line)
-                                # u = Unicode support
+    ( \ on ( \ input )? \ line \ (?<lineNumber> \d+ ) )?
+    (?<endingPunctuation> \. | \? )?
+    $
 `;
 
-/**
- * Match groups:
- *
- * 1.  First line of message
- * 2.  _(Optional)_ Line number
- * 3.  _(Optional)_ If "undefined control sequence", this is the undefined
- *     control sequence in question.
- */
-const errorRegExp: RegExp = re`
-    ^                               # (start of line)
-    ! [\ ]                          # ("! ")
-    (                               # 1: Message
-        .+?                         # (any character (excl. newline), ≥1, lazy)
+interface ErrorRegExp1MatchGroups {
+    message: string;
+    pkgType: 'Class' | 'Package' | 'Module' | 'LaTeX' | 'LaTeX3';
+    pkg?: string;
+    severity: 'Error' | 'Warning' | 'Info';
+    lineNumber?: `${number}`;
+    endingPunctuation?: string;
+}
+
+const errorRegExp: RegExp = regex('gm')`
+    ^ ! \ (?<message> .+? ) \g<newline>
+    (
+        ( (?<! ( ! \ | l\. ) ) .*? \g<newline> )*?        # more lines
+        l \.? [\ ]? (?<lineNumber> \d+ )
+        ( .*? (?<controlSequence> \\ [\w@]+ ) \g<newline> )
+      |
+        ( (?<! ( ! \ | l\. ) ) .*? \g<newline> )*?        # more lines
+        l \.? [\ ]? (?<lineNumber2> \d+ )
+      |
+        ( (?<! ( ! \ | l\. ) ) .*? \g<newline> )*?        # more lines
+    )?
+
+    (?(DEFINE)
+        (?<newline> \r\n? | \n )
     )
-    (?: \r\n? | \n )                # (cross-platform newline character)
-    (?:
-        (?:
-            (?:                     # -: more lines, ≥0, lazy
-                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
-                .*?                 # (any character (excl. newline), ≥0, lazy)
-                (?: \r\n? | \n )    # (cross-platform newline character)
-            )*?
-            (?:                     # -: "l.<n> " (optional)
-                l \.? [\ ]?
-                (                   # 2: Line number
-                    \d+             # (digit, ≥1, greedy)
-                )
-            )
-            (?:                     # -: if "undefined control sequence",
-                                    #    this is the 1st extra line, containing
-                                    #    the control sequence in question.
-                                    #    Otherwise, this should usually not be
-                                    #    matched.
-                .*?                 # (any (excl. newline), ≥0, lazy)
-                (                   # 3: Control sequence
-                    \\              # (backslash)
-                    [\w@]+          # (alphanumeric or _ or @, ≥1, greedy)
-                )
-                (?: \r\n? | \n )    # (cross-platform newline)
-            )?
-        )
-      | (?:
-            (?:                     # -: more lines, ≥0, lazy
-                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
-                .*?                 # (any (excl. newline), ≥0, lazy)
-                (?: \r\n? | \n )    # (cross-platform newline)
-            )*
-            (?:                     # -: "l.<n> " (optional)
-                l \.? [\ ]?
-                (                   # 4: Line number
-                    \d+             # (digit, ≥1, greedy)
-                )
-            )
-        )
-      | (?:
-            (?:                     # -: more lines, ≥0, lazy
-                (?<!(?:!\ | l\. ))  # (negative lookbehind for "! " or "l.")
-                .*?                 # (any (excl. newline), ≥0, lazy)
-                (?: \r\n? | \n )    # (cross-platform newline)
-            )*?
-        )?
-    )
-    # FLAGS
-    ${'gmu'}                        # g = Global (find all matches)
-                                    # m = Multi-line (^/$ match start/end of line)
-                                    # u = Unicode support
 `;
+
+interface ErrorRegExpMatchGroups {
+    /** First line of message. */
+    message: string;
+    /**
+     * _(Optional)_ Line number.
+     *
+     * @remarks
+     * At most one of the following two capture groups will be defined:
+     * - {@link lineNumber | `lineNumber`}
+     * - {@link lineNumber2 | `lineNumber2`}
+     */
+    lineNumber?: `${number}`;
+    /**
+     * _(Optional)_ Line number.
+     *
+     * @remarks
+     * At most one of the following two capture groups will be defined:
+     * - {@link lineNumber | `lineNumber`}
+     * - {@link lineNumber2 | `lineNumber2`}
+     */
+    lineNumber2?: `${number}`;
+    /**
+     * _(Optional)_ If "undefined control sequence", this is the undefined
+     * control sequence in question.
+     */
+    controlSequence?: string;
+}
 
 // const fds =
 //     /^\![ ](.+?)(?:\r\n?|\n)(?:(?<!\![ ]).*?(?:\r\n?|\n))*?(?:l\.?[ ]?(\d+))?(?:.*?(\\[\w\@]+)(?:\r\n?|\n))?/gmu;
 
-/**
- * Match groups:
- *
- * 1.  Message
- * 2.  _(Optional)_ Start line number (if range in paragraph)
- * 3.  _(Optional)_ Line number (if detected at specific line)
- */
-const boxRegExp: RegExp = re`
-    ^                       # (start of line)
-    (                       # 1: Message
-        (?:                 # -:
-            (?:             # -: type of problem
-                Overfull
-              | Underfull
-            )
-            [\ ]            # (space)
-            \\ [vh] box     # ('\\vbox' or '\\hbox')
-            [\ ]            # (space)
-            \(              # (opening parenthesis)
-            (?:             # -: e.g., '12.34pt too wide' or 'badness 10000'
-                [^)]+?      # (any except closing parenthesis, ≥1, lazy)
-            )
-            \)              # (closing parenthesis)
+const boxRegExp: RegExp = regex('gm')`
+    ^
+    (?<message>
+        (
+            ( Overfull | Underfull ) \ \\ [vh] box
+            \ \( [^\)]+? \)  # e.g., ' (12.34pt too wide)' or ' (badness 10000)'
         )
-        (?:                 # -: if problem arose in paragraph, we want to
-                            #    mention this fact in the message. Similarly, if
-                            #    the problem occurred "while \\output is
-                            #    active", we also want to mention that.
-            [\ ] in
-            [\ ] paragraph
-          | [\ ] has
-            [\ ] occurred
-            [\ ] while
-            [\ ] \\ output
-            [\ ] is
-            [\ ] active
+        (   \ in \ paragraph
+          | \ has \ occurred \ while \ \\output \ is \ active
         )?
     )
-    (?:                     # -: ' at lines 4--7' (iff problem in paragraph), or
-                            #    ' detected at line 123', or
-                            #    ' [123]' (or ' []') (optional page number)
-        [\ ] at
-        [\ ] lines
-        [\ ]
-        (                   # 2: Start line number
-            \d+             # (digit, ≥1, greedy)
-        )
-        (?:                 # -: End line number
-            --              # ('--')
-            \d+             # (digit, ≥1, greedy)
-        )
-      | [\ ] detected
-        [\ ] at
-        [\ ] line
-        [\ ]
-        (                   # 3: Line number
-            \d+             # (digit, ≥1, greedy)
-        )
-      | (?:                 # -: optional page number; e.g., ' [1]'
-            [\ ]            # (' ')
-            \[              # ('[')
-            (?:             # -: page number
-                \d*         # (digit, ≥0, greedy)
-            )
-            \]              # (']')
-        )?
+    (
+        \ at \ lines \ (?<startLine> \d+ ) -- (?<endLine> \d+ )
+      | \ detected \ at \ line \ (?<lineNumber> \d+ )
+      | ( \ \[ \d* \] )?                  # optional page number; e.g., ' [1]'
     )
-    $                       # (end of line)
-
-    # FLAGS
-    ${'gmu'}                # g = Global (find all matches)
-                            # m = Multi-line ('^'/'$' match start/end of line)
-                            # u = Unicode support
+    $
 `;
 
-/**
- * Match groups:
- *
- * 1.  Line number
- * 2.  Message
- * 3.  _(Optional)_ Class/package/module name
- * 4.  `'Error'`, `'Warning'`, `'Info'`, or `'Missing'`
- */
-const errmessageRegExp: RegExp = re`
-    ^                       # (start of line)
+interface BoxRegExpMatchGroups {
+    message: string;
+    /** _(Optional)_ Start line number (if range in paragraph) */
+    startLine?: `${number}`;
+    /** _(Optional)_ End line number (if range in paragraph) */
+    endLine?: `${number}`;
+    /** _(Optional)_ Line number (if detected at specific line) */
+    lineNumber?: `${number}`;
+}
+
+const errmessageRegExp: RegExp = regex('gim')`
+    ^
     [^:\r\n]+?              # (any (excl. newlines and colons), ≥1, lazy)
     \.tex:                  # (".tex:")
-    (                       # 1: Line number
-        \d+                 # (digit, ≥1, greedy)
-    )
-    :[\ ]                   # (": ")
-    (                       # 2: Message
-        (?:                 # -:
-            (?:             # -:
-                Package
-              | Class
-              | Module
-            )
-            [\ ]            # (space)
-            (               # 3: Class/package/module name
-                \S+         # (non-whitespaces, ≥1, greedy
-            )
-            [\ ]            # (space)
-        )?
-        .*?                 # (any (incl. newline), ≥0, lazy)
-        (                   # 4: Severity, or "Missing"
-            Error
-            | Warning
-            | Info
-            | Missing
-        )
-        .*                  # (any (incl. newline), ≥0, greedy)
-        (?:                 # -: Extra lines, ≥0, greedy
-            (?:             # -: cross-platform newline
-                \r\n?       # (CR or CRLF)
-              | \n          # (LF)
-            )
-            \(              # (opening parenthesis)
-            \3              # (backreference to match group 3)
-            \)              # (closing parenthesis)
-            .+?             # (any (excl. newline), ≥1, lazy)
+    (?<lineNumber> \d+ )    # (digit, ≥1, greedy)
+    :\                      # (": ")
+    (?<message>
+        ( ( Package | Class | Module ) \ (?<pkg> \S+ ) \ )?
+        .*?
+        (?<severity> Error | Warning | Info | Missing )
+        .*
+        (                   # Extra lines, optional
+            (\r\n?|\n) \( \k<pkg> \) .+?
         )*
     )
-    $                       # (end of line)
-
-    # FLAGS
-    ${'gimu'}               # g = Global (find all matches)
-                            # i = Case-insensitive
-                            # m = Multi-line ('^'/'$' match start/end of line)
-                            # u = Unicode support
+    $
 `;
+
+interface ErrmessageRegExpMatchGroups {
+    lineNumber: `${number}`;
+    message: string;
+    /** _(Optional)_ Class/package/module name */
+    pkg?: string;
+    severity: 'Error' | 'Warning' | 'Info' | 'Missing';
+}
 
 const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
     [
         boxRegExp,
         (match) => {
-            // Assert truthy-ness of mandatory _non-empty_ match groups
-            nodeAssert(match[1]);
+            const { message, startLine, lineNumber } =
+                match.groups as unknown as BoxRegExpMatchGroups;
 
             // Set severity
             const severity = 'box';
 
-            // Determine message to use
-            const message = match[1];
-
             // Determine line number
-            let line = match[2]
-                ? parseInt(match[2])
-                : match[3]
-                  ? parseInt(match[3])
+            const line = startLine
+                ? parseInt(startLine)
+                : lineNumber
+                  ? parseInt(lineNumber)
                   : 1;
-            /* v8 ignore next 1 (unreachable code, due to regex format) */
-            if (Number.isNaN(line)) line = 1;
 
             return { line, message, severity };
         },
@@ -1695,21 +1544,25 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
     [
         errorRegExp1,
         (match) => {
-            // Assert truthy-ness of mandatory _non-empty_ match groups
-            nodeAssert(match[1] && match[2] && match[4]);
+            const {
+                message: msg,
+                pkgType,
+                pkg,
+                severity: s,
+                lineNumber,
+                endingPunctuation,
+            } = match.groups as unknown as ErrorRegExp1MatchGroups;
 
             // Set severity
-            const s = match[4].toLowerCase();
-            const severity =
-                s === 'error' ? 'error' : s === 'warning' ? 'warn' : 'info';
+            const severity = normalizeSeverity(s);
 
             // Determine message to use
-            let message = match[1] + (match[6] ?? '');
+            let message = msg + (endingPunctuation ?? '');
             if (/\r\n?|\n/u.test(message)) {
                 const regexp = new RegExp(
                     '^\\((?:' +
-                        match[2] +
-                        (match[3] ? '|' + match[3] : '') +
+                        pkgType +
+                        (pkg ? '|' + pkg : '') +
                         ')\\)\\s*(.*?)$',
                     'gmu',
                 );
@@ -1718,8 +1571,11 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
             message = message.replaceAll(/\s+/gu, ' ').trim();
 
             // Determine line number
-            let line = parseInt(match[4]);
-            if (Number.isNaN(line)) line = 1;
+            let line = 1;
+            if (lineNumber) {
+                line = parseInt(lineNumber);
+                if (Number.isNaN(line)) line = 1;
+            }
 
             return { line, message, severity };
         },
@@ -1727,16 +1583,23 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
     [
         errorRegExp,
         (match) => {
-            // Assert truthy-ness of mandatory _non-empty_ match groups
-            nodeAssert(match[1]);
+            const {
+                message: msg,
+                lineNumber,
+                lineNumber2,
+                controlSequence,
+            } = match.groups as unknown as ErrorRegExpMatchGroups;
 
             // Set severity
             const severity = 'error';
 
             // Determine message to use
-            let message = match[1];
-            if (message.includes('Undefined control sequence') && match[3]) {
-                message = `Undefined control sequence: ${match[3]}`;
+            let message = msg;
+            if (
+                message.includes('Undefined control sequence') &&
+                controlSequence
+            ) {
+                message = `Undefined control sequence: ${controlSequence}`;
             }
 
             // ! Undefined control sequence.
@@ -1744,10 +1607,8 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
             //                                                   {a}$};
 
             // Determine line number
-            const lineMaybe = match[2] ?? match[4];
-            let line = lineMaybe ? parseInt(lineMaybe) : 1;
-            /* v8 ignore next 1 (unreachable code, due to regex format) */
-            if (Number.isNaN(line)) line = 1;
+            const lineNumberStr = lineNumber ?? lineNumber2;
+            const line = lineNumberStr ? parseInt(lineNumberStr) : 1;
 
             return { line, message, severity };
         },
@@ -1755,23 +1616,21 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
     [
         errmessageRegExp,
         (match) => {
-            // Assert truthy-ness of mandatory _non-empty_ match groups
-            nodeAssert(match[1] && match[2] && match[4]);
+            const {
+                message: msg,
+                severity: s,
+                lineNumber,
+                pkg,
+            } = match.groups as unknown as ErrmessageRegExpMatchGroups;
 
             // Set severity
-            const s = match[4].toLowerCase();
-            const severity =
-                s === 'error'
-                    ? 'error'
-                    : s === 'warning' || s === 'missing'
-                      ? 'warn'
-                      : 'info';
+            const severity = normalizeSeverity(s);
 
             // Determine message to use
-            let message = match[2];
-            if (/\r\n?|\n/u.test(message) && match[3]) {
+            let message = msg;
+            if (/\r\n?|\n/u.test(message) && pkg) {
                 const regexp = new RegExp(
-                    '^\\((?:' + match[3] + ')\\)\\s*(.*?)$',
+                    '^\\((?:' + pkg + ')\\)\\s*(.*?)$',
                     'gmu',
                 );
                 message = message.replaceAll(regexp, ' $1');
@@ -1779,7 +1638,7 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
             message = message.replaceAll(/\s+/gu, ' ').trim();
 
             // Determine line number
-            let line = parseInt(match[1]);
+            let line = parseInt(lineNumber);
             /* v8 ignore next 1 (unreachable code, due to regex format) */
             if (Number.isNaN(line)) line = 1;
 
@@ -1787,3 +1646,19 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
         },
     ],
 ];
+
+function normalizeSeverity(
+    severity: 'Error' | 'Warning' | 'Missing' | 'Info',
+): Exclude<TexLogSeverity, 'box'> {
+    const s = severity.toLowerCase();
+    switch (s) {
+        case 'error':
+            return 'error';
+        case 'warning':
+        case 'missing':
+            return 'warn';
+        case 'info':
+        default:
+            return 'info';
+    }
+}

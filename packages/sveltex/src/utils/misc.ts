@@ -81,45 +81,6 @@ export function sha256(
 }
 
 /**
- * You can use the `re` template tag to create regular expressions with comments and whitespace
- * removed (simulating the `x` flag in Perl-compatible regular expressions). Escaped spaces are
- * preserved. The `re` tag also allows you to specify flags for the regular expression by inserting
- * `${flags}` at any point inside the template string.
- *
- * @example
- * ```ts
- * const regex = re`
- *     (
- *         [a-z]+   # comment
- *         | [\ ]+  # escaped space
- *     )
- *    ${'mg'}`;
- * ```
- */
-export function re(strings: TemplateStringsArray, ...flags: string[]): RegExp {
-    return new RegExp(
-        strings.raw
-            .join('')
-            // Remove comments.
-            .replace(/(?<=^|[^\\])((?:\\\\)*)(?<!\(\?)#.*$/gmu, '$1')
-            // Unescape hashtags and backticks.
-            .replace(/(?<=^|[^\\])((?:\\\\)*)\\([#`])/gmu, '$1$2')
-            // Remove all whitespace except for escaped spaces.
-            .replace(
-                /(?<=^|[^\\])((?:\\\\)*)(\\[ ])|\s+/gmu,
-                (_match, pairsOfBackslashes, whitespace) => {
-                    const pairsOfBackslashesString =
-                        typeof pairsOfBackslashes === 'string'
-                            ? pairsOfBackslashes
-                            : '';
-                    return whitespace ? pairsOfBackslashesString + ' ' : '';
-                },
-            ),
-        flags.join(''),
-    );
-}
-
-/**
  * Ensures that a string ends with another given string.
  *
  * @param str - Some string.

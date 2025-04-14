@@ -1,109 +1,109 @@
 [
   {
-    "line": 1,
+    "line": 4,
+    "message": "Package epstopdf-base Info: Redefining graphics rule for `.eps'",
+    "severity": "info"
+  },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 8,
+    "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
+    "severity": "info"
+  },
+  { "line": 8, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
+  {
+    "line": 77,
     "message": "Package shellesc Info: Restricted shell escape enabled.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 107,
     "message": "Package graphics Info: Driver file: pdftex.def.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 274,
     "message": "Package xcolor Info: Driver file: pdftex.def.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1350,
     "message": "Package xcolor Info: Model `cmy' substituted by `cmy0'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1354,
     "message": "Package xcolor Info: Model `hsb' substituted by `rgb'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1366,
     "message": "Package xcolor Info: Model `RGB' extended.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1368,
     "message": "Package xcolor Info: Model `HTML' substituted by `rgb'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1369,
     "message": "Package xcolor Info: Model `Hsb' substituted by `hsb'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1370,
     "message": "Package xcolor Info: Model `tHsb' substituted by `hsb'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1371,
     "message": "Package xcolor Info: Model `HSB' substituted by `hsb'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1372,
     "message": "Package xcolor Info: Model `Gray' substituted by `gray'.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 1373,
     "message": "Package xcolor Info: Model `wave' substituted by `hsb'.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for OML/cmm/m/it.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for OMS/cmsy/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for OT1/cmr/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for T1/cmr/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for TS1/cmr/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for OMX/cmex/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "LaTeX Font Info: Checking defaults for U/cmr/m/n.",
-    "severity": "info"
-  },
-  { "line": 1, "message": "LaTeX Font Info: ... okay.", "severity": "info" },
-  {
-    "line": 1,
-    "message": "Package epstopdf-base Info: Redefining graphics rule for `.eps'",
     "severity": "info"
   }
 ]

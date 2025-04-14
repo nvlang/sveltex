@@ -75,18 +75,13 @@
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 4,
     "message": "LaTeX Font Info: External font `cmex10' loaded for size <7>.",
     "severity": "info"
   },
   {
-    "line": 1,
+    "line": 4,
     "message": "LaTeX Font Info: External font `cmex10' loaded for size <5>.",
-    "severity": "info"
-  },
-  {
-    "line": 1,
-    "message": "Package graphics Info: Driver file: luatex.def.",
     "severity": "info"
   },
   {
@@ -149,5 +144,10 @@
     "line": 14,
     "message": "LaTeX Error: \\begin{[} on input line 4 ended by \\end{document}.",
     "severity": "error"
+  },
+  {
+    "line": 107,
+    "message": "Package graphics Info: Driver file: luatex.def.",
+    "severity": "info"
   }
 ]
