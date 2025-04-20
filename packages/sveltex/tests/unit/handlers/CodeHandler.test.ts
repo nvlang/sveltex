@@ -514,11 +514,11 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 expect(output).toBeDefined();
                                 if (backend === 'shiki') {
                                     expect(output.processed).toContain(
-                                        '<span style="color:',
+                                        ' <span style="color:',
                                     );
                                 } else {
                                     expect(output.processed).toContain(
-                                        '<span class=',
+                                        ' <span class=',
                                     );
                                 }
                             },
