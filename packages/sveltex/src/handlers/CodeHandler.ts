@@ -678,7 +678,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                       }
                     : {};
                 const classes: string[] = ['shiki'];
-                let processed;
+                let processed: string;
                 const { theme, themes } = config.shiki;
                 const structure = inline ? 'inline' : 'classic';
                 if (themes) {
@@ -722,6 +722,12 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                             meta,
                             lang,
                         }),
+                    );
+                }
+                if (inline) {
+                    processed = processed.replaceAll(
+                        /(<span(?: class=".*?")?(?: style=".*?")?>)(\s*)(\S.*?)(\s*)<\/span>/gu,
+                        '$2$1$3</span>$4',
                     );
                 }
                 const prefix =
