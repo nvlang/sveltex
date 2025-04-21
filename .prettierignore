@@ -12,3 +12,6 @@ tmp
 *.hbs
 res
 *.tmLanguage.json
+packages/sveltex/tests/e2e/sveltex.config.js
+packages/sveltex/tests/e2e
+e2e
