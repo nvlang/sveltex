@@ -50,7 +50,7 @@
     "test:e2e": "pnpm test:e2e:prepare && playwright test",
     "playwright": "playwright test",
     "playwright:golden": "playwright test --update-snapshots",
-    "test:e2e:prepare": "pnpm build && pnpm exec playwright install && cd tests/e2e && pnpm i && pnpm build && cd ../..",
+    "test:e2e:prepare": "pnpm build && pnpm exec playwright install && cd tests/e2e && pnpm --ignore-workspace install && pnpm build && cd ../..",
     "test:e2e:golden": "pnpm test:e2e:prepare && pnpm playwright:golden",
     "format": "prettier --write .",
     "test:watch": "vitest --watch",
