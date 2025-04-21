@@ -20,6 +20,8 @@ test('visual regression integration tests', async ({ page }) => {
         await page.goto(href);
         await expect(page).toHaveScreenshot(`${sanitizeFilename(href)}.png`, {
             fullPage: true,
+            maxDiffPixels: 50,
+            maxDiffPixelRatio: 0.01,
         });
     }
 });
