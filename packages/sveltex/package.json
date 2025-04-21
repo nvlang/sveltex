@@ -1,6 +1,6 @@
 {
   "name": "@nvl/sveltex",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Svelte + Markdown + LaTeX",
   "type": "module",
   "author": {
