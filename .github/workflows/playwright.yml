@@ -99,7 +99,7 @@ jobs:
         working-directory: packages/sveltex/tests/e2e
 
       - name: Run Playwright tests
-        run: pnpm playwright
+        run: pnpm playwright --update-snapshots
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
