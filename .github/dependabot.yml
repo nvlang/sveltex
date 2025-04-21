@@ -9,7 +9,8 @@ updates:
   - package-ecosystem: 'npm'
 
     # Location of package manifests
-    directory: '/'
+    directories:
+      - '/packages/*/'
 
     # Branch to create pull requests against
     target-branch: 'dependencies'
