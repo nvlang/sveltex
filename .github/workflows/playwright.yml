@@ -109,11 +109,3 @@ jobs:
           name: playwright-report
           path: packages/sveltex/playwright-report/
           retention-days: 30
-
-      - name: Upload Actual Screenshots
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: actual-screenshots
-          path: packages/sveltex/tests/e2e/basic.spec.ts-snapshots/
-          retention-days: 7
