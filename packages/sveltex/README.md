@@ -75,11 +75,11 @@ yarn dlx create-sveltex # If using Yarn
 #### Installation
 
 ```sh
-pnpm add -D @nvl/sveltex # If using PNPM
-bun  add -D @nvl/sveltex # If using Bun
-npm  add -D @nvl/sveltex # If using NPM
-yarn add -D @nvl/sveltex # If using Yarn
-deno add -D @nvl/sveltex # If using Deno
+pnpm add -D @nvl/sveltex     # If using PNPM
+bun  add -D @nvl/sveltex     # If using Bun
+npm  add -D @nvl/sveltex     # If using NPM
+yarn add -D @nvl/sveltex     # If using Yarn
+deno add -D jsr:@nvl/sveltex # If using Deno
 ```
 
 #### Basic steup
