@@ -70,7 +70,8 @@ yarn dlx create-sveltex # If using Yarn
 
 </details>
 
-### Adding to an existing project
+<details>
+<summary><b>Adding to an existing project</b></summary>
 
 #### Installation
 
@@ -111,6 +112,18 @@ Now, install the backends (see IntelliSense or the error message you'd get if
 you tried to run the above code without installing the backends), and you should
 be good to go. Create a `+page.sveltex` file in your `src/routes` directory, and
 start adding markdown, math, code blocks, and even TeX components.
+
+See the [docs] for more information on how to use SvelTeX.
+
+</details>
+
+<div align="center">
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/dark/screenshot.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/screenshot.png">
+    <img alt="Logotype" src="https://raw.githubusercontent.com/nvlang/sveltex/main/res/light/screenshot.png" width="100%">
+</picture>
+</div>
 
 ## Editor integration
 
