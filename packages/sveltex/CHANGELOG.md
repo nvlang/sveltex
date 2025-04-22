@@ -1,5 +1,16 @@
 # @nvl/sveltex
 
+## 0.4.4
+
+### Patch Changes
+
+- [`c7d30fd`](https://github.com/nvlang/sveltex/commit/c7d30fdf9f45706af3af50a354753b087d3e026b)
+  Thanks [@nvlang](https://github.com/nvlang)! - Correct Deno install
+  instructions in README.
+
+- [`1918771`](https://github.com/nvlang/sveltex/commit/1918771fdaeae035efd9ab1046158eca6fd176ef)
+  Thanks [@nvlang](https://github.com/nvlang)! - Add screenshot to README.
+
 ## 0.4.3
 
 ### Patch Changes
