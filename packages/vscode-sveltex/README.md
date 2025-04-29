@@ -71,4 +71,15 @@ Initial release.
 -   Updated `@types/node`: `^20.14.9` → `^20.14.10`.
 
 
+### 1.0.3
+
+#### Documentation
+
+-   Fixed link to screenshot in `README.md`.
+
+#### Build
+
+-   Reduce extension size by not bundling unnecessary files.
+
+
 [SvelTeX]: https://sveltex.dev/
