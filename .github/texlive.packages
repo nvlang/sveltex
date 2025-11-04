@@ -1,0 +1,12 @@
+latex-bin
+luatex
+xetex
+latexmk
+dvisvgm
+standalone
+pgf
+microtype
+mathtools
+luatex85
+lipsum
+xcolor
