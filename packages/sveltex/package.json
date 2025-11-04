@@ -54,7 +54,7 @@
     "test:e2e:golden": "pnpm test:e2e:prepare && pnpm playwright:golden",
     "format": "prettier --write .",
     "test:watch": "vitest --watch",
-    "prepare": "husky",
+    "prepare": "cd ../.. && husky packages/sveltex/.husky",
     "knip": "knip",
     "ci": "pnpm install"
   },
