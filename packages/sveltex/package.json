@@ -114,7 +114,7 @@
     "hast-util-from-html": "^2.0.3",
     "html-escaper": "^3.0.3",
     "html-tag-names": "^2.1.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "magic-string": "^0.30.17",
     "mdast-util-directive": "^3.1.0",
     "mdast-util-from-markdown": "^2.0.2",
