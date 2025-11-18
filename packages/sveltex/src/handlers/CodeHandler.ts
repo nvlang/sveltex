@@ -371,9 +371,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
                 const attr =
-                    prefix !== false && lang
-                        ? ` class="${prefix}${String(lang)}"`
-                        : '';
+                    prefix !== false && lang ? ` class="${prefix}${lang}"` : '';
                 if (!inline) {
                     processed = processed.replace(
                         /^(?:\r\n?|\n)(.*?)(?:\r\n?|\n)$/su,
@@ -568,9 +566,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
                 const attr =
-                    prefix !== false && lang
-                        ? ` class="${prefix}${String(lang)}"`
-                        : '';
+                    prefix !== false && lang ? ` class="${prefix}${lang}"` : '';
 
                 if (!inline) {
                     processed = processed.replace(
@@ -809,9 +805,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 const prefix =
                     addLanguageClass === true ? 'language-' : addLanguageClass;
                 const attr =
-                    prefix !== false && lang
-                        ? ` class="${prefix}${String(lang)}"`
-                        : '';
+                    prefix !== false && lang ? ` class="${prefix}${lang}"` : '';
                 escaped = inline
                     ? `<code${attr}>${escaped}</code>`
                     : `<pre><code${attr}>${escaped}</code></pre>`;

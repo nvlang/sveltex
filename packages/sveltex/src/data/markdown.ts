@@ -273,7 +273,7 @@ export function canBeOnlyThingInParagraph(
     return (
         isString(tag) &&
         ((tagsThatCanBeInParagraphs as unknown as string[]).includes(tag) ||
-            !!components.some(
+            components.some(
                 (c) => c.name === tag && componentCanBeOnlyThingInParagraph(c),
             ))
     );

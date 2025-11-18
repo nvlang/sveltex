@@ -347,8 +347,8 @@ export function getMathInSpecialDelimsES(
     const { display, inline } = texSettings;
     (
         [
-            [!!display.escapedSquareBrackets, '\\\\\\[', '\\\\\\]', false],
-            [!!inline.escapedParentheses, '\\\\\\(', '\\\\\\)', true],
+            [display.escapedSquareBrackets, '\\\\\\[', '\\\\\\]', false],
+            [inline.escapedParentheses, '\\\\\\(', '\\\\\\)', true],
         ] as const
     ).forEach(([enabled, ldelim, rdelim, inline_]) => {
         if (enabled) {

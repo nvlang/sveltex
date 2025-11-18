@@ -231,7 +231,7 @@ export function interpretString(
     }
     if (trimmedStr.endsWith('Infinity')) {
         if (/^[+]\s*Infinity$/u.test(trimmedStr)) {
-            return +Infinity;
+            return Infinity;
         }
         if (/^[-]\s*Infinity$/u.test(trimmedStr)) {
             return -Infinity;

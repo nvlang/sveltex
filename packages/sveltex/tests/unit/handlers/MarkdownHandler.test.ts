@@ -225,8 +225,7 @@ describe.each([
                 },
                 [
                     [
-                        '' +
-                            '|             |          Grouping           || \n' +
+                        '|             |          Grouping           || \n' +
                             'First Header  | Second Header | Third Header | \n' +
                             ' ------------ | :-----------: | -----------: | \n' +
                             'Content       |          *Long Cell*        || \n' +

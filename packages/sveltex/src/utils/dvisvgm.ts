@@ -34,7 +34,7 @@ export function bitmapFormatToFlagValue(bitmapFormat: BitmapFormat): string {
     if (isString(bitmapFormat)) {
         return bitmapFormat;
     }
-    return `${bitmapFormat[0]}:${String(ensureWithinRange(bitmapFormat[1], [0, 100]).toFixed(0))}`;
+    return `${bitmapFormat[0]}:${ensureWithinRange(bitmapFormat[1], [0, 100]).toFixed(0)}`;
 }
 
 /**

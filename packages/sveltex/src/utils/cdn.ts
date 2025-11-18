@@ -102,7 +102,7 @@ export async function fetchWithTimeout(
         if (!response.ok) {
             log(
                 'error',
-                `HTTP error ${String(response.status)} (${String(response.statusText)}): ${url}`,
+                `HTTP error ${String(response.status)} (${response.statusText}): ${url}`,
             );
             clearTimeout(timeoutObj);
             return undefined;
