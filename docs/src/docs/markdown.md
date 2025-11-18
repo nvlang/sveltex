@@ -99,7 +99,7 @@ In order of recommendation:
 -   **`micromark`** [[github](https://github.com/micromark/micromark) /
     [npm](https://www.npmjs.com/package/micromark)]: The parser powering
     unified, this is an extremely tiny dependency. Though extensible and fully
-    CommonMark compliant, It'll seldom be the case that you should pick this
+    CommonMark compliant, it'll seldom be the case that you should pick this
     over `remark`/`rehype` (which we refer to as "unified" above), since the
     latter offer a more high-level API and generally a more extensive ecosystem
     of plugins. Nonetheless, it's still supported, and a solid option.
