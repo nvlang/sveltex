@@ -23,7 +23,7 @@ export { inspect } from 'node:util';
 export { isRegExp } from 'node:util/types';
 
 export { deepmergeCustom } from 'deepmerge-ts';
-export { default as findCacheDirectory } from 'find-cache-dir';
+export { default as findCacheDirectory } from 'find-cache-directory';
 export { Glob } from 'glob';
 export { escape as escapeHtml } from 'html-escaper';
 export { htmlTagNames } from 'html-tag-names';

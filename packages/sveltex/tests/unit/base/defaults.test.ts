@@ -158,7 +158,7 @@ describe.concurrent('config/defaults', () => {
 
         it('should have cacheDirectory set even if findCacheDirectory returns undefined', () => {
             vi.mock(
-                'find-cache-dir',
+                'find-cache-directory',
                 async (importOriginal: () => Promise<object>) => {
                     const actual = await importOriginal();
                     return {
@@ -180,7 +180,7 @@ describe.concurrent('config/defaults', () => {
 
         it('should have cacheDirectory set even if findCacheDirectory returns undefined and $XDG_CACHE_HOME is not defined', () => {
             vi.mock(
-                'find-cache-dir',
+                'find-cache-directory',
                 async (importOriginal: () => Promise<object>) => {
                     const actual = await importOriginal();
                     return {

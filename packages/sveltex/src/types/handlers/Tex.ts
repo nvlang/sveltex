@@ -395,15 +395,16 @@ interface CachingOptions {
      * @remarks
      * The default value indicated above is somewhat untrue. The actual default
      * value is determined by the `findCacheDirectory` function from the
-     * [`find-cache-dir`](https://www.npmjs.com/package/find-cache-dir) package,
-     * which will look for a `package.json` file in the current working
+     * [`find-cache-directory`](https://www.npmjs.com/package/find-cache-directory)
+     * package, which will look for a `package.json` file in the current working
      * directory or its parent directories, and will return the absolute path to
      * the directory that the default value from above shows, relative to the
      * parent directory of the `package.json` it found. If it doesn't find a
      * `package.json`, or if the `node_modules` directory is unwritable, it will
      * return `undefined`. In this case, SvelTeX will fall back to using
-     * [`XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest#basics) via `$XDG_CACHE_HOME/sveltex`,
-     * or `~/.cache/sveltex` if `XDG_CACHE_HOME` isn't set.
+     * [`XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest#basics)
+     * via `$XDG_CACHE_HOME/sveltex`, or `~/.cache/sveltex` if `XDG_CACHE_HOME`
+     * isn't set.
      */
     cacheDirectory?: string | undefined;
 }
