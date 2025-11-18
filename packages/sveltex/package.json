@@ -110,7 +110,7 @@
     "@types/unist": "^3.0.3",
     "deepmerge-ts": "^7.1.5",
     "find-cache-dir": "^6.0.0",
-    "glob": "^11.0.1",
+    "glob": "^11.1.0",
     "hast-util-from-html": "^2.0.3",
     "html-escaper": "^3.0.3",
     "html-tag-names": "^2.1.0",
