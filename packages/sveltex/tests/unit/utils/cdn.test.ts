@@ -17,7 +17,6 @@ import {
 
 import { setupServer } from 'msw/node';
 import { delay, http, HttpResponse } from 'msw';
-import { AbortError } from 'node-fetch';
 
 const server = setupServer(
     http.get('https://85b973d4c9e1.com/418', async () => {
@@ -32,8 +31,12 @@ const server = setupServer(
     }),
 );
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterAll(() => server.close());
+beforeAll(() => {
+    server.listen({ onUnhandledRequest: 'error' });
+});
+afterAll(() => {
+    server.close();
+});
 
 function fixture() {
     beforeEach(() => {
