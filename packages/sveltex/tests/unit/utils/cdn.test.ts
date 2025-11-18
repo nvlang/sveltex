@@ -12,7 +12,28 @@ import {
     afterAll,
     beforeEach,
     afterEach,
+    beforeAll,
 } from 'vitest';
+
+import { setupServer } from 'msw/node';
+import { delay, http, HttpResponse } from 'msw';
+import { AbortError } from 'node-fetch';
+
+const server = setupServer(
+    http.get('https://85b973d4c9e1.com/418', async () => {
+        await delay(100);
+        // HttpResponse.json({ error: "I'm a teapot" }, { status: 418 });
+    }),
+    http.get('https://85b973d4c9e1.com/503', () => {
+        return HttpResponse.json(
+            { error: 'Service Unavailable' },
+            { status: 503 },
+        );
+    }),
+);
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterAll(() => server.close());
 
 function fixture() {
     beforeEach(() => {
@@ -20,6 +41,7 @@ function fixture() {
     });
     afterEach(() => {
         vi.clearAllMocks();
+        server.resetHandlers();
     });
 }
 
@@ -33,16 +55,16 @@ describe('utils/cdn', () => {
         fixture();
         it.each([
             [
-                'https://httpstat.us/503',
+                'https://85b973d4c9e1.com/503',
                 2000,
                 undefined,
-                'HTTP error 503 (Service Unavailable): https://httpstat.us/503',
+                'HTTP error 503 (Service Unavailable): https://85b973d4c9e1.com/503',
             ],
             [
-                'https://httpstat.us/418',
+                'https://85b973d4c9e1.com/418',
                 -100,
                 undefined,
-                'Timed out (-100ms): https://httpstat.us/418',
+                'Timed out (-100ms): https://85b973d4c9e1.com/418',
             ],
         ])(
             'fetchWithTimeout(%o, %o) === %o',
