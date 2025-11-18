@@ -32,7 +32,7 @@ updates:
     # When to check for updates
     schedule:
       # How often to check for updates
-      interval: 'monthly'
+      interval: 'yearly'
 
       # Time of day to check for updates (hh:mm)
       time: '09:00'
