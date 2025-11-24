@@ -30,11 +30,6 @@ export default tseslint.config(
             'no-useless-assignment': 'warn',
 
             /**
-             * Disabled to avoid unnecessary warnings.
-             */
-            'prefer-optional-chain': 'off',
-
-            /**
              * Disabled in favor of `@typescript-eslint/class-methods-use-this`.
              */
             'class-methods-use-this': 'off',
@@ -172,6 +167,11 @@ export default tseslint.config(
              * Disabled in favor of `@typescript-eslint/default-param-last`.
              */
             'default-param-last': 'off',
+
+            /**
+             * Disabled to avoid unnecessary warnings.
+             */
+            '@typescript-eslint/prefer-optional-chain': 'off',
 
             /**
              * Enforce default parameters to be last.
