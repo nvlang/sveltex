@@ -23,7 +23,6 @@ import { getLocationUnist, walkUnist } from './ast.js';
 export function remarkDisableIndentedCodeBlocksAndAutolinks(
     this: import('unified').Processor,
 ): void {
-    // eslint-disable-next-line no-invalid-this
     const data = this.data();
     const micromarkExtensions =
         data.micromarkExtensions ?? (data.micromarkExtensions = []);

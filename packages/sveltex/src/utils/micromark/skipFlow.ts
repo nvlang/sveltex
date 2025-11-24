@@ -52,7 +52,6 @@ export function tokenizeSkipFlowFactory(
         ok: State,
         nok: State,
     ): State {
-        // eslint-disable-next-line no-invalid-this
         const self = this;
         let buffer: string;
         let openingTagString: string = '';
@@ -335,7 +334,6 @@ function tokenizeNonLazyContinuationStart(
     ok: State,
     nok: State,
 ): State {
-    // eslint-disable-next-line no-invalid-this
     const self = this;
     return start;
 
