@@ -233,11 +233,8 @@ export default function (plop: NodePlopAPI) {
             if (tailwindcss) {
                 devDeps.push(
                     'tailwindcss',
+                    '@tailwindcss/vite',
                     '@tailwindcss/typography',
-                    'postcss',
-                    'postcss-import',
-                    'postcss-load-config',
-                    'autoprefixer',
                 );
             }
             if (prettier) {

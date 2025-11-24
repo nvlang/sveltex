@@ -1,9 +1,5 @@
 <script lang="ts">
-{{#if (contains tools 'tailwindcss')}}
-import '../app.pcss';
-{{else}}
 import '../app.css';
-{{/if}}
 {{#if svelte5}}
 let { children } = $props();
 {{/if}}

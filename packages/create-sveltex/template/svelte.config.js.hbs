@@ -6,13 +6,7 @@ import sveltexPreprocessor from './sveltex.config.js';
 const config = {
     extensions: ['.svelte', ...sveltexPreprocessor.configuration.extensions],
     preprocess: [
-        {{#if (contains tools 'tailwindcss')}}
-        sveltePreprocess({
-            postcss: { configFilePath: './postcss.config.js' },
-        }),
-        {{else}}
         sveltePreprocess(),
-        {{/if}}
         sveltexPreprocessor
     ],
     {{#if (equals codeBackend 'shiki')}}
