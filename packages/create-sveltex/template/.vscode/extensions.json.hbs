@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "svelte.svelte-vscode",
+    {{#if (contains tools 'tailwindcss')}}
+    "bradlc.vscode-tailwindcss",
+    {{/if}}
+    {{#if (contains tools 'playwright')}}
+    "ms-playwright.playwright",
+    {{/if}}
+    {{#if (contains tools 'vitest')}}
+    "vitest.explorer",
+    {{/if}}
+    "sveltex-preprocessor.sveltex"
+  ]
+}
