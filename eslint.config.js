@@ -1,11 +1,12 @@
 import eslint from '@eslint/js';
 import vitest from 'eslint-plugin-vitest';
 // import prettierConfig from 'eslint-config-prettier/flat';
+import { defineConfig } from 'eslint/config';
 import tsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 import playwright from 'eslint-plugin-playwright';
 
-export default tseslint.config(
+export default defineConfig(
     {
         ignores: [
             '.DS_Store',
