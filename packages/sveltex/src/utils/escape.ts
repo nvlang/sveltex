@@ -273,16 +273,18 @@ function getVerbatimES(
         const end = start + outerContent.length;
 
         // Get line at which match starts
-        const lineOffset: number = content
-            .slice(0, content.lastIndexOf(innerContent, end))
-            .split(/\r\n?|\n/u).length;
+        const lineOffset = innerContent
+            ? content
+                  .slice(0, content.lastIndexOf(innerContent, end))
+                  .split(/\r\n?|\n/u).length
+            : undefined;
 
         const loc: Offsets = { start, end, lineOffset };
 
         const config = verbEnvs?.get(tag);
         let inline = config?.defaultAttributes['inline'] === true;
         if (attributes['inline'] === true) inline = true;
-        if (inline) {
+        if (inline && innerContent !== undefined) {
             innerContent = innerContent.replace(
                 /^(?:\r\n?|\n| )(.*)(?:\r\n?|\n| )$/su,
                 '$1',

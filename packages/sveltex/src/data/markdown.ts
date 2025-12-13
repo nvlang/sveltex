@@ -6,6 +6,11 @@ import { isString } from '../typeGuards/utils.js';
 import type { ComponentInfo } from '../types/handlers/Markdown.js';
 
 /**
+ * Tags that can contain paragraphs.
+ */
+export type VoidTag = (typeof voidTags)[number];
+
+/**
  * @see https://spec.commonmark.org/0.31.2/#html-blocks
  */
 export type MarkdownHtmlTagType6 = (typeof specials)[number];
@@ -25,6 +30,28 @@ export type TagThatCanBeInParagraph =
 // Ensure that `TagThatCanContainParagraph` is a "subtype" of
 // `MarkdownHtmlTagType6 | 'pre'`.
 typeAssert<Extends<TagThatCanContainParagraph, MarkdownHtmlTagType6 | 'pre'>>();
+
+/**
+ * Void HTML elements.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+ */
+export const voidTags = [
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+] as const;
 
 /**
  * @see https://spec.commonmark.org/0.31.2/#html-blocks

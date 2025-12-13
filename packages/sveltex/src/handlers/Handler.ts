@@ -62,8 +62,10 @@ export class Handler<
         PossibleBackend,
         ProcessOptions,
         FullConfiguration,
-        ActualHandler
+        ActualHandler,
+        Content
     >,
+    Content extends string | undefined = string | undefined,
 > {
     /**
      * The name of the handler backend.
@@ -93,7 +95,11 @@ export class Handler<
      * @internal
      * @readonly
      */
-    protected readonly _process: ProcessFn<ProcessOptions, ActualHandler>;
+    protected readonly _process: ProcessFn<
+        ProcessOptions,
+        ActualHandler,
+        Content
+    >;
 
     /**
      * Process content.
@@ -102,8 +108,8 @@ export class Handler<
      * @param options - Options to pass to the processor.
      * @returns The processed content, or promise resolving to it.
      */
-    public get process(): SimplerProcessFn<ProcessOptions> {
-        return async (content: string, options: ProcessOptions) => {
+    public get process(): SimplerProcessFn<ProcessOptions, Content> {
+        return async (content: Content, options: ProcessOptions) => {
             const res = await this._process(
                 content,
                 options,
@@ -180,7 +186,7 @@ export class Handler<
         configuration,
     }: {
         backend: ActualBackend;
-        process: ProcessFn<ProcessOptions, ActualHandler>;
+        process: ProcessFn<ProcessOptions, ActualHandler, Content>;
         configuration: FullConfiguration;
     }) {
         this.backend = backend;

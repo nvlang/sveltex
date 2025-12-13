@@ -23,11 +23,50 @@ export type InterpretedAttributes = Record<
     string | number | boolean | null | undefined
 >;
 
-export interface ParsedComponent {
+export type ParsedComponent =
+    | ParsedRegularComponent
+    | ParsedSelfClosingComponent
+    | ParsedVoidComponent;
+
+export interface ParsedRegularComponent {
     innerContent: string;
-    selfClosing: boolean;
+    selfClosing: false;
     attributes: InterpretedAttributes;
     tag: string;
+}
+
+export interface ParsedSelfClosingComponent {
+    innerContent: undefined;
+    selfClosing: true;
+    attributes: InterpretedAttributes;
+    tag: string;
+}
+
+export interface ParsedVoidComponent {
+    innerContent: undefined;
+    /**
+     * Technically speaking, void elements should not be self-closing, but we
+     * allow it for flexibility's sake.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+     */
+    selfClosing: boolean;
+    attributes: InterpretedAttributes;
+    tag:
+        | 'area'
+        | 'base'
+        | 'br'
+        | 'col'
+        | 'embed'
+        | 'hr'
+        | 'img'
+        | 'input'
+        | 'link'
+        | 'meta'
+        | 'param'
+        | 'source'
+        | 'track'
+        | 'wbr';
 }
 
 export interface ProcessableSnippet<T extends SnippetType> {
@@ -37,7 +76,7 @@ export interface ProcessableSnippet<T extends SnippetType> {
      * `process` function. At the very least, this means that `innerContent`
      * should lack the outermost delimiters of the snippet.
      */
-    innerContent: string;
+    innerContent: T extends 'verbatim' ? string | undefined : string;
 
     /**
      * Object that contains options that should be passed as the second argument

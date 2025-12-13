@@ -29,7 +29,7 @@ export interface Offsets {
      * error messages. Should correspond to line number of the first line of the
      * inner content of the verbatim environment.
      */
-    lineOffset?: number;
+    lineOffset?: number | undefined;
 }
 
 export interface StartEnd_Offset {

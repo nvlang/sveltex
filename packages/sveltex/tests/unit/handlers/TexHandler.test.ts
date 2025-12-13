@@ -178,7 +178,10 @@ describe('TexHandler', () => {
                     })
                 ).processed,
             ).toEqual('');
-            expect(log).not.toHaveBeenCalled();
+            expect(log).toHaveBeenCalledExactlyOnceWith(
+                'warn',
+                expect.stringContaining('not found'),
+            );
             expect(writeFile).toHaveBeenCalledTimes(3);
         });
 
@@ -192,8 +195,7 @@ describe('TexHandler', () => {
                         selfClosing: true,
                         filename: 'test-73cd8d85.sveltex',
                         config: getDefaultVerbEnvConfig('tex'),
-                        outerContent:
-                            '<ExampleAlias ref="ref">x</ExampleAlias>',
+                        outerContent: '<ExampleAlias ref="ref" />',
                     })
                 ).processed,
             ).toEqual(

@@ -53,7 +53,8 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
     MarkdownBackend,
     MarkdownProcessOptions,
     FullMarkdownConfiguration<B>,
-    MarkdownHandler<B>
+    MarkdownHandler<B>,
+    string
 > {
     public override get configuration(): FullMarkdownConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually

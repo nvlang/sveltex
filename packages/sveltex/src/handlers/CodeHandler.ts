@@ -52,7 +52,8 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
     CodeBackend,
     CodeProcessOptionsBase,
     FullCodeConfiguration<B>,
-    CodeHandler<B>
+    CodeHandler<B>,
+    string
 > {
     public override get configuration(): FullCodeConfiguration<B> {
         // rfdc doesn't handle RegExps well, so we have to copy them manually

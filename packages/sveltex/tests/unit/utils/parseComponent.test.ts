@@ -152,7 +152,7 @@ describe('parseComponent', () => {
                 {
                     tag: 'tex',
                     attributes: { ref: 'test' },
-                    innerContent: '',
+                    innerContent: undefined,
                     selfClosing: true,
                 },
             ],
@@ -161,7 +161,7 @@ describe('parseComponent', () => {
                 {
                     tag: 'tex',
                     attributes: { ref: 'test' },
-                    innerContent: '',
+                    innerContent: undefined,
                     selfClosing: true,
                 },
             ],
@@ -170,7 +170,7 @@ describe('parseComponent', () => {
                 {
                     tag: 'a:b-c_d',
                     attributes: { test: undefined },
-                    innerContent: '',
+                    innerContent: undefined,
                     selfClosing: true,
                 },
             ],

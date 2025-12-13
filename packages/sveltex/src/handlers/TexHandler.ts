@@ -18,7 +18,12 @@ import { SveltexCache } from '../utils/cache.js';
 import { Handler } from './Handler.js';
 import { pathExists } from '../utils/fs.js';
 import { mergeConfigs } from '../utils/merge.js';
-import type { ProcessedSnippet } from '../types/utils/Escape.js';
+import type {
+    InterpretedAttributes,
+    ProcessedSnippet,
+} from '../types/utils/Escape.js';
+import { isString } from 'packages/sveltex/src/typeGuards/utils.js';
+import { log } from 'packages/sveltex/src/utils/debug.js';
 
 export class TexHandler extends Handler<
     TexBackend,
@@ -47,10 +52,13 @@ export class TexHandler extends Handler<
      * @returns The processed content, or promise resolving to it.
      */
     public override get process(): (
-        content: string,
+        content: string | undefined,
         options: TexProcessOptions,
     ) => ProcessedSnippet | Promise<ProcessedSnippet> {
-        return async (content: string, options: TexProcessOptions) => {
+        return async (
+            content: string | undefined,
+            options: TexProcessOptions,
+        ) => {
             return super.process(content, options);
         };
     }
@@ -162,28 +170,49 @@ export class TexHandler extends Handler<
         );
 
         const process = async (
-            tex: string,
+            tex: string | undefined,
             options: TexProcessOptions,
             texHandler: TexHandler,
         ) => {
+            const { attributes } = options;
+            const { ref } = attributes;
+            if (!ref || !isString(ref)) {
+                throw new Error(
+                    'TeX component must have a valid ref attribute.',
+                );
+            }
+            const attributesWithoutRef = Object.fromEntries(
+                Object.entries(attributes).filter(
+                    (entry) => entry[0] !== 'ref',
+                ),
+            ) as InterpretedAttributes;
+
             const tc = TexComponent.create({
                 ...options,
+                attributes: attributesWithoutRef,
                 tex,
+                ref,
                 texHandler,
             });
-            if (!options.selfClosing) {
+
+            if (!options.selfClosing && tex !== undefined) {
+                // Tex component is not self-closing, so we actually have to
+                // compile something.
                 if (tex.trim() === '') return '';
                 await tc.compile();
             }
-            const importInfo = {
-                id: tc.id,
-                path: tc.out.sveltePath,
-            };
-            if (pathExists(tc.out.sveltePath)) {
+            const sveltePath = tc.out.sveltePath;
+            const importInfo = { id: tc.id, path: sveltePath };
+            if (pathExists(sveltePath)) {
                 texHandler.noteTcInFile(options.filename, importInfo);
                 return tc.outputString;
+            } else {
+                log(
+                    'warn',
+                    `${options.filename}: TeX component output file not found at expected path: ${sveltePath}`,
+                );
+                return '';
             }
-            return '';
         };
 
         const ath = new TexHandler({

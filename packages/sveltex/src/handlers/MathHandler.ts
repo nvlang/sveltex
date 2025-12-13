@@ -33,7 +33,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
     MathBackend,
     MathProcessOptions<B>,
     FullMathConfiguration<B>,
-    MathHandler<B>
+    MathHandler<B>,
+    string
 > {
     public override get process(): (
         tex: string,

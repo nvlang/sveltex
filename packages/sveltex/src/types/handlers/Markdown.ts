@@ -347,7 +347,8 @@ export type FullMarkdownConfiguration<B extends MarkdownBackend> =
  */
 export type MarkdownProcessFn<B extends MarkdownBackend> = ProcessFn<
     MarkdownProcessOptions,
-    MarkdownHandler<B>
+    MarkdownHandler<B>,
+    string
 >;
 
 export interface MarkdownProcessOptions {

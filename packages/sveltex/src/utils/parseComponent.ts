@@ -2,6 +2,7 @@
 // attributes, and inner content.
 
 // Internal dependencies
+import { voidTags, type VoidTag } from '../data/markdown.js';
 import { regex } from '../deps.js';
 import { isBoolean, isNumber, isString } from '../typeGuards/utils.js';
 import type {
@@ -82,9 +83,31 @@ export function parseComponent(html: string): ParsedComponent {
     const selfClosing = closingSlash === '/';
 
     // <tag/></tag> is invalid
-    if (selfClosing && closingTag) {
+    if (selfClosing && closingTag !== undefined) {
         throw new Error(
             'HTML syntax error: self-closing tag should not have closing tag',
+        );
+    }
+
+    // Void elements
+    if (voidTags.includes(tag as VoidTag)) {
+        if (innerContent !== undefined) {
+            throw new Error(
+                `HTML syntax error: void element <${tag}> should not have inner content`,
+            );
+        } else if (closingTag !== undefined) {
+            throw new Error(
+                `HTML syntax error: void element <${tag}> should not have closing tag`,
+            );
+        }
+        // Technically speaking, void elements should not be self-closing, but
+        // we allow it for flexibility's sake.
+    }
+
+    // <tag/>"..."
+    if (selfClosing && innerContent !== undefined) {
+        throw new Error(
+            `HTML syntax error: self-closing element <${tag}/> should not have inner content`,
         );
     }
 
@@ -117,7 +140,7 @@ export function parseComponent(html: string): ParsedComponent {
     }
     const attributes: InterpretedAttributes =
         interpretAttributes(rawAttributes);
-    return { tag, attributes, innerContent, selfClosing };
+    return { tag, attributes, innerContent, selfClosing } as ParsedComponent;
 }
 
 /**
@@ -166,7 +189,7 @@ export const componentRegExp: RegExp = regex('s')`
         \s*
         (?<closingSlash> \/ )?
     >
-    (?<innerContent> .*? )
+    (?<innerContent> .*? )?
     (?<closingTag> <\/ \s* \k<tag> \s* > )?
     \s*
     $
@@ -182,7 +205,7 @@ interface ComponentRegExpMatchGroups {
     /** _(Optional)_ Closing slash. Present iff tag is self-closing. */
     closingSlash?: '/';
     /** _(Optional)_ Inner content. Present iff tag is not self-closing. */
-    innerContent: string;
+    innerContent?: string | undefined;
     /**
      * _(Optional)_ Closing tag (e.g., `</span>`). Present iff tag is not
      * self-closing.

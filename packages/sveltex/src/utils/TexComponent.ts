@@ -30,7 +30,6 @@ import {
     type TexLogSeverity,
 } from '../data/tex.js';
 import { isArray, isObject, isString } from '../typeGuards/utils.js';
-import type { InterpretedAttributes } from '../types/utils/Escape.js';
 import { spawnCliInstruction } from './cli.js';
 import {
     escapeCssColorVars,
@@ -61,6 +60,7 @@ import {
     stat,
     svgoOptimize,
 } from '../deps.js';
+import type { InterpretedAttributes } from 'packages/sveltex/src/types/utils/Escape.js';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
@@ -223,8 +223,11 @@ export class TexComponent {
      * between `\begin{document}` and `\end{document}`). This is *before*
      * escaping CSS variables.
      *
+     * @remarks
+     * This is `undefined` if this TeX component was self-closing (i.e., had no
+     * content).
      */
-    private readonly texDocumentBodyWithCssVars: string;
+    private readonly texDocumentBodyWithCssVars: string | undefined;
 
     /**
      * The name of the directory to create in the cache for files associated
@@ -249,7 +252,7 @@ export class TexComponent {
      * `this.config.outputDirectory` is `'src/sveltex/tikz'`, the rendered TeX
      * file will be saved to `src/sveltex/tikz/subdir/myfig.svelte`.
      */
-    private _ref!: string;
+    private readonly _ref: string;
 
     /**
      * The reference of the component, which is the base filename to use for
@@ -426,6 +429,7 @@ export class TexComponent {
         texHandler,
         config,
         tag,
+        ref,
         lineOffset,
         filename,
     }: {
@@ -433,10 +437,11 @@ export class TexComponent {
             string,
             string | number | boolean | null | undefined
         >;
-        tex: string;
+        tex: string | undefined;
         texHandler: TexHandler;
         config: VerbEnvConfigTex;
         tag: string;
+        ref: string;
         lineOffset?: number | undefined;
         filename: string;
     }): TexComponent {
@@ -445,6 +450,7 @@ export class TexComponent {
             config,
             texDocumentBodyWithCssVars: tex,
             tag,
+            ref,
         });
         tc._handledAttributes = tc.handleAttributes(attributes);
         tc.lineOffset = lineOffset;
@@ -456,34 +462,16 @@ export class TexComponent {
     public filename!: string;
 
     /**
-     * Handle the attributes that the user provided to the component. This is
-     * done in two steps:
-     *
-     * 1. Extract the `ref` attribute from the attributes object and return the
-     *    remaining attributes, excluding valueless attributes.
-     * 2. Call the
-     *    {@link VerbEnvConfigTex.handleAttributes | `handleAttributes`}
-     *    method (as determined by the TeX component's
-     *    {@link configuration | `configuration`}) on the attributes object
-     *    returned by the previous step.
-     *
+     * Handle the attributes that the user provided to the component by calling
+     * the {@link VerbEnvConfigTex.handleAttributes | `handleAttributes`} method
+     * (as determined by the TeX component's
+     * {@link configuration | `configuration`}) on the attributes object.
      */
     public get handleAttributes(): (
-        attributes: Record<
-            string,
-            string | number | boolean | null | undefined
-        >,
+        attributes: InterpretedAttributes,
     ) => Record<string, unknown> {
-        return (
-            attributes: Record<
-                string,
-                string | number | boolean | null | undefined
-            >,
-        ) =>
-            this.configuration.handleAttributes(
-                this.extractRefAttribute(attributes),
-                this,
-            );
+        return (attributes) =>
+            this.configuration.handleAttributes(attributes, this);
     }
 
     /**
@@ -510,17 +498,20 @@ export class TexComponent {
         texDocumentBodyWithCssVars,
         texHandler,
         tag,
+        ref,
     }: {
         config: VerbEnvConfigTex;
-        texDocumentBodyWithCssVars: string;
+        texDocumentBodyWithCssVars: string | undefined;
         tag: string;
         // From parent Sveltex instance
         texHandler: TexHandler;
+        ref: string;
     }) {
         this.texHandler = texHandler;
         this.configuration = config;
         this.texDocumentBodyWithCssVars = texDocumentBodyWithCssVars;
         this.tag = tag;
+        this._ref = ref;
     }
 
     /**
@@ -595,6 +586,12 @@ export class TexComponent {
      *
      */
     public readonly compile = async (): Promise<number | null> => {
+        if (this.texDocumentBodyWithCssVars === undefined) {
+            throw new Error(
+                'Cannot compile a self-closing TeX component (i.e., one without any content).',
+            );
+        }
+
         // 1. Get the escaped TeX content.
         const { escaped: compilableTexContent, cssColorVars } =
             escapeCssColorVars(this.contentWithCssVars, this.preamble);
@@ -1220,27 +1217,6 @@ export class TexComponent {
         args.push(this.source.texName);
 
         return { command, args, env, cwd, silent };
-    }
-
-    /**
-     * Extract the `ref` attribute from the given attributes object and return
-     * the remaining attributes.
-     *
-     * @param attributes - Attributes object to extract the `ref` attribute from.
-     * @returns The remaining attributes, excluding the `ref` attribute.
-     * @throws If no `ref` attribute is found in the attributes object.
-     */
-    private extractRefAttribute(
-        attributes: InterpretedAttributes,
-    ): Record<string, string> {
-        const { ref } = attributes;
-        if (!ref || !isString(ref)) {
-            throw new Error('TeX component must have a valid ref attribute.');
-        }
-        this._ref = ref;
-        return Object.fromEntries(
-            Object.entries(attributes).filter((entry) => entry[0] !== 'ref'),
-        ) as Record<string, string>;
     }
 }
 

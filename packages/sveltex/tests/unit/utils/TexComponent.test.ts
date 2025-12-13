@@ -130,7 +130,8 @@ describe('(setter) configuration', () => {
         const tc = TexComponent.create({
             filename: 'file.sveltex',
             texHandler: ath,
-            attributes: { ref: 'ref' },
+            attributes: {},
+            ref: 'ref',
             tex: '',
             config: defaultConfig,
             tag: 'tex',
@@ -152,7 +153,8 @@ describe('(getter) documentClass', () => {
         const tc = TexComponent.create({
             filename: 'file.sveltex',
             texHandler: ath,
-            attributes: { ref: 'ref' },
+            attributes: {},
+            ref: 'ref',
             tex: '',
             config,
             tag: 'tex',
@@ -166,7 +168,8 @@ describe('(getter) documentClass', () => {
         const tc = TexComponent.create({
             filename: 'file.sveltex',
             texHandler: ath,
-            attributes: { ref: 'ref' },
+            attributes: {},
+            ref: 'ref',
             tex: '',
             config: { type: 'tex', documentClass: 'standalone' },
             tag: 'tex',
@@ -220,8 +223,9 @@ describe('compile(): catches errors', () => {
                 overrides: { conversion: { converter: 'poppler' } },
             }),
         });
-        expect(log).toHaveBeenCalled();
-        expect(log).toHaveBeenLastCalledWith(
+        expect(log).toHaveBeenCalledTimes(3);
+        expect(log).toHaveBeenNthCalledWith(
+            2,
             { severity: 'error', style: 'dim' },
             expect.stringContaining('031bbd43-4445-4976-bd3a-e46147f5bb3d'),
         );
@@ -266,8 +270,9 @@ describe('compile(): catches errors', () => {
                 tag: 'tex',
                 config: defaultConfig,
             });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenCalledWith(
+            expect(log).toHaveBeenCalledTimes(2);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
                 opts?.['verbosity']
                     ? 'error'
                     : { severity: 'error', style: 'dim' },
@@ -302,8 +307,9 @@ describe('compile(): catches errors', () => {
             tag: 'tex',
             config: defaultConfig,
         });
-        expect(log).toHaveBeenCalledTimes(1);
-        expect(log).toHaveBeenCalledWith(
+        expect(log).toHaveBeenCalledTimes(2);
+        expect(log).toHaveBeenNthCalledWith(
+            1,
             'error',
             `✖ Error while compiling tmp/tests/${id}/cache/tex/ref/root.tex:\n\n`,
             expect.stringContaining('Error'),
@@ -360,8 +366,9 @@ describe('compile(): catches errors', () => {
                 tag: 'tex',
                 config: defaultConfig,
             });
-            expect(log).toHaveBeenCalledTimes(1);
-            expect(log).toHaveBeenCalledWith(
+            expect(log).toHaveBeenCalledTimes(2);
+            expect(log).toHaveBeenNthCalledWith(
+                1,
                 { severity: 'error', style: 'dim' },
                 expect.stringContaining(
                     'The conversion was attempted by running the following command',
@@ -404,11 +411,17 @@ describe('compile(): catches errors', () => {
             tag: 'tex',
             config: defaultConfig,
         });
-        expect(log).toHaveBeenCalledTimes(1);
-        expect(log).toHaveBeenCalledWith(
+        expect(log).toHaveBeenCalledTimes(2);
+        expect(log).toHaveBeenNthCalledWith(
+            1,
             'error',
             expect.stringContaining('Error while compiling'),
             expect.stringContaining('Error: ENOENT: no such file or directory'),
+        );
+        expect(log).toHaveBeenNthCalledWith(
+            2,
+            'warn',
+            expect.stringContaining('not found'),
         );
 
         expect(writeFile_).toHaveBeenCalled();
@@ -490,7 +503,7 @@ describe('compile(): catches errors', () => {
             tag: 'tex',
             config: defaultConfig,
         });
-        expect(log).toHaveBeenCalledTimes(2);
+        expect(log).toHaveBeenCalledTimes(3);
         expect(log).toHaveBeenNthCalledWith(
             1,
             'error',
@@ -549,7 +562,7 @@ describe('compile(): catches errors', () => {
             tag: 'tex',
             config: defaultConfig,
         });
-        expect(log).toHaveBeenCalledTimes(2);
+        expect(log).toHaveBeenCalledTimes(3);
         expect(log).toHaveBeenNthCalledWith(
             1,
             'error',
@@ -564,6 +577,11 @@ describe('compile(): catches errors', () => {
             expect.stringMatching(
                 /Deleting unused cache subdirectory: .*\/tmp\/tests\/.{1,100}\/cache\/tex\//u,
             ),
+        );
+        expect(log).toHaveBeenNthCalledWith(
+            3,
+            'warn',
+            expect.stringContaining('not found'),
         );
         expect(writeFile_).toHaveBeenCalled();
         expect(writeFile_).toHaveBeenCalledWith(
@@ -693,7 +711,8 @@ describe('TexHandler.process()', () => {
         it('should add the right output flags for lualatexmk (pdf)', async () => {
             const texHandler = await TexHandler.create();
             const tc = TexComponent.create({
-                attributes: { ref: 'ref' },
+                attributes: {},
+                ref: 'ref',
                 filename: 'test.sveltex',
                 tag: 'tex',
                 config: mergeConfigs(
@@ -748,7 +767,8 @@ describe('TexHandler.process()', () => {
         it.each(cases)(`should add $flag flag`, async (data) => {
             const texHandler = await TexHandler.create();
             const tc = TexComponent.create({
-                attributes: { ref: 'ref' },
+                attributes: {},
+                ref: 'ref',
                 filename: 'test.sveltex',
                 tag: 'tex',
                 config: mergeConfigs(

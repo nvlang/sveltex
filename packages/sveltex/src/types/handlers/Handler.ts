@@ -67,7 +67,7 @@ interface WithOriginal {
      * The original content that was passed to the backend for processing. This
      * is before pre-transformations were applied, too.
      */
-    original: string;
+    original: string | undefined;
 }
 
 /**
@@ -77,8 +77,11 @@ interface WithOriginal {
  * @typeParam ProcessOptions - The type of the options object that the handler
  * accepts for processing.
  */
-export type SimplerProcessFn<ProcessOptions extends object> = (
-    content: string,
+export type SimplerProcessFn<
+    ProcessOptions extends object,
+    Content extends string | undefined = string | undefined,
+> = (
+    content: Content,
     options: ProcessOptions,
 ) => ProcessedSnippet | Promise<ProcessedSnippet>;
 
@@ -90,8 +93,12 @@ export type SimplerProcessFn<ProcessOptions extends object> = (
  * accepts for processing.
  * @typeParam H - The type of the handler that the function is associated with.
  */
-export type ProcessFn<ProcessOptions extends object, H> = (
-    content: string,
+export type ProcessFn<
+    ProcessOptions extends object,
+    H,
+    Content extends string | undefined = string | undefined,
+> = (
+    content: Content,
     options: ProcessOptions,
     handler: H,
 ) => string | ProcessedSnippet | Promise<string | ProcessedSnippet>;

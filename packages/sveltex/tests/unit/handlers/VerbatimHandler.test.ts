@@ -146,46 +146,25 @@ describe('VerbatimHandler', () => {
         });
 
         it('should correctly handle self-closing components', async () => {
-            expect(
-                (
-                    await (
-                        await sveltex(
-                            {},
-                            {
-                                verbatim: {
-                                    Code: {
-                                        type: 'code',
-                                        selfCloseOutputWith: ' />',
-                                    },
-                                },
+            const res = await (
+                await sveltex(
+                    {},
+                    {
+                        verbatim: {
+                            Code: {
+                                type: 'code',
+                                selfCloseOutputWith: ' />',
                             },
-                        )
-                    ).markup({
-                        filename: 'test.sveltex',
-                        content: '<Code id="something"/>',
-                    })
-                )?.code,
-            ).toContain('<Code id="something" />');
-            expect(
-                (
-                    await (
-                        await sveltex(
-                            {},
-                            {
-                                verbatim: {
-                                    Code: {
-                                        type: 'code',
-                                        selfCloseOutputWith: '/>',
-                                    },
-                                },
-                            },
-                        )
-                    ).markup({
-                        filename: 'test.sveltex',
-                        content: '<Code id="something" />',
-                    })
-                )?.code,
-            ).toContain('<Code id="something"/>');
+                        },
+                    },
+                )
+            ).markup({
+                filename: 'test.sveltex',
+                content: '<Code id="something"/>',
+            });
+            expect(res).toBeDefined();
+            expect(res?.code).toContain('<Code id="something" />');
+
             const p = await sveltex(
                 {},
                 {

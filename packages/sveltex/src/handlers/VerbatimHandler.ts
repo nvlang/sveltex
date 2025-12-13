@@ -81,7 +81,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
          *
          */
         const process = async (
-            innerContent: string,
+            innerContent: string | undefined,
             options: VerbatimProcessOptions,
             verbatimHandler: VerbatimHandler<C>,
         ): Promise<ProcessedSnippet> => {
@@ -91,7 +91,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
              * At the beginning, the inner content to process; at the end, the
              * processed content.
              */
-            let processed: string = innerContent;
+            let processed = innerContent;
 
             nodeAssert(
                 !(selfClosing && innerContent),
@@ -131,8 +131,10 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 removeParagraphTag: !mergedAttributes['inline'],
             };
 
-            // Apply pre-transformers
-            processed = applyTransformations(processed, options, pre);
+            if (processed !== undefined) {
+                // Apply pre-transformers
+                processed = applyTransformations(processed, options, pre);
+            }
 
             /**
              * If we should wrap the output in a tag, or return a self-closing
@@ -224,26 +226,7 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 }
             }
 
-            if (type === 'escape') {
-                typeAssert(is<FullVerbEnvConfigEscape>(config));
-                if (config.escape.html) {
-                    processed = escapeHtml(processed);
-                }
-                // NB: It's important to escape braces _after_ escaping HTML,
-                // since escaping braces will introduce ampersands which
-                // escapeHtml would escape
-                if (config.escape.braces) {
-                    processed = escapeBraces(processed);
-                }
-            } else if (type === 'code') {
-                typeAssert(is<FullVerbEnvConfigCode>(config));
-                const processedSnippet =
-                    await verbatimHandler.codeHandler.process(processed, {
-                        ...mergedAttributes,
-                    });
-                processed = processedSnippet.processed;
-                unescapeOptions = processedSnippet.unescapeOptions;
-            } else if (type === 'tex') {
+            if (type === 'tex') {
                 // TeX Content
                 typeAssert(is<FullVerbEnvConfigTex>(config));
                 const res = await verbatimHandler.texHandler.process(
@@ -259,16 +242,36 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 );
                 processed = res.processed;
                 unescapeOptions = res.unescapeOptions;
-            } else {
-                // type === 'noop'
-                typeAssert(is<FullVerbEnvConfigNoop>(config));
+            } else if (!selfClosing && processed !== undefined) {
+                if (type === 'escape') {
+                    typeAssert(is<FullVerbEnvConfigEscape>(config));
+                    if (config.escape.html) {
+                        processed = escapeHtml(processed);
+                    }
+                    // NB: It's important to escape braces _after_ escaping
+                    // HTML, since escaping braces will introduce ampersands
+                    // which escapeHtml would escape
+                    if (config.escape.braces) {
+                        processed = escapeBraces(processed);
+                    }
+                } else if (type === 'code') {
+                    typeAssert(is<FullVerbEnvConfigCode>(config));
+                    const processedSnippet =
+                        await verbatimHandler.codeHandler.process(processed, {
+                            ...mergedAttributes,
+                        });
+                    processed = processedSnippet.processed;
+                    unescapeOptions = processedSnippet.unescapeOptions;
+                } else {
+                    // type === 'noop'
+                    typeAssert(is<FullVerbEnvConfigNoop>(config));
+                }
+                processed = applyTransformations(
+                    processed,
+                    { ...options, original: innerContent },
+                    post,
+                );
             }
-
-            processed = applyTransformations(
-                processed,
-                { ...options, original: innerContent },
-                post,
-            );
 
             // If `component !== 'none'`, wrap the processed content in the
             // output tag, so that `processed` now stores the _outer_ content.
@@ -277,6 +280,13 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                     selfClosing && respectSelfClosing
                         ? outputTagOpen
                         : outputTagOpen + processed + outputTagClose;
+            }
+            // If we're given a self-closing component as input, and outputTag
+            // is null (indicating that the processed "inner content" shouldn't
+            // be wrapped in any component afterwards), then I think the most
+            // reasonable thing to do is to return an empty string.
+            else if (processed === undefined) {
+                processed = '';
             }
 
             return { processed, unescapeOptions };
