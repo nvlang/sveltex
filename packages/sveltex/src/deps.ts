@@ -161,7 +161,7 @@ import { default as XRegExpOrig } from 'xregexp';
 XRegExpOrig.install({ namespacing: true });
 export const XRegExp = XRegExpOrig;
 
-export { regex } from 'regex';
+export { regex, pattern } from 'regex';
 
 export { Poppler } from 'node-poppler';
 

@@ -47,6 +47,8 @@ import {
     type UnistPosition,
     directiveFromMarkdown,
     uuid,
+    regex,
+    pattern,
 } from '../deps.js';
 import { micromarkSkip } from './micromark/syntax.js';
 import type { MdastJson, MdastToml } from '../types/utils/Frontmatter.js';
@@ -192,39 +194,25 @@ function normalComponentsRegExp(rawTags: string[]): RegExp {
         'Empty tags array passed to regularTagsRegExp',
     );
     const tags = rawTags.map(escapeStringForRegExp).map((s) => s.trim());
-    // eslint-disable-next-line new-cap
-    const r = XRegExp(
-        `
-            <                       # (opening delimiter of opening tag)
-            (                       # 1: opening tag name
-                ${tags.join('|')}   # (opening tag name)
-            )
-            (                       # 2: attributes
-                (?:                 # -: optional attribute(s)
-                    \\s              # (mandatory whitespace)
-                    [^>]*?          # (any character except '>', lazy)
-                    (?:
-                        (?:         # -: single-quoted attribute value
-                            '[^']*' # (any characters except "'", surrounded by "'"s)
-                        )
-                        | (?:       # -: double-quoted attribute value
-                            "[^"]*" # (any characters except '"', surrounded by '"'s)
-                        )
-                    )?
-                )*
-            )
-            >                       # (closing delimiter of opening tag)
-            (                       # -: tag content
-                .*?                 # (any character, incl. newlines, ≥0, lazy)
-            )
-            </                      # (opening delimiter of closing tag)
-            \\s*                     # (optional whitespace)
-            \\1                      # (backreference to opening tag name)
-            \\s*                     # (optional whitespace)
-            >                       # (closing delimiter of closing tag)
-        `,
-        'gsux',
-    );
+
+    const r = regex('gs')`
+        <
+        (?<tag> ${pattern(tags.join('|'))} )
+        (?<attributes>
+            (?:                     # attributes are optional
+                \s                  # (mandatory whitespace)
+                [^>]*?              # ostensibly includes attr name and "="
+                (?:                 # quoted attribute value
+                    (?:'[^']*?')    # (single-quoted)
+                    | (?:"[^"]*?")  # (double-quoted)
+                )?
+            )*?
+        )
+        \s*?
+        >                           # closing delimiter of opening tag
+        (?<content> .*? )           # tag content
+        </ \s* \k<tag> \s* >        # closing tag
+    `;
     return r;
 }
 
@@ -234,49 +222,30 @@ function normalAndSelfClosingComponentsRegExp(rawTags: string[]): RegExp {
         'Empty tags array passed to allTagsRegExp',
     );
     const tags = rawTags.map(escapeStringForRegExp).map((s) => s.trim());
-    // eslint-disable-next-line new-cap
-    return XRegExp(
-        `
-            <                       # (opening delimiter of opening tag)
-            (                       # 1: opening tag name
-                ${tags.join('|')}   # (opening tag name)
+
+    return regex('gs')`
+        <
+        (?<tag> ${pattern(tags.join('|'))} )
+        (
+            (?:                     # attributes are optional
+                \s                  # (mandatory whitespace)
+                [^>]*?              # ostensibly includes attribute name and "="
+                (?:                 # quoted attribute value
+                    (?:'[^']*?')    # (single-quoted)
+                    | (?:"[^"]*?")  # (double-quoted)
+                )?
+            )*?
+        )
+        \s*?
+        (
+            />                      # self-closing tag
+            | (                     # ...or...
+                >                   # closing delimiter of opening tag
+                (.*?)               # tag content
+                </\s* \k<tag> \s*>  # closing tag
             )
-            (                       # 2: attributes
-                (?:                 # -: optional attribute(s)
-                    \\s             # (mandatory whitespace)
-                    [^>]*?          # (any character except >, lazy)
-                    (?:             # -: quoted attribute value
-                        (?:         # -: single-quoted attribute value
-                            '       # (opening single quotation mark)
-                            [^']*?  # (any character except single quotation mark, ≥0, lazy)
-                            '       # (closing single quotation mark)
-                        )
-                        | (?:       # -: double-quoted attribute value
-                            "       # (opening double quotation mark)
-                            [^"]*?  # (any character except double quotation mark, ≥0, lazy)
-                            "       # (closing double quotation mark)
-                        )
-                    )?
-                )*?
-            )
-            \\s*?
-            (?:
-                />                  # (self-closing tag)
-                | (?:               # -: "regular" tag
-                    >               # (closing delimiter of opening tag)
-                    (               # -: tag content
-                        .*?         # (any character, incl. newlines, ≥0, lazy)
-                    )
-                    </              # (opening delimiter of closing tag)
-                    \\s*            # (optional whitespace)
-                    \\1             # (backreference to opening tag name)
-                    \\s*            # (optional whitespace)
-                    >               # (closing delimiter of closing tag)
-                )
-            )
-        `,
-        'gsux',
-    );
+        )
+    `;
 }
 
 /**
