@@ -3,7 +3,6 @@
 
 import type { StringLiteralUnion } from './utility-types.js';
 
-/* eslint-disable tsdoc/syntax */
 export type TexDimUnit =
     | 'pt'
     | 'mm'

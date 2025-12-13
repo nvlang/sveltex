@@ -261,7 +261,7 @@ export default defineConfig(
     {
         files: ['**/*.ts'],
         plugins: { tsdoc },
-        rules: { 'tsdoc/syntax': 'warn' },
+        rules: { 'tsdoc/syntax': 'off' },
     },
     {
         languageOptions: {

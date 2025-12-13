@@ -421,7 +421,6 @@ interface MathjaxTexInputProcessorOptions
      */
     // processEscapes?: boolean;
 
-    /* eslint-disable tsdoc/syntax */
     /**
      * Process `\begin{xxx}...\end{xxx}` outside math mode.
      *
@@ -435,7 +434,6 @@ interface MathjaxTexInputProcessorOptions
      * \end{something}`) and marks them for processing by MathJax. When `false`,
      * LaTeX environments will not be processed outside of math mode.
      */
-    /* eslint-enable tsdoc/syntax */
     processEnvironments?: boolean;
 
     /**
@@ -452,7 +450,6 @@ interface MathjaxTexInputProcessorOptions
      */
     processRefs?: boolean;
 
-    /* eslint-disable tsdoc/syntax */
     /**
      * Pattern for recognizing numbers.
      *
@@ -471,7 +468,6 @@ interface MathjaxTexInputProcessorOptions
      * };
      * ```
      */
-    /* eslint-enable tsdoc/syntax */
     digits?: RegExp;
 
     /**
@@ -900,7 +896,6 @@ interface MathjaxChtmlOutputProcessorOptions {
 }
 
 interface MathjaxDocumentOptions {
-    /* eslint-disable tsdoc/syntax */
     /**
      * This array lists the names of the tags whose contents should not be
      * processed by MathJaX. You can add to (or remove from) this list to
@@ -909,7 +904,6 @@ interface MathjaxDocumentOptions {
      * @defaultValue `['script', 'noscript', 'style', 'textarea', 'pre', 'code',
      * 'annotation', 'annotation-xml']`
      */
-    /* eslint-enable tsdoc/syntax */
     skipHtmlTags?: string[];
 
     /**

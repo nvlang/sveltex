@@ -1,6 +1,5 @@
 // File description: Types related to the `TexHandler` class.
 
-/* eslint-disable tsdoc/syntax */
 /* eslint-disable no-duplicate-imports */
 // Types
 import type { SvgoOptions } from '../../deps.js';

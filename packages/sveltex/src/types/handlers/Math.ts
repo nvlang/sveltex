@@ -1,7 +1,5 @@
 // File description: Types related to the `MathHandler` class.
 
-/* eslint-disable tsdoc/syntax */
-
 // Types
 import { type Equals, typeAssert } from '../../deps.js';
 import type { MathHandler } from '../../handlers/MathHandler.js';

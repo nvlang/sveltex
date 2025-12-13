@@ -1,4 +1,3 @@
-/* eslint-disable tsdoc/syntax */
 import { spawn, type SpawnOptionsWithoutStdio } from 'child_process';
 import { default as process } from 'node:process';
 

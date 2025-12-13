@@ -275,7 +275,6 @@ export class TexComponent {
      * info.
      */
     public get source(): {
-        /* eslint-disable tsdoc/syntax */
         /**
          * @example 'node_modules/.cache/@nvl/sveltex/tikz/ref'
          */

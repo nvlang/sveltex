@@ -120,7 +120,6 @@ export interface BackendChoices<
      */
     codeBackend?: C | undefined;
 
-    /* eslint-disable tsdoc/syntax */
     /**
      * Engine to use to render math (e.g., `$$x^2$$`).
      *
@@ -139,7 +138,6 @@ export interface BackendChoices<
      *     <pnpm|bun|npm|yarn> add -D mathjax-full
      *     ```
      */
-    /* eslint-enable tsdoc/syntax */
     mathBackend?: T | undefined;
 }
 

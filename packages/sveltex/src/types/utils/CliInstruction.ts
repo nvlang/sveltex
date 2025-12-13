@@ -81,7 +81,6 @@ export interface CliInstruction
     silent?: boolean | undefined;
 }
 
-/* eslint-disable tsdoc/syntax */
 /**
  * Instructions to convert a DVI/PDF/XDV file to an SVG file.
  *

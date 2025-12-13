@@ -452,7 +452,6 @@ export function getColonES(document: string): EscapableSnippet<'svelte'>[] {
 
 // /<!--[^]*?-->|<style((?:\s+[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/]+)*\s*)(?:\/>|>([\S\s]*?)<\/style>)/g
 
-/* eslint-disable tsdoc/syntax */
 /**
  * @param document - The document in which to find escapable snippets.
  * @param documentLines - The lines of the document, i.e., `document.split('\n')`.
@@ -466,7 +465,6 @@ export function getColonES(document: string): EscapableSnippet<'svelte'>[] {
  * - `'mustacheTag'` Mustache tags (`{...}`), i.e., almost anything in braces
  *   that hasn't already been escaped by this method or otherwise.
  */
-/* eslint-enable tsdoc/syntax */
 export function getMdastES({
     ast,
     document,
