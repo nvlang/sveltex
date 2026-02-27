@@ -275,7 +275,7 @@ export default function (plop: NodePlopAPI) {
                     none: [],
                 }[codeBackend],
                 ...{
-                    mathjax: ['mathjax-full'],
+                    mathjax: ['@mathjax/src'],
                     katex: ['katex'],
                     none: [],
                 }[mathBackend],

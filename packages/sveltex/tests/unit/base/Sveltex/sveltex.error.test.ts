@@ -101,7 +101,7 @@ describe('Sveltex.create()', () => {
                 'highlight.js',
                 '@wooorm/starry-night',
                 // Math processors,
-                'mathjax-full/js/mathjax.js',
+                '@mathjax/src/js/mathjax.js',
                 'katex',
             ].forEach((dep) => {
                 vi.doMock(dep, () => {
@@ -125,7 +125,7 @@ describe('Sveltex.create()', () => {
                     : codeBackend,
             );
             expect(missingDeps).toContain(
-                mathBackend === 'mathjax' ? 'mathjax-full' : mathBackend,
+                mathBackend === 'mathjax' ? '@mathjax/src' : mathBackend,
             );
             [
                 // Markdown processors
@@ -138,7 +138,7 @@ describe('Sveltex.create()', () => {
                 'highlight.js',
                 '@wooorm/starry-night',
                 // Math processors,
-                'mathjax-full/js/mathjax.js',
+                '@mathjax/src/js/mathjax.js',
                 'katex',
             ].forEach((dep) => {
                 vi.doUnmock(dep);

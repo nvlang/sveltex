@@ -112,16 +112,62 @@ export function getDefaultMathConfig<
                     staticDir: 'static',
                     timeout: 2000,
                     type: ca === 'hybrid' ? 'hybrid' : 'none',
-                    font: 'modern',
                 } as MathJaxFullCssConfiguration,
                 mathjax: {
-                    tex: {},
+                    tex: {
+                        packages: {
+                            '[+]': [
+                                'amscd',
+                                'bbm',
+                                'bboldx',
+                                'bbox',
+                                'begingroup',
+                                'boldsymbol',
+                                'braket',
+                                'bussproofs',
+                                'cancel',
+                                'cases',
+                                'centernot',
+                                'color',
+                                'colortbl',
+                                'dsfont',
+                                'empheq',
+                                'enclose',
+                                'extpfeil',
+                                'gensymb',
+                                'html',
+                                'mathtools',
+                                'mhchem',
+                                'noerrors',
+                                'physics',
+                                'setoptions',
+                                'tagformat',
+                                'texhtml',
+                                'textcomp',
+                                'unicode',
+                                'units',
+                                'upgreek',
+                                'verb',
+                            ],
+                        },
+                    },
                     chtml: {
-                        adaptiveCSS: false,
                         fontURL:
-                            'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                            'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/woff2',
+                        dynamicPrefix:
+                            'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/dynamic',
+                    },
+                    options: {
+                        enableAssistiveMml: true,
+                        enableBraille: false,
+                        enableComplexity: false,
+                        enableEnrichment: false,
+                        enableExplorer: false,
+                        enableMenu: false,
+                        enableSpeech: false,
                     },
                 },
+                font: 'newcm',
                 outputFormat: 'chtml',
                 transformers: { post: [], pre: [] },
                 delims: {
@@ -131,7 +177,7 @@ export function getDefaultMathConfig<
                     doubleDollarSignsDisplay: 'fenced',
                 },
                 // mathjax: { chtml: { fontURL:
-                //     'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+                //     'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font/chtml/woff2',
                 // }}
             } as FullMathConfiguration<'mathjax'>;
             return rv as FullMathConfiguration<T>;

@@ -12,6 +12,7 @@ import { fs } from './fs.js';
 // External dependencies
 import { AbortError, nodeFetch } from '../deps.js';
 import type { StringLiteralUnion } from '../types/utils/utility-types.js';
+import type { MathjaxFont } from '../types/handlers/Math.js';
 
 export function cdnLink(
     pkg: StringLiteralUnion<
@@ -19,7 +20,7 @@ export function cdnLink(
         | 'katex'
         | '@wooorm/starry-night'
         | 'highlight.js'
-        | `mathjax-${string}-font`
+        | `mathjax-${MathjaxFont}-font`
     >,
     resource: string,
     version: string = 'latest',
