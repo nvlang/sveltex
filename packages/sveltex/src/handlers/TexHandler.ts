@@ -22,8 +22,8 @@ import type {
     InterpretedAttributes,
     ProcessedSnippet,
 } from '../types/utils/Escape.js';
-import { isString } from 'packages/sveltex/src/typeGuards/utils.js';
-import { log } from 'packages/sveltex/src/utils/debug.js';
+import { isString } from '../typeGuards/utils.js';
+import { log } from '../utils/debug.js';
 
 export class TexHandler extends Handler<
     TexBackend,

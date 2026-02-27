@@ -42,6 +42,7 @@ import { buildDvisvgmInstruction } from './dvisvgm.js';
 import { fs, pathExists } from './fs.js';
 import { mergeConfigs } from './merge.js';
 import { sha256 } from './misc.js';
+import type { InterpretedAttributes } from '../types/utils/Escape.js';
 
 // External dependencies
 import {
@@ -60,7 +61,6 @@ import {
     stat,
     svgoOptimize,
 } from '../deps.js';
-import type { InterpretedAttributes } from 'packages/sveltex/src/types/utils/Escape.js';
 
 /**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
