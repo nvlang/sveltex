@@ -101,7 +101,7 @@ describe('Sveltex.create()', () => {
                 'highlight.js',
                 '@wooorm/starry-night',
                 // Math processors,
-                '@mathjax/src/js/mathjax.js',
+                '@mathjax/src/js/components/global.js',
                 'katex',
             ].forEach((dep) => {
                 vi.doMock(dep, () => {

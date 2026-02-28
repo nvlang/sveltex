@@ -82,9 +82,9 @@ describe("MathHandler<'mathjax'>", () => {
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/u,
+                    /^static\/sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.css$/u,
                 ),
-                expect.stringContaining('[jax='),
+                expect.stringContaining('mjx-container'),
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -101,9 +101,9 @@ describe("MathHandler<'mathjax'>", () => {
             expect(fancyWrite).toHaveBeenNthCalledWith(
                 1,
                 expect.stringMatching(
-                    /sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.min\.css/u,
+                    /^static\/sveltex\/mathjax@\d+\.\d+\.\d+.*\.svg\.css$/u,
                 ),
-                expect.stringContaining('[jax='),
+                expect.stringContaining('mjx-container'),
             );
             expect(log).not.toHaveBeenCalled();
         });
@@ -161,20 +161,13 @@ describe("MathHandler<'mathjax'>", () => {
                 it.each([
                     ['hybrid', 1],
                     ['none', 0],
-                    ['hybrid', 0, [], {}, undefined, true],
+                    ['hybrid', 1, [], {}],
                     ['hybrid', 1, ['jsdelivr'], {}],
                     ['hybrid', 1, 'jsdelivr', {}],
+                    ['hybrid', 1, [], { chtml: { fontURL: undefined } }],
                     [
                         'hybrid',
-                        0,
-                        [],
-                        { chtml: { fontURL: undefined } },
-                        undefined,
-                        true,
-                    ],
-                    [
-                        'hybrid',
-                        0,
+                        1,
                         [],
                         {
                             chtml: {
@@ -182,8 +175,6 @@ describe("MathHandler<'mathjax'>", () => {
                                     'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font/chtml/woff2',
                             },
                         },
-                        undefined,
-                        true,
                     ],
                     ['hybrid', 1, undefined, { chtml: null }],
                 ] as [
@@ -191,29 +182,9 @@ describe("MathHandler<'mathjax'>", () => {
                     number,
                     (SupportedCdn | [SupportedCdn, ...SupportedCdn[]])?,
                     object?,
-                    boolean?,
-                    boolean?,
                 ][])(
                     '%o, %o, %o',
-                    async (
-                        type,
-                        nWrites,
-                        cdns,
-                        mathjaxConfig,
-                        mockFancyFetch,
-                        expectError,
-                    ) => {
-                        let fancyFetch: MockInstance = vi.fn();
-                        if (mockFancyFetch) {
-                            fancyFetch = vi
-                                .spyOn(
-                                    await import(
-                                        '../../../../src/utils/cdn.js'
-                                    ),
-                                    'fancyFetch',
-                                )
-                                .mockResolvedValue(undefined);
-                        }
+                    async (type, nWrites, cdns, mathjaxConfig) => {
                         const handler = await MathHandler.create('mathjax', {
                             outputFormat: 'chtml',
                             css:
@@ -226,18 +197,11 @@ describe("MathHandler<'mathjax'>", () => {
                         expect((await handler.process('x')).processed).toEqual(
                             xChtml,
                         );
-                        if (expectError) {
-                            expect(() => {
-                                handler.updateCss();
-                            }).toThrowError();
-                        } else {
-                            handler.updateCss();
-                        }
+                        handler.updateCss();
                         expect(log).not.toHaveBeenCalled();
                         expect(writeFileEnsureDirSync).toHaveBeenCalledTimes(
                             nWrites,
                         );
-                        if (mockFancyFetch) fancyFetch.mockRestore();
                     },
                 );
             });

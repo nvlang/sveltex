@@ -99,6 +99,7 @@ describe('specific examples', () => {
                     ].join('\n'),
                     /<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>\n+<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>/u,
                 ],
+                ['<script>let a = 1;</script>\n“...”\n', /\n+<p>“\.{3}”<\/p>/u],
             ])('%o', async (input, expected) => {
                 const p = await sveltex(
                     { markdownBackend },
@@ -124,6 +125,27 @@ describe('specific examples', () => {
         },
     );
 });
+
+// describe('Self-closing tags', () => {
+//     test.each([['<Example ref="ref" />', '...']])(
+//         '%o',
+//         async (input, expected) => {
+//             const p = await sveltex(
+//                 {},
+//                 { verbatim: { Example: { type: 'tex' } } },
+//             );
+//             const result = (
+//                 await p.markup({
+//                     content: input,
+//                     filename: generateId() + '.sveltex',
+//                 })
+//             )?.code;
+//             expect(result).toBeDefined();
+//             nodeAssert(result !== undefined);
+//             expect(result).toMatch(expected);
+//         },
+//     );
+// });
 
 describe('sanitizePermutation', () => {
     test.each([

@@ -55,7 +55,7 @@ beforeAll(async () => {
 
 describe('getVersion', () => {
     fixture();
-    it.each(['katex', 'highlight.js', 'mathjax-full'] as const)(
+    it.each(['katex', 'highlight.js', '@mathjax/src'] as const)(
         'getVersion(%o) has format "x.y.z"',
         async (dep) => {
             expect(await getVersion(dep)).toMatch(/(\d+\.\d+\.\d+)/u);

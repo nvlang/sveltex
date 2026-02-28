@@ -5,7 +5,7 @@ export const backendConfigs = () =>
     cartesianProduct(
         ['unified', 'markdown-it', 'micromark', 'marked'] as const,
         ['shiki', 'starry-night', 'highlight.js', 'escape'] as const,
-        ['mathjax-svg-newcm', 'mathjax-chtml-newcm', 'mathjax-svg-fira', 'mathjax-chtml-fira', 'katex'] as const,
+        ['mathjax-svg-newcm', 'katex'] as const,
     );
 
 export const preprocessors = async () =>
@@ -48,13 +48,9 @@ export const preprocessors = async () =>
                                   outputFormat: mathBackend
                                       .split('-')[1]
                                       ?.toLowerCase() as 'svg' | 'chtml',
-                                  mathjax:{
-                                    output:{
-                                        font: `mathjax-${mathBackend
+                                      font: mathBackend
                                       .split('-')[2]
-                                      ?.toLowerCase() as 'newcm' | 'fira'}`,
-                                    }
-                                  }
+                                      ?.toLowerCase() as 'newcm' | 'fira'
                               }
                             : {},
                         code:
