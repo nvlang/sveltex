@@ -93,7 +93,9 @@ export function getDefaultMathConfig<
                                 type: 'hybrid',
                             }
                           : { type: 'none' },
-                katex: {},
+                katex: {
+                    output: 'htmlAndMathml',
+                },
                 transformers: { post: [], pre: [] },
                 delims: {
                     dollars: true,
