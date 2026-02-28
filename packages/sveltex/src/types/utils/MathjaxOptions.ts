@@ -1431,11 +1431,6 @@ interface MathjaxChtmlOutputProcessorOptions
      * > Version 3 included all the font data in one file, but in v4, where the
      * > fonts include much greater character coverage, the fonts are broken
      * > into several smaller pieces that are loaded only when needed.
-     *
-     * @defaultValue
-     * ```ts
-     * 'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/dynamic'
-     * ```
      */
     dynamicPrefix?: string;
 

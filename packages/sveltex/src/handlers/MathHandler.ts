@@ -127,10 +127,11 @@ export class MathHandler<B extends MathBackend> extends Handler<
     // which case `_updateCss` is overridden in the constructor.
     /* v8 ignore next 2 (unreachable code) */
     // eslint-disable-next-line @typescript-eslint/class-methods-use-this
-    private readonly _updateCss: (mathHandler: this) => void = () => undefined;
+    private readonly _updateCss: (mathHandler: this) => Promise<void> =
+        async () => undefined;
 
-    public get updateCss(): () => void {
-        return () => {
+    public get updateCss(): () => Promise<void> {
+        return async () => {
             if (
                 this.backend === 'mathjax' &&
                 (this._configuration as FullMathConfiguration<'mathjax'>).css
@@ -140,6 +141,14 @@ export class MathHandler<B extends MathBackend> extends Handler<
             ) {
                 this._updateCss(this);
             }
+        };
+    }
+
+    private readonly _cleanup: (mathHandler: this) => Promise<void> =
+        async () => undefined;
+    public get cleanup(): () => Promise<void> {
+        return async () => {
+            await this._cleanup(this);
         };
     }
 
@@ -176,16 +185,19 @@ export class MathHandler<B extends MathBackend> extends Handler<
         configuration,
         handleCss,
         updateCss,
+        cleanup,
     }: {
         backend: B;
         process: MathProcessFn<B>;
         configuration: FullMathConfiguration<B>;
         handleCss?: (mathHandler: MathHandler<B>) => Promise<void>;
-        updateCss?: (mathHandler: MathHandler<B>) => void;
+        updateCss?: (mathHandler: MathHandler<B>) => Promise<void>;
+        cleanup?: (mathHandler: MathHandler<B>) => Promise<void>;
     }) {
         super({ backend, process, configuration });
         if (handleCss) this._handleCss = handleCss;
         if (updateCss) this._updateCss = updateCss;
+        if (cleanup) this._cleanup = cleanup;
     }
 
     /**
@@ -366,18 +378,12 @@ export class MathHandler<B extends MathBackend> extends Handler<
 
             // Import the necessary functions and types from the `@mathjax/src`
             // package, and throw an error if the import fails.
-            let MathJax, combineConfig, liteAdaptor, RegisterHTMLHandler;
+            let MathJax, combineConfig;
             try {
                 const { MathJax: _MathJax, combineConfig: _combineConfig } =
                     await import('@mathjax/src/js/components/global.js');
                 MathJax = _MathJax;
                 combineConfig = _combineConfig;
-                liteAdaptor = (
-                    await import('@mathjax/src/js/adaptors/liteAdaptor.js')
-                ).liteAdaptor;
-                RegisterHTMLHandler = (
-                    await import('@mathjax/src/js/handlers/html.js')
-                ).RegisterHTMLHandler;
             } catch (err) {
                 // If the import fails, add `@mathjax/src` to the list of
                 // missing dependencies and rethrow the error.
@@ -389,8 +395,6 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 throw err;
             }
 
-            type MathItem<N, T, D> =
-                import('@mathjax/src/js/core/MathItem.js').MathItem<N, T, D>;
             type MathDocument<N, D, T> =
                 import('@mathjax/src/js/core/MathDocument.js').MathDocument<
                     N,
@@ -422,84 +426,15 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 },
                 chtml: {
                     fontURL: `https://cdn.jsdelivr.net/npm/@mathjax/mathjax-${config.font}-font@latest/chtml/woff2`,
+                    // dynamicPrefix: `@mathjax/mathjax-${config.font}-font/js/chtml/dynamic`,
                 },
-                options: {
-                    renderActions: {
-                        getSpeech: [
-                            300,
-                            null,
-                            (
-                                math: MathItem<any, any, any>,
-                                doc: MathDocument<any, any, any>,
-                            ) => {
-                                // Generate the speech string and add it to the
-                                // MathJax container, along with ARIA
-                                // attributes, and hide the child nodes.
-                                const adaptor = doc.adaptor;
-                                const label =
-                                    modality === 'braille'
-                                        ? 'aria-braillelabel'
-                                        : 'aria-label';
-                                adaptor.setAttribute(
-                                    math.typesetRoot,
-                                    label,
-                                    toSpeech(toMathML(math)),
-                                );
-                                adaptor.setAttribute(
-                                    math.typesetRoot,
-                                    'role',
-                                    'img',
-                                );
-                                adaptor.setAttribute(
-                                    math.typesetRoot,
-                                    'aria-roledescription',
-                                    '\u0091',
-                                ); // something not spoken by screen readers
-                                adaptor.setAttribute(
-                                    math.typesetRoot,
-                                    'aria-brailleroledescription',
-                                    'math',
-                                );
-                                for (const child of adaptor.childNodes(
-                                    math.typesetRoot,
-                                )) {
-                                    adaptor.setAttribute(
-                                        child,
-                                        'aria-hidden',
-                                        'true',
-                                    );
-                                }
-                            },
-                        ],
-                    },
+                svg: {
+                    // dynamicPrefix: `@mathjax/mathjax-${config.font}-font/js/svg/dynamic`,
                 },
             });
 
             // Add MathJax configuration passed to us
             combineConfig(MathJax.config, config.mathjax);
-
-            // Import the speech-rule-engine
-            await import('@mathjax/src/components/require.mjs');
-            const { setupEngine, engineReady, toSpeech } = await import(
-                'speech-rule-engine/js/common/system.js'
-            );
-
-            // Set up the speech engine
-            const locale = config.mathjax.options?.sre?.locale ?? 'en';
-            const modality =
-                locale === 'nemeth' || locale === 'euro' ? 'braille' : 'speech';
-            await setupEngine({ locale, modality }).then(() => engineReady());
-
-            // Create a MathML serializer
-            const { SerializedMmlVisitor } = await import(
-                '@mathjax/src/js/core/MmlTree/SerializedMmlVisitor.js'
-            );
-            const visitor = new SerializedMmlVisitor();
-            const toMathML = (math: any) => visitor.visitTree(math.root);
-
-            // Lite adaptor
-            const adaptor = liteAdaptor();
-            RegisterHTMLHandler(adaptor);
 
             // Load MathJax and wait for it to start up
             /* @ts-expect-error */
@@ -603,7 +538,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
              */
             const updateCss: (
                 mathHandler: MathHandler<'mathjax'>,
-            ) => void = () => {
+            ) => Promise<void> = async () => {
                 nodeAssert(
                     fmt === 'chtml',
                     "Expected `outputFormat` to be 'chtml' in `updateCss` call.",
@@ -643,9 +578,17 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     // rendered as inline- or as display math.
                     display: inline === false,
                 })) as HTMLElement;
-                return processor.adaptor
-                    .outerHTML(node)
-                    .replace(/ data-latex=".*?"/g, '');
+                return processor.adaptor.outerHTML(node);
+                // .replace(/ data-latex=".*?"/g, '');
+            };
+
+            const cleanup = async () => {
+                // If I understand correctly, this is only relevant if speech
+                // generation is used. Since SvelTeX uses MathML for
+                // accessibility instead, it should hence not be necessary to
+                // call this.
+                // /* @ts-expect-error */
+                // await MathJax.done();
             };
 
             return new MathHandler<'mathjax'>({
@@ -654,6 +597,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 configuration: config,
                 handleCss,
                 updateCss,
+                cleanup,
             }) as unknown as MathHandler<B>;
         }
 

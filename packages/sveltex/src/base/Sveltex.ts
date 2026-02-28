@@ -437,7 +437,8 @@ export class Sveltex<
             if (mathPresent) {
                 this.mathPresent[filename] = true;
                 headLines.push(...this._mathHandler.headLines);
-                this._mathHandler.updateCss();
+                await this._mathHandler.updateCss();
+                await this._mathHandler.cleanup(); // TODO: Check if it's wise to run this for each file (MathJax.done() specifically).
             }
             if (codePresent) {
                 this.codePresent[filename] = true;
