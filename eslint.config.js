@@ -1,5 +1,4 @@
 import eslint from '@eslint/js';
-import vitest from 'eslint-plugin-vitest';
 // import prettierConfig from 'eslint-config-prettier/flat';
 import { defineConfig } from 'eslint/config';
 import tsdoc from 'eslint-plugin-tsdoc';
@@ -287,18 +286,18 @@ export default defineConfig(
         files: ['**/*.js'],
         ...tseslint.configs.disableTypeChecked,
     },
-    {
-        // Vitest test files
-        files: ['packages/*/tests/unit/**/*.{test,spec}.ts'],
-        plugins: { vitest },
-        rules: {
-            ...vitest.configs.recommended.rules,
-            'vitest/expect-expect': 'off',
-        },
-        languageOptions: {
-            globals: vitest.environments.env.globals,
-        },
-    },
+    // {
+    //     // Vitest test files
+    //     files: ['packages/*/tests/unit/**/*.{test,spec}.ts'],
+    //     plugins: { vitest },
+    //     rules: {
+    //         ...vitest.configs.recommended.rules,
+    //         'vitest/expect-expect': 'off',
+    //     },
+    //     languageOptions: {
+    //         globals: vitest.environments.env.globals,
+    //     },
+    // },
     {
         // Playwright test files
         files: ['packages/*/tests/e2e/**/*.{test,spec}.ts'],
