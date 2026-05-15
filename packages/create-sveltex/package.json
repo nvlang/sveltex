@@ -56,10 +56,10 @@
     "create-sveltex": "./dist/mod.js"
   },
   "dependencies": {
+    "inquirer": "9.3.5",
     "minimist": "^1.2.8",
-    "picocolors": "^1.0.1",
-    "plop": "^4.0.1",
-    "inquirer": "9.3.5"
+    "picocolors": "^1.1.1",
+    "plop": "^4.0.5"
   },
   "overrides": {
     "node-plop": {

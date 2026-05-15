@@ -176,9 +176,9 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.14.10",
-    "@types/vscode": "^1.67.0",
-    "js-yaml": "^4.1.0",
-    "tsx": "^4.19.3"
+    "@types/node": "^20.19.41",
+    "@types/vscode": "^1.120.0",
+    "js-yaml": "^4.1.1",
+    "tsx": "^4.22.0"
   }
 }
