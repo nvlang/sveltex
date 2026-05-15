@@ -19,10 +19,6 @@ import type {
 } from '@mathjax/src/js/output/common/FontData.js';
 import type { MathjaxFont } from '../handlers/Math.js';
 import type {
-    mathjaxDefaultTexExtensions,
-    mathjaxTexExtensions,
-} from '../../data/mathjax.js';
-import type {
     EnrichedMathDocument,
     EnrichedMathItem,
 } from '@mathjax/src/js/a11y/semantic-enrich.js';
@@ -366,9 +362,66 @@ interface MathjaxMathmlInputProcessorOptions
     MathMLCompile?: unknown;
 }
 
-export type MathjaxTexExtension = (typeof mathjaxTexExtensions)[number];
+/**
+ * Names of the TeX-input extension packages MathJax recognizes.
+ */
+export type MathjaxTexExtension =
+    | 'action'
+    | 'ams'
+    | 'amscd'
+    | 'autoload'
+    | 'base'
+    | 'bbm'
+    | 'bboldx'
+    | 'bbox'
+    | 'begingroup'
+    | 'boldsymbol'
+    | 'braket'
+    | 'bussproofs'
+    | 'cancel'
+    | 'cases'
+    | 'centernot'
+    | 'color'
+    | 'colortbl'
+    | 'colorv2'
+    | 'configmacros'
+    | 'dsfont'
+    | 'empheq'
+    | 'enclose'
+    | 'extpfeil'
+    | 'gensymb'
+    | 'html'
+    | 'mathtools'
+    | 'mhchem'
+    | 'newcommand'
+    | 'noerrors'
+    | 'noundefined'
+    | 'physics'
+    | 'require'
+    | 'setoptions'
+    | 'tagformat'
+    | 'texhtml'
+    | 'textcomp'
+    | 'textmacros'
+    | 'unicode'
+    | 'units'
+    | 'upgreek'
+    | 'verb';
+
+/**
+ * The TeX-input extensions MathJax loads by default.
+ *
+ * @see https://github.com/mathjax/MathJax-src/blob/1a2ef74c0ac0620e7b8de46402c9dce3b95ade52/components/mjs/input/tex/config.json
+ */
 export type MathjaxDefaultTexExtension =
-    (typeof mathjaxDefaultTexExtensions)[number];
+    | 'base'
+    | 'ams'
+    | 'newcommand'
+    | 'textmacros'
+    | 'noundefined'
+    | 'require'
+    | 'autoload'
+    | 'configmacros';
 
 /**
  * The options below control the operation of the [TeX input

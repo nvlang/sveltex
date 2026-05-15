@@ -27,14 +27,6 @@ import { applyTransformations } from '../utils/transformers.js';
 import { is, join, nodeAssert, typeAssert } from '../deps.js';
 import { log } from '../utils/debug.js';
 import { diagnoseMathConfiguration } from '../utils/diagnosers/mathConfiguration.js';
-// import {
-//     mathjaxDefaultTexExtensions,
-//     mathjaxTexExtensionImports,
-// } from '../data/mathjax.js';
-// import type {
-//     MathjaxDefaultTexExtension,
-//     MathjaxTexExtension,
-// } from '../types/utils/MathjaxOptions.js';
 
 export class MathHandler<B extends MathBackend> extends Handler<
     B,
