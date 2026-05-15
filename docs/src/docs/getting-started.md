@@ -46,6 +46,30 @@ yarn add -D @nvl/sveltex
 ```
 :::
 
+SvelTeX doesn't bundle the markdown, code, or math backends — you install the
+ones you've chosen as peer dependencies. For example, the `unified` markdown
+backend needs the `unified`, `remark-parse`, `remark-rehype`, and
+`rehype-stringify` packages, the `shiki` code backend needs `shiki`, and so on.
+SvelTeX will tell you exactly which packages are missing the first time you run
+a build.
+
+::: info MathJax backend
+
+If you pick `mathjax` as your math backend, you need the
+[`@mathjax/src`](https://www.npmjs.com/package/@mathjax/src) package at version
+4 or later. MathJax v4 also ships each math font as a separate npm package, so
+you additionally need the `@mathjax/mathjax-<font>-font` package matching your
+[`math.font`](math#fonts) setting — with the default font (`newcm`), that's
+[`@mathjax/mathjax-newcm-font`](https://www.npmjs.com/package/@mathjax/mathjax-newcm-font):
+
+```sh
+pnpm add -D @mathjax/src @mathjax/mathjax-newcm-font
+```
+
+See the [Math](math#installation) page for details.
+
+:::
+
 ### Setup
 
 SvelTeX has one main export, `sveltex`. This is an asynchronous function that
