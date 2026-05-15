@@ -61,8 +61,12 @@ export function adjustHtmlSpacing(
         if (node.type === 'element') {
             typeAssert(is<HastElement>(node));
             const loc = getLocationUnist(node, lines);
-            /* v8 ignore next 1 (unreachable code) */
+            // Unreachable: `hastFromHtml` (with `verbose: true`) always records
+            // `data.position.opening` for parsed elements, and implied elements
+            // (no positional info) already throw in `getLocationUnist` above.
+            /* v8 ignore start */
             if (!node.data?.position.opening) return false;
+            /* v8 ignore stop */
             const locOpeningTag = getLocationUnist(
                 { position: node.data.position.opening },
                 lines,
@@ -108,9 +112,13 @@ export function adjustHtmlSpacing(
                 locClosingTag.start,
             );
 
-            /* v8 ignore next 2 (unreachable branches due to regex format) */
+            // The `?? ''` fallbacks below are unreachable: `/^(\s*)/u` and
+            // `/(\s*)$/u` match every possible string (including the empty
+            // string), so `.exec(...)` never returns `null` here.
+            /* v8 ignore start */
             const leadingWhitespace = /^(\s*)/u.exec(innerContent)?.[0] ?? '';
             const trailingWhitespace = /(\s*)$/u.exec(innerContent)?.[0] ?? '';
+            /* v8 ignore stop */
             const leadingNewlines = countNewlines(leadingWhitespace);
             let prefIn = prefersInline(tagName);
 

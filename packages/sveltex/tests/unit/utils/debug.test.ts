@@ -126,6 +126,87 @@ describe('debug', () => {
                 pc.yellow('warn test'),
             );
         });
+
+        it('should treat options object without `severity` as `log`', () => {
+            log({ style: 'dim' }, 'no severity');
+            expect(consoleLogMock).toHaveBeenCalledTimes(1);
+            expect(consoleErrorMock).not.toHaveBeenCalled();
+            expect(consoleWarnMock).not.toHaveBeenCalled();
+        });
+
+        it('should treat options object without `style` using default styles only', () => {
+            log({ severity: 'error' }, 'no style');
+            expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+            expect(consoleErrorMock).toHaveBeenNthCalledWith(
+                1,
+                pc.red('no style'),
+            );
+        });
+    });
+
+    // When colours ARE supported, `log` takes the styling code path:
+    // `applyPcStyles` is invoked and non-string args are passed through
+    // unchanged. In the default test environment `pc.isColorSupported` is
+    // `false`, so we temporarily flip it on here. Note that picocolors binds
+    // its formatter functions at module-load time, so once colours were
+    // unsupported at import the `pc.red`/`pc.dim` functions remain the
+    // identity function; what matters for these tests is that the styling
+    // branch (and `applyPcStyles`) is actually executed.
+    describe('log (with colour support)', () => {
+        let originalColorSupport: boolean;
+        let consoleLogMock: MockInstance;
+        let consoleErrorMock: MockInstance;
+        let consoleWarnMock: MockInstance;
+        beforeAll(() => {
+            originalColorSupport = pc.isColorSupported;
+            pc.isColorSupported = true;
+        });
+        afterAll(() => {
+            pc.isColorSupported = originalColorSupport;
+        });
+        beforeEach(() => {
+            vi.clearAllMocks();
+            consoleLogMock = vi.spyOn(consoles, 'log').mockReturnValue();
+            consoleErrorMock = vi.spyOn(consoles, 'error').mockReturnValue();
+            consoleWarnMock = vi.spyOn(consoles, 'warn').mockReturnValue();
+        });
+
+        it('should take the styling code path when colour is supported', () => {
+            log('error', 'styled error');
+            expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+            const [arg] = consoleErrorMock.mock.calls[0] as [string];
+            // `applyPcStyles` ran; with picocolors' identity formatter the
+            // resulting string still contains (here: equals) the input.
+            expect(arg).toContain('styled error');
+            expect(arg).toEqual(pc.red('styled error'));
+        });
+
+        it('should compose default and user styles', () => {
+            log({ severity: 'warn', style: ['dim'] }, 'styled warn');
+            expect(consoleWarnMock).toHaveBeenCalledTimes(1);
+            const [arg] = consoleWarnMock.mock.calls[0] as [string];
+            expect(arg).toEqual(pc.yellow(pc.dim('styled warn')));
+        });
+
+        it('should only style string args and pass others through verbatim', () => {
+            const obj = { object: true };
+            const arr = ['array'];
+            log('error', 'styled', obj, arr, 123, false);
+            expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+            const call = consoleErrorMock.mock.calls[0] as unknown[];
+            expect(call[0]).toEqual(pc.red('styled'));
+            // Non-string args are returned as-is by the mapping callback.
+            expect(call[1]).toBe(obj);
+            expect(call[2]).toBe(arr);
+            expect(call[3]).toBe(123);
+            expect(call[4]).toBe(false);
+        });
+
+        it('should log without styling when severity has no default style and no user style', () => {
+            log('log', 'plain log');
+            expect(consoleLogMock).toHaveBeenCalledTimes(1);
+            expect(consoleLogMock).toHaveBeenNthCalledWith(1, 'plain log');
+        });
     });
 
     describe('runWithSpinner', () => {
@@ -168,6 +249,53 @@ describe('debug', () => {
                     ['something'],
                 ),
             ).toEqual(1);
+        });
+
+        it('should return 0 and succeed when the action does not fail', async () => {
+            const successMessage = vi.fn(() => 'success');
+            const code = await runWithSpinner(
+                () => 'ok',
+                {
+                    startMessage: 'test',
+                    successMessage,
+                },
+                ['failure-value'],
+            );
+            expect(code).toEqual(0);
+            expect(successMessage).toHaveBeenCalledTimes(1);
+        });
+
+        it('should return 0 when no failureValues are provided and no error is thrown', async () => {
+            const action = vi.fn(() => 'anything');
+            const code = await runWithSpinner(action, {
+                startMessage: 'test',
+                successMessage: () => 'success',
+            });
+            expect(code).toEqual(0);
+            expect(action).toHaveBeenCalledTimes(1);
+        });
+
+        it('should format elapsed times above one second in seconds', async () => {
+            // `runWithSpinner` measures elapsed time with
+            // `process.hrtime.bigint()` and formats it via `timeToString`.
+            // We fake the clock so the measured duration is 2 s, exercising
+            // the `ms > 1000` branch of `timeToString`.
+            const deps = await import('../../../src/deps.js');
+            const hrtimeMock = vi
+                .spyOn(deps.process.hrtime, 'bigint')
+                .mockReturnValueOnce(0n)
+                .mockReturnValue(2_000_000_000n);
+            const successMessage = vi.fn(
+                (timeTaken: string) => `done in ${timeTaken}`,
+            );
+            const code = await runWithSpinner(() => 'ok', {
+                startMessage: 'test',
+                successMessage,
+            });
+            expect(code).toEqual(0);
+            expect(successMessage).toHaveBeenCalledTimes(1);
+            expect(successMessage).toHaveBeenCalledWith('2.00s');
+            hrtimeMock.mockRestore();
         });
     });
 

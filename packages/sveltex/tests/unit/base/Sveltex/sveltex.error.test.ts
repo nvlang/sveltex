@@ -144,5 +144,20 @@ describe('Sveltex.create()', () => {
                 vi.doUnmock(dep);
             });
         });
+
+        test('lists the MathJax font package when a non-default font is set', async () => {
+            vi.doMock('@mathjax/src/js/components/global.js', () => {
+                throw new Error('@mathjax/src not found');
+            });
+            await expect(
+                async () =>
+                    await sveltex(
+                        { mathBackend: 'mathjax' },
+                        { math: { font: 'fira' } },
+                    ),
+            ).rejects.toThrow();
+            expect(missingDeps).toContain('@mathjax/mathjax-fira-font');
+            vi.doUnmock('@mathjax/src/js/components/global.js');
+        });
     });
 });

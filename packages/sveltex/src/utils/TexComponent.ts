@@ -1549,7 +1549,10 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
             let line = 1;
             if (lineNumber) {
                 line = parseInt(lineNumber);
+                /* v8 ignore start -- unreachable: `lineNumber` is captured by
+                   the regex as `\d+`, so `parseInt` can never return `NaN` */
                 if (Number.isNaN(line)) line = 1;
+                /* v8 ignore stop */
             }
 
             return { line, message, severity };
@@ -1614,8 +1617,10 @@ const specialCases: [RegExp, (match: RegExpExecArray) => Problem][] = [
 
             // Determine line number
             let line = parseInt(lineNumber);
-            /* v8 ignore next 1 (unreachable code, due to regex format) */
+            /* v8 ignore start -- unreachable: `lineNumber` is captured by the
+               regex as `\d+`, so `parseInt` can never return `NaN` */
             if (Number.isNaN(line)) line = 1;
+            /* v8 ignore stop */
 
             return { line, message, severity };
         },

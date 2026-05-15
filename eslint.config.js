@@ -13,6 +13,7 @@ export default defineConfig(
             '**/dist/**',
             '**/coverage/**',
             '**/html/**',
+            '**/tmp/**',
             '**/tests/e2e/**',
             'docs/**',
         ],

@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { sveltex } from '../../../src/base/Sveltex.js';
+import { missingDeps } from '../../../src/utils/env.js';
 import type {
     MarkdownBackend,
     MarkdownConfiguration,
@@ -20,6 +21,7 @@ import {
 import {
     adjustHtmlSpacingAndEscape,
     countNewlines,
+    MarkdownHandler,
 } from '../../../src/handlers/MarkdownHandler.js';
 import { isArray } from '../../../src/typeGuards/utils.js';
 import { spy } from '../fixtures.js';
@@ -500,4 +502,105 @@ describe('countNewlines()', () => {
     ])('%o → %o', (input, expected) => {
         expect(countNewlines(input)).toEqual(expected);
     });
+});
+
+/* -------------------------------------------------------------------------- */
+/*                       MarkdownHandler.process edge cases                   */
+/* -------------------------------------------------------------------------- */
+
+describe('MarkdownHandler.process edge cases', () => {
+    test('custom backend may return a ProcessedSnippet object', async () => {
+        // A custom `process` function is allowed to return a full
+        // `ProcessedSnippet` object instead of a bare string; the handler
+        // should spread it and run `unescapeTags` over its `processed` field.
+        const handler = await MarkdownHandler.create('custom', {
+            process: () => ({
+                processed: '<div class="custom-output">done</div>',
+                unescapeOptions: { removeParagraphTag: false },
+            }),
+        });
+        const res = await handler.process('whatever', {
+            filename: 'test.sveltex',
+        });
+        // The `processed` field of the returned object is what ends up in the
+        // result (after the no-op `unescapeTags` pass over well-formed HTML).
+        expect(res.processed).toBe('<div class="custom-output">done</div>');
+        // The `unescapeOptions` from the returned object are preserved.
+        expect(res.unescapeOptions).toEqual({ removeParagraphTag: false });
+    });
+
+    test.each(['marked', 'micromark', 'unified'] as const)(
+        '%s handler can be created without a user config',
+        async (backend) => {
+            // Created with no `userConfig` argument at all, exercising the
+            // `userConfig ?? {}` fallback. The resulting handler must still
+            // process basic markdown with its default configuration.
+            const handler = await MarkdownHandler.create(backend);
+            expect(handler.backend).toBe(backend);
+            const res = await handler.process('*emphasis*', {
+                filename: 'test.sveltex',
+            });
+            expect(res.processed).toContain('<em>emphasis</em>');
+        },
+    );
+
+    test('strict mode skips HTML-spacing adjustment (identity unescapeTags)', async () => {
+        // With `strict: true`, `adjustHtmlSpacingAndEscape` is not invoked, so
+        // `unescapeTags` remains the identity function. The block-level tag
+        // therefore is not given breathing room and stays glued to its
+        // content.
+        const strictHandler = await MarkdownHandler.create('marked', {
+            strict: true,
+        });
+        const strict = (
+            await strictHandler.process('<div>\n*a*\n</div>', {
+                filename: 'test.sveltex',
+            })
+        ).processed;
+        // In strict mode the `*a*` is treated as raw HTML content, not
+        // emphasised markdown.
+        expect(strict).not.toContain('<em>');
+        expect(strict).toContain('*a*');
+
+        // Sanity check: with the default (non-strict) behaviour the same input
+        // *is* adjusted and the emphasis is parsed.
+        const looseHandler = await MarkdownHandler.create('marked', {
+            strict: false,
+        });
+        const loose = (
+            await looseHandler.process('<div>\n*a*\n</div>', {
+                filename: 'test.sveltex',
+            })
+        ).processed;
+        expect(loose).toContain('<em>a</em>');
+    });
+});
+
+/* -------------------------------------------------------------------------- */
+/*               MarkdownHandler.create missing-dependency handling           */
+/* -------------------------------------------------------------------------- */
+
+describe('MarkdownHandler.create missing dependencies', () => {
+    afterEach(() => {
+        missingDeps.length = 0;
+    });
+    test.each([
+        ['marked', 'marked'],
+        ['micromark', 'micromark'],
+        ['markdown-it', 'markdown-it'],
+        ['unified', 'unified'],
+    ] as const)(
+        '%s: rethrows import error and records missing dep',
+        async (backend, dep) => {
+            missingDeps.length = 0;
+            vi.doMock(dep, () => {
+                throw new Error(`${dep} not found`);
+            });
+            await expect(
+                MarkdownHandler.create(backend, {}),
+            ).rejects.toThrow();
+            expect(missingDeps).toContain(dep);
+            vi.doUnmock(dep);
+        },
+    );
 });

@@ -90,6 +90,29 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
             0,
             2,
         ],
+        // tex-only properties present on a non-tex environment yield two
+        // warnings each: one for being defined despite `type` not being
+        // "tex", and one for being an unexpected property for that type.
+        [
+            {
+                type: 'noop',
+                preamble: '\\usepackage{amsmath}',
+            },
+            0,
+            2,
+        ],
+        [
+            {
+                type: 'code',
+                preamble: '\\usepackage{amsmath}',
+                documentClass: 'article',
+                overrides: { caching: { enabled: true } },
+                handleAttributes: () => ({}),
+                postprocess: (s: string) => s,
+            },
+            0,
+            10,
+        ],
     ] as (VerbEnvConfigBase | [VerbEnvConfigBase, number?, number?])[])(
         `%o`,
         (test) => {
@@ -103,4 +126,34 @@ describe('utils/diagnosers/verbatimEnvironmentConfiguration', () => {
             expect(res.warnings).toEqual(warnings ?? 0);
         },
     );
+
+    describe('environment name argument', () => {
+        it('mentions the environment name when a non-object is passed', () => {
+            const res = diagnoseVerbEnvConfig(null, 'myEnv');
+            expect(res).toEqual({ errors: 1, warnings: 0, problems: 1 });
+        });
+
+        it('mentions the environment name when problems are found', () => {
+            const res = diagnoseVerbEnvConfig(
+                { type: 'something-invalid' },
+                'myEnv',
+            );
+            expect(res.errors).toBe(1);
+            expect(res.problems).toBe(1);
+        });
+
+        it('reports a warning-only environment with its name', () => {
+            const res = diagnoseVerbEnvConfig(
+                { type: 'noop', unexpectedProp: true },
+                'codeBlock',
+            );
+            expect(res.errors).toBe(0);
+            expect(res.warnings).toBe(1);
+        });
+
+        it('omits the environment name when it is not provided', () => {
+            const res = diagnoseVerbEnvConfig({ type: 'something-invalid' });
+            expect(res.errors).toBe(1);
+        });
+    });
 });

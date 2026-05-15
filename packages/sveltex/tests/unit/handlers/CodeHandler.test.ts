@@ -4,6 +4,7 @@ import {
     expect,
     vi,
     beforeAll,
+    beforeEach,
     type MockInstance,
     afterAll,
     afterEach,
@@ -819,6 +820,356 @@ describe('fixtures', () => {
                 )?.code;
                 expect(output).toContain(expected);
             }
+        });
+    });
+});
+
+describe('CodeHandler edge cases', () => {
+    let log: MockInstance;
+    let writeFileEnsureDir: MockInstance;
+    let existsSync: MockInstance;
+    beforeAll(async () => {
+        const mocks = await spy(['log', 'writeFileEnsureDir', 'existsSync']);
+        log = mocks.log;
+        writeFileEnsureDir = mocks.writeFileEnsureDir;
+        existsSync = mocks.existsSync;
+    });
+    afterAll(() => {
+        vi.restoreAllMocks();
+    });
+    beforeEach(() => {
+        // Pretend no CSS file is on disk yet, so that CSS handling always
+        // attempts a fetch + write (and is deterministic across runs).
+        existsSync.mockReturnValue(false);
+    });
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('handleCss', () => {
+        test('concurrent calls only handle CSS once', async () => {
+            const handler = await CodeHandler.create('highlight.js', {
+                theme: { type: 'self-hosted' },
+            });
+            // Kick off two `process` calls without awaiting the first one, so
+            // that the second call observes `_handlingCss === true` and has to
+            // wait via the polling interval.
+            const first = handler.process('let a;', { lang: 'js' });
+            const second = handler.process('let b;', { lang: 'js' });
+            const [r1, r2] = await Promise.all([first, second]);
+            expect(r1.processed).toContain('hljs');
+            expect(r2.processed).toContain('hljs');
+            // CSS should have been fetched and written exactly once, despite
+            // two concurrent `process` calls.
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            // Subsequent calls should be no-ops (CSS already handled).
+            await handler.process('let c;', { lang: 'js' });
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+        });
+
+        test('starry-night self-hosted CSS with non-default theme name', async () => {
+            const fancyFetch = vi
+                .spyOn(await import('../../../src/utils/cdn.js'), 'fancyFetch')
+                .mockResolvedValue('.pl-c { color: green; }');
+            const handler = await CodeHandler.create('starry-night', {
+                theme: { type: 'self-hosted', name: 'high-contrast' },
+            });
+            await handler.process('let a;', { lang: 'js' });
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            // The resource name embeds the non-default theme name.
+            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
+                1,
+                expect.stringContaining('high-contrast-both.css'),
+                expect.stringContaining('color:'),
+            );
+            fancyFetch.mockRestore();
+        });
+
+        test('highlight.js self-hosted CSS with min: false', async () => {
+            const handler = await CodeHandler.create('highlight.js', {
+                theme: { type: 'self-hosted', min: false, name: 'github-dark' },
+            });
+            await handler.process('let a;', { lang: 'js' });
+            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
+            // With `min: false`, the resource name has no `.min` segment.
+            const [path] = writeFileEnsureDir.mock.calls[0] as [string, string];
+            expect(path).toContain('github-dark.css');
+            expect(path).not.toContain('.min.css');
+        });
+
+        test('highlight.js cdn theme sets headLines', async () => {
+            const handler = await CodeHandler.create('highlight.js', {
+                theme: { type: 'cdn', name: 'github-dark' },
+            });
+            await handler.process('let a;', { lang: 'js' });
+            expect(handler.headLines).toHaveLength(1);
+            expect(handler.headLines[0]).toMatch(
+                /^<link rel="stylesheet" href="https?:\/\/.*github-dark.*\.css">$/u,
+            );
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('scriptLines', () => {
+        test('is an empty array by default', async () => {
+            const handler = await CodeHandler.create('highlight.js');
+            expect(handler.scriptLines).toEqual([]);
+        });
+    });
+
+    describe('transformers', () => {
+        test('falsy pre/post transformers are skipped', async () => {
+            // `transformers.pre` and `transformers.post` are both nullish, so
+            // the corresponding `applyTransformations` calls are skipped.
+            const handler = await CodeHandler.create('none', {
+                transformers: {
+                    pre: null,
+                    post: null,
+                },
+            });
+            const output = await handler.process('var a = 1;', {
+                inline: false,
+            });
+            // No transformation applied: the code is returned verbatim by the
+            // `none` backend.
+            expect(output.processed).toBe('var a = 1;');
+        });
+    });
+
+    describe('cdn theme with empty cdn list', () => {
+        test('highlight.js: no headLines are set when cdn list is empty', async () => {
+            const handler = await CodeHandler.create('highlight.js', {
+                theme: { type: 'cdn', cdn: [] },
+            });
+            await handler.process('let a;', { lang: 'js' });
+            // With no CDNs configured there is no stylesheet link to emit.
+            expect(handler.headLines).toEqual([]);
+            expect(writeFileEnsureDir).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('inlineMeta disabled', () => {
+        test.each(['highlight.js', 'starry-night', 'shiki'] as const)(
+            '%s: inline processing works when inlineMeta is null',
+            async (backend) => {
+                // `inlineMeta: null` disables ad-hoc inline meta parsing, so
+                // `inlineParsed` is undefined and the `if (inlineParsed)` arm
+                // is skipped.
+                const handler = await CodeHandler.create(backend, {
+                    inlineMeta: null,
+                    ...(backend === 'shiki'
+                        ? { shiki: { theme: 'github-light' } }
+                        : { theme: { type: 'none' } }),
+                });
+                const output = await handler.process('{js} const x = 3;', {
+                    inline: true,
+                });
+                expect(output).toBeDefined();
+                // Inline output is always wrapped in a single `<code>` element.
+                expect(output.processed).toMatch(/^<code[^>]*>.*<\/code>$/su);
+                // Since inline meta parsing is off, the `{js}` prefix is not
+                // stripped and is treated as part of the code.
+                expect(output.processed).toContain('js');
+            },
+        );
+    });
+
+    describe('shiki theme objects without a name', () => {
+        test('single theme object without a name', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                shiki: { theme: { settings: [], bg: '#fff', fg: '#000' } },
+            });
+            const output = await handler.process('let a = 1;', { lang: 'js' });
+            expect(output).toBeDefined();
+            // A nameless theme contributes no extra class beyond `shiki`.
+            expect(output.processed).toMatch(/^<pre class="shiki\s*"/u);
+            expect(output.processed).toContain('<span style="color:');
+        });
+
+        test('themes map containing a theme object without a name', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                shiki: {
+                    themes: {
+                        light: { settings: [], bg: '#fff', fg: '#000' },
+                    },
+                },
+            });
+            const output = await handler.process('let a = 1;', { lang: 'js' });
+            expect(output).toBeDefined();
+            // The nameless theme adds no class, but `shiki-themes` is present.
+            expect(output.processed).toMatch(
+                /^<pre class="shiki shiki-themes\s*"/u,
+            );
+        });
+    });
+
+    describe('shiki inline code without a language', () => {
+        test('no language class is added when language is undefined', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                shiki: { theme: 'github-light' },
+            });
+            const output = await handler.process('const x = 3;', {
+                inline: true,
+            });
+            expect(output).toBeDefined();
+            // No `lang` was supplied, so no `language-*` class is prepended.
+            expect(output.processed).not.toMatch(/class="[^"]*language-/u);
+            expect(output.processed).toMatch(/^<code class="shiki[^"]*">/u);
+        });
+    });
+
+    describe('shiki block code whose <code> tag was removed by a transformer', () => {
+        test('language class injection is skipped when there is no <code> tag', async () => {
+            // A transformer renames the inner `<code>` element to `<div>`, so
+            // the regex looking for a `<code>` tag finds no match and the
+            // language-class injection step is skipped entirely.
+            const handler = await CodeHandler.create('shiki', {
+                shiki: {
+                    theme: 'github-light',
+                    transformers: [
+                        {
+                            code(hast) {
+                                hast.tagName = 'div';
+                                return hast;
+                            },
+                        },
+                    ],
+                },
+            });
+            const output = await handler.process('const x = 3;', {
+                inline: false,
+                lang: 'js',
+            });
+            expect(output).toBeDefined();
+            // The `<code>` tag is gone (renamed to `<div>`)...
+            expect(output.processed).not.toContain('<code');
+            expect(output.processed).toContain('<div>');
+            // ...so no `language-js` class could be injected onto it.
+            expect(output.processed).not.toContain('language-js');
+        });
+    });
+
+    describe('escape backend with escaping disabled', () => {
+        test('escape.html and escape.braces both false: passthrough', async () => {
+            const handler = await CodeHandler.create('escape', {
+                escape: { html: false, braces: false },
+                appendNewline: false,
+            });
+            const output = await handler.process('<b>{x}</b>', {
+                inline: false,
+            });
+            // Neither HTML nor braces are escaped.
+            expect(output.processed).toBe('<pre><code><b>{x}</b></code></pre>');
+        });
+
+        test('escape.html true but escape.braces false', async () => {
+            const handler = await CodeHandler.create('escape', {
+                escape: { html: true, braces: false },
+            });
+            const output = await handler.process('<b>{x}</b>', {
+                inline: false,
+            });
+            // HTML is escaped, braces are left as-is.
+            expect(output.processed).toContain('&lt;b&gt;');
+            expect(output.processed).toContain('{x}');
+            expect(output.processed).not.toContain('&lbrace;');
+        });
+
+        test('escape.html false but escape.braces true', async () => {
+            const handler = await CodeHandler.create('escape', {
+                escape: { html: false, braces: true },
+            });
+            const output = await handler.process('<b>{x}</b>', {
+                inline: false,
+            });
+            // Braces are escaped, HTML is left as-is.
+            expect(output.processed).toContain('<b>');
+            expect(output.processed).toContain('&lbrace;x&rbrace;');
+            expect(output.processed).not.toContain('&lt;b&gt;');
+        });
+    });
+
+    describe('unknown-language warnings', () => {
+        test('highlight.js warns for unknown language flag', async () => {
+            const handler = await CodeHandler.create('highlight.js', {
+                theme: { type: 'none' },
+            });
+            const output = await handler.process('let a = 1;', {
+                lang: 'this-is-not-a-real-language',
+            });
+            // Unknown language => content is merely HTML-escaped, not
+            // highlighted.
+            expect(output.processed).not.toContain('hljs-');
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenCalledWith(
+                'warn',
+                expect.stringContaining(
+                    "Language 'this-is-not-a-real-language' not found.",
+                ),
+            );
+        });
+
+        test('shiki warns for unknown language flag', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                shiki: { theme: 'github-light' },
+            });
+            const output = await handler.process('let a = 1;', {
+                lang: 'this-is-not-a-real-language',
+            });
+            expect(output).toBeDefined();
+            expect(log).toHaveBeenCalledTimes(1);
+            expect(log).toHaveBeenCalledWith(
+                'warn',
+                expect.stringContaining(
+                    'Language "this-is-not-a-real-language" not found.',
+                ),
+            );
+            // Even with an unknown language, the language class is still added.
+            expect(output.processed).toContain(
+                'language-this-is-not-a-real-language',
+            );
+        });
+    });
+
+    describe('missing dependencies', () => {
+        test('highlight.js: rethrows import error and records missing dep', async () => {
+            const { missingDeps } = await import('../../../src/utils/env.js');
+            missingDeps.length = 0;
+            vi.doMock('highlight.js', () => {
+                throw new Error('highlight.js not found');
+            });
+            // `CodeHandler.create` should not swallow the failure to import
+            // `highlight.js`; it rethrows after recording the missing dep.
+            await expect(CodeHandler.create('highlight.js')).rejects.toThrow();
+            expect(missingDeps).toContain('highlight.js');
+            vi.doUnmock('highlight.js');
+            missingDeps.length = 0;
+        });
+
+        test('starry-night: rethrows import error and records missing deps', async () => {
+            const { missingDeps } = await import('../../../src/utils/env.js');
+            missingDeps.length = 0;
+            vi.doMock('@wooorm/starry-night', () => {
+                throw new Error('@wooorm/starry-night not found');
+            });
+            await expect(CodeHandler.create('starry-night')).rejects.toThrow();
+            expect(missingDeps).toContain('@wooorm/starry-night');
+            expect(missingDeps).toContain('hast-util-find-and-replace');
+            expect(missingDeps).toContain('hast-util-to-html');
+            vi.doUnmock('@wooorm/starry-night');
+            missingDeps.length = 0;
+        });
+
+        test('shiki: rethrows import error and records missing dep', async () => {
+            const { missingDeps } = await import('../../../src/utils/env.js');
+            missingDeps.length = 0;
+            vi.doMock('shiki', () => {
+                throw new Error('shiki not found');
+            });
+            await expect(CodeHandler.create('shiki')).rejects.toThrow();
+            expect(missingDeps).toContain('shiki');
+            vi.doUnmock('shiki');
+            missingDeps.length = 0;
         });
     });
 });

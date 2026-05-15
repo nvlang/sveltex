@@ -33,6 +33,7 @@ describe("MathHandler<'mathjax'> (SVG output)", () => {
     fixture();
     let fancyWrite: MockInstance;
     let log: MockInstance;
+    let existsSync: MockInstance;
     beforeAll(async () => {
         vi.spyOn(
             await import('../../../../src/deps.js'),
@@ -60,6 +61,7 @@ describe("MathHandler<'mathjax'> (SVG output)", () => {
         );
         fancyWrite = mocks.fancyWrite;
         log = mocks.log;
+        existsSync = mocks.existsSync;
     });
 
     afterAll(() => {
@@ -99,6 +101,39 @@ describe("MathHandler<'mathjax'> (SVG output)", () => {
                 ),
                 expect.stringContaining('mjx-container'),
             );
+            expect(log).not.toHaveBeenCalled();
+        });
+
+        it("doesn't regenerate the stylesheet when it already exists", async () => {
+            // `handleCss` bails out early once the SVG stylesheet file is
+            // present on disk, so `fancyWrite` is never called.
+            existsSync.mockReturnValueOnce(true);
+            await (
+                await MathHandler.create('mathjax', { outputFormat: 'svg' })
+            ).process('');
+            expect(fancyWrite).not.toHaveBeenCalled();
+            expect(log).not.toHaveBeenCalled();
+        });
+
+        it('makes a concurrent process() call wait for in-flight CSS handling', async () => {
+            // CSS is handled exactly once per handler. A second, concurrent
+            // `process()` call observes `_handlingCss` and polls until the
+            // first call is done. Delaying `fancyWrite` keeps CSS handling in
+            // flight long enough for the poller to tick while it is still
+            // unfinished, exercising both arms of the `_handledCss` check.
+            fancyWrite.mockImplementationOnce(
+                async () =>
+                    new Promise<void>((resolve) => {
+                        setTimeout(resolve, 60);
+                    }),
+            );
+            const handler = await MathHandler.create('mathjax', {
+                outputFormat: 'svg',
+            });
+            const first = handler.process('a');
+            const second = handler.process('b');
+            await Promise.all([first, second]);
+            expect(fancyWrite).toHaveBeenCalledTimes(1);
             expect(log).not.toHaveBeenCalled();
         });
     });

@@ -77,3 +77,32 @@ describe('CSS for code + math backends', () => {
         });
     });
 });
+
+describe('multiple math snippets in a single document', () => {
+    fixture();
+    test('processes every math snippet (mathPresent only flips once)', async () => {
+        const preprocessor = await sveltex({
+            markdownBackend: 'micromark',
+            codeBackend: 'escape',
+            mathBackend: 'katex',
+        });
+        // Two separate inline-math snippets: the first sets `mathPresent` to
+        // `true`, the second must take the branch where it is already `true`.
+        const code = (
+            await preprocessor.markup({
+                content: 'First $a + b$ and then $c \\cdot d$ done.',
+                filename: 'test.sveltex',
+            })
+        )?.code;
+        expect(code).toBeDefined();
+        // Both expressions were handed to KaTeX and rendered.
+        expect(code).toContain('katex');
+        const renderedMathCount = (code?.match(/class="katex"/gu) ?? [])
+            .length;
+        expect(renderedMathCount).toBe(2);
+        // The textual context around the two snippets survived.
+        expect(code).toContain('First ');
+        expect(code).toContain(' and then ');
+        expect(code).toContain(' done.');
+    });
+});

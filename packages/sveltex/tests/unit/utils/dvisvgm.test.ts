@@ -350,4 +350,84 @@ describe.concurrent('buildDvisvgmInstruction', () => {
             ],
         });
     });
+
+    it('should omit every flag whose option is explicitly `null`', () => {
+        // An option set to `null` means "let `dvisvgm` use its own default",
+        // i.e. SvelTeX should not emit the corresponding flag at all.
+        const instruction = buildDvisvgmInstruction({
+            outputPath: '/path/to/output.svg',
+            texPath: '/path/to/input.tex',
+            inputType: 'dvi',
+            dvisvgm: {
+                processing: {
+                    cache: null,
+                    exactBbox: null,
+                    keep: null,
+                    mag: null,
+                    noMktexmf: null,
+                    noSpecials: null,
+                    traceAll: null,
+                },
+                svg: {
+                    bbox: null,
+                    bitmapFormat: null,
+                    clipJoin: null,
+                    comments: null,
+                    currentColor: null,
+                    fontFormat: null,
+                    gradOverlap: null,
+                    gradSegments: null,
+                    gradSimplify: null,
+                    linkmark: null,
+                    noStyles: null,
+                    optimize: null,
+                    precision: null,
+                    relative: null,
+                },
+                console: { verbosity: null },
+                svgTransformations: {
+                    rotate: null,
+                    scale: null,
+                    transform: null,
+                    translate: null,
+                    zoom: null,
+                },
+            },
+        });
+
+        // Only the unconditional flags remain: `--output`, `--embed-bitmaps`
+        // (always added for DVI input), and the input path.
+        expect(instruction).toEqual({
+            command: 'dvisvgm',
+            args: [
+                '--output=/path/to/output.svg',
+                '--embed-bitmaps',
+                '/path/to/input.tex',
+            ],
+        });
+    });
+
+    it('should omit `--trace-all` and `--currentcolor` when those options are `false`', () => {
+        // `traceAll`/`currentColor` are non-`null` here, so the relevant `if`
+        // is entered, but neither `true` nor a string value matches, so no
+        // flag is emitted.
+        const instruction = buildDvisvgmInstruction({
+            outputPath: '/path/to/output.svg',
+            texPath: '/path/to/input.tex',
+            inputType: 'dvi',
+            dvisvgm: {
+                processing: { traceAll: false },
+                svg: { currentColor: false },
+            },
+        });
+
+        expect(instruction.args).not.toContain('--trace-all');
+        expect(instruction.args).not.toContain('--trace-all=true');
+        expect(
+            instruction.args.some((arg) => arg.startsWith('--currentcolor')),
+        ).toBe(false);
+        // Sanity check: other default flags are still present.
+        expect(instruction.args).toContain('--embed-bitmaps');
+        expect(instruction.args).toContain('--bbox=2pt');
+    });
 });

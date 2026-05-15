@@ -117,10 +117,11 @@ export class MathHandler<B extends MathBackend> extends Handler<
     // The `() => undefined` function is unreachable, since the `updateCss`
     // getter only calls `_updateCss` if MathJax and CHTML are being used, in
     // which case `_updateCss` is overridden in the constructor.
-    /* v8 ignore next 2 (unreachable code) */
+    /* v8 ignore start -- unreachable default: the constructor overrides `_updateCss` before `updateCss` could ever reach it */
     // eslint-disable-next-line @typescript-eslint/class-methods-use-this
     private readonly _updateCss: (mathHandler: this) => Promise<void> =
         async () => Promise.resolve();
+    /* v8 ignore stop */
 
     public get updateCss(): () => Promise<void> {
         return async () => {

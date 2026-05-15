@@ -243,6 +243,45 @@ describe.concurrent('config/defaults', () => {
         });
     });
 
+    describe('inlineMeta (parseInlineCode)', () => {
+        fixture();
+        const inlineMeta = getDefaultCodeConfig('escape').inlineMeta;
+
+        it('parses lang + meta from `{lang meta} code` when the tag is valid', () => {
+            expect(inlineMeta?.('{js title=x} const a = 1;', () => true)).toEqual(
+                { code: 'const a = 1;', lang: 'js', meta: 'title=x' },
+            );
+        });
+
+        it('does not extract lang/meta from braces when the tag is invalid', () => {
+            // `validLanguageTag` returns `false`, so the braces must be left
+            // untouched and treated as part of the code.
+            expect(
+                inlineMeta?.('{bogus title} const a = 1;', () => false),
+            ).toEqual({
+                code: '{bogus title} const a = 1;',
+                lang: undefined,
+                meta: undefined,
+            });
+        });
+
+        it('only sets `lang` (no `meta`) for `{lang} code` with a valid tag', () => {
+            expect(inlineMeta?.('{js} const a = 1;', () => true)).toEqual({
+                code: 'const a = 1;',
+                lang: 'js',
+                meta: undefined,
+            });
+        });
+
+        it('parses lang from `lang code` (no braces) when the tag is valid', () => {
+            expect(inlineMeta?.('js const a = 1;', () => true)).toEqual({
+                code: 'const a = 1;',
+                lang: 'js',
+                meta: undefined,
+            });
+        });
+    });
+
     describe('postprocess()', () => {
         fixture();
         it('should work', async () => {
@@ -256,6 +295,65 @@ describe.concurrent('config/defaults', () => {
                 tag: 'tex',
                 // outerContent: '<tex ref="ref">test</tex>',
                 config: getDefaultVerbEnvConfig('tex'),
+            });
+            expect(
+                tc.configuration.postprocess(
+                    '<svelte:component this={...} />',
+                    tc,
+                ),
+            ).toEqual('<figure>\n<svelte:component this={...} />\n</figure>');
+        });
+
+        it('handles handledAttributes without figureAttributes / captionAttributes', async () => {
+            const texHandler = await TexHandler.create();
+            // Custom `handleAttributes` returns an object that lacks the
+            // `figureAttributes` and `captionAttributes` keys entirely, so
+            // `postprocess` must take the falsy branch for both of them. With
+            // no `captionAttributes` object present, the `<figcaption>` is
+            // never emitted, even though a `caption` string was provided.
+            const config = {
+                ...getDefaultVerbEnvConfig('tex'),
+                handleAttributes: () => ({ caption: 'just a caption' }),
+            };
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
+                attributes: {},
+                ref: 'ref',
+                filename: 'test.sveltex',
+                tag: 'tex',
+                config,
+            });
+            expect(
+                tc.configuration.postprocess(
+                    '<svelte:component this={...} />',
+                    tc,
+                ),
+            ).toEqual('<figure>\n<svelte:component this={...} />\n</figure>');
+        });
+
+        it('ignores figureAttributes / captionAttributes that are not objects', async () => {
+            const texHandler = await TexHandler.create();
+            // The keys are present but hold non-object values, so the
+            // `isNonNullObject` half of each guard must short-circuit: no
+            // figure attributes string is built and no `<figcaption>` is
+            // emitted.
+            const config = {
+                ...getDefaultVerbEnvConfig('tex'),
+                handleAttributes: () => ({
+                    figureAttributes: 'not-an-object',
+                    caption: 'cap',
+                    captionAttributes: 42,
+                }),
+            };
+            const tc = TexComponent.create({
+                texHandler,
+                tex: 'test',
+                attributes: {},
+                ref: 'ref',
+                filename: 'test.sveltex',
+                tag: 'tex',
+                config,
             });
             expect(
                 tc.configuration.postprocess(

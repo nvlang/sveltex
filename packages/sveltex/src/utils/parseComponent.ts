@@ -72,13 +72,15 @@ export function parseComponent(html: string): ParsedComponent {
 
     // Tag name must not be empty (i.e., must not be `undefined`, `null`, nor
     // `''`).
-    /* v8 ignore next 6 (unreachable code) */
+    /* v8 ignore start -- unreachable: a successful `componentRegExp` match
+       always captures a non-empty `tag` group (`[a-zA-Z][...]*`) */
     if (!tag) {
         throw new Error(
             "HTML syntax error: couldn't parse tag name in the following:\n\n" +
                 html,
         );
     }
+    /* v8 ignore stop */
 
     const selfClosing = closingSlash === '/';
 
@@ -95,11 +97,15 @@ export function parseComponent(html: string): ParsedComponent {
             throw new Error(
                 `HTML syntax error: void element <${tag}> should not have inner content`,
             );
+            /* v8 ignore start -- unreachable: when `componentRegExp` captures
+               a `closingTag`, it always also captures (at least whitespace
+               as) `innerContent`, so the branch above is taken first */
         } else if (closingTag !== undefined) {
             throw new Error(
                 `HTML syntax error: void element <${tag}> should not have closing tag`,
             );
         }
+        /* v8 ignore stop */
         // Technically speaking, void elements should not be self-closing, but
         // we allow it for flexibility's sake.
     }
@@ -120,13 +126,15 @@ export function parseComponent(html: string): ParsedComponent {
         ) {
             let { attribute_name, value } =
                 attMatch.groups as unknown as AttributesRegExpMatchGroups;
-            /* v8 ignore next 6 (unreachable code) */
+            /* v8 ignore start -- unreachable: a successful `attributesRegExp`
+               match always captures a non-empty `attribute_name` group */
             if (!attribute_name) {
                 throw new Error(
                     'HTML syntax error: could not parse attribute key in the following:\n\n' +
                         attributesString,
                 );
             }
+            /* v8 ignore stop */
             attribute_name = attribute_name.toLowerCase();
             if (value) {
                 value =

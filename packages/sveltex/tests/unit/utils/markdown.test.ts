@@ -56,6 +56,49 @@ describe('adjustHtmlSpacing', () => {
     );
 });
 
+describe('adjustHtmlSpacing with component info', () => {
+    it("uses a component's `prefersInline: true` over the prefersInline arg", () => {
+        // `prefersInline` arg says `false`, but the matching component
+        // overrides it to `true`, so the single-newline content is collapsed
+        // into an inline element.
+        expect(
+            adjustHtmlSpacing(
+                '<ExampleID>\ntext</ExampleID>',
+                () => false,
+                [{ name: 'Example', prefersInline: true }],
+                'ID',
+            ),
+        ).toBe('<ExampleID>text</ExampleID>');
+    });
+
+    it("uses a component's `prefersInline: false` over the prefersInline arg", () => {
+        // `prefersInline` arg says `true`, but the matching component
+        // overrides it to `false`, so the content is padded for paragraph
+        // wrapping.
+        expect(
+            adjustHtmlSpacing(
+                '<ExampleID>\ntext</ExampleID>',
+                () => true,
+                [{ name: 'Example', prefersInline: false }],
+                'ID',
+            ),
+        ).toMatch(/<ExampleID>\n{2,}text\n{2,}<\/ExampleID>/u);
+    });
+
+    it("falls back to the prefersInline arg when a component has no `prefersInline`", () => {
+        // The matching component exists but leaves `prefersInline` undefined,
+        // so the `prefersInline` argument (`true`) is used.
+        expect(
+            adjustHtmlSpacing(
+                '<ExampleID>\ntext</ExampleID>',
+                () => true,
+                [{ name: 'Example', type: 'all' }],
+                'ID',
+            ),
+        ).toBe('<ExampleID>text</ExampleID>');
+    });
+});
+
 describe('isImported', () => {
     it.each([
         [

@@ -706,7 +706,13 @@ function calcPadding(
         padding[0] = 0;
     }
     // Padding after
+    // Unreachable falsy branch: `calcPadding` only reaches this point for
+    // (non-inline) fenced code blocks and frontmatter, whose final line is
+    // always just the closing delimiter (optionally followed by whitespace),
+    // so there is never trailing non-whitespace content after `end.column`.
+    /* v8 ignore start */
     if (lineEnd.slice(end.column + 1).trim().length === 0) {
+        /* v8 ignore stop */
         // /END\s*$/m
         padding[1] = 1;
         const lineAfter = lines[end.line + 1];

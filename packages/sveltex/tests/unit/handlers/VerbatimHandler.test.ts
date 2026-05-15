@@ -116,6 +116,34 @@ describe('VerbatimHandler', () => {
             );
             expect(log).toHaveBeenCalledTimes(0);
         });
+
+        it('an alias equal to the environment name is not treated as a duplicate', async () => {
+            // The `aliases` array lists the environment's own name. The alias
+            // loop should skip it (since `alias === env`) instead of flagging
+            // it as a conflicting duplicate.
+            const sp = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        Code: {
+                            type: 'escape',
+                            escape: { braces: true, html: true },
+                            aliases: ['Code'],
+                        },
+                    },
+                },
+            );
+            expect(log).not.toHaveBeenCalled();
+            // The environment still works under its (self-aliased) name.
+            expect(
+                (
+                    await sp.markup({
+                        filename: 'test.sveltex',
+                        content: '<Code>{x}</Code>',
+                    })
+                )?.code,
+            ).toContain('<Code>&lbrace;x&rbrace;</Code>');
+        });
     });
     describe('process(content: string)', () => {
         fixture();
@@ -323,6 +351,103 @@ describe('VerbatimHandler', () => {
                     })
                 )?.code,
             ).toContain('<noop>abc</noop>');
+        });
+
+        it('escape env with escape.html disabled leaves HTML untouched', async () => {
+            const sp = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        OnlyBraces: {
+                            type: 'escape',
+                            escape: { html: false, braces: true },
+                        },
+                    },
+                },
+            );
+            const result = (
+                await sp.markup({
+                    filename: 'test.sveltex',
+                    content: '<OnlyBraces>\n<b>{x}</b></OnlyBraces>',
+                })
+            )?.code;
+            // `escape.html` is false, so `<` and `>` are *not* escaped...
+            expect(result).toContain('<b>');
+            // ...but `escape.braces` is true, so the braces still are.
+            expect(result).toContain('&lbrace;x&rbrace;');
+            expect(result).not.toContain('&lt;b&gt;');
+        });
+
+        it('escape env with escape.braces disabled leaves braces untouched', async () => {
+            const sp = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        OnlyHtml: {
+                            type: 'escape',
+                            escape: { html: true, braces: false },
+                        },
+                    },
+                },
+            );
+            const result = (
+                await sp.markup({
+                    filename: 'test.sveltex',
+                    content: '<OnlyHtml>\n<b>{x}</b></OnlyHtml>',
+                })
+            )?.code;
+            // `escape.html` is true, so the angle brackets are escaped...
+            expect(result).toContain('&lt;b&gt;');
+            // ...but `escape.braces` is false, so the braces are left as-is.
+            expect(result).toContain('{x}');
+            expect(result).not.toContain('&lbrace;');
+        });
+
+        it('escape env with both escape options disabled is a passthrough', async () => {
+            const sp = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        Raw: {
+                            type: 'escape',
+                            escape: { html: false, braces: false },
+                        },
+                    },
+                },
+            );
+            const result = (
+                await sp.markup({
+                    filename: 'test.sveltex',
+                    content: '<Raw>\n<b>{x}</b></Raw>',
+                })
+            )?.code;
+            // Neither HTML nor braces are escaped: content passes through.
+            expect(result).toContain('<Raw>\n<b>{x}</b></Raw>');
+        });
+
+        it('wraps undefined inner content when respectSelfClosing is false', async () => {
+            // With `respectSelfClosing: false`, a self-closing input tag is
+            // treated as a regular tag: its (undefined) inner content falls
+            // back to an empty string and the output is wrapped in open/close
+            // tags rather than emitted as a self-closing tag.
+            const sp = await sveltex(
+                {},
+                {
+                    verbatim: {
+                        Code: {
+                            type: 'noop',
+                            respectSelfClosing: false,
+                        },
+                    },
+                },
+            );
+            const result = (
+                await sp.markup({
+                    filename: 'test.sveltex',
+                    content: '<Code id="something"/>',
+                })
+            )?.code;
+            expect(result).toContain('<Code id="something"></Code>');
         });
     });
 

@@ -150,7 +150,11 @@ export function interpretFrontmatter(
             });
         } else if (isNonNullObject(meta)) {
             Object.entries(meta).forEach(([name, content]) => {
+                // Unreachable falsy branch: keys returned by `Object.entries`
+                // are always strings, so `isString(name)` is always `true`.
+                /* v8 ignore start */
                 if (isString(name)) {
+                    /* v8 ignore stop */
                     if (isMetaName(name)) {
                         interpretedMeta = addMetaName(interpretedMeta, {
                             name,
@@ -272,7 +276,12 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
         Object.entries(imports).forEach(([path, value]) => {
             if (isString(value)) {
                 scriptLines.push(`import ${value} from '${path}';`);
+                // Unreachable falsy branch: the `isRecord` guard above already
+                // guarantees every `value` is a string or a string array, so
+                // a non-string `value` is necessarily an array here.
+                /* v8 ignore start */
             } else if (isArray(value)) {
+                /* v8 ignore stop */
                 scriptLines.push(
                     `import { ${value.join(', ')} } from '${path}';`,
                 );
@@ -293,12 +302,17 @@ export function handleFrontmatter(snippet: ProcessableSnippet<'frontmatter'>): {
     // Base
     if (base) {
         const entries = Object.entries(base);
+        // Unreachable falsy branch: `base` here comes from
+        // `interpretFrontmatter`, which only ever yields a non-empty object
+        // whose keys are `href` and/or `target` (or drops `base` entirely).
+        /* v8 ignore start */
         if (
             0 < entries.length &&
             entries.every(
                 ([k, v]) => (k === 'href' || k === 'target') && isString(v),
             )
         ) {
+            /* v8 ignore stop */
             let baseString = '<base';
             entries.forEach(([key, value]) => {
                 baseString += ` ${key}="${String(value)}"`;

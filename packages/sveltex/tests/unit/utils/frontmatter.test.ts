@@ -314,6 +314,28 @@ describe('interpretFrontmatter()', () => {
             { titulo: '...', meta: { auteur: 'Jane Doe', desc: 'test' } },
             { titulo: '...' },
         ],
+        // `base` is truthy but neither a string nor a non-null object, so it
+        // is dropped entirely.
+        [{ base: 123 } as unknown as Frontmatter, {}],
+        [{ base: true } as unknown as Frontmatter, {}],
+        // `base` object provides only `target` (no `href`).
+        [{ base: { target: '_blank' } }, { base: { target: '_blank' } }],
+        // `link` is truthy but not an array: `frontmatter.link` is reset to an
+        // empty array and nothing is interpreted.
+        [{ link: { rel: 'stylesheet' } } as unknown as Frontmatter, { link: [] }],
+        // `link` is an array, but none of its items are valid objects with a
+        // string `rel`, so the interpreted link list stays empty.
+        [
+            {
+                link: ['not-an-object', { href: 'x.css' }, { rel: 42 }],
+            } as unknown as Frontmatter,
+            { link: [] },
+        ],
+        // A `meta` array item carries `content` but neither a valid `name` nor
+        // a valid `http-equiv`, so it contributes nothing.
+        [{ meta: [{ content: 'orphan content' }] }, {}],
+        // `meta` is truthy but neither an array nor a non-null object.
+        [{ meta: 'a bare string' } as unknown as Frontmatter, {}],
     ] as [Frontmatter, object?, ([string, string] | [string, string][])?][])(
         '%o → %o',
         (input, expected, logs) => {
@@ -629,6 +651,19 @@ describe('handleFrontmatter()', () => {
                 'imports: {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"},',
                 '};',
             ],
+        },
+        {
+            // `base` is an empty object in the raw frontmatter;
+            // `interpretFrontmatter` drops it (neither `href` nor `target`),
+            // so it never reaches `handleFrontmatter`'s `headLines` logic.
+            label: 'base (empty object, dropped on interpretation)',
+            snippet: {
+                innerContent: 'base: {}',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [],
+            scriptLines: [],
+            scriptModuleLines: [],
         },
     ] as {
         label?: string;

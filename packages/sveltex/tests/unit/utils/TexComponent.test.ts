@@ -181,6 +181,39 @@ describe('(getter) documentClass', () => {
     });
 });
 
+describe('(static) importSvg', () => {
+    fixture();
+    it('should build an import statement with a root-relative path', () => {
+        const result = TexComponent.importSvg({
+            id: 'Sveltex__tex__ref',
+            path: resolve(process.cwd(), 'src/sveltex/tex/ref.svelte'),
+        });
+        expect(result).toEqual(
+            "import Sveltex__tex__ref from '/src/sveltex/tex/ref.svelte';",
+        );
+    });
+});
+
+describe('compile(): self-closing component', () => {
+    fixture();
+    it('should throw when there is no content to compile', async () => {
+        const ath = await TexHandler.create();
+        const tc = TexComponent.create({
+            filename: 'file.sveltex',
+            texHandler: ath,
+            attributes: { ref: 'ref' },
+            ref: 'ref',
+            // A self-closing component has no inner content.
+            tex: undefined,
+            config: defaultConfig,
+            tag: 'tex',
+        });
+        await expect(tc.compile()).rejects.toThrow(
+            'Cannot compile a self-closing TeX component',
+        );
+    });
+});
+
 // TODO: the problem has to do with verbosity prop in all likelihood
 describe('compile(): catches errors', () => {
     beforeEach(() => {
@@ -703,6 +736,126 @@ describe('TexHandler.process()', () => {
             );
             writeFile_.mockRestore();
             spawnCliInstruction.mockRestore();
+        });
+
+        it('should reuse a previously created Poppler instance', async () => {
+            // Compiling two components with the same `TexHandler` means the
+            // second conversion finds `texHandler.poppler` already defined and
+            // skips re-creating it.
+            const id = uuid();
+            const ath = await TexHandler.create({
+                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                conversion: { outputDirectory: `tmp/tests/${id}/output` },
+                debug: { verbosity: 'box' },
+            });
+            const { log } = await spy(['log'], false);
+            const config = mergeConfigs({ tag: 'tex', ...defaultConfig }, {
+                overrides: {
+                    compilation: { intermediateFiletype: 'pdf' },
+                    conversion: { converter: 'poppler' },
+                },
+                documentClass: 'standalone',
+            });
+            await ath.process('first', {
+                attributes: { ref: 'one' },
+                filename: 'test.sveltex',
+                selfClosing: false,
+                tag: 'tex',
+                config,
+            });
+            expect(ath.poppler).toBeDefined();
+            const popplerAfterFirst = ath.poppler;
+            await ath.process('second', {
+                attributes: { ref: 'two' },
+                filename: 'test.sveltex',
+                selfClosing: false,
+                tag: 'tex',
+                config,
+            });
+            // The same Poppler instance was reused for the second component.
+            expect(ath.poppler).toBe(popplerAfterFirst);
+            expect(log).not.toHaveBeenCalled();
+            expect(
+                await nodeReadFile(
+                    `tmp/tests/${id}/output/tex/two.svelte`,
+                    'utf8',
+                ),
+            ).toContain('<svg');
+        });
+
+        it('should compile without a `currentColor` replacement when it is null', async () => {
+            // With `currentColor: null` the SVG is left untouched (no
+            // `fill="currentColor"` and no hex replacement).
+            const id = uuid();
+            const ath = await TexHandler.create({
+                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                conversion: { outputDirectory: `tmp/tests/${id}/output` },
+                debug: { verbosity: 'box' },
+            });
+            const { writeFile: writeFile_, log } = await spy(
+                ['writeFile', 'log'],
+                false,
+            );
+            await ath.process('test', {
+                attributes: { ref: 'ref' },
+                filename: 'test.sveltex',
+                selfClosing: false,
+                tag: 'tex',
+                config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
+                    overrides: {
+                        compilation: { intermediateFiletype: 'pdf' },
+                        conversion: { converter: 'poppler' },
+                        optimization: { currentColor: null },
+                    },
+                    documentClass: 'standalone',
+                }),
+            });
+            expect(log).not.toHaveBeenCalled();
+            expect(writeFile_).toHaveBeenNthCalledWith(
+                2,
+                `tmp/tests/${id}/output/tex/ref.svg`,
+                expect.not.stringContaining('fill="currentColor"'),
+                'utf8',
+            );
+        });
+
+        it('should compile when `currentColor` is not a valid hex colour', async () => {
+            // `#12345` has five hex digits, which is not a valid CSS hex
+            // colour length, so `getHexRegExp` returns `undefined` and no hex
+            // replacement is performed.
+            const id = uuid();
+            const ath = await TexHandler.create({
+                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                conversion: { outputDirectory: `tmp/tests/${id}/output` },
+                debug: { verbosity: 'box' },
+            });
+            const { writeFile: writeFile_, log } = await spy(
+                ['writeFile', 'log'],
+                false,
+            );
+            await ath.process('test', {
+                attributes: { ref: 'ref' },
+                filename: 'test.sveltex',
+                selfClosing: false,
+                tag: 'tex',
+                config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
+                    overrides: {
+                        compilation: { intermediateFiletype: 'pdf' },
+                        conversion: { converter: 'poppler' },
+                        optimization: { currentColor: '#12345' },
+                    },
+                    documentClass: 'standalone',
+                }),
+            });
+            expect(log).not.toHaveBeenCalled();
+            // `fill="currentColor"` is still added (poppler branch), but no hex
+            // string was replaced since the regexp could not be built.
+            expect(writeFile_).toHaveBeenNthCalledWith(
+                2,
+                `tmp/tests/${id}/output/tex/ref.svg`,
+                expect.stringMatching(/^<svg fill="currentColor"/u),
+                'utf8',
+            );
         });
     });
 
@@ -1282,6 +1435,26 @@ describe('enactPresets()', () => {
             });
             expect(log).not.toHaveBeenCalled();
         });
+
+        it('enables graphdrawing without sub-libraries when set to `true`', async () => {
+            // When `graphdrawing` is `true` (rather than an object), the
+            // `graphdrawing` library is loaded but no graph-drawing
+            // sub-libraries are added.
+            const log = await spy('log');
+            const verbEnvConfig = getDefaultVerbEnvConfig('tex');
+            const texConfig = getDefaultTexConfig();
+            texConfig.compilation.engine = 'lualatexmk';
+            verbEnvConfig.preset = {
+                name: 'tikz',
+                libraries: { graphdrawing: true },
+            };
+            expect(enactPresets(verbEnvConfig, texConfig)).toMatchObject({
+                packages: ['tikz'],
+                tikzlibraries: ['graphdrawing', 'babel', 'arrows.meta', 'calc'],
+                gdlibraries: [],
+            });
+            expect(log).not.toHaveBeenCalled();
+        });
     });
 
     describe('tikz: fixedpointarithmetic', () => {
@@ -1467,6 +1640,38 @@ describe('parseLatexLog()', () => {
             ],
         ] as [string, Problem][])('%o', (logContents, problem) => {
             expect(parseLatexLog(logContents, 0, 0)).toEqual([problem]);
+        });
+    });
+    describe('multi-line messages', () => {
+        it('collapses a multi-line LaTeX error that has no package name', () => {
+            // The continuation line `(LaTeX) ...` is folded into the message.
+            // Because there is no package name, the regex built to strip the
+            // continuation prefix only contains the `pkgType`.
+            const log =
+                'LaTeX Error: Something bad happened here\n' +
+                '(LaTeX)        and it continues on this line.';
+            expect(parseLatexLog(log, 0, 0)).toEqual([
+                {
+                    line: 1,
+                    message:
+                        'LaTeX Error: Something bad happened here and it continues on this line.',
+                    severity: 'error',
+                },
+            ]);
+        });
+
+        it('collapses a multi-line package error using the package name', () => {
+            const log =
+                'Package hyperref Error: Bad option\n' +
+                '(hyperref)        see the documentation for details.';
+            expect(parseLatexLog(log, 0, 0)).toEqual([
+                {
+                    line: 1,
+                    message:
+                        'Package hyperref Error: Bad option see the documentation for details.',
+                    severity: 'error',
+                },
+            ]);
         });
     });
 });
