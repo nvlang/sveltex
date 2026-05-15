@@ -31,14 +31,18 @@ import { diagnoseMathConfiguration } from '../utils/diagnosers/mathConfiguration
 
 /**
  * MathJax v4 splits its accessibility features across separately loadable
- * components. A document-`options` key only gains a registered default once
- * the component that owns it is loaded; passing an option whose component is
+ * components. A document-`options` key only gains a registered default once a
+ * component that registers it is loaded; passing an option whose component is
  * not loaded makes MathJax log `Invalid option "<key>" (no default value)`.
  *
  * SvelTeX is a build-time preprocessor, so it loads only the components that
  * are meaningful without a browser runtime. This table pairs each loadable
- * accessibility component with the option keys it owns and a predicate that
- * decides — from SvelTeX's `enable*` meta-options — whether to load it.
+ * accessibility component with the option keys it registers and a predicate
+ * that decides — from SvelTeX's `enable*` meta-options — whether to load it.
+ *
+ * A key can be registered by more than one component: the `speech` and
+ * `complexity` documents both extend the `semantic-enrich` document, so they
+ * register the enrichment options too.
  */
 const mathjaxA11yComponents: {
     component: string;
@@ -57,6 +61,8 @@ const mathjaxA11yComponents: {
     },
     {
         component: 'a11y/speech',
+        // The speech document extends the semantic-enrich document, so it
+        // also registers `enableEnrichment` and `enrichError`.
         keys: [
             'enableSpeech',
             'enableBraille',
@@ -64,13 +70,17 @@ const mathjaxA11yComponents: {
             'sre',
             'a11y',
             'worker',
+            'enableEnrichment',
+            'enrichError',
         ],
         shouldLoad: (o) =>
             o['enableSpeech'] === true || o['enableBraille'] === true,
     },
     {
         component: 'a11y/complexity',
-        keys: ['enableComplexity'],
+        // The complexity document likewise extends the semantic-enrich
+        // document, so it also registers the enrichment options.
+        keys: ['enableComplexity', 'enableEnrichment', 'enrichError'],
         shouldLoad: (o) => o['enableComplexity'] === true,
     },
 ];
@@ -93,8 +103,8 @@ const mathjaxUnsupportedA11yKeys: string[] = [
  * The `enable*` flags in the MathJax `options` block are SvelTeX-level
  * switches that decide which MathJax accessibility *components* to load. This
  * returns the components to add to `loader.load`, together with a copy of
- * `options` from which every key whose owning component is not loaded has
- * been removed — so MathJax is never handed an option without a registered
+ * `options` from which every key that no loaded component registers has been
+ * removed — so MathJax is never handed an option without a registered
  * default.
  *
  * @param options - The MathJax document options from the SvelTeX config.
@@ -108,19 +118,25 @@ export function resolveMathjaxA11y(options: MathjaxOptions | undefined): {
     // deciding which components to load and which keys are safe to forward.
     const provided = (options ?? {}) as unknown as Record<string, unknown>;
     const load: string[] = [];
-    const blockedKeys = new Set<string>(mathjaxUnsupportedA11yKeys);
+    /** Every option key registered by some accessibility component. */
+    const a11yKeys = new Set<string>(mathjaxUnsupportedA11yKeys);
+    /** Keys registered by a component that will actually be loaded. */
+    const allowedKeys = new Set<string>();
     for (const { component, keys, shouldLoad } of mathjaxA11yComponents) {
+        for (const key of keys) a11yKeys.add(key);
         if (shouldLoad(provided)) {
             load.push(component);
-        } else {
-            // The component is not loaded, so MathJax would reject the keys
-            // it owns: keep them out of the forwarded options.
-            for (const key of keys) blockedKeys.add(key);
+            for (const key of keys) allowedKeys.add(key);
         }
     }
     const forwarded: Record<string, unknown> = {};
     for (const key of Object.keys(provided)) {
-        if (!blockedKeys.has(key)) forwarded[key] = provided[key];
+        // Core options (registered by no a11y component) always pass through;
+        // an a11y option passes through only when a component that registers
+        // it is loaded — otherwise MathJax would reject it.
+        if (!a11yKeys.has(key) || allowedKeys.has(key)) {
+            forwarded[key] = provided[key];
+        }
     }
     return { load, options: forwarded };
 }

@@ -95,6 +95,27 @@ describe('resolveMathjaxA11y', () => {
         });
     });
 
+    it('keeps the enrichment options when speech or complexity loads', () => {
+        // The speech and complexity documents both extend the semantic-enrich
+        // document, so they register `enableEnrichment`/`enrichError` even
+        // when the `semantic-enrich` component is not loaded on its own.
+        expect(
+            resolveMathjaxA11y({ enableSpeech: true, enableEnrichment: false }),
+        ).toEqual({
+            load: ['a11y/assistive-mml', 'a11y/speech'],
+            options: { enableSpeech: true, enableEnrichment: false },
+        });
+        expect(
+            resolveMathjaxA11y({
+                enableComplexity: true,
+                enableEnrichment: false,
+            }),
+        ).toEqual({
+            load: ['a11y/assistive-mml', 'a11y/complexity'],
+            options: { enableComplexity: true, enableEnrichment: false },
+        });
+    });
+
     it('always strips options for components SvelTeX never loads', () => {
         expect(
             resolveMathjaxA11y({ enableExplorer: false, enableMenu: false }),
