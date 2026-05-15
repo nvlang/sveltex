@@ -39,6 +39,17 @@ import { spy } from '../fixtures.js';
 
 vi.spyOn(consoles, 'error').mockImplementation(() => undefined);
 
+/**
+ * Arbitrary for the `code` argument of the syntax-highlighting fuzz tests.
+ *
+ * The fuzzed string is prefixed with `!` so it cannot be parsed as inline
+ * metadata. SvelTeX's `inlineMeta` parser extracts a language tag from the
+ * code itself (overriding the `lang` passed explicitly) when the code starts
+ * with `{` or a word character; a leading `!` is neither, so the explicit
+ * `lang` is always the one reflected in the output.
+ */
+const codeArbitrary = fc.string({ minLength: 1 }).map((s) => `!${s}`);
+
 describe('CodeHandler.create', () => {
     describe.each(
         codeBackends.flatMap((backend) => [
@@ -388,7 +399,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 fc.constantFrom(
                                     ...Object.keys(bundledLanguages),
                                 ),
-                                fc.string({ minLength: 1 }),
+                                codeArbitrary,
                                 fc.boolean(),
                             ],
                             { verbose: 2 },
@@ -435,7 +446,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 fc.constantFrom(
                                     ...Object.keys(bundledLanguages),
                                 ),
-                                fc.string({ minLength: 1 }),
+                                codeArbitrary,
                                 fc.boolean(),
                             ],
                             { verbose: 2 },
@@ -939,7 +950,7 @@ describe('CodeHandler edge cases', () => {
     describe('cdn theme with empty cdn list', () => {
         test('highlight.js: no headLines are set when cdn list is empty', async () => {
             const handler = await CodeHandler.create('highlight.js', {
-                theme: { type: 'cdn', cdn: [] },
+                theme: { type: 'cdn', cdn: [] as unknown as SupportedCdn },
             });
             await handler.process('let a;', { lang: 'js' });
             // With no CDNs configured there is no stylesheet link to emit.

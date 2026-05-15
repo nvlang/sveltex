@@ -424,7 +424,7 @@ describe.concurrent('buildDvisvgmInstruction', () => {
         expect(instruction.args).not.toContain('--trace-all');
         expect(instruction.args).not.toContain('--trace-all=true');
         expect(
-            instruction.args.some((arg) => arg.startsWith('--currentcolor')),
+            instruction.args?.some((arg) => arg.startsWith('--currentcolor')),
         ).toBe(false);
         // Sanity check: other default flags are still present.
         expect(instruction.args).toContain('--embed-bitmaps');

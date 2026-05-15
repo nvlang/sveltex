@@ -283,8 +283,8 @@ describe('debug', () => {
             const deps = await import('../../../src/deps.js');
             const hrtimeMock = vi
                 .spyOn(deps.process.hrtime, 'bigint')
-                .mockReturnValueOnce(0n)
-                .mockReturnValue(2_000_000_000n);
+                .mockReturnValueOnce(BigInt(0))
+                .mockReturnValue(BigInt(2_000_000_000));
             const successMessage = vi.fn(
                 (timeTaken: string) => `done in ${timeTaken}`,
             );
