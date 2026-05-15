@@ -58,6 +58,11 @@ jobs:
           cache: pnpm
           cache-dependency-path: ./pnpm-lock.yaml
 
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install dependencies
         run: pnpm install
 
@@ -100,6 +105,10 @@ jobs:
 
       - name: Build test projects
         run: pnpm test:e2e:build
+        working-directory: packages/sveltex
+
+      - name: Build the showcase site (with Deno)
+        run: pnpm test:e2e:build:showcase
         working-directory: packages/sveltex
 
       - name: Run Playwright tests

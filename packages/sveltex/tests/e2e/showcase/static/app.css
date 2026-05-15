@@ -1,0 +1,248 @@
+/*
+ * Global stylesheet for the SvelTeX showcase site.
+ *
+ * Linked from `app.html`, so it is served verbatim from `static/` and applies
+ * to every prerendered page.
+ */
+
+:root {
+    --bg: #fbfbfd;
+    --surface: #ffffff;
+    --text: #1d1d22;
+    --muted: #5b5b66;
+    --border: #e3e3ea;
+    --accent: #6b3fd4;
+    --accent-soft: #efe9fc;
+
+    /*
+     * Consumed by the TikZ pictures on the /diagrams page: SvelTeX keeps
+     * `var(--…)` colour references intact in the generated SVG, so the diagram
+     * picks up this value from the surrounding page.
+     */
+    --some-color: #2f9e8f;
+
+    --font-body:
+        ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+        Arial, sans-serif;
+    --font-mono:
+        ui-monospace, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo,
+        Consolas, monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+/* ── Site shell ──────────────────────────────────────────────────────────── */
+
+.site {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.site-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.site-nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.site-nav a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.site-nav a:hover {
+    color: var(--accent);
+}
+
+.site-main {
+    flex: 1;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1.25rem 1.5rem;
+}
+
+.site-footer p {
+    margin: 0;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    margin: 2.2rem 0 0.8rem;
+}
+
+h1 {
+    font-size: 2.3rem;
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 1.6rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+p {
+    margin: 0 0 1rem;
+}
+
+a {
+    color: var(--accent);
+}
+
+ul,
+ol {
+    padding-left: 1.4rem;
+}
+
+li {
+    margin: 0.25rem 0;
+}
+
+blockquote {
+    margin: 1.2rem 0;
+    padding: 0.4rem 1.1rem;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    color: #2c2740;
+}
+
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.2rem 0;
+    font-size: 0.95rem;
+}
+
+th,
+td {
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+}
+
+th {
+    background: var(--accent-soft);
+}
+
+/* ── Code ────────────────────────────────────────────────────────────────── */
+
+/* Inline code. Fenced blocks carry their own colours from the Shiki theme. */
+:not(pre) > code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: #f0f0f4;
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+}
+
+pre {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.2rem 0;
+}
+
+pre code {
+    font-family: inherit;
+}
+
+/* ── Math (MathJax SVG output) ───────────────────────────────────────────── */
+
+mjx-container[display='true'] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.4rem 0;
+}
+
+/* ── TeX / TikZ figures ──────────────────────────────────────────────────── */
+
+figure {
+    margin: 1.4rem 0;
+    text-align: center;
+}
+
+figure svg {
+    max-width: 100%;
+    height: auto;
+}
+
+figcaption {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-top: 0.5rem;
+}

@@ -1,7 +1,9 @@
 # E2E Tests
 
-Visual regression tests for `@nvl/sveltex`, covering every supported combination of
-markdown, code, and math backends.
+Visual regression tests for `@nvl/sveltex`, in two complementary suites: a
+combinatorial **backend matrix** (every supported markdown × code × math
+combination), and a single hand-written **showcase site** that is built with
+Deno.
 
 ## Architecture
 
@@ -45,10 +47,14 @@ tests/e2e/
 │
 ├── snapshots/              # Visual regression golden images (committed)
 │
+├── showcase/               # ← Hand-written realistic site (committed, Deno-built)
+│
 ├── backends.ts             # Single source of truth: all backend combos + helpers
 ├── generate.ts             # Generator: writes per-combo project directories
-├── build-projects.ts       # Builder: runs `vite build` across all projects in parallel
-└── combo.spec.ts           # Shared Playwright spec (parameterised by project name)
+├── build-projects.ts       # Builder: `vite build` across all combo projects
+├── build-showcase.ts       # Builder: `deno task build` for the showcase site
+├── combo.spec.ts           # Backend-matrix spec (parameterised by combo)
+└── showcase.spec.ts        # Showcase-site spec
 ```
 
 ### Backend dimensions
@@ -72,6 +78,34 @@ so a spec cannot know "which project am I". Instead, `combo.spec.ts` enumerates 
 combo at collection time, globs that combo's `projects/<combo-id>/src/routes/`
 directory, and registers one screenshot test per page — each pointed at its combo's own
 preview server via an absolute `http://localhost:<port>` URL.
+
+---
+
+## The showcase site
+
+Alongside the combinatorial matrix, `showcase/` is a **single, hand-written,
+realistic website**: a small SvelTeX documentation site with a home page, a
+Markdown reference, and pages for code, math, TeX/TikZ diagrams, Svelte
+components, and a frontmatter-driven blog post.
+
+Two things set it apart from the combo projects:
+
+- It is **built and served with [Deno](https://deno.com)** rather than Node.
+  `deno task build` runs Vite under the Deno runtime; `deno task preview`
+  serves the output. This proves SvelTeX works end-to-end when the build host
+  is Deno — it is published to JSR as well as to npm.
+- It is **committed, not generated**. The pages are real content, authored to
+  exercise every SvelTeX feature in one coherent site rather than via minimal
+  per-combo fixtures.
+
+The showcase pins one realistic backend combination — `marked` + `shiki` +
+MathJax 4 (SVG output) — and is screenshot-tested by `showcase.spec.ts` on its
+own preview server (port 3200).
+
+`build-showcase.ts` symlinks the showcase's `node_modules` to the shared
+`_template` install and runs the Deno build; it is wired into
+`pnpm test:e2e:prepare` through `pnpm test:e2e:build:showcase`. To iterate on
+the showcase without starting the 80 combo servers, set `E2E_SHOWCASE_ONLY=1`.
 
 ---
 

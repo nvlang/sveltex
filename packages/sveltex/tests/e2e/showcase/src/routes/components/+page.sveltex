@@ -1,0 +1,42 @@
+<script>
+    import Counter from '$lib/Counter.svelte';
+    import Callout from '$lib/Callout.svelte';
+</script>
+
+# Svelte components
+
+A `.sveltex` file is still a Svelte component. You can drop real components
+straight into the Markdown, and they stay fully interactive after hydration.
+
+## An interactive island
+
+Here is a `Counter` component — click it:
+
+<Counter />
+
+It is defined in `src/lib/Counter.svelte` and uses Svelte 5 runes.
+
+## Components that wrap Markdown
+
+The `Callout` component receives Markdown as its children: SvelTeX processes
+the content *inside* the tags before handing it over.
+
+<Callout type="tip">
+This text is **Markdown**, rendered inside a Svelte component — it can hold
+`inline code` and [links](https://svelte.dev).
+</Callout>
+
+<Callout type="warning">
+Each callout takes a `type` prop, so the same component renders several styles.
+</Callout>
+
+## Verbatim environments
+
+The `Verb` environment is configured to *escape* its contents, so
+HTML-special characters and curly braces survive untouched instead of being
+parsed as markup or Svelte interpolation:
+
+<Verb>
+This is verbatim: <strong>literal tags</strong>, the comparison 1 < 2, and
+{curly braces} all survive.
+</Verb>

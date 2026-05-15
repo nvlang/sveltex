@@ -1,0 +1,35 @@
+---
+title: Building this site with Deno
+description: How the SvelTeX showcase is compiled — and why the runtime barely matters.
+author: The SvelTeX team
+date: '2026-05-15'
+tags: [deno, sveltekit, sveltex]
+imports:
+  '$lib/Callout.svelte': 'Callout'
+---
+
+# {title}
+
+_By {author} — {date}_
+
+> {description}
+
+This post is a `.sveltex` file with **YAML frontmatter**. SvelTeX exposes the
+frontmatter fields as variables, so the heading above is literally `{title}`.
+
+## Why Deno
+
+The whole showcase is built by **Deno** running Vite. SvelTeX itself is
+runtime-agnostic — it is published to both npm and JSR — so the same
+preprocessor works whether the build host is Node or Deno.
+
+<Callout type="note">
+The `imports` key in this page's frontmatter pulls in the `Callout`
+component used here, with no separate script block.
+</Callout>
+
+## Frontmatter in practice
+
+Keeping metadata next to the content it describes means the title, author and
+tags travel with the page. This post is tagged `deno`, `sveltekit` and
+`sveltex`, and a build tool can read those straight from the frontmatter.

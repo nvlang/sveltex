@@ -154,6 +154,13 @@ export function comboPort(index: number): number {
     return BASE_PORT + index;
 }
 
+/**
+ * Port for the preview server of the hand-written showcase site
+ * (`tests/e2e/showcase/`). Chosen well above the combo range
+ * (`BASE_PORT … BASE_PORT + 79`) so it can never collide with a combo.
+ */
+export const SHOWCASE_PORT = 3200;
+
 // ─── Page filtering helpers ───────────────────────────────────────────────────
 
 /**

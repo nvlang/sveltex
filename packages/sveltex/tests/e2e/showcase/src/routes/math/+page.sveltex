@@ -1,0 +1,54 @@
+# Mathematics
+
+Math is typeset by **MathJax 4** with SVG output and the New Computer Modern
+font. SVG output is self-contained, so no web fonts are needed at runtime.
+
+## Inline math
+
+The Euler identity $e^{i\pi} + 1 = 0$ and the Pythagorean theorem
+$a^2 + b^2 = c^2$ sit inline. Other delimiters work too: \(\sqrt{2}\) and
+$\tfrac{1}{2}$.
+
+## Display math
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} \, \mathrm{d}x = \sqrt{\pi}
+$$
+
+Aligned equations:
+
+$$
+\begin{align*}
+(a + b)^2 &= a^2 + 2ab + b^2 \\
+(a - b)^2 &= a^2 - 2ab + b^2
+\end{align*}
+$$
+
+A matrix:
+
+$$
+A = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\in \mathbb{R}^{3 \times 3}
+$$
+
+A piecewise definition:
+
+$$
+\operatorname{sgn}(x) = \begin{cases}
+    -1 & \text{if } x < 0, \\
+    \phantom{-}0 & \text{if } x = 0, \\
+    \phantom{-}1 & \text{if } x > 0.
+\end{cases}
+$$
+
+## Commutative diagrams
+
+MathJax's `CD` environment renders commutative diagrams:
+
+$$
+\begin{CD}
+A @>f>> B \\
+@VgVV @VVhV \\
+C @>>k> D
+\end{CD}
+$$

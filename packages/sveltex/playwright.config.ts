@@ -23,7 +23,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import process from 'node:process';
 
-import { backendCombos, comboId, comboPort } from './tests/e2e/backends.js';
+import {
+    backendCombos,
+    comboId,
+    comboPort,
+    SHOWCASE_PORT,
+} from './tests/e2e/backends.js';
 
 const combos = backendCombos();
 
@@ -32,7 +37,7 @@ const combos = backendCombos();
  * run; locally a still-running server is reused for fast iteration, while CI
  * always starts fresh.
  */
-const webServers = combos.map((combo, index) => ({
+const comboServers = combos.map((combo, index) => ({
     cwd: `tests/e2e/projects/${comboId(combo)}`,
     command: 'pnpm preview',
     url: `http://localhost:${comboPort(index)}`,
@@ -40,9 +45,31 @@ const webServers = combos.map((combo, index) => ({
     timeout: 60_000,
 }));
 
+/**
+ * Preview server for the hand-written showcase site (`tests/e2e/showcase/`).
+ * It is served with Deno — `deno task preview` runs `vite preview` under the
+ * Deno runtime — mirroring the Deno-driven `deno task build` step.
+ */
+const showcaseServer = {
+    cwd: 'tests/e2e/showcase',
+    command: 'deno task preview',
+    url: `http://localhost:${SHOWCASE_PORT}`,
+    reuseExistingServer: !process.env['CI'],
+    timeout: 60_000,
+};
+
+/**
+ * Set `E2E_SHOWCASE_ONLY=1` to start only the showcase server and skip the 80
+ * combo servers — useful when iterating on the showcase alone:
+ *   E2E_SHOWCASE_ONLY=1 pnpm playwright showcase.spec.ts
+ */
+const webServers = process.env['E2E_SHOWCASE_ONLY']
+    ? [showcaseServer]
+    : [...comboServers, showcaseServer];
+
 export default defineConfig({
     testDir: './tests/e2e',
-    testMatch: /combo\.spec\.ts/u,
+    testMatch: /(?:combo|showcase)\.spec\.ts$/u,
 
     /* Run independent screenshot tests concurrently. */
     fullyParallel: true,

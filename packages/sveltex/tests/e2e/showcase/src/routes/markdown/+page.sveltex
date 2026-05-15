@@ -1,0 +1,64 @@
+# Markdown reference
+
+SvelTeX turns standard Markdown into Svelte markup at build time. This page
+exercises the constructs a real site relies on.
+
+## Headings
+
+The six heading levels map to `<h1>` through `<h6>`.
+
+## Emphasis
+
+*Italic with asterisks* and _italic with underscores_.
+**Bold with asterisks** and __bold with underscores__.
+***Bold italic***, and ~~struck-through text~~.
+
+## Lists
+
+An unordered list, with nesting:
+
+- Markdown backends
+    - `marked`
+    - `markdown-it`
+    - `unified`
+- Code backends
+    - `shiki`
+    - `starry-night`
+
+An ordered list:
+
+1. Write a `.sveltex` file.
+2. Let SvelTeX preprocess it.
+3. Ship static HTML.
+
+A task list:
+
+- [x] Markdown
+- [x] Math
+- [ ] Telepathy
+
+## Blockquotes
+
+> A blockquote can hold **emphasis**, `code`, and a nested list:
+>
+> - one
+> - two
+
+## Tables
+
+| Backend | Category | Optional |
+| ------- | -------- | :------: |
+| marked  | Markdown |    no    |
+| shiki   | Code     |    no    |
+| mathjax | Math     |   yes    |
+
+## Links, images and rules
+
+Here is a [link to svelte.dev](https://svelte.dev), a bare URL that GFM turns
+into a link automatically, https://kit.svelte.dev, and a tiny inline image:
+
+![one transparent pixel](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
+
+---
+
+The rule above is a horizontal `<hr>`.

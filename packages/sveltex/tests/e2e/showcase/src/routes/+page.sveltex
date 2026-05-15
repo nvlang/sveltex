@@ -1,0 +1,32 @@
+# SvelTeX
+
+**SvelTeX** is a Svelte preprocessor. It lets you write **Markdown**, **LaTeX**
+math and syntax-highlighted **code** directly inside Svelte and SvelteKit
+projects — without giving up any of Svelte's interactivity.
+
+Every page of this site is a single `.sveltex` file: Markdown on the outside,
+Svelte on the inside. The site is built as static HTML by **SvelteKit**, and
+the entire build runs on **Deno**.
+
+## Explore the showcase
+
+| Page                      | What it demonstrates                        |
+| ------------------------- | ------------------------------------------- |
+| [Markdown](/markdown)     | Headings, lists, tables, quotes, emphasis   |
+| [Code](/code)             | Fenced and inline syntax highlighting       |
+| [Math](/math)             | Inline and display math, typeset by MathJax |
+| [Diagrams](/diagrams)     | LaTeX/TikZ pictures rendered to SVG         |
+| [Components](/components) | Interactive Svelte components in Markdown   |
+| [Blog](/blog)             | A post driven by YAML frontmatter           |
+
+## One paragraph, three notations
+
+Prose, `inline code`, and inline math like $E = mc^2$ all sit in the same
+sentence. Display math gets its own centred block:
+
+$$
+e^{i\pi} + 1 = 0
+$$
+
+> **Accessible by default.** SvelTeX emits assistive MathML alongside the
+> visual math, so screen readers can announce every expression.

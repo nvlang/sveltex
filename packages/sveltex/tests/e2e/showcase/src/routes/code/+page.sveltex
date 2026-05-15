@@ -1,0 +1,54 @@
+# Syntax highlighting
+
+The showcase uses the **Shiki** code backend with the `github-dark-default`
+theme. Shiki tokenises with real TextMate grammars, so the colours match a
+modern editor.
+
+## Fenced blocks
+
+TypeScript:
+
+```ts
+interface Point {
+    x: number;
+    y: number;
+}
+
+function distance(a: Point, b: Point): number {
+    return Math.hypot(b.x - a.x, b.y - a.y);
+}
+```
+
+Rust:
+
+```rust
+fn main() {
+    let primes: Vec<u32> = (2..50)
+        .filter(|n| (2..*n).all(|d| n % d != 0))
+        .collect();
+    println!("{primes:?}");
+}
+```
+
+A Svelte component:
+
+```svelte
+<script>
+    let count = $state(0);
+</script>
+
+<button onclick={() => count++}>clicked {count} times</button>
+```
+
+A unified diff:
+
+```diff
+- const greeting = 'hello';
++ const greeting = 'hello, world';
+```
+
+## Inline highlighting
+
+SvelTeX highlights inline code too: writing the language as the first token
+turns `js const answer = 42;` into a coloured snippet, while a plain
+`code span` stays neutral.

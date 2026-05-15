@@ -1,0 +1,36 @@
+# TeX and TikZ
+
+The `tex` verbatim environment hands its contents to a real LaTeX engine.
+SvelTeX compiles the document, converts it to SVG with `dvisvgm`, and inlines
+the result — so these are genuine TikZ pictures, not raster images.
+
+## A labelled figure
+
+<tex ref="showcase-figure">
+\begin{tikzpicture}
+    \draw (0,0) circle (1.6);
+    \draw[dashed, var(--some-color), thick] (-2,-2) rectangle (2,2);
+    \draw[thick] (-1.6,0) -- (1.6,0);
+    \node at (0,0.7) {$\displaystyle \oint_C \mathbf{F} \cdot \mathrm{d}\mathbf{r}$};
+\end{tikzpicture}
+</tex>
+
+The dashed border above is drawn in the page's `--some-color` CSS variable:
+SvelTeX keeps `var(--…)` references intact in the generated SVG, so the figure
+picks up its colour from the surrounding stylesheet.
+
+## A small graph
+
+A second `tex` block — each figure is compiled independently:
+
+<tex ref="showcase-graph">
+\begin{tikzpicture}[every node/.style={circle, draw, minimum size=8mm}]
+    \node (a) at (90:1.4) {$a$};
+    \node (b) at (210:1.4) {$b$};
+    \node (c) at (330:1.4) {$c$};
+    \draw (a) -- (b) -- (c) -- (a);
+\end{tikzpicture}
+</tex>
+
+The `tex` environment, with its TikZ preamble, is declared in the `verbatim`
+section of `sveltex.config.js`.
