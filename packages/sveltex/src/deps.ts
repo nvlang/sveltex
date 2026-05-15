@@ -25,7 +25,16 @@ export { isRegExp } from 'node:util/types';
 export { deepmergeCustom } from 'deepmerge-ts';
 export { default as findCacheDirectory } from 'find-cache-directory';
 export { Glob } from 'glob';
-export { escape as escapeHtml } from 'html-escaper';
+import { escape as htmlEscape } from 'html-escaper';
+/**
+ * `escapeHtml` is exported as an explicitly typed `const` rather than a bare
+ * re-export because Deno's bundled TypeScript resolves `html-escaper`'s
+ * `escape` as returning `string | undefined`, while the project's `tsc`
+ * resolves it as `string`. Pinning the signature keeps both type-checkers —
+ * and therefore `deno publish` — in agreement.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- see the comment above
+export const escapeHtml = htmlEscape as (input: string) => string;
 export { htmlTagNames } from 'html-tag-names';
 export { default as MagicString, type SourceMap } from 'magic-string';
 

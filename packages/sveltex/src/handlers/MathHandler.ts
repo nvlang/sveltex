@@ -449,9 +449,14 @@ export class MathHandler<B extends MathBackend> extends Handler<
             // Add MathJax configuration passed to us
             combineConfig(MathJax.config, config.mathjax);
 
-            // Load MathJax and wait for it to start up.
-            // @ts-expect-error: the prebuilt `@mathjax/src` startup bundle ships without type declarations.
-            await import('@mathjax/src/bundle/startup.js');
+            // Load MathJax and wait for it to start up. The specifier is held
+            // in a `string`-typed variable so that neither `tsc` nor Deno's
+            // type-checker statically resolves the prebuilt (declaration-less)
+            // startup bundle — they disagree on whether it resolves, which
+            // would leave any `@ts-expect-error` directive "unused" under one
+            // of them.
+            const startupBundle: string = '@mathjax/src/bundle/startup.js';
+            await import(startupBundle);
             await MathJax.startup.promise;
 
             // Create MathJax processor.
