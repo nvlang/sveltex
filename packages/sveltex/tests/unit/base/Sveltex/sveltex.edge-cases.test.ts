@@ -20,7 +20,6 @@ describe("fuzzy '<div>', '</div>', '\\n', and '*test*' combinations", () => {
     describe.each([
         // 'markdown-it', 'marked', 'micromark',
         'unified',
-        // eslint-disable-next-line vitest/valid-describe-callback
     ] as const)(`%s`, { timeout: 120e3 }, (markdownBackend) => {
         fuzzyTest.prop(
             [

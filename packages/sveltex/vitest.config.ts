@@ -3,7 +3,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import os from 'node:os';
 
 export default defineConfig({
-    plugins: [tsconfigPaths()],
+    // `ignoreConfigErrors` silences parse errors for the e2e `tsconfig.json`
+    // files, which `extends` a SvelteKit-generated config that only exists
+    // after `svelte-kit sync`; they are irrelevant to unit-test path mapping.
+    plugins: [tsconfigPaths({ ignoreConfigErrors: true })],
     test: {
         include: ['./tests/unit/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
         exclude: ['./tests/e2e/**/*'],

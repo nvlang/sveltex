@@ -943,7 +943,6 @@ describe.concurrent('compile()', () => {
         });
     });
 
-    /* eslint-disable vitest/valid-describe-callback */
     describe.sequential(
         'caching',
         { timeout: 15e3, sequential: true, retry: 2 },
@@ -1161,8 +1160,6 @@ describe.concurrent('compile()', () => {
             );
         },
     );
-    /* eslint-enable vitest/valid-describe-callback */
-
     describe.sequential('overriding commands', () => {
         fixture();
         it('overrideCompilation, overrideConversion, and overrideOptimization', async () => {
@@ -1319,6 +1316,9 @@ describe('enactPresets()', () => {
 });
 
 describe('printLogProblems()', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
     it.each([
         [
             'respects verbosity setting',

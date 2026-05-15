@@ -43,7 +43,9 @@ describe("MathHandler<'katex'>", () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
             ok: true,
             text: async () =>
-                '/* mocked katex css */\n.katex { font-style: italic; }\n.katex .base { font-weight: normal; }',
+                Promise.resolve(
+                    '/* mocked katex css */\n.katex { font-style: italic; }\n.katex .base { font-weight: normal; }',
+                ),
         }));
 
         const mocks = await spy(

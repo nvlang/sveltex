@@ -1,5 +1,3 @@
-/* eslint-disable vitest/no-commented-out-tests */
-
 import type { CodeBackend } from '../../../../src/types/handlers/Code.js';
 import type { MarkdownBackend } from '../../../../src/types/handlers/Markdown.js';
 import type { MathBackend } from '../../../../src/types/handlers/Math.js';
@@ -368,7 +366,6 @@ describe('Sveltex.markup()', () => {
         });
     });
 
-    // eslint-disable-next-line vitest/valid-describe-callback
     describe.concurrent('transforms inline markdown', async () => {
         const preprocessor_ = await sveltex({
             markdownBackend: 'marked',
