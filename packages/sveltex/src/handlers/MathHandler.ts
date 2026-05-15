@@ -9,6 +9,7 @@ import type {
     MathProcessOptions,
 } from '../types/handlers/Math.js';
 import type { ProcessedSnippet } from '../types/utils/Escape.js';
+import type { MathjaxOptions } from '../types/utils/MathjaxOptions.js';
 
 // Internal dependencies
 import { getDefaultMathConfig } from '../base/defaults.js';
@@ -27,6 +28,119 @@ import { applyTransformations } from '../utils/transformers.js';
 import { is, join, nodeAssert, typeAssert } from '../deps.js';
 import { log } from '../utils/debug.js';
 import { diagnoseMathConfiguration } from '../utils/diagnosers/mathConfiguration.js';
+
+/**
+ * MathJax v4 splits its accessibility features across separately loadable
+ * components. A document-`options` key only gains a registered default once
+ * the component that owns it is loaded; passing an option whose component is
+ * not loaded makes MathJax log `Invalid option "<key>" (no default value)`.
+ *
+ * SvelTeX is a build-time preprocessor, so it loads only the components that
+ * are meaningful without a browser runtime. This table pairs each loadable
+ * accessibility component with the option keys it owns and a predicate that
+ * decides — from SvelTeX's `enable*` meta-options — whether to load it.
+ */
+const mathjaxA11yComponents: {
+    component: string;
+    keys: string[];
+    shouldLoad: (options: Record<string, unknown>) => boolean;
+}[] = [
+    {
+        component: 'a11y/assistive-mml',
+        keys: ['enableAssistiveMml'],
+        shouldLoad: (o) => o['enableAssistiveMml'] !== false,
+    },
+    {
+        component: 'a11y/semantic-enrich',
+        keys: ['enableEnrichment', 'enrichError'],
+        shouldLoad: (o) => o['enableEnrichment'] === true,
+    },
+    {
+        component: 'a11y/speech',
+        keys: [
+            'enableSpeech',
+            'enableBraille',
+            'speechError',
+            'sre',
+            'a11y',
+            'worker',
+        ],
+        shouldLoad: (o) =>
+            o['enableSpeech'] === true || o['enableBraille'] === true,
+    },
+    {
+        component: 'a11y/complexity',
+        keys: ['enableComplexity'],
+        shouldLoad: (o) => o['enableComplexity'] === true,
+    },
+];
+
+/**
+ * MathJax `options` keys owned by accessibility components that SvelTeX never
+ * loads — the `explorer` and contextual `menu` extensions both require a
+ * browser runtime. These keys are always stripped before the options are
+ * forwarded to MathJax.
+ */
+const mathjaxUnsupportedA11yKeys: string[] = [
+    'enableExplorer',
+    'enableMenu',
+    'menuOptions',
+];
+
+/**
+ * Resolves SvelTeX's accessibility meta-options into a concrete MathJax setup.
+ *
+ * The `enable*` flags in the MathJax `options` block are SvelTeX-level
+ * switches that decide which MathJax accessibility *components* to load. This
+ * returns the components to add to `loader.load`, together with a copy of
+ * `options` from which every key whose owning component is not loaded has
+ * been removed — so MathJax is never handed an option without a registered
+ * default.
+ *
+ * @param options - The MathJax document options from the SvelTeX config.
+ * @returns The accessibility components to load and the filtered options.
+ */
+export function resolveMathjaxA11y(options: MathjaxOptions | undefined): {
+    load: string[];
+    options: MathjaxOptions;
+} {
+    // MathJax's `options` is a loose key/value bag; treat it as such while
+    // deciding which components to load and which keys are safe to forward.
+    const provided = (options ?? {}) as unknown as Record<string, unknown>;
+    const load: string[] = [];
+    const blockedKeys = new Set<string>(mathjaxUnsupportedA11yKeys);
+    for (const { component, keys, shouldLoad } of mathjaxA11yComponents) {
+        if (shouldLoad(provided)) {
+            load.push(component);
+        } else {
+            // The component is not loaded, so MathJax would reject the keys
+            // it owns: keep them out of the forwarded options.
+            for (const key of keys) blockedKeys.add(key);
+        }
+    }
+    const forwarded: Record<string, unknown> = {};
+    for (const key of Object.keys(provided)) {
+        if (!blockedKeys.has(key)) forwarded[key] = provided[key];
+    }
+    return { load, options: forwarded };
+}
+
+/**
+ * Removes the `menuOptions` key that the `a11y/assistive-mml` component adds
+ * to `config.options` so the contextual menu — when present — can mirror the
+ * assistive-MathML setting. SvelTeX never loads the menu, so the key has no
+ * registered default; leaving it would make MathJax log
+ * `Invalid option "menuOptions"`. This runs from the MathJax `startup.ready`
+ * hook: after the component has executed, but before the document is created.
+ *
+ * @param config - The global `MathJax.config` object.
+ */
+export function stripMathjaxMenuOptions(config: Record<string, unknown>): void {
+    const options = config['options'];
+    if (options) {
+        delete (options as Record<string, unknown>)['menuOptions'];
+    }
+}
 
 export class MathHandler<B extends MathBackend> extends Handler<
     B,
@@ -377,7 +491,11 @@ export class MathHandler<B extends MathBackend> extends Handler<
              */
             interface MathJaxWithStartup {
                 config: Record<string, unknown>;
-                startup: { promise: Promise<unknown>; document: unknown };
+                startup: {
+                    promise: Promise<unknown>;
+                    document: unknown;
+                    defaultReady: () => void;
+                };
             }
 
             // Import the necessary functions and types from the `@mathjax/src`
@@ -407,6 +525,11 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     T
                 >;
 
+            // Resolve SvelTeX's accessibility meta-options into the MathJax
+            // a11y components to load and the option keys that are safe to
+            // forward (see `resolveMathjaxA11y`).
+            const a11y = resolveMathjaxA11y(config.mathjax.options);
+
             // Set the MathJax configuration defaults
             combineConfig(MathJax.config, {
                 loader: {
@@ -414,7 +537,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                         'input/tex',
                         `output/${config.outputFormat}`,
                         'adaptors/liteDOM',
-                        'a11y/assistive-mml',
+                        ...a11y.load,
                         ...(config.mathjax.load ?? []),
                     ],
                     paths: {
@@ -426,6 +549,17 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 startup: {
                     document: '',
                     typeset: false,
+                    /*
+                     * The `a11y/assistive-mml` component adds
+                     * `options.menuOptions` for the contextual menu, which
+                     * SvelTeX never loads; strip it before the document is
+                     * created so MathJax doesn't warn about an unregistered
+                     * option.
+                     */
+                    ready: () => {
+                        stripMathjaxMenuOptions(MathJax.config);
+                        MathJax.startup.defaultReady();
+                    },
                 },
                 output: {
                     font: `mathjax-${config.font}`,
@@ -439,8 +573,12 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 },
             });
 
-            // Add MathJax configuration passed to us
-            combineConfig(MathJax.config, config.mathjax);
+            // Add the MathJax configuration passed to us, with the document
+            // options narrowed to those whose components MathJax has loaded.
+            combineConfig(MathJax.config, {
+                ...config.mathjax,
+                options: a11y.options,
+            });
 
             // Load MathJax and wait for it to start up. The specifier is held
             // in a `string`-typed variable so that neither `tsc` nor Deno's

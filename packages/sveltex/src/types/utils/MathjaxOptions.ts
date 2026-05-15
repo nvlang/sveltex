@@ -74,7 +74,7 @@ export interface MathjaxConfiguration {
     load?: string[] | undefined;
 }
 
-type MathjaxOptions = MathjaxDocumentOptions &
+export type MathjaxOptions = MathjaxDocumentOptions &
     MathjaxSemanticEnrichOptions &
     MathjaxSpeechOptions &
     MathjaxAssistiveMmlOptions &

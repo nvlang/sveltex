@@ -13,6 +13,8 @@ Update the `mathjax` math backend to **MathJax v4**.
   build, which has a single preprocessor configuration.
 - **Accessible math by default.** The `mathjax` backend emits assistive MathML
   while leaving MathJax's own speech-string generation off — emitting both can
-  make some screen readers announce an expression twice.
+  make some screen readers announce an expression twice. SvelTeX's `enable*`
+  accessibility options now select which MathJax extensions are loaded, so
+  opting into speech, braille or semantic enrichment works as documented.
 - Modernized SvelTeX's element-detecting regexes (#25).
 - Updated dependencies, including some breaking major-version bumps.

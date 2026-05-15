@@ -38,6 +38,8 @@ describe("MathHandler<'mathjax'>", () => {
     let log: MockInstance;
     let existsSync: MockInstance;
     let writeFileEnsureDirSync: MockInstance;
+    /** `console.warn` output captured while the MathJax singleton starts up. */
+    const mathjaxStartupWarnings: string[] = [];
     beforeAll(async () => {
         vi.spyOn(
             await import('../../../../src/deps.js'),
@@ -67,6 +69,17 @@ describe("MathHandler<'mathjax'>", () => {
         log = mocks.log;
         existsSync = mocks.existsSync;
         writeFileEnsureDirSync = mocks.writeFileEnsureDirSync;
+
+        // Initialize the process-global MathJax singleton once, with
+        // `console.warn` captured: the accessibility-option handling must not
+        // make MathJax log any `Invalid option` warnings.
+        const warnSpy = vi
+            .spyOn(console, 'warn')
+            .mockImplementation((...args: unknown[]) => {
+                mathjaxStartupWarnings.push(args.map(String).join(' '));
+            });
+        await MathHandler.create('mathjax');
+        warnSpy.mockRestore();
     });
 
     afterAll(() => {
@@ -92,6 +105,15 @@ describe("MathHandler<'mathjax'>", () => {
                 enableSpeech: false,
             });
             expect(log).not.toHaveBeenCalled();
+        });
+
+        it('starts MathJax without any invalid-option warnings', () => {
+            // `resolveMathjaxA11y` forwards only options whose MathJax
+            // component is loaded, and the `startup.ready` hook strips the
+            // `menuOptions` key that the assistive-mml component injects.
+            expect(mathjaxStartupWarnings.join('\n')).not.toMatch(
+                /Invalid option/u,
+            );
         });
 
         it("doesn't generate CSS if the file already exists", async () => {
