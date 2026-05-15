@@ -1,5 +1,5 @@
 ---
-'@nvl/sveltex': major
+'@nvl/sveltex': minor
 ---
 
 Update the `mathjax` math backend to **MathJax v4**.
@@ -13,7 +13,6 @@ Update the `mathjax` math backend to **MathJax v4**.
   build, which has a single preprocessor configuration.
 - **Accessible math by default.** The `mathjax` backend emits assistive MathML
   while leaving MathJax's own speech-string generation off — emitting both can
-  make some screen readers announce an expression twice. KaTeX likewise emits
-  MathML by default now.
+  make some screen readers announce an expression twice.
 - Modernized SvelTeX's element-detecting regexes (#25).
 - Updated dependencies, including some breaking major-version bumps.
