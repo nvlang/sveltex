@@ -120,15 +120,18 @@ export function getDefaultMathConfig<
                         // fontURL:
                         //     'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/woff2',
                     },
-                    // options: {
-                    //     enableAssistiveMml: true,
-                    //     enableBraille: false,
-                    //     enableComplexity: false,
-                    //     enableEnrichment: false,
-                    //     enableExplorer: false,
-                    //     enableMenu: false,
-                    //     enableSpeech: false,
-                    // },
+                    // SvelTeX aims for accessible-by-default output. Assistive
+                    // MathML is emitted so screen readers can read the math,
+                    // while MathJax's own speech-/braille-string generation is
+                    // left off: emitting assistive MathML *and* speech strings
+                    // can make some screen readers announce the expression
+                    // twice.
+                    options: {
+                        enableAssistiveMml: true,
+                        enableBraille: false,
+                        enableEnrichment: false,
+                        enableSpeech: false,
+                    },
                 },
                 font: 'newcm',
                 outputFormat: 'chtml',

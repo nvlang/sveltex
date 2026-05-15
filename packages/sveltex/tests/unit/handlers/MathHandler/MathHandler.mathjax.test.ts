@@ -83,6 +83,17 @@ describe("MathHandler<'mathjax'>", () => {
             expect(log).not.toHaveBeenCalled();
         });
 
+        it('defaults to accessible MathML with speech generation off', async () => {
+            const handler = await MathHandler.create('mathjax');
+            expect(handler.configuration.mathjax.options).toEqual({
+                enableAssistiveMml: true,
+                enableBraille: false,
+                enableEnrichment: false,
+                enableSpeech: false,
+            });
+            expect(log).not.toHaveBeenCalled();
+        });
+
         it("doesn't generate CSS if the file already exists", async () => {
             existsSync.mockReturnValueOnce(true);
             await (await MathHandler.create('mathjax')).process('');
@@ -171,22 +182,20 @@ describe("MathHandler<'mathjax'>", () => {
                 );
             });
 
-            it('should return accessible math (CHTML)', async () => {
+            it('returns accessible math by default (CHTML)', async () => {
                 const handler = await MathHandler.create('mathjax', {
                     outputFormat: 'chtml',
-                    mathjax: {
-                        options: {
-                            enableSpeech: false,
-                            enableBraille: false,
-                            enableAssistiveMml: true,
-                            enableEnrichment: false,
-                        },
-                    },
                 });
-                expect(
-                    (await handler.process('\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}'))
-                        .processed,
-                ).toContain('mjx-assistive-mml');
+                const { processed } = await handler.process(
+                    '\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}',
+                );
+                // Assistive MathML is emitted by default, so screen readers
+                // can read the expression...
+                expect(processed).toContain('mjx-assistive-mml');
+                // ...while MathJax's own speech strings (which would be
+                // attached as an `aria-label`) are not, to avoid screen
+                // readers announcing the math twice.
+                expect(processed).not.toContain('aria-label');
                 expect(log).not.toHaveBeenCalled();
             });
 

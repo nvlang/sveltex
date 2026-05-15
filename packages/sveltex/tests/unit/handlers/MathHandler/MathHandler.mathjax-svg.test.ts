@@ -126,14 +126,18 @@ describe("MathHandler<'mathjax'> (SVG output)", () => {
                 expect(log).not.toHaveBeenCalled();
             });
 
-            it('should return accessible math (SVG)', async () => {
+            it('returns accessible math by default (SVG)', async () => {
                 const handler = await MathHandler.create('mathjax', {
                     outputFormat: 'svg',
                 });
-                expect(
-                    (await handler.process('\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}'))
-                        .processed,
-                ).toContain('mjx-assistive-mml');
+                const { processed } = await handler.process(
+                    '\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}',
+                );
+                // Assistive MathML is emitted by default, so screen readers
+                // can read the expression; MathJax's own speech strings
+                // (an `aria-label`) are not, to avoid double announcements.
+                expect(processed).toContain('mjx-assistive-mml');
+                expect(processed).not.toContain('aria-label');
                 expect(log).not.toHaveBeenCalled();
             });
 
