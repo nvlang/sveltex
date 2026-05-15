@@ -21,14 +21,10 @@ static/sveltex
 test-results
 tmp
 vitest-report
-# Legacy monolithic e2e app (kept for reference but generated files ignored)
-packages/sveltex/tests/e2e/sveltex.config.js
-packages/sveltex/tests/e2e/src/routes/generated/*
-
-# Generated per-combo project directories (written by generate.ts)
+# E2E tests: generated per-combo SvelteKit projects (written by generate.ts)
 packages/sveltex/tests/e2e/projects/
 
-# Shared template node_modules (installed once, symlinked into each project)
+# E2E tests: shared template install (symlinked into each generated project)
 packages/sveltex/tests/e2e/_template/node_modules/
 packages/sveltex/tests/e2e/_template/.svelte-kit/
 
@@ -40,15 +36,6 @@ scripts/tex/markdown
 scripts/tex/results
 scripts/tex/svg
 scripts/tex/svg-optimized
-
-tests/e2e/src/routes/generated
-tests/e2e/src/routes/+page.svelte
-tests/e2e/projects/
-tests/e2e/_template/node_modules/
-tests/e2e/_template/.svelte-kit/
-
-# Visual regression snapshots (committed intentionally; exclude OS noise)
-packages/sveltex/tests/e2e/snapshots/
 
 # Docs
 docs/.vitepress/cache/

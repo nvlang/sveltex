@@ -61,24 +61,17 @@ tests/e2e/
 
 4 × 4 × 5 = **80 combinations**.
 
-With 3 browsers (Chrome, Firefox, Galaxy S9+) that is **240 Playwright projects**, all
-running fully in parallel.
+Browsers are Playwright **projects** (`chrome`, `firefox`, `galaxy-s9`); each backend
+combo is a `describe` block within the single shared `combo.spec.ts`. Every browser
+project runs the full combo matrix, for a total of ~1900 screenshot tests.
 
-### Playwright project naming
+### How `combo.spec.ts` is parameterised
 
-Playwright project names follow the pattern `<combo-id>--<browser-name>`, e.g.:
-
-```
-unified-shiki-katex--chrome
-unified-shiki-katex--firefox
-unified-shiki-katex--galaxy-s9
-marked-highlight.js-mathjax-chtml-fira--chrome
-…
-```
-
-`combo.spec.ts` extracts the combo ID by stripping the last `--<browser>` suffix, then
-globs the corresponding `projects/<combo-id>/src/routes/` directory to discover which
-pages to test.
+A test file's module scope runs **once**, before Playwright assigns tests to projects,
+so a spec cannot know "which project am I". Instead, `combo.spec.ts` enumerates every
+combo at collection time, globs that combo's `projects/<combo-id>/src/routes/`
+directory, and registers one screenshot test per page — each pointed at its combo's own
+preview server via an absolute `http://localhost:<port>` URL.
 
 ---
 
@@ -105,16 +98,16 @@ pnpm test:e2e:golden
 pnpm playwright:golden
 ```
 
-### Run a single combo
+### Run a single combo (across all browsers)
 
 ```sh
-pnpm playwright --project "unified-shiki-katex--chrome"
+pnpm playwright -g "unified-shiki-katex"
 ```
 
-### Run a single combo across all browsers
+### Run a single browser
 
 ```sh
-pnpm playwright --project "unified-shiki-katex--*"
+pnpm playwright --project chrome
 ```
 
 ### Re-generate projects without reinstalling
@@ -150,8 +143,8 @@ pnpm playwright          # run tests
 
 ## Adding a new browser
 
-Edit the `BROWSERS` array near the top of `playwright.config.ts`.  No other changes
-are needed — the project matrix is generated automatically.
+Add an entry to the `projects` array in `playwright.config.ts`. No other changes are
+needed.
 
 ---
 

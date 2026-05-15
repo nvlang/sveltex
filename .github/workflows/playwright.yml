@@ -22,7 +22,7 @@ permissions:
 jobs:
   test:
     name: Run Playwright Tests
-    timeout-minutes: 20
+    timeout-minutes: 60
     runs-on: ubuntu-latest
 
     steps:
@@ -87,16 +87,20 @@ jobs:
         run: pnpm exec playwright install --with-deps
         working-directory: packages/sveltex
 
-      - name: Build SvelTeX
+      - name: Build @nvl/sveltex
         run: pnpm build
 
-      - name: Install Dependencies for Test Project
+      - name: Install test-project template dependencies
         run: pnpm --ignore-workspace install
-        working-directory: packages/sveltex/tests/e2e
+        working-directory: packages/sveltex/tests/e2e/_template
 
-      - name: Build Test Project
-        run: pnpm build
-        working-directory: packages/sveltex/tests/e2e
+      - name: Generate per-combo test projects
+        run: pnpm generate-projects
+        working-directory: packages/sveltex
+
+      - name: Build test projects
+        run: pnpm test:e2e:build
+        working-directory: packages/sveltex
 
       - name: Run Playwright tests
         run: pnpm playwright
