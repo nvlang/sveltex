@@ -79,7 +79,7 @@ describe('Sveltex.create()', () => {
                             verbatim: null,
                         },
                     ),
-            ).rejects.toThrowError(/Failed to create SvelTeX preprocessor\./u);
+            ).rejects.toThrow(/Failed to create SvelTeX preprocessor\./u);
         });
     });
     describe('logs error about missing dependencies', () => {
@@ -115,7 +115,7 @@ describe('Sveltex.create()', () => {
                         markdownBackend,
                         codeBackend,
                     }),
-            ).rejects.toThrowError(
+            ).rejects.toThrow(
                 /Failed to create SvelTeX preprocessor\.\n\nPlease install the necessary dependencies by running:/u,
             );
             expect(missingDeps).toContain(markdownBackend);

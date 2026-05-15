@@ -32,7 +32,7 @@ describe('SveltexCache', () => {
                 'exampleOutputDir',
                 'exampleCacheDir',
             );
-            expect(() => JSON.stringify(cache)).not.toThrowError();
+            expect(() => JSON.stringify(cache)).not.toThrow();
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { cacheDirGlob, ...otherProps } = cache;
             expect(JSON.parse(JSON.stringify(cache))).toEqual(otherProps);

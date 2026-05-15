@@ -21,7 +21,7 @@ function fixture() {
     });
 }
 
-describe.sequential('utils/cdn', () => {
+describe('utils/cdn', { concurrent: false }, () => {
     let log: MockInstance;
     fixture();
     beforeAll(async () => {

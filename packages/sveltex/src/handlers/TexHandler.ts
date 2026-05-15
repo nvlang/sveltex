@@ -18,10 +18,7 @@ import { SveltexCache } from '../utils/cache.js';
 import { Handler } from './Handler.js';
 import { pathExists } from '../utils/fs.js';
 import { mergeConfigs } from '../utils/merge.js';
-import type {
-    InterpretedAttributes,
-    ProcessedSnippet,
-} from '../types/utils/Escape.js';
+import type { ProcessedSnippet } from '../types/utils/Escape.js';
 import { isString } from '../typeGuards/utils.js';
 import { log } from '../utils/debug.js';
 
@@ -185,7 +182,7 @@ export class TexHandler extends Handler<
                 Object.entries(attributes).filter(
                     (entry) => entry[0] !== 'ref',
                 ),
-            ) as InterpretedAttributes;
+            );
 
             const tc = TexComponent.create({
                 ...options,

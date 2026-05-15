@@ -52,7 +52,7 @@ describe('CodeHandler.create', () => {
                         post: [() => '', ['a', 'b'], [/a/u, 'b']],
                         pre: [/a/u, 'b'],
                     },
-                } as CodeConfiguration<CodeBackend>,
+                },
             ],
         ]) as [CodeBackend, string, CodeConfiguration<CodeBackend>][],
     )('(%o, %s) → [object Object]', (backend, _configStr, config) => {
@@ -153,135 +153,177 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
         if (backend !== 'none') {
             describe('features', () => {
                 if (backend === 'starry-night' || backend === 'highlight.js') {
-                    describe.sequential('generates CSS on first run', () => {
-                        let writeFileEnsureDir: MockInstance;
-                        let log: MockInstance;
-                        let existsSync: MockInstance;
-                        beforeAll(async () => {
-                            const mocks = await spy([
-                                'writeFileEnsureDir',
-                                'log',
-                                'existsSync',
-                            ]);
-                            writeFileEnsureDir = mocks.writeFileEnsureDir;
-                            existsSync = mocks.existsSync;
-                            log = mocks.log;
-                        });
-                        afterAll(() => {
-                            writeFileEnsureDir.mockRestore();
-                            existsSync.mockRestore();
-                            log.mockRestore();
-                        });
-                        afterEach(() => {
-                            vi.clearAllMocks();
-                        });
-                        test.each([
-                            ...[['jsdelivr'], ['cdnjs']],
-                            ...['jsdelivr', 'cdnjs', 'esm.sh'].map(
-                                (cdn) =>
-                                    [[cdn, ...supportedCdns]] as [
-                                        [SupportedCdn, ...SupportedCdn[]],
-                                    ],
-                            ),
-                        ] as (
-                            | SupportedCdn
-                            | [SupportedCdn, ...SupportedCdn[]]
-                        )[])('cdn: %o', async (cdn) => {
-                            const handler = await CodeHandler.create(backend, {
-                                theme: { type: 'self-hosted', cdn },
+                    describe(
+                        'generates CSS on first run',
+                        { concurrent: false },
+                        () => {
+                            let writeFileEnsureDir: MockInstance;
+                            let log: MockInstance;
+                            let existsSync: MockInstance;
+                            beforeAll(async () => {
+                                const mocks = await spy([
+                                    'writeFileEnsureDir',
+                                    'log',
+                                    'existsSync',
+                                ]);
+                                writeFileEnsureDir = mocks.writeFileEnsureDir;
+                                existsSync = mocks.existsSync;
+                                log = mocks.log;
                             });
-                            await handler.process('', {});
-                            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
-                            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
-                                1,
-                                expect.stringMatching(
-                                    new RegExp(
-                                        `sveltex/${backend}@.*\\.css`,
-                                        'u',
-                                    ),
+                            afterAll(() => {
+                                writeFileEnsureDir.mockRestore();
+                                existsSync.mockRestore();
+                                log.mockRestore();
+                            });
+                            afterEach(() => {
+                                vi.clearAllMocks();
+                            });
+                            test.each([
+                                ...[['jsdelivr'], ['cdnjs']],
+                                ...['jsdelivr', 'cdnjs', 'esm.sh'].map(
+                                    (cdn) =>
+                                        [[cdn, ...supportedCdns]] as [
+                                            [SupportedCdn, ...SupportedCdn[]],
+                                        ],
                                 ),
-                                expect.stringContaining('color:'),
-                            );
-                            await handler.process('', {});
-                            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
-                        });
-
-                        test("shouldn't write CSS if configuration.theme.type is none", async () => {
-                            const handler = await CodeHandler.create(backend, {
-                                theme: { type: 'none' },
-                            });
-                            await handler.process('', {});
-                            expect(log).not.toHaveBeenCalled();
-                            expect(writeFileEnsureDir).not.toHaveBeenCalled();
-                            expect(existsSync).not.toHaveBeenCalled();
-                        });
-
-                        test("shouldn't write CSS if configuration is not valid", async () => {
-                            const handler = await CodeHandler.create(backend, {
-                                theme: 123 as unknown as { type: 'none' },
-                            });
-                            await handler.process('', {});
-                            expect(log).toHaveBeenCalledTimes(1);
-                            expect(writeFileEnsureDir).not.toHaveBeenCalled();
-                            expect(existsSync).not.toHaveBeenCalled();
-                        });
-
-                        test("should work even if version can't be fetched", async () => {
-                            const getVersionMock = vi
-                                .spyOn(
-                                    await import('../../../src/utils/env.js'),
-                                    'getVersion',
-                                )
-                                .mockResolvedValueOnce(undefined);
-                            const handler = await CodeHandler.create(backend, {
-                                theme: { type: 'self-hosted' },
-                            });
-                            await handler.process('', {});
-                            expect(writeFileEnsureDir).toHaveBeenCalledTimes(1);
-                            expect(writeFileEnsureDir).toHaveBeenNthCalledWith(
-                                1,
-                                expect.stringMatching(
-                                    new RegExp(
-                                        `static/sveltex/${backend}@latest.*\\.css`,
-                                        'u',
+                            ] as (
+                                | SupportedCdn
+                                | [SupportedCdn, ...SupportedCdn[]]
+                            )[])('cdn: %o', async (cdn) => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: { type: 'self-hosted', cdn },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenCalledTimes(1);
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenNthCalledWith(
+                                    1,
+                                    expect.stringMatching(
+                                        new RegExp(
+                                            `sveltex/${backend}@.*\\.css`,
+                                            'u',
+                                        ),
                                     ),
-                                ),
-                                expect.stringContaining('color:'),
-                            );
-                            getVersionMock.mockRestore();
-                        });
-
-                        test("should return early if CSS can't be fetched", async () => {
-                            const fetchCssMock = vi
-                                .spyOn(
-                                    await import('../../../src/utils/cdn.js'),
-                                    'fancyFetch',
-                                )
-                                .mockResolvedValueOnce(undefined);
-                            const handler = await CodeHandler.create(backend, {
-                                theme: { type: 'self-hosted' },
+                                    expect.stringContaining('color:'),
+                                );
+                                await handler.process('', {});
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenCalledTimes(1);
                             });
-                            await handler.process('', {});
-                            expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
-                            fetchCssMock.mockRestore();
-                        });
 
-                        test('should return early if CSS file is already present', async () => {
-                            const fetchCssMock = vi
-                                .spyOn(
-                                    await import('../../../src/utils/cdn.js'),
-                                    'fancyFetch',
-                                )
-                                .mockResolvedValueOnce(undefined);
-                            existsSync.mockReturnValueOnce(true);
-                            const handler = await CodeHandler.create(backend, {
-                                theme: { type: 'self-hosted' },
+                            test("shouldn't write CSS if configuration.theme.type is none", async () => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: { type: 'none' },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(log).not.toHaveBeenCalled();
+                                expect(
+                                    writeFileEnsureDir,
+                                ).not.toHaveBeenCalled();
+                                expect(existsSync).not.toHaveBeenCalled();
                             });
-                            await handler.process('', {});
-                            expect(writeFileEnsureDir).toHaveBeenCalledTimes(0);
-                            fetchCssMock.mockRestore();
-                        });
-                    });
+
+                            test("shouldn't write CSS if configuration is not valid", async () => {
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: 123 as unknown as {
+                                            type: 'none';
+                                        },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(log).toHaveBeenCalledTimes(1);
+                                expect(
+                                    writeFileEnsureDir,
+                                ).not.toHaveBeenCalled();
+                                expect(existsSync).not.toHaveBeenCalled();
+                            });
+
+                            test("should work even if version can't be fetched", async () => {
+                                const getVersionMock = vi
+                                    .spyOn(
+                                        await import('../../../src/utils/env.js'),
+                                        'getVersion',
+                                    )
+                                    .mockResolvedValueOnce(undefined);
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: { type: 'self-hosted' },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenCalledTimes(1);
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenNthCalledWith(
+                                    1,
+                                    expect.stringMatching(
+                                        new RegExp(
+                                            `static/sveltex/${backend}@latest.*\\.css`,
+                                            'u',
+                                        ),
+                                    ),
+                                    expect.stringContaining('color:'),
+                                );
+                                getVersionMock.mockRestore();
+                            });
+
+                            test("should return early if CSS can't be fetched", async () => {
+                                const fetchCssMock = vi
+                                    .spyOn(
+                                        await import('../../../src/utils/cdn.js'),
+                                        'fancyFetch',
+                                    )
+                                    .mockResolvedValueOnce(undefined);
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: { type: 'self-hosted' },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenCalledTimes(0);
+                                fetchCssMock.mockRestore();
+                            });
+
+                            test('should return early if CSS file is already present', async () => {
+                                const fetchCssMock = vi
+                                    .spyOn(
+                                        await import('../../../src/utils/cdn.js'),
+                                        'fancyFetch',
+                                    )
+                                    .mockResolvedValueOnce(undefined);
+                                existsSync.mockReturnValueOnce(true);
+                                const handler = await CodeHandler.create(
+                                    backend,
+                                    {
+                                        theme: { type: 'self-hosted' },
+                                    },
+                                );
+                                await handler.process('', {});
+                                expect(
+                                    writeFileEnsureDir,
+                                ).toHaveBeenCalledTimes(0);
+                                fetchCssMock.mockRestore();
+                            });
+                        },
+                    );
                 }
                 describe('escapes special characters', () => {
                     test.each([

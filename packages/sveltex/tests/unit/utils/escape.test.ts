@@ -98,7 +98,7 @@ describe.concurrent.shuffle('escape()', () => {
                                 metaString: info,
                             },
                         },
-                    } as Partial<EscapedSnippet<'code'>>,
+                    },
                 ],
             ]),
         ],
@@ -1357,7 +1357,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                     if (n === -1) {
                         expect(() =>
                             parseToMdast(document, ['Verb', 'V3_rb']),
-                        ).toThrowError();
+                        ).toThrow();
                     } else {
                         const ast = parseToMdast(document, ['Verb', 'V3_rb']);
                         expect(
@@ -1403,7 +1403,7 @@ describe.concurrent.shuffle('getMdastES()', () => {
                                         dollars: enabled,
                                         inline: { singleDollar },
                                         doubleDollarSignsDisplay: 'always',
-                                    } as WithDelims['delims'],
+                                    },
                                     !enabled || (n === 1 && !singleDollar)
                                         ? []
                                         : [

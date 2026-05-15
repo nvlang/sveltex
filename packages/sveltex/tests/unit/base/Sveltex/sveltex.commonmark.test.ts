@@ -118,7 +118,7 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
     const sections = ['Code spans', 'Fenced code blocks'];
     describe.each(sections)('%s', (section) => {
         describe.each(processors)('$markdownBackend + $codeBackend', (s) => {
-            it.sequential.each(
+            it.each(
                 commonMarkSpec.filter(
                     ({ section: sec, markdown, example }) =>
                         sec === section &&
@@ -126,66 +126,73 @@ describe.concurrent('CommonMark compliance (with highlighters)', () => {
                         !exceptions.all.includes(example) &&
                         !exceptions[s.markdownBackend].includes(example),
                 ),
-            )('$example: $markdown', async ({ markdown, html, example }) => {
-                const code = (
-                    await s.markup({
-                        content: markdown,
-                        filename: `${String(example)}.sveltex`,
-                    })
-                )?.code;
-                let expected: string = html;
-                // code = code?.replaceAll(' class="language-plaintext"', '');
-                // html = html.replace(/<p>(.*?)<\/p>/gsu, '$1');
-                // code = code?.replace(/<p>(.*?)<\/p>/gsu, '$1');
+            )(
+                '$example: $markdown',
+                { concurrent: false },
+                async ({ markdown, html, example }) => {
+                    const code = (
+                        await s.markup({
+                            content: markdown,
+                            filename: `${String(example)}.sveltex`,
+                        })
+                    )?.code;
+                    let expected: string = html;
+                    // code = code?.replaceAll(' class="language-plaintext"', '');
+                    // html = html.replace(/<p>(.*?)<\/p>/gsu, '$1');
+                    // code = code?.replace(/<p>(.*?)<\/p>/gsu, '$1');
 
-                expect(code).toBeDefined();
-                nodeAssert(code !== undefined);
-                // The CommonMark tests don't take into account any actual
-                // syntax highlighting (which is completely fair, of course —
-                // that's not part of the spec). However, in our case, we still
-                // want to test some of the behavior even when a syntax
-                // highlighter is being used. So, we need to remove the syntax
-                // highlighting parts from the output, so that we can compare
-                // the rest of the output to the expected output. NB: it is not
-                // always trivial (or true) that "(syntax highlighted code) -
-                // (highlighting tags) = (original code, with special characters
-                // escaped)".
-                let actual = code
-                    .replace(/<script[^>]*>.*?<\/script>\n/gsu, '')
-                    .replace(/<svelte:head>.*?<\/svelte:head>\n/su, '')
-                    .replaceAll(/<\/?span[^>]*>/gu, '')
-                    .replaceAll(/class="(language-\S+)?.*?"/gu, 'class="$1"')
-                    .replaceAll(' class=""', '');
-                if (s.codeBackend === 'shiki') {
-                    actual = actual
-                        .replaceAll(/ style=".*?"/gu, '')
-                        .replaceAll(/ tabindex=".*?"/gu, '')
-                        .replaceAll(/ startline=".*?"/gu, '')
-                        // shiki escapes double quotes. Since this shouldn't
-                        // make any difference in practice, it seems acceptable
-                        // to me to ignore that discrepancy in the test.
-                        .replaceAll('"', '&quot;');
-                    // shiki escapes < differently. Since this shouldn't make
-                    // any difference in practice, it seems acceptable to me to
-                    // ignore that discrepancy in the test.
-                    expected = expected.replaceAll('&lt;', '&#x3C;');
-                }
-                if (s.markdownBackend === 'unified') {
-                    actual = actual.replaceAll('"', '&quot;');
-                    // unified doesn't escape > (as it's technically
-                    // superfluous). Since this shouldn't make any difference in
-                    // practice, it seems acceptable to me to ignore that
-                    // discrepancy in the test.
-                    expected = expected.replaceAll('&gt;', '>');
-                }
-                if (s.codeBackend === 'shiki') {
-                    expected = expected.replaceAll('&gt;', '>');
-                    actual = actual.replaceAll('&gt;', '>');
-                }
-                actual = normalizeHtml(actual, s.markdownBackend);
-                expected = normalizeHtml(expected, s.markdownBackend);
-                expect(actual).toEqual(expected);
-            });
+                    expect(code).toBeDefined();
+                    nodeAssert(code !== undefined);
+                    // The CommonMark tests don't take into account any actual
+                    // syntax highlighting (which is completely fair, of course —
+                    // that's not part of the spec). However, in our case, we still
+                    // want to test some of the behavior even when a syntax
+                    // highlighter is being used. So, we need to remove the syntax
+                    // highlighting parts from the output, so that we can compare
+                    // the rest of the output to the expected output. NB: it is not
+                    // always trivial (or true) that "(syntax highlighted code) -
+                    // (highlighting tags) = (original code, with special characters
+                    // escaped)".
+                    let actual = code
+                        .replace(/<script[^>]*>.*?<\/script>\n/gsu, '')
+                        .replace(/<svelte:head>.*?<\/svelte:head>\n/su, '')
+                        .replaceAll(/<\/?span[^>]*>/gu, '')
+                        .replaceAll(
+                            /class="(language-\S+)?.*?"/gu,
+                            'class="$1"',
+                        )
+                        .replaceAll(' class=""', '');
+                    if (s.codeBackend === 'shiki') {
+                        actual = actual
+                            .replaceAll(/ style=".*?"/gu, '')
+                            .replaceAll(/ tabindex=".*?"/gu, '')
+                            .replaceAll(/ startline=".*?"/gu, '')
+                            // shiki escapes double quotes. Since this shouldn't
+                            // make any difference in practice, it seems acceptable
+                            // to me to ignore that discrepancy in the test.
+                            .replaceAll('"', '&quot;');
+                        // shiki escapes < differently. Since this shouldn't make
+                        // any difference in practice, it seems acceptable to me to
+                        // ignore that discrepancy in the test.
+                        expected = expected.replaceAll('&lt;', '&#x3C;');
+                    }
+                    if (s.markdownBackend === 'unified') {
+                        actual = actual.replaceAll('"', '&quot;');
+                        // unified doesn't escape > (as it's technically
+                        // superfluous). Since this shouldn't make any difference in
+                        // practice, it seems acceptable to me to ignore that
+                        // discrepancy in the test.
+                        expected = expected.replaceAll('&gt;', '>');
+                    }
+                    if (s.codeBackend === 'shiki') {
+                        expected = expected.replaceAll('&gt;', '>');
+                        actual = actual.replaceAll('&gt;', '>');
+                    }
+                    actual = normalizeHtml(actual, s.markdownBackend);
+                    expected = normalizeHtml(expected, s.markdownBackend);
+                    expect(actual).toEqual(expected);
+                },
+            );
         });
     });
 });

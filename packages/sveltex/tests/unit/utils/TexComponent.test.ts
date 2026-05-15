@@ -625,7 +625,7 @@ describe('TexHandler.process()', () => {
                             selfClosing: false,
                             config: defaultConfig,
                         }),
-                ).rejects.toThrowError(/ref.*attribute/isu);
+                ).rejects.toThrow(/ref.*attribute/isu);
             },
         );
     });
@@ -855,7 +855,7 @@ describe.concurrent('compile()', () => {
                                 name: 'tikz',
                                 libraries: { shadings: true },
                             },
-                        } as VerbEnvConfigTex,
+                        },
                     );
                     await ath.process(
                         [
@@ -914,7 +914,7 @@ describe.concurrent('compile()', () => {
                                 name: 'tikz',
                                 libraries: { shadings: true },
                             },
-                        } as VerbEnvConfigTex,
+                        },
                     );
                     await ath.process(
                         [
@@ -943,224 +943,215 @@ describe.concurrent('compile()', () => {
         });
     });
 
-    describe.sequential(
-        'caching',
-        { timeout: 15e3, sequential: true, retry: 2 },
-        () => {
-            fixture();
-            it.each([
-                ...cartesianProduct(
-                    ['pdflatex', 'lualatex', 'xelatex'],
-                    ['pdf', 'dvi'],
-                    ['dvisvgm'],
-                ),
-                ...cartesianProduct([...texEngines], ['pdf'], ['poppler']),
-            ])(
-                '%s (%s) + %s',
-                { timeout: 300e3, retry: 2, sequential: true },
-                async (engine, intermediateFiletype, converter) => {
-                    const {
-                        writeFile: writeFile_,
-                        spawnCliInstruction,
-                        log,
-                    } = await spy(
-                        ['writeFile', 'spawnCliInstruction', 'log'],
-                        false,
-                    );
-                    log.mockReset();
-                    const id = uuid();
-                    const ref = 'ref';
+    describe('caching', { timeout: 15e3, sequential: true, retry: 2 }, () => {
+        fixture();
+        it.each([
+            ...cartesianProduct(
+                ['pdflatex', 'lualatex', 'xelatex'],
+                ['pdf', 'dvi'],
+                ['dvisvgm'],
+            ),
+            ...cartesianProduct([...texEngines], ['pdf'], ['poppler']),
+        ])(
+            '%s (%s) + %s',
+            { timeout: 300e3, retry: 2, sequential: true },
+            async (engine, intermediateFiletype, converter) => {
+                const {
+                    writeFile: writeFile_,
+                    spawnCliInstruction,
+                    log,
+                } = await spy(
+                    ['writeFile', 'spawnCliInstruction', 'log'],
+                    false,
+                );
+                log.mockReset();
+                const id = uuid();
+                const ref = 'ref';
 
-                    // Create some unused cache subdirectories
-                    await fs.writeFileEnsureDir(
-                        `tmp/tests/${id}/cache/test/test1.tex`,
-                        'test1',
-                    );
-                    await fs.writeFileEnsureDir(
-                        `tmp/tests/${id}/cache/a/b/c/test2.tex`,
-                        'test2',
-                    );
-                    await fs.writeFileEnsureDir(
-                        `tmp/tests/${id}/cache/tex/${ref}/a/b/c/test3.tex`,
-                        'test3',
-                    );
+                // Create some unused cache subdirectories
+                await fs.writeFileEnsureDir(
+                    `tmp/tests/${id}/cache/test/test1.tex`,
+                    'test1',
+                );
+                await fs.writeFileEnsureDir(
+                    `tmp/tests/${id}/cache/a/b/c/test2.tex`,
+                    'test2',
+                );
+                await fs.writeFileEnsureDir(
+                    `tmp/tests/${id}/cache/tex/${ref}/a/b/c/test3.tex`,
+                    'test3',
+                );
 
-                    vi.clearAllMocks();
+                vi.clearAllMocks();
 
-                    const ath = await TexHandler.create({
-                        caching: { cacheDirectory: `tmp/tests/${id}/cache` },
-                        conversion: {
-                            outputDirectory: `tmp/tests/${id}/output`,
-                        },
-                    });
-                    const config = mergeConfigs(
-                        getDefaultVerbEnvConfig('tex'),
-                        {
-                            overrides: {
-                                compilation: { engine, intermediateFiletype },
-                                conversion: { converter },
-                            },
-                        },
-                    );
-                    await ath.process('$x$', {
-                        attributes: { ref },
-                        filename: `file-${ref}.sveltex`,
-                        selfClosing: false,
-                        tag: 'tex',
-                        config,
-                    });
+                const ath = await TexHandler.create({
+                    caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                    conversion: {
+                        outputDirectory: `tmp/tests/${id}/output`,
+                    },
+                });
+                const config = mergeConfigs(getDefaultVerbEnvConfig('tex'), {
+                    overrides: {
+                        compilation: { engine, intermediateFiletype },
+                        conversion: { converter },
+                    },
+                });
+                await ath.process('$x$', {
+                    attributes: { ref },
+                    filename: `file-${ref}.sveltex`,
+                    selfClosing: false,
+                    tag: 'tex',
+                    config,
+                });
 
-                    // Compile
-                    //
-                    // Regular run:
-                    // 1. 1st `writeFile`, for `cache.json` file.
-                    // 2. Svelte → TeX: 2nd `writeFile`, for `.tex` file.
-                    // 3. TeX → DVI/PDF: 1st `spawnCliInstruction`, for TeX
-                    //    engine.
-                    // 4. DVI/PDF → SVG: Now it splits into two branches:
-                    //   - dvisvgm:
-                    //     1. 2nd `spawnCliInstruction`, for conversion with
-                    //        dvisvgm.
-                    //     2. 1st `readFile`, for `.svg` file.
-                    //   - Poppler:
-                    //     1. Conversion with Poppler via `node-poppler`.
-                    // 5. SVG → Svelte:
-                    //     1. Optimization with SVGO.
-                    //     2. 3rd `writeFile`, for `.svg` file.
-                    //     3. Rename file via `node:fs`.
-                    // 6. 4th `writeFile`, to write cache to `cache.json`.
-                    //
-                    // expect(writeFile).toHaveBeenCalledTimes(4);
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        1,
-                        `tmp/tests/${id}/cache/cache.json`,
-                        expect.stringMatching(/\{"int":\{\},"svg":\{\}\}/isu),
-                        'utf8',
-                    );
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        2,
-                        `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
-                        expect.stringContaining('\\documentclass'),
-                        'utf8',
-                    );
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        3,
-                        `tmp/tests/${id}/output/tex/${ref}.svg`,
-                        expect.stringContaining('<svg'),
-                        'utf8',
-                    );
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        4,
-                        `tmp/tests/${id}/cache/cache.json`,
-                        expect.stringMatching(
-                            new RegExp(
-                                `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
-                                'u',
-                            ),
+                // Compile
+                //
+                // Regular run:
+                // 1. 1st `writeFile`, for `cache.json` file.
+                // 2. Svelte → TeX: 2nd `writeFile`, for `.tex` file.
+                // 3. TeX → DVI/PDF: 1st `spawnCliInstruction`, for TeX
+                //    engine.
+                // 4. DVI/PDF → SVG: Now it splits into two branches:
+                //   - dvisvgm:
+                //     1. 2nd `spawnCliInstruction`, for conversion with
+                //        dvisvgm.
+                //     2. 1st `readFile`, for `.svg` file.
+                //   - Poppler:
+                //     1. Conversion with Poppler via `node-poppler`.
+                // 5. SVG → Svelte:
+                //     1. Optimization with SVGO.
+                //     2. 3rd `writeFile`, for `.svg` file.
+                //     3. Rename file via `node:fs`.
+                // 6. 4th `writeFile`, to write cache to `cache.json`.
+                //
+                // expect(writeFile).toHaveBeenCalledTimes(4);
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    1,
+                    `tmp/tests/${id}/cache/cache.json`,
+                    expect.stringMatching(/\{"int":\{\},"svg":\{\}\}/isu),
+                    'utf8',
+                );
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    2,
+                    `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
+                    expect.stringContaining('\\documentclass'),
+                    'utf8',
+                );
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    3,
+                    `tmp/tests/${id}/output/tex/${ref}.svg`,
+                    expect.stringContaining('<svg'),
+                    'utf8',
+                );
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    4,
+                    `tmp/tests/${id}/cache/cache.json`,
+                    expect.stringMatching(
+                        new RegExp(
+                            `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
+                            'u',
                         ),
-                        'utf8',
-                    );
+                    ),
+                    'utf8',
+                );
 
-                    expect(spawnCliInstruction).toHaveBeenCalledTimes(
-                        1 + +(converter === 'dvisvgm'),
-                    );
-                    expect(spawnCliInstruction).toHaveBeenNthCalledWith(
-                        1,
-                        expect.objectContaining({
-                            command:
-                                texBaseCommand[engine as SupportedTexEngine],
-                        }),
-                    );
+                expect(spawnCliInstruction).toHaveBeenCalledTimes(
+                    1 + +(converter === 'dvisvgm'),
+                );
+                expect(spawnCliInstruction).toHaveBeenNthCalledWith(
+                    1,
+                    expect.objectContaining({
+                        command: texBaseCommand[engine as SupportedTexEngine],
+                    }),
+                );
 
-                    // const existsSync = await spy('existsSync');
-                    // existsSync.mockImplementation(
-                    //     (path: string) =>
-                    //         !!path.match(/\.(tex|dvi|svelte)$/),
-                    // );
+                // const existsSync = await spy('existsSync');
+                // existsSync.mockImplementation(
+                //     (path: string) =>
+                //         !!path.match(/\.(tex|dvi|svelte)$/),
+                // );
 
-                    expect(log).toHaveBeenCalledTimes(3);
-                    expect(log).toHaveBeenNthCalledWith(
-                        1,
-                        'info',
-                        expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/test\/?$/u,
+                expect(log).toHaveBeenCalledTimes(3);
+                expect(log).toHaveBeenNthCalledWith(
+                    1,
+                    'info',
+                    expect.stringMatching(
+                        /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/test\/?$/u,
+                    ),
+                );
+                expect(log).toHaveBeenNthCalledWith(
+                    2,
+                    'info',
+                    expect.stringMatching(
+                        /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/a\/?$/u,
+                    ),
+                );
+                expect(log).toHaveBeenNthCalledWith(
+                    3,
+                    'info',
+                    expect.stringMatching(
+                        /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/tex\/ref\/a(\/?)$/u,
+                    ),
+                );
+
+                vi.clearAllMocks();
+
+                // Everything as before => no compilation.
+                await ath.process('$x$', {
+                    attributes: { ref },
+                    filename: `file-${ref}.sveltex`,
+                    selfClosing: false,
+                    tag: 'tex',
+                    config,
+                });
+
+                expect(writeFile_).toHaveBeenCalledTimes(0);
+                expect(spawnCliInstruction).toHaveBeenCalledTimes(0);
+                expect(log).toHaveBeenCalledTimes(0);
+
+                vi.clearAllMocks();
+
+                // Different .tex hash, same PDF content & hash => compilation, but
+                // no conversion.
+                await ath.process('$x$%', {
+                    attributes: { ref },
+                    filename: `file-${ref}.sveltex`,
+                    selfClosing: false,
+                    tag: 'tex',
+                    config,
+                });
+
+                expect(log).toHaveBeenCalledTimes(0);
+                expect(writeFile_).toHaveBeenCalledTimes(2);
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    1,
+                    `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
+                    expect.stringContaining('\\documentclass'),
+                    'utf8',
+                );
+                expect(writeFile_).toHaveBeenNthCalledWith(
+                    2,
+                    `tmp/tests/${id}/cache/cache.json`,
+                    expect.stringMatching(
+                        new RegExp(
+                            `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
+                            'u',
                         ),
-                    );
-                    expect(log).toHaveBeenNthCalledWith(
-                        2,
-                        'info',
-                        expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/a\/?$/u,
-                        ),
-                    );
-                    expect(log).toHaveBeenNthCalledWith(
-                        3,
-                        'info',
-                        expect.stringMatching(
-                            /^Deleting unused cache subdirectory: .*\/tmp\/tests\/[\w-]{36}\/cache\/tex\/ref\/a(\/?)$/u,
-                        ),
-                    );
-
-                    vi.clearAllMocks();
-
-                    // Everything as before => no compilation.
-                    await ath.process('$x$', {
-                        attributes: { ref },
-                        filename: `file-${ref}.sveltex`,
-                        selfClosing: false,
-                        tag: 'tex',
-                        config,
-                    });
-
-                    expect(writeFile_).toHaveBeenCalledTimes(0);
-                    expect(spawnCliInstruction).toHaveBeenCalledTimes(0);
-                    expect(log).toHaveBeenCalledTimes(0);
-
-                    vi.clearAllMocks();
-
-                    // Different .tex hash, same PDF content & hash => compilation, but
-                    // no conversion.
-                    await ath.process('$x$%', {
-                        attributes: { ref },
-                        filename: `file-${ref}.sveltex`,
-                        selfClosing: false,
-                        tag: 'tex',
-                        config,
-                    });
-
-                    expect(log).toHaveBeenCalledTimes(0);
-                    expect(writeFile_).toHaveBeenCalledTimes(2);
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        1,
-                        `tmp/tests/${id}/cache/tex/${ref}/root.tex`,
-                        expect.stringContaining('\\documentclass'),
-                        'utf8',
-                    );
-                    expect(writeFile_).toHaveBeenNthCalledWith(
-                        2,
-                        `tmp/tests/${id}/cache/cache.json`,
-                        expect.stringMatching(
-                            new RegExp(
-                                `\\{"int":\\{"tex/${ref}":\\{"sourceHash":"[\\w-]{43}","hash":"([\\w-]{43})"\\}\\},"svg":\\{"tex/${ref}":\\{"sourceHash":"\\1"\\}\\}\\}`,
-                                'u',
-                            ),
-                        ),
-                        'utf8',
-                    );
-                    expect(spawnCliInstruction).toHaveBeenCalledTimes(1);
-                    expect(spawnCliInstruction).toHaveBeenNthCalledWith(
-                        1,
-                        expect.objectContaining({
-                            command:
-                                texBaseCommand[engine as SupportedTexEngine],
-                        }),
-                    );
-                    vi.restoreAllMocks();
-                },
-            );
-        },
-    );
-    describe.sequential('overriding commands', () => {
+                    ),
+                    'utf8',
+                );
+                expect(spawnCliInstruction).toHaveBeenCalledTimes(1);
+                expect(spawnCliInstruction).toHaveBeenNthCalledWith(
+                    1,
+                    expect.objectContaining({
+                        command: texBaseCommand[engine as SupportedTexEngine],
+                    }),
+                );
+                vi.restoreAllMocks();
+            },
+        );
+    });
+    describe('overriding commands', { concurrent: false }, () => {
         fixture();
         it('overrideCompilation, overrideConversion, and overrideOptimization', async () => {
             const id = uuid();
@@ -1187,6 +1178,7 @@ describe.concurrent('compile()', () => {
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- the assertion contextually types the inline override callbacks below
                 config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
                     type: 'tex',
                     overrides: {

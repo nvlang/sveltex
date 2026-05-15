@@ -144,7 +144,7 @@ describe.concurrent('config/defaults', () => {
                 (type) => {
                     expect(() =>
                         getDefaultVerbEnvConfig(type as VerbatimType),
-                    ).toThrowError();
+                    ).toThrow();
                 },
             );
         });

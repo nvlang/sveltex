@@ -30,22 +30,22 @@ describe.concurrent('Sveltex', () => {
                     codeBackend: 'unknown' as 'none',
                     mathBackend: 'unknown' as 'none',
                 }),
-            ).rejects.toThrowError();
+            ).rejects.toThrow();
             await expect(async () =>
                 sveltex({
                     markdownBackend: 'unknown' as 'none',
                 }),
-            ).rejects.toThrowError();
+            ).rejects.toThrow();
             await expect(async () =>
                 sveltex({
                     codeBackend: 'unknown' as 'none',
                 }),
-            ).rejects.toThrowError();
+            ).rejects.toThrow();
             await expect(async () =>
                 sveltex({
                     mathBackend: 'unknown' as 'none',
                 }),
-            ).rejects.toThrowError();
+            ).rejects.toThrow();
         });
     });
 
@@ -121,7 +121,7 @@ describe.concurrent('Sveltex', () => {
     //                     'mathjax-full',
     //                     'local',
     //                 ),
-    //         ).rejects.toThrowError(
+    //         ).rejects.toThrow(
     //             'Failed to create Sveltex preprocessor.\n\nPlease install the necessary dependencies by running:\n\npnpm add -D unified remark-parse remark-rehype rehype-stringify @wooorm/starry-night hast-util-find-and-replace hast-util-to-html mathjax-full',
     //         );
     //         expect(missingDeps).toEqual([

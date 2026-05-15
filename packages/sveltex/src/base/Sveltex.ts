@@ -76,7 +76,7 @@ export async function sveltex<
         backendChoices?.markdownBackend ?? ('none' as M),
         backendChoices?.codeBackend ?? ('none' as C),
         backendChoices?.mathBackend ?? ('none' as T),
-        configuration ?? ({} as SveltexConfiguration<M, C, T>),
+        configuration ?? {},
     );
     return s;
 }
@@ -98,8 +98,7 @@ export class Sveltex<
     M extends MarkdownBackend = 'none',
     C extends CodeBackend = 'none',
     T extends MathBackend = 'none',
-> implements PreprocessorGroup
-{
+> implements PreprocessorGroup {
     /**
      * The name of the preprocessor group.
      */
@@ -246,7 +245,7 @@ export class Sveltex<
                 'sveltex.config.cjs',
                 'sveltex.config.mjs',
             ].map((path) => resolve(path)),
-        } as Processed;
+        };
     };
 
     /**
