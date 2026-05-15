@@ -34,7 +34,6 @@ export default defineConfig({
                 '**/legacy/**',
                 '**/html/**',
             ],
-            ignoreEmptyLines: true,
             reportOnFailure: true,
         },
         reporters: [
