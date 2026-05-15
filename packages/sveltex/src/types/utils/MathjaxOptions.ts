@@ -1266,7 +1266,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * null
      * ```
      */
-    cssStyles?: unknown | null;
+    cssStyles?: unknown;
 }
 
 /**

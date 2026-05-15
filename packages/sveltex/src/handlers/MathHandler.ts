@@ -128,7 +128,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
     /* v8 ignore next 2 (unreachable code) */
     // eslint-disable-next-line @typescript-eslint/class-methods-use-this
     private readonly _updateCss: (mathHandler: this) => Promise<void> =
-        async () => undefined;
+        async () => Promise.resolve();
 
     public get updateCss(): () => Promise<void> {
         return async () => {
@@ -139,13 +139,14 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 (this._configuration as FullMathConfiguration<'mathjax'>)
                     .outputFormat === 'chtml'
             ) {
-                this._updateCss(this);
+                await this._updateCss(this);
             }
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/class-methods-use-this
     private readonly _cleanup: (mathHandler: this) => Promise<void> =
-        async () => undefined;
+        async () => Promise.resolve();
     public get cleanup(): () => Promise<void> {
         return async () => {
             await this._cleanup(this);
@@ -369,20 +370,31 @@ export class MathHandler<B extends MathBackend> extends Handler<
             );
 
             // Merge user-provided configuration into the default configuration.
-            let config = mergeConfigs(
+            const config = mergeConfigs(
                 getDefaultMathConfig('mathjax', userConfig?.css?.type),
                 userConfig ?? {},
             );
 
             const fmt = config.outputFormat;
 
+            /**
+             * The MathJax component bundle augments the global `MathJax`
+             * object with a `startup` property at runtime; this isn't
+             * reflected in `@mathjax/src`'s published type declarations.
+             */
+            interface MathJaxWithStartup {
+                config: Record<string, unknown>;
+                startup: { promise: Promise<unknown>; document: unknown };
+            }
+
             // Import the necessary functions and types from the `@mathjax/src`
             // package, and throw an error if the import fails.
-            let MathJax, combineConfig;
+            let MathJax: MathJaxWithStartup;
+            let combineConfig: (dst: unknown, src: unknown) => unknown;
             try {
                 const { MathJax: _MathJax, combineConfig: _combineConfig } =
                     await import('@mathjax/src/js/components/global.js');
-                MathJax = _MathJax;
+                MathJax = _MathJax as unknown as MathJaxWithStartup;
                 combineConfig = _combineConfig;
             } catch (err) {
                 // If the import fails, add `@mathjax/src` to the list of
@@ -415,7 +427,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
                     paths: {
                         mathjax: '@mathjax/src/bundle',
                     },
-                    require: (file: string) => import(file),
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- MathJax loader hook; the module specifier is resolved at runtime
+                    require: async (file: string) => import(file),
                 },
                 startup: {
                     document: '',
@@ -436,17 +449,15 @@ export class MathHandler<B extends MathBackend> extends Handler<
             // Add MathJax configuration passed to us
             combineConfig(MathJax.config, config.mathjax);
 
-            // Load MathJax and wait for it to start up
-            /* @ts-expect-error */
+            // Load MathJax and wait for it to start up.
+            // @ts-expect-error: the prebuilt `@mathjax/src` startup bundle ships without type declarations.
             await import('@mathjax/src/bundle/startup.js');
-            /* @ts-expect-error */
             await MathJax.startup.promise;
 
-            // Create MathJax processor
-            /* @ts-expect-error */
+            // Create MathJax processor.
             const processor = MathJax.startup.document as MathDocument<
                 HTMLElement,
-                any,
+                unknown,
                 string
             >;
 
@@ -536,9 +547,8 @@ export class MathHandler<B extends MathBackend> extends Handler<
              * page is processed last, we have to call this function at the
              * end of every page that contains any MathJax math.
              */
-            const updateCss: (
-                mathHandler: MathHandler<'mathjax'>,
-            ) => Promise<void> = async () => {
+            // eslint-disable-next-line @typescript-eslint/require-await -- async only to satisfy the `_updateCss` signature; the body is synchronous
+            const updateCss = async (): Promise<void> => {
                 nodeAssert(
                     fmt === 'chtml',
                     "Expected `outputFormat` to be 'chtml' in `updateCss` call.",

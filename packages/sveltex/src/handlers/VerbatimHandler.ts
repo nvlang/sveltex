@@ -279,14 +279,14 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                 processed =
                     selfClosing && respectSelfClosing
                         ? outputTagOpen
-                        : outputTagOpen + processed + outputTagClose;
+                        : outputTagOpen + (processed ?? '') + outputTagClose;
             }
             // If we're given a self-closing component as input, and outputTag
             // is null (indicating that the processed "inner content" shouldn't
             // be wrapped in any component afterwards), then I think the most
             // reasonable thing to do is to return an empty string.
-            else if (processed === undefined) {
-                processed = '';
+            else {
+                processed ??= '';
             }
 
             return { processed, unescapeOptions };

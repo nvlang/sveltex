@@ -36,7 +36,7 @@ const BROWSERS = [
             browserName: 'chromium' as const,
         },
     },
-] satisfies Array<{ name: string; use: Record<string, unknown> }>;
+] satisfies { name: string; use: Record<string, unknown> }[];
 
 // ─── Combo matrix ─────────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ const projects: Project[] = combos.flatMap((combo, index) => {
             baseURL: `http://localhost:${port}`,
         },
         // Point every project at the single shared spec file.
-        testMatch: /combo\.spec\.ts/,
+        testMatch: /combo\.spec\.ts/u,
     }));
 });
 

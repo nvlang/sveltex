@@ -923,7 +923,7 @@ export function unescapeSnippets(
  */
 export function parseToMdast(
     document: string,
-    verbatimTags: string[] | undefined = undefined,
+    verbatimTags?: string[],
     mathDelims: WithFullDelims['delims'] = getDefaultMathConfig('custom')
         .delims,
     directiveSettings: DirectiveEscapeSettings = {},
