@@ -5,12 +5,18 @@
 // `virtual-svelte.ts` blanks these regions out of the ONE virtual `.svelte`
 // document handed to `svelte-language-server`. To get language assistance for
 // them instead, the SvelTeX server forwards requests to a dedicated child (the
-// math language server, or TexLab). Those children expect a clean, standalone
-// document — bare TeX for the math server, bare LaTeX for TexLab — so the
-// region's syntactic wrapper (the `$`/`$$`/`\(`/`\[` math delimiters, or the
-// `<tex>…</tex>` verbatim tags) must be stripped, and positions mapped across
-// that strip. This module does exactly that, reusing the same `SourceMap` /
-// `Mapping` model the Svelte side uses.
+// math language server, or TexLab). The region's syntactic wrapper — the
+// `$`/`$$`/`\(`/`\[` math delimiters, or the `<tex>…</tex>` verbatim tags — is
+// stripped, and positions are mapped across that strip.
+//
+// The math server wants bare TeX. TexLab, a full LaTeX language server, does
+// not: its completion and hover are context-sensitive, and a bare fragment
+// (`\alp`) yields almost nothing — TexLab does not see it as document-body
+// content. So a LaTeX (verbatim) region's content is embedded in a minimal
+// `\documentclass…\begin{document}…\end{document}` scaffold. The scaffold lines
+// are synthetic — no `Mapping` covers them — so they never appear in a
+// forwarded result. The same `SourceMap` / `Mapping` model the Svelte side
+// uses is reused throughout.
 
 import { identityMapping } from './mapping.js';
 import { SourceMap } from './mapper.js';
@@ -18,7 +24,11 @@ import type { Region } from './regions.js';
 
 /** A standalone virtual document for one region. */
 export interface RegionVirtualDocument {
-    /** The bare inner text (math delimiters / verbatim tags stripped). */
+    /**
+     * The virtual document text handed to the child server. For a math region
+     * this is the bare inner text (delimiters stripped); for a LaTeX verbatim
+     * region it is that inner text embedded in {@link latexRegionScaffold}.
+     */
     text: string;
     /**
      * Bidirectional mapper between the `.sveltex` source and {@link text}.
@@ -30,6 +40,26 @@ export interface RegionVirtualDocument {
     /** Offset one past the end of the inner text in the `.sveltex` source. */
     innerEnd: number;
 }
+
+/**
+ * The minimal LaTeX document a verbatim (LaTeX) region's content is embedded
+ * into before being handed to TexLab.
+ *
+ * TexLab's completion and hover are context-sensitive: a bare command fragment
+ * is not treated as document-body content and yields next to nothing. Putting
+ * the fragment inside `\begin{document}…\end{document}` is what unlocks
+ * TexLab's command completion. The preamble is deliberately minimal — core
+ * LaTeX only — so it stays unopinionated about which packages a project loads.
+ *
+ * Exported so the source-map geometry is verifiable and the preamble lives in
+ * exactly one place.
+ */
+export const latexRegionScaffold = {
+    /** Inserted before the region content. */
+    prefix: '\\documentclass{article}\n\\begin{document}\n',
+    /** Inserted after the region content. */
+    suffix: '\n\\end{document}\n',
+} as const;
 
 /** A `[prefixLength, suffixLength]` pair describing a wrapper to strip. */
 type Wrapper = readonly [prefix: number, suffix: number];
@@ -89,10 +119,12 @@ function verbatimWrapper(slice: string): Wrapper {
  * @returns The standalone virtual document and its source map.
  *
  * @remarks
- * The virtual document is the region's _inner_ text only; the `SourceMap`
- * holds one identity mapping `[innerStart … innerEnd) ↔ [0 … innerLength)`, so
- * a caret anywhere in the bare document maps straight back to the right
- * `.sveltex` offset.
+ * A `math` region's virtual document is the bare inner text. A `verbatim`
+ * region's is that inner text wrapped in {@link latexRegionScaffold}. Either
+ * way the `SourceMap` holds one identity mapping covering the inner span —
+ * `[innerStart … innerEnd) ↔ [prefixLength … prefixLength + innerLength)` — so
+ * a caret in the inner text maps straight back to the right `.sveltex` offset,
+ * while the synthetic scaffold lines are covered by no mapping at all.
  */
 export function buildRegionVirtualDocument(
     source: string,
@@ -108,10 +140,25 @@ export function buildRegionVirtualDocument(
 
     const innerStart = region.sourceStart + prefix;
     const innerEnd = Math.max(innerStart, region.sourceEnd - suffix);
-    const text = source.slice(innerStart, innerEnd);
+    const innerText = source.slice(innerStart, innerEnd);
+
+    // A `verbatim` region is forwarded to TexLab, which needs document-body
+    // context; a `math` region goes to the bare-TeX math server, which does
+    // not. Embed the former in a minimal LaTeX document.
+    const scaffold =
+        region.kind === 'verbatim'
+            ? latexRegionScaffold
+            : { prefix: '', suffix: '' };
+    const text = `${scaffold.prefix}${innerText}${scaffold.suffix}`;
 
     const sourceMap = SourceMap.create(
-        [identityMapping(innerStart, 0, text.length)],
+        [
+            identityMapping(
+                innerStart,
+                scaffold.prefix.length,
+                innerText.length,
+            ),
+        ],
         source,
         text,
     );

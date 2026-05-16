@@ -3,7 +3,10 @@
 // tags, computing the inner span, and mapping positions across the strip.
 
 import { describe, expect, it } from 'vitest';
-import { buildRegionVirtualDocument } from '../../src/core/region-virtual.js';
+import {
+    buildRegionVirtualDocument,
+    latexRegionScaffold,
+} from '../../src/core/region-virtual.js';
 import type { Region } from '../../src/core/regions.js';
 
 /** Builds a `Region` of `kind` covering the whole of `source`. */
@@ -93,13 +96,20 @@ describe('buildRegionVirtualDocument — math regions', () => {
 });
 
 describe('buildRegionVirtualDocument — verbatim regions', () => {
-    it('strips the opening and closing tags of a `<tex>` region', () => {
+    /** Wraps `inner` in the LaTeX scaffold, as the builder does for TexLab. */
+    function scaffolded(inner: string): string {
+        return latexRegionScaffold.prefix + inner + latexRegionScaffold.suffix;
+    }
+
+    it('strips the tags and embeds a `<tex>` body in the LaTeX scaffold', () => {
         const source = '<tex>\n\\draw (0,0);\n</tex>';
         const v = buildRegionVirtualDocument(
             source,
             wholeRegion(source, 'verbatim'),
         );
-        expect(v.text).toBe('\n\\draw (0,0);\n');
+        // The `<tex>…</tex>` tags are stripped; the body is wrapped so TexLab
+        // sees it as document-body content.
+        expect(v.text).toBe(scaffolded('\n\\draw (0,0);\n'));
         expect(v.innerStart).toBe('<tex>'.length);
     });
 
@@ -109,7 +119,7 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             source,
             wholeRegion(source, 'verbatim'),
         );
-        expect(v.text).toBe('body');
+        expect(v.text).toBe(scaffolded('body'));
     });
 
     it('treats a self-closing verbatim element as having no inner text', () => {
@@ -118,7 +128,8 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             source,
             wholeRegion(source, 'verbatim'),
         );
-        expect(v.text).toBe('');
+        // No inner content — just the bare scaffold.
+        expect(v.text).toBe(scaffolded(''));
     });
 
     it('offsets the inner span by the region start in the document', () => {
@@ -129,7 +140,7 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             sourceEnd: source.length,
         };
         const v = buildRegionVirtualDocument(source, region);
-        expect(v.text).toBe('L');
+        expect(v.text).toBe(scaffolded('L'));
         // `<tex>` is 5 chars; inner starts at 7 + 5 = 12.
         expect(v.innerStart).toBe(12);
     });
@@ -144,6 +155,8 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             line: 0,
             character: 6, // `\foo` -> `\f|` is source char 6
         });
-        expect(generated).toEqual({ line: 0, character: 1 });
+        // The two-line scaffold preamble pushes the body to line 2; the
+        // mapping itself is still identity, so `\f|` -> char 1 on that line.
+        expect(generated).toEqual({ line: 2, character: 1 });
     });
 });
