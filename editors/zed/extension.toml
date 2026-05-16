@@ -1,0 +1,30 @@
+id = "sveltex"
+name = "SvelTeX"
+version = "0.1.0"
+schema_version = 1
+authors = ["N. V. Lang <hi@nvlang.dev>"]
+description = "SvelTeX (.sveltex) language support: syntax highlighting via tree-sitter and the @nvl/sveltex-language-server LSP."
+repository = "https://github.com/nvlang/sveltex"
+
+# The tree-sitter grammar that powers `.sveltex` highlighting, injections and
+# folding. Zed clones this Git repository at the pinned `rev` and compiles the
+# grammar found in the `path` subdirectory (`packages/tree-sitter-sveltex`).
+#
+# NOTE FOR MAINTAINERS: `rev` must be bumped to a *pushed* commit SHA of the
+# `nvlang/sveltex` repository whenever the grammar changes — Zed builds the
+# grammar from the remote, not from the working tree. The SHA below is the
+# commit that introduced the grammar package. Until the grammar is split into
+# its own repository (the usual Zed convention is one repo per grammar, e.g.
+# `tree-sitter-grammars/tree-sitter-svelte`), the `path` field keeps it
+# building from this monorepo subdirectory.
+[grammars.sveltex]
+repository = "https://github.com/nvlang/sveltex"
+rev = "ad04acf6bb238f75019a248a0e7162d4e6caf7dd"
+path = "packages/tree-sitter-sveltex"
+
+# The SvelTeX language server. Zed launches it over stdio; see `src/lib.rs`.
+# `@nvl/sveltex-language-server`'s `bin/server.js` is a thin, dependency-free
+# stdio wrapper meant exactly for this.
+[language_servers.sveltex-language-server]
+name = "SvelTeX Language Server"
+languages = ["SvelTeX"]

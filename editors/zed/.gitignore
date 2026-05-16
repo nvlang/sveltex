@@ -1,0 +1,10 @@
+# Rust build artifacts. `Cargo.lock` is intentionally committed: Zed builds
+# the extension from a pinned dependency graph, so the lock file must be
+# tracked.
+/target
+*.wasm
+
+# Zed writes the compiled extension and its grammars here when the extension
+# is installed as a dev extension.
+/grammars
+extension.wasm
