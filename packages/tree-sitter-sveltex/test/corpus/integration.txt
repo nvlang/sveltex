@@ -1,0 +1,131 @@
+================================================================================
+A full document: frontmatter, prose, math, verbatim
+================================================================================
+---
+title: Demo
+---
+
+# {title}
+
+Prose with inline $E=mc^2$ math.
+
+$$
+\int x \, dx
+$$
+
+<tex>
+\draw (0,0);
+</tex>
+
+The end.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk)
+  (display_math
+    (math_delimiter)
+    (math_content_display)
+    (math_delimiter))
+  (markdown_chunk)
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name)))
+  (markdown_chunk))
+
+================================================================================
+A fenced code block keeps a dollar sign as code, not math
+================================================================================
+Some prose.
+
+```svelte
+<script>
+  let count = $state(0);
+</script>
+```
+
+Real math $x$ follows.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+An inline code span keeps a dollar sign as code, not math
+================================================================================
+Inline `$state` is code, but $y$ is math.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+A Svelte logic block and mustache tag stay inside the Markdown chunk
+================================================================================
+{#if ready}
+  Welcome, {name}!
+{/if}
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk))
+
+================================================================================
+A Svelte script block stays inside the Markdown chunk
+================================================================================
+<script>
+  import Counter from '$lib/Counter.svelte';
+</script>
+
+# Heading
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk))
+
+================================================================================
+A tilde-fenced code block keeps a dollar sign as code, not math
+================================================================================
+~~~
+price = $5
+~~~
+
+Then $z$ math.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+Empty document
+================================================================================
+
+--------------------------------------------------------------------------------
+
+(document)

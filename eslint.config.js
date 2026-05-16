@@ -19,6 +19,12 @@ export default defineConfig(
             // harness (`@nvl/sv`); regenerated on every test run.
             '**/.test-output/**',
             'docs/**',
+            // The tree-sitter grammar package: `grammar.js` is written in the
+            // tree-sitter grammar DSL (not a TypeScript-checked module) and
+            // the native binding glue is not part of the type-checked source.
+            'packages/tree-sitter-sveltex/**',
+            // The Zed extension is a standalone Rust crate, not a JS package.
+            'editors/**',
         ],
     },
     eslint.configs.recommended,

@@ -1,0 +1,331 @@
+[
+  {
+    "type": "display_math",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "math_content_bracket",
+            "named": true
+          },
+          {
+            "type": "math_content_display",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "math_delimiter",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "document",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "display_math",
+          "named": true
+        },
+        {
+          "type": "frontmatter",
+          "named": true
+        },
+        {
+          "type": "inline_math",
+          "named": true
+        },
+        {
+          "type": "markdown_chunk",
+          "named": true
+        },
+        {
+          "type": "verbatim_environment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "frontmatter",
+    "named": true,
+    "fields": {
+      "close": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_fence",
+            "named": true
+          }
+        ]
+      },
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "frontmatter_content",
+            "named": true
+          }
+        ]
+      },
+      "language": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "frontmatter_language",
+            "named": true
+          }
+        ]
+      },
+      "open": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_fence",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "frontmatter_content",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "inline_math",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "math_content_inline",
+            "named": true
+          },
+          {
+            "type": "math_content_paren",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "math_delimiter",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "markdown_chunk",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "math_content_display",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "math_content_inline",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "math_delimiter",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "plain_verbatim_body",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "tex_verbatim_body",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "verbatim_close_tag",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "verbatim_environment",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "plain_verbatim_body",
+            "named": true
+          },
+          {
+            "type": "tex_verbatim_body",
+            "named": true
+          }
+        ]
+      },
+      "close": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "verbatim_close_tag",
+            "named": true
+          }
+        ]
+      },
+      "open": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "verbatim_plain_open_tag",
+            "named": true
+          },
+          {
+            "type": "verbatim_tex_open_tag",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "verbatim_plain_open_tag",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "verbatim_attributes",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "verbatim_tex_open_tag",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "verbatim_attributes",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "$",
+    "named": false
+  },
+  {
+    "type": "$$",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "</",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": "frontmatter_fence",
+    "named": true
+  },
+  {
+    "type": "frontmatter_language",
+    "named": true
+  },
+  {
+    "type": "math_content_bracket",
+    "named": true
+  },
+  {
+    "type": "math_content_paren",
+    "named": true
+  },
+  {
+    "type": "tag_name",
+    "named": true
+  },
+  {
+    "type": "verbatim_attributes",
+    "named": true
+  }
+]

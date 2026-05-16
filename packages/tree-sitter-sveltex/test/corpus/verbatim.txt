@@ -1,0 +1,125 @@
+================================================================================
+TeX verbatim environment
+================================================================================
+<tex>
+\draw (0,0) circle (1);
+</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+TeX verbatim environment with attributes
+================================================================================
+<tex ref="figure-1">
+\node {$x$};
+</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name)
+      (verbatim_attributes))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+TikZ verbatim environment
+================================================================================
+<tikz>
+\begin{tikzpicture}\end{tikzpicture}
+</tikz>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+Plain verbatim environment
+================================================================================
+<verbatim>
+This is literal: <strong>tags</strong> and {braces}.
+</verbatim>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_plain_open_tag
+      (tag_name))
+    (plain_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+Verb verbatim environment
+================================================================================
+<Verb>
+1 < 2 and {curly}
+</Verb>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_plain_open_tag
+      (tag_name))
+    (plain_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+Verbatim environment on a single line
+================================================================================
+<tex>\draw (0,0);</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+Markdown around a verbatim environment
+================================================================================
+Before.
+
+<tex>
+\draw (0,0);
+</tex>
+
+After.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name)))
+  (markdown_chunk))
+
+================================================================================
+A non-verbatim HTML tag stays inside the Markdown chunk
+================================================================================
+A paragraph with <strong>bold</strong> and a <Counter /> component.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk))

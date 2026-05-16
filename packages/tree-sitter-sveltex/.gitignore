@@ -1,0 +1,13 @@
+# Native build artifacts produced by `tree-sitter generate` / node-gyp.
+# The generated `src/parser.c`, `src/grammar.json`, `src/node-types.json` and
+# `src/tree_sitter/` headers are intentionally NOT ignored: a publishable
+# tree-sitter grammar ships its generated parser so consumers need not run the
+# tree-sitter CLI themselves.
+build/
+prebuilds/
+*.wasm
+*.obj
+*.o
+
+# Editor/log noise.
+*.log

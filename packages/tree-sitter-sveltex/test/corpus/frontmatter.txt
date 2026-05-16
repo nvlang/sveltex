@@ -1,0 +1,113 @@
+================================================================================
+YAML frontmatter (no keyword)
+================================================================================
+---
+title: Example
+tags: [a, b]
+---
+
+# Heading
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+YAML frontmatter (explicit keyword)
+================================================================================
+---yaml
+title: Example
+---
+
+Body.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_language)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+TOML frontmatter (keyword)
+================================================================================
+---toml
+title = "Example"
+---
+
+Body.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_language)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+TOML frontmatter (+++ shorthand)
+================================================================================
++++
+title = "Example"
++++
+
+Body.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+JSON frontmatter (keyword)
+================================================================================
+---json
+{ "title": "Example" }
+---
+
+Body.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_language)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+Empty frontmatter body (the blank line between the fences is empty content)
+================================================================================
+---
+---
+
+Body.
+--------------------------------------------------------------------------------
+
+(document
+  (frontmatter
+    (frontmatter_fence)
+    (frontmatter_content)
+    (frontmatter_fence))
+  (markdown_chunk))
+
+================================================================================
+No frontmatter (a leading rule is just Markdown)
+================================================================================
+Some prose with no frontmatter at all.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk))

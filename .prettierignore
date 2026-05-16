@@ -15,3 +15,10 @@ res
 packages/sveltex/tests/e2e/sveltex.config.js
 packages/sveltex/tests/e2e
 e2e
+
+# The tree-sitter grammar package and the Zed extension are standalone
+# sub-projects with their own ecosystem conventions (the tree-sitter grammar
+# DSL, generated C, `.scm` query files, Rust); they are not formatted by the
+# monorepo's Prettier config.
+packages/tree-sitter-sveltex
+editors

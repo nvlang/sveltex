@@ -1,0 +1,45 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "sveltex",
+      "scope": "source.sveltex",
+      "path": ".",
+      "file-types": [
+        "sveltex"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "injections": [
+        "queries/injections.scm"
+      ],
+      "folds": [
+        "queries/folds.scm"
+      ],
+      "injection-regex": "^sveltex$"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Tree-sitter grammar for SvelTeX (.sveltex) documents",
+    "authors": [
+      {
+        "name": "N. V. Lang",
+        "email": "npm@nvlang.dev"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/nvlang/sveltex"
+    }
+  },
+  "bindings": {
+    "c": false,
+    "go": false,
+    "node": true,
+    "python": false,
+    "rust": false,
+    "swift": false
+  }
+}

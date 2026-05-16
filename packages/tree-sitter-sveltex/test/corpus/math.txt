@@ -1,0 +1,115 @@
+================================================================================
+Inline math with dollar signs
+================================================================================
+The identity $e^{i\pi}+1=0$ is famous.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+Display math with double dollar signs
+================================================================================
+$$
+\int_0^1 x \, dx
+$$
+--------------------------------------------------------------------------------
+
+(document
+  (display_math
+    (math_delimiter)
+    (math_content_display)
+    (math_delimiter)))
+
+================================================================================
+Inline math with escaped parentheses
+================================================================================
+A root \(\sqrt{2}\) inline.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_paren)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+Display math with escaped square brackets
+================================================================================
+\[
+a^2 + b^2 = c^2
+\]
+--------------------------------------------------------------------------------
+
+(document
+  (display_math
+    (math_delimiter)
+    (math_content_bracket)
+    (math_delimiter)))
+
+================================================================================
+Display math wins over two inline spans
+================================================================================
+$$x$$
+--------------------------------------------------------------------------------
+
+(document
+  (display_math
+    (math_delimiter)
+    (math_content_display)
+    (math_delimiter)))
+
+================================================================================
+Two separate inline math spans on a line
+================================================================================
+Both $a$ and $b$ here.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk)
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter))
+  (markdown_chunk))
+
+================================================================================
+Escaped dollar does not close inline math
+================================================================================
+$a \$ b$
+--------------------------------------------------------------------------------
+
+(document
+  (inline_math
+    (math_delimiter)
+    (math_content_inline)
+    (math_delimiter)))
+
+================================================================================
+Display math spanning multiple lines with aligned environment
+================================================================================
+$$
+\begin{align*}
+a &= b \\
+c &= d
+\end{align*}
+$$
+--------------------------------------------------------------------------------
+
+(document
+  (display_math
+    (math_delimiter)
+    (math_content_display)
+    (math_delimiter)))

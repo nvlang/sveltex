@@ -1,0 +1,62 @@
+{
+  "name": "@nvl/tree-sitter-sveltex",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for SvelTeX (.sveltex) documents",
+  "license": "MIT",
+  "author": {
+    "name": "N. V. Lang",
+    "email": "npm@nvlang.dev",
+    "url": "https://nvlang.dev/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nvlang/sveltex.git",
+    "directory": "packages/tree-sitter-sveltex"
+  },
+  "bugs": {
+    "url": "https://github.com/nvlang/sveltex/issues"
+  },
+  "homepage": "https://sveltex.dev",
+  "keywords": [
+    "tree-sitter",
+    "parser",
+    "sveltex",
+    "svelte",
+    "markdown",
+    "latex"
+  ],
+  "main": "bindings/node",
+  "files": [
+    "grammar.js",
+    "tree-sitter.json",
+    "binding.gyp",
+    "queries/*.scm",
+    "src/**",
+    "bindings/node/*"
+  ],
+  "tree-sitter": [
+    {
+      "scope": "source.sveltex",
+      "file-types": [
+        "sveltex"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "injections": [
+        "queries/injections.scm"
+      ],
+      "folds": [
+        "queries/folds.scm"
+      ]
+    }
+  ],
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter generate && tree-sitter test",
+    "parse": "tree-sitter parse"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.26.8"
+  }
+}
