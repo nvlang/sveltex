@@ -15,6 +15,9 @@ export default defineConfig(
             '**/html/**',
             '**/tmp/**',
             '**/tests/e2e/**',
+            // Throwaway SvelteKit projects scaffolded by the `sv` add-on test
+            // harness (`@nvl/sveltex-sv`); regenerated on every test run.
+            '**/.test-output/**',
             'docs/**',
         ],
     },
