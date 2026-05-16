@@ -103,9 +103,6 @@ interface OpenDocument {
     virtual: VirtualSvelteDocument;
 }
 
-/** Debounce window (ms) for rebuilding the virtual document on edits. */
-const REPARSE_DEBOUNCE_MS = 150;
-
 /** File extension that identifies a SvelTeX document. */
 const SVELTEX_EXTENSION = '.sveltex';
 
@@ -171,8 +168,6 @@ function withoutPullDiagnostics(
 export function createServer(connection: Connection): void {
     /** Open `.sveltex` documents, keyed by URI. */
     const documents = new Map<string, OpenDocument>();
-    /** Pending debounced re-parse timers, keyed by URI. */
-    const reparseTimers = new Map<string, NodeJS.Timeout>();
     /** Resolved SvelTeX config; replaced once `initialize` locates a config. */
     let config: SveltexConfigSnapshot = defaultConfigSnapshot();
 
@@ -484,8 +479,6 @@ export function createServer(connection: Connection): void {
     );
 
     connection.onShutdown(async () => {
-        for (const timer of reparseTimers.values()) clearTimeout(timer);
-        reparseTimers.clear();
         await Promise.all([proxy.stop(), regionForwarder.stop()]);
     });
 
@@ -504,27 +497,23 @@ export function createServer(connection: Connection): void {
         (params: DidChangeTextDocumentParams): void => {
             const uri = params.textDocument.uri;
             if (!isSveltexUri(uri)) return;
-            const previous = documents.get(uri);
-            if (!previous) return;
+            if (!documents.get(uri)) return;
 
             // The client uses Full sync (we advertised it), so the last change
             // entry holds the complete new text.
             const last = params.contentChanges.at(-1);
             if (!last || !('text' in last)) return;
-            const version = params.textDocument.version;
 
-            // Debounce: a fresh re-parse on every keystroke is wasteful, and
-            // mid-edit text is often transiently unparseable anyway.
-            const existing = reparseTimers.get(uri);
-            if (existing) clearTimeout(existing);
-            reparseTimers.set(
-                uri,
-                setTimeout(() => {
-                    reparseTimers.delete(uri);
-                    const doc = rebuild(uri, last.text, version);
-                    void proxyDidChange(doc);
-                }, REPARSE_DEBOUNCE_MS),
-            );
+            // Re-parse synchronously. The editor requests completion on the
+            // very `\` (or `{`) it just inserted — i.e. immediately after this
+            // `didChange`. Debouncing the re-parse would leave that request
+            // working off stale regions and a stale source map while the caret
+            // is already past them, so the position mis-maps and the forwarded
+            // request silently returns nothing. `computeRegions` is cheap
+            // enough to run per keystroke, and `svelte-language-server`
+            // debounces its own (heavier) analysis downstream.
+            const doc = rebuild(uri, last.text, params.textDocument.version);
+            void proxyDidChange(doc);
         },
     );
 
@@ -532,11 +521,6 @@ export function createServer(connection: Connection): void {
         (params: DidCloseTextDocumentParams): void => {
             const uri = params.textDocument.uri;
             if (!isSveltexUri(uri)) return;
-            const timer = reparseTimers.get(uri);
-            if (timer) {
-                clearTimeout(timer);
-                reparseTimers.delete(uri);
-            }
             documents.delete(uri);
             void proxyDidClose(uri);
         },
