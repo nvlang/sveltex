@@ -45,12 +45,28 @@ interface Spawned {
     initializeResult: InitializeResult;
 }
 
+/**
+ * Attaches no-op `'error'` listeners to a spawned server and its pipes.
+ *
+ * A server killed during teardown can make Node emit `'error'` events on the
+ * child process or its stdio streams (e.g. `EPIPE` when a message is written
+ * to an already-exiting child). Without listeners those become unhandled
+ * errors that fail the whole test file even though every test passed.
+ */
+function silenceChildErrors(child: ChildProcess): void {
+    child.on('error', () => undefined);
+    child.stdin?.on('error', () => undefined);
+    child.stdout?.on('error', () => undefined);
+    child.stderr?.on('error', () => undefined);
+}
+
 /** Spawns `bin/server.js` and completes the `initialize` handshake. */
 async function spawn(): Promise<Spawned> {
     const child = fork(SERVER_BIN, ['--stdio'], {
         stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
         execArgv: [],
     });
+    silenceChildErrors(child);
     if (!child.stdout || !child.stdin) {
         throw new Error('child process is missing stdio streams');
     }
@@ -87,16 +103,27 @@ async function delay(ms: number): Promise<void> {
     });
 }
 
-/** Shuts a spawned server down. */
+/**
+ * Shuts a spawned server down.
+ *
+ * The graceful LSP `shutdown`/`exit` is raced against a short timeout: the
+ * server forks its own `svelte-language-server` child, which can be slow to
+ * wind down under load, and teardown must never hang the test. Whatever the
+ * race outcome, the connection is disposed and the child force-killed.
+ */
 async function stop(server: Spawned): Promise<void> {
     try {
-        await server.connection.sendRequest('shutdown');
-        await server.connection.sendNotification('exit');
+        await Promise.race([
+            server.connection
+                .sendRequest('shutdown')
+                .then(() => server.connection.sendNotification('exit')),
+            delay(2_000),
+        ]);
     } catch {
-        // Already gone.
+        // Already gone, or the graceful shutdown lost the race.
     }
     server.connection.dispose();
-    if (server.child.exitCode === null) server.child.kill();
+    server.child.kill();
 }
 
 /** Opens a `.sveltex` document and waits out the server's reparse debounce. */
@@ -244,6 +271,7 @@ describe('SvelTeX language server — Node IPC transport', () => {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
             execArgv: [],
         });
+        silenceChildErrors(child);
         const connection = createProtocolConnection(
             new IPCMessageReader(child),
             new IPCMessageWriter(child),
