@@ -1,0 +1,64 @@
+{
+  "name": "@nvl/sveltex-sv",
+  "version": "0.1.0",
+  "description": "Community sv add-on for SvelTeX (Svelte + Markdown + LaTeX)",
+  "type": "module",
+  "license": "MIT",
+  "private": false,
+  "author": {
+    "name": "N. V. Lang",
+    "email": "npm@nvlang.dev",
+    "url": "https://nvlang.dev/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nvlang/sveltex.git",
+    "directory": "packages/sv-sveltex"
+  },
+  "bugs": {
+    "url": "https://github.com/nvlang/sveltex/issues"
+  },
+  "homepage": "https://sveltex.dev",
+  "keywords": [
+    "sv-add",
+    "sveltex",
+    "svelte",
+    "sveltekit",
+    "markdown",
+    "tex",
+    "latex",
+    "math",
+    "preprocessor"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "sv": "^0.15.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@sveltejs/sv-utils": "^0.2.2",
+    "@types/node": "^24.10.15",
+    "sv": "^0.15.3",
+    "tsdown": "^0.21.7",
+    "vitest": "^4.1.3"
+  }
+}
