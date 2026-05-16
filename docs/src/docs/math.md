@@ -4,7 +4,7 @@ description: Use MathJax or KaTeX with SvelTeX.
 ---
 
 <script lang="ts" setup>
-import { PhFileCss, PhPalette, PhGear, PhArrowFatLineRight, PhEar } from '@phosphor-icons/vue';
+import { PhFileCss, PhPalette, PhGear, PhEar } from '@phosphor-icons/vue';
 </script>
 
 # Math
@@ -268,10 +268,14 @@ accessibility component, so turning a feature on or off behaves as documented.
 | Option | Default | Effect |
 |---|:---:|---|
 | `enableAssistiveMml` | `true` | Insert an assistive MathML tree next to each expression. |
-| `enableEnrichment` | `true` | Apply semantic enrichment to the internal MathML. |
+| `enableEnrichment` | `false` | Apply semantic enrichment to the internal MathML. |
 | `enableSpeech` | `false` | Generate and attach speech strings. |
 | `enableBraille` | `false` | Generate and attach Braille labels. |
 | `enableComplexity` | `false` | Run the complexity extension's build-time computations. |
+
+Turning on `enableSpeech`, `enableBraille`, or `enableComplexity` implies
+semantic enrichment, since those components need it — so enrichment runs even
+when `enableEnrichment` is left at `false`.
 
 ```js
 // sveltex.config.js

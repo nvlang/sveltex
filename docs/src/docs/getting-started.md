@@ -3,28 +3,64 @@
 
 ## Creating a new project
 
-You can use the [`create-sveltex`] package to create a new project using
-SvelTeX:
+SvelTeX is distributed as a community add-on for the official Svelte CLI
+([`sv`](https://github.com/sveltejs/cli)). To start from scratch, first
+scaffold a SvelteKit project:
 
 ::: code-group
 ```sh [pnpm]
-pnpm dlx create-sveltex
+pnpm dlx sv create
 ```
 ```sh [bun]
-bunx create-sveltex
+bunx sv create
 ```
 ```sh [npm]
-npx create-sveltex
+npx sv create
 ```
 ```sh [yarn]
-yarn dlx create-sveltex
+yarn dlx sv create
+```
+:::
+
+...then add SvelTeX to it, as described in the next section.
+
+::: info `create-sveltex` is deprecated
+
+Earlier versions of SvelTeX shipped a `create-sveltex` scaffolding package. It
+has been superseded by the `sv` add-on below; the `create-sveltex` binary now
+only prints a notice pointing here.
+
+:::
+
+
+## Adding to an existing project
+
+### Using the `sv` add-on
+
+The quickest way to add SvelTeX to an existing SvelteKit project is the `sv`
+add-on. It installs SvelTeX and the peer dependencies for the backends you
+pick, creates a `sveltex.config.js`, and wires the preprocessor into your
+`svelte.config.js`:
+
+::: code-group
+```sh [pnpm]
+pnpm dlx sv add @nvl/sveltex-sv
+```
+```sh [bun]
+bunx sv add @nvl/sveltex-sv
+```
+```sh [npm]
+npx sv add @nvl/sveltex-sv
+```
+```sh [yarn]
+yarn dlx sv add @nvl/sveltex-sv
 ```
 :::
 
 ...and follow the prompts.
 
-
-## Adding to an existing project
+Prefer to set things up by hand? The rest of this page walks through the
+manual installation and configuration.
 
 ### Installation
 
@@ -140,7 +176,6 @@ If you prefer, you can also just use the `sveltex` function directly in your
 `svelte.config.js`. Just remember to `await` it.
 
 
-[`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
 [`markdownBackend`]: markdown
 [`codeBackend`]: code
 [`mathBackend`]: math
