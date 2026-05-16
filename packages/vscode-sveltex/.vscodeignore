@@ -15,9 +15,12 @@ tsconfig.json
 # Dependencies — bundled into `dist/`; never ship the (pnpm-symlinked) tree.
 node_modules/**
 
-# Grammar sources — only the generated `*.tmLanguage.json` files are shipped.
+# Grammar sources: the YAML is compiled to JSON at build time and not shipped.
+# Both the live `*.tmLanguage.json` files AND the `*.tmLanguage.json_default`
+# template are shipped — `extension.ts`'s `updateGrammarFile()` reads the
+# template at activation to regenerate the live grammar from the user's
+# `latexTags` / `escapeTags` settings, so excluding it breaks activation.
 **/*.tmLanguage.yaml
-syntaxes/sveltex.tmLanguage.json_default
 
 # Editor / VCS / tooling metadata.
 .vscode/**
