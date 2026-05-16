@@ -116,7 +116,9 @@ async function stop(server: Spawned): Promise<void> {
         await Promise.race([
             server.connection
                 .sendRequest('shutdown')
-                .then(() => server.connection.sendNotification('exit')),
+                .then(async () => {
+                    await server.connection.sendNotification('exit');
+                }),
             delay(2_000),
         ]);
     } catch {
