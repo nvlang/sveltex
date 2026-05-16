@@ -183,7 +183,32 @@ function startLanguageClient(extensionPath: string): lc.LanguageClient {
         serverOptions,
         clientOptions,
     );
-    void languageClient.start();
+    // `start()` is asynchronous: a rejection means the server process failed
+    // to launch or the `initialize` handshake failed. Surface it loudly —
+    // accessing `outputChannel` creates the channel even if `start()` never
+    // got far enough to create it itself — instead of letting the failure
+    // vanish into an unhandled rejection.
+    languageClient.start().then(
+        () => {
+            languageClient.outputChannel.appendLine(
+                '[sveltex] Language server started.',
+            );
+        },
+        (error: unknown) => {
+            const detail =
+                error instanceof Error
+                    ? (error.stack ?? error.message)
+                    : String(error);
+            languageClient.outputChannel.appendLine(
+                '[sveltex] Language server failed to start:\n' + detail,
+            );
+            languageClient.outputChannel.show(true);
+            void vscode.window.showErrorMessage(
+                'SvelTeX: the language server failed to start. See the ' +
+                    '"SvelTeX Language Server" output channel for details.',
+            );
+        },
+    );
     return languageClient;
 }
 
