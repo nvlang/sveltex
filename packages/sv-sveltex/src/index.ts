@@ -17,12 +17,12 @@ const markdownDependencies = {
     },
     'markdown-it': { 'markdown-it': '^14.1.0' },
     micromark: { micromark: '^4.0.0' },
-    marked: { marked: '^16.0.0' },
+    marked: { marked: '^17.0.0' },
     none: {},
 } as const;
 
 const codeDependencies = {
-    shiki: { shiki: '^3.0.0' },
+    shiki: { shiki: '^4.0.0' },
     'starry-night': {
         '@wooorm/starry-night': '^3.3.0',
         'hast-util-find-and-replace': '^5.0.1',
@@ -194,7 +194,7 @@ export default defineAddon({
         // --- Dependencies ----------------------------------------------------
         // `@nvl/sveltex` itself, plus the peer dependencies for the chosen
         // backends, are added as dev dependencies of the consuming project.
-        sv.devDependency('@nvl/sveltex', '^0.4.4');
+        sv.devDependency('@nvl/sveltex', '^0.5.0');
         const backendDeps: Record<string, string> = {
             ...markdownDependencies[markdownBackend],
             ...codeDependencies[codeBackend],
