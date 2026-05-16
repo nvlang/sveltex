@@ -354,16 +354,20 @@ export function createServer(connection: Connection): void {
                 );
             }
 
-            // Advertise the union of: what the child can do (so proxied
-            // requests are actually requested by the editor) and the native
-            // Markdown features this server adds. `textDocumentSync` is forced
-            // to `Full` because the virtual document is rebuilt wholesale.
+            // Advertise ONLY the capabilities this server actually handles —
+            // the proxied request types plus the native Markdown features.
+            // Spreading the child's full capability set (`...childCapabilities`)
+            // would also advertise features with no handler here (pull
+            // diagnostics, semantic tokens, inlay hints, document colours, code
+            // lenses, type definition, …); the editor would then fire those
+            // requests and each would come back `-32601 Unhandled method`.
             //
-            // The completion trigger characters are extended with `\` and `{`:
-            // the editor only re-requests completion on a trigger character it
-            // was told about, and those two open a TeX command / a
-            // `\begin{...}` environment name inside a forwarded math or LaTeX
-            // region.
+            // `textDocumentSync` is `Full` because the virtual document is
+            // rebuilt wholesale. The completion trigger characters are extended
+            // with `\` and `{`: the editor only re-requests completion on a
+            // trigger character it was told about, and those two open a TeX
+            // command / a `\begin{...}` environment name inside a forwarded
+            // math or LaTeX region.
             const childCompletion = childCapabilities?.completionProvider;
             const triggerCharacters = [
                 ...new Set([
@@ -374,12 +378,22 @@ export function createServer(connection: Connection): void {
             ];
             return {
                 capabilities: {
-                    ...(childCapabilities ?? {}),
                     textDocumentSync: TextDocumentSyncKind.Full,
+                    hoverProvider: true,
                     completionProvider: {
                         ...(childCompletion ?? {}),
                         triggerCharacters,
                     },
+                    definitionProvider: true,
+                    referencesProvider: true,
+                    documentHighlightProvider: true,
+                    signatureHelpProvider:
+                        childCapabilities?.signatureHelpProvider ?? {},
+                    renameProvider: { prepareProvider: true },
+                    codeActionProvider:
+                        childCapabilities?.codeActionProvider ?? true,
+                    documentLinkProvider:
+                        childCapabilities?.documentLinkProvider ?? {},
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
