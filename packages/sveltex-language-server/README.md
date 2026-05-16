@@ -86,6 +86,19 @@ piggyback on.
 - **`core/svelte-proxy.ts`** — resolves `svelte-language-server/bin/server.js`
   from `node_modules`, forks it, and speaks LSP with it over a stdio JSON-RPC
   connection.
+- **`core/lsp-proxy.ts`** — a _generic_ child-language-server proxy (the same
+  spawn/JSON-RPC pattern as `svelte-proxy.ts`, but server-agnostic). Supports
+  both a forked Node module (the bundled math language server) and a spawned
+  native executable (the TexLab binary).
+- **`core/region-virtual.ts`** — builds a small, standalone virtual document
+  for a single non-delegated region: bare TeX for a math region (delimiters
+  stripped), bare LaTeX for a verbatim region (tags stripped), each with a
+  `SourceMap` back to the `.sveltex` source.
+- **`core/texlab.ts`** — robust, cross-platform detection of a `texlab` binary
+  on `PATH`.
+- **`core/region-forwarding.ts`** — forwards hover/completion that land in a
+  math region (to the math language server) or a LaTeX verbatim region (to
+  TexLab), spawning those children lazily and mapping results back.
 - **`core/markdown.ts`** — native Markdown features (document symbols, folding
   ranges, selection ranges) computed directly from the mdast. These need no
   position mapping because the mdast carries source offsets.
@@ -93,7 +106,9 @@ piggyback on.
   position-bearing message. Requests are mapped source → generated before being
   forwarded; responses (and diagnostics) are mapped generated → source, and
   anything that lands in a non-delegated region is dropped.
-- **`core/server.ts`** — `createServer(connection)`, the orchestrator.
+- **`core/server.ts`** — `createServer(connection)`, the orchestrator. It
+  routes each request: a delegated region goes to the Svelte proxy, a math or
+  LaTeX-verbatim region to `RegionForwarder`.
 
 ### Why one virtual document and not many
 
@@ -132,7 +147,7 @@ This is what makes the same core reusable across editors:
 Any future host (Neovim, Emacs `lsp-mode`, Sublime LSP, ...) plugs in the same
 way: run `bin/server.js`, speak LSP.
 
-## v1 feature coverage
+## Feature coverage
 
 **Proxied to `svelte-language-server`, fully position-mapped**, and suppressed
 inside non-delegated regions:
@@ -154,24 +169,40 @@ inside non-delegated regions:
 - Folding ranges
 - Selection ranges
 
+**Forwarded to dedicated child servers** (each non-delegated region becomes its
+own small virtual document; positions and results are mapped back):
+
+- **Math regions** (`$…$`, `$$…$$`, `\(…\)`, `\[…\]`) → the bundled
+  [`@nvl/sveltex-math-language-server`](../sveltex-math-language-server),
+  spawned with `initializationOptions.backend` set from the SvelTeX config's
+  `mathBackend`. TeX command completion (on `\`) and hover. When `mathBackend`
+  is `custom` or `none` — backends with no math server — math regions are
+  skipped.
+- **LaTeX verbatim regions** (a `verbatim` environment whose tag is one of the
+  configured `latexTags` — `tex` / `latex` / `tikz` by default) → a spawned
+  [TexLab](https://github.com/latex-lsp/texlab) process, _if_ a `texlab` binary
+  is found on `PATH`. Hover, completion, and TexLab's other LaTeX features. If
+  `texlab` is not installed, these regions are skipped silently — no error.
+
 **Document sync:** `didOpen` / `didChange` / `didClose` of the source file are
 translated into sync of the virtual `.svelte` document. Changes trigger a
-debounced full re-parse (v1 uses full-document sync).
+debounced full re-parse (full-document sync).
 
 **Configuration:** `sveltex.config.{js,cjs,mjs}` is loaded on `initialize` to
-pick up verbatim-environment names, math delimiters, and directive settings.
+pick up verbatim-environment names, math delimiters, the math backend, and
+directive settings.
 
 ## Known limitations / stubbed for later
 
-- **LaTeX / math language features** are stubbed. Math and verbatim regions are
-  recognized and excluded from Svelte analysis, but no diagnostics, hover or
-  completion are produced _for_ them yet. (`TODO`s mark the seams.)
+- **LaTeX / math diagnostics** are not yet produced. Math and LaTeX verbatim
+  regions get completion and hover (forwarded, see above), but no _diagnostics_
+  are surfaced for them.
 - **Markdown → HTML expansion.** Delegated Markdown is currently passed to the
   Svelte server as-is. A future phase will expand it to the HTML the Svelte
   compiler actually sees; the `Mapping` model already supports the non-identity
   (length-changing) mappings this needs.
 - **Incremental virtual-file updates.** Each edit rebuilds the whole virtual
-  document. Fine for v1; a future phase can patch incrementally.
+  document. A future phase can patch incrementally.
 - **`.ts` config files** are detected but not executed (running them needs a
   TypeScript loader). `.js` / `.cjs` / `.mjs` configs are fully loaded.
 - **Formatting** is not yet proxied.
@@ -183,9 +214,59 @@ pick up verbatim-environment names, math delimiters, and directive settings.
 
 ```sh
 pnpm --filter @nvl/sveltex-language-server build   # type-check + emit dist/
-pnpm --filter @nvl/sveltex-language-server test    # run unit tests
+pnpm --filter @nvl/sveltex-language-server test    # run unit/integration tests
 pnpm --filter @nvl/sveltex-language-server lint    # eslint + tsc --noEmit
 ```
 
-The bidirectional mapper — the most error-prone component — is covered by
-`tests/unit/mapper.test.ts`.
+The `tests/unit/` suite covers the bidirectional mapper (the most error-prone
+component), region computation, virtual-document building, the per-region
+virtual documents, the config snapshot, TexLab detection, math/verbatim
+forwarding, and an end-to-end check that spawns `bin/server.js` and drives it
+over stdio. The TexLab path is tested with TexLab made absent, so the suite
+does not require the `texlab` binary.
+
+## How to try the extension
+
+The [`vscode-sveltex`](../vscode-sveltex) extension launches this server. To
+exercise the whole stack inside VS Code:
+
+1. **Build everything** from the monorepo root:
+
+   ```sh
+   pnpm install
+   pnpm --filter @nvl/sveltex build
+   pnpm --filter @nvl/sveltex-math-language-server build
+   pnpm --filter @nvl/sveltex-language-server build
+   pnpm --filter sveltex build      # the VS Code extension
+   ```
+
+2. **Launch the Extension Development Host.** Open `packages/vscode-sveltex/`
+   in VS Code and press <kbd>F5</kbd> (Run → Start Debugging). A second VS Code
+   window opens with the SvelTeX extension loaded.
+
+3. **Open a project** that has a `.sveltex` file (and, ideally, a
+   `sveltex.config.{js,mjs,cjs}` so the math backend is detected — otherwise
+   the server defaults to MathJax). The sample showcase project under
+   `packages/sveltex/tests/e2e/showcase/` is a good candidate.
+
+4. **Confirm end-to-end behaviour** in a `.sveltex` file:
+
+   - Inside a `<script lang="ts">` block, write a type error
+     (`const n: number = 'x';`) — a Svelte/TypeScript diagnostic appears,
+     proving the embedded `svelte-language-server` is being proxied.
+   - Inside inline math (`$ … $`), type a backslash and a few letters
+     (`\alp`) — TeX command completion offers `\alpha`. Hover a command such as
+     `\frac` for a description. The offered commands match the project's
+     `mathBackend` (KaTeX vs MathJax).
+   - Inside a LaTeX verbatim environment (`<tex> … </tex>`), completion and
+     hover work _if_ a `texlab` binary is on `PATH`; if not, the editor simply
+     offers nothing there (no error).
+   - A heading outline appears in the Outline view (native Markdown symbols).
+
+If the language server fails to start, the extension logs an error but keeps
+syntax highlighting working; check the "SvelTeX Language Server" output channel
+in the Extension Development Host for details.
+
+For an automated smoke test, this package's
+`tests/unit/server.test.ts` already spawns `bin/server.js` and drives the same
+requests over stdio — the transport the VS Code client uses.

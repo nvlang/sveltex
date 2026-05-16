@@ -29,8 +29,18 @@ export { SourceMap } from './core/mapper.js';
 export type { MapDirection } from './core/mapper.js';
 export { buildVirtualSvelte } from './core/virtual-svelte.js';
 export type { VirtualSvelteDocument } from './core/virtual-svelte.js';
-export type { SveltexConfigSnapshot } from './core/config.js';
+export type { MathBackend, SveltexConfigSnapshot } from './core/config.js';
 export { defaultConfigSnapshot, loadConfigSnapshot } from './core/config.js';
+export {
+    buildRegionVirtualDocument,
+    type RegionVirtualDocument,
+} from './core/region-virtual.js';
+export { findTexlab, isTexlabAvailable } from './core/texlab.js';
+export {
+    RegionForwarder,
+    isLatexVerbatimRegion,
+} from './core/region-forwarding.js';
+export { LspProxy, type LspSpawnSpec } from './core/lsp-proxy.js';
 
 /**
  * Starts the SvelTeX language server over stdio.

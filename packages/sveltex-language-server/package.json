@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@nvl/sveltex": "workspace:*",
+    "@nvl/sveltex-math-language-server": "workspace:*",
     "svelte-language-server": "^0.18.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-protocol": "^3.17.5",

@@ -31,8 +31,18 @@ export interface MathDelimsSnapshot {
 }
 
 /**
+ * The math backend a SvelTeX project renders its math with.
+ *
+ * Mirrors `@nvl/sveltex`'s `MathBackend`. Only `mathjax` and `katex` have a
+ * corresponding math language server; `custom` and `none` mean no math
+ * assistance is offered.
+ */
+export type MathBackend = 'mathjax' | 'katex' | 'custom' | 'none';
+
+/**
  * The minimal, immutable view of a resolved `sveltex.config.*` that the LSP
- * core needs in order to split a document into {@link Region}s.
+ * core needs in order to split a document into {@link Region}s and route
+ * region-specific language requests.
  */
 export interface SveltexConfigSnapshot {
     /**
@@ -41,10 +51,21 @@ export interface SveltexConfigSnapshot {
      * which elements to treat as opaque.
      */
     verbatimTags: string[];
+    /**
+     * The subset of {@link verbatimTags} that denote LaTeX / TeX environments
+     * (a verbatim entry whose `type` is `'tex'`, plus its aliases). Requests
+     * inside one of these are forwarded to TexLab when it is available.
+     */
+    latexTags: string[];
     /** File extensions handled by SvelTeX (e.g. `['.sveltex']`). */
     extensions: string[];
     /** Math-delimiter settings. */
     mathDelims: MathDelimsSnapshot;
+    /**
+     * The math backend the project uses. Drives which math language server
+     * (if any) math regions are forwarded to.
+     */
+    mathBackend: MathBackend;
     /** Markdown directive settings. */
     directives: DirectiveEscapeSettings;
     /**
@@ -70,8 +91,12 @@ const CONFIG_FILE_NAMES = [
 export function defaultConfigSnapshot(): SveltexConfigSnapshot {
     return {
         verbatimTags: ['tex', 'latex', 'tikz', 'verb', 'verbatim'],
+        // The VS Code extension's `sveltex.latexTags` setting defaults to the
+        // same three; keep them in step.
+        latexTags: ['tex', 'latex', 'tikz'],
         extensions: ['.sveltex'],
         mathDelims: getDefaultMathConfig('mathjax').delims,
+        mathBackend: 'mathjax',
         directives: { enabled: false, bracesArePartOfDirective: null },
         configPath: undefined,
     };
@@ -110,6 +135,58 @@ function readVerbatimTags(
     if (!isObject(verbatim)) return undefined;
     const keys = Object.keys(verbatim);
     return keys.length > 0 ? keys : undefined;
+}
+
+/**
+ * Extracts the LaTeX / TeX verbatim environment names from a user config
+ * object: the names (and aliases) of every `verbatim` entry whose `type` is
+ * `'tex'`.
+ *
+ * @returns The deduplicated tag list, or `undefined` if the config declares no
+ * `tex`-typed verbatim environment.
+ */
+function readLatexTags(
+    config: Record<string, unknown>,
+): string[] | undefined {
+    const verbatim = config['verbatim'];
+    if (!isObject(verbatim)) return undefined;
+    const tags = new Set<string>();
+    for (const [name, entry] of Object.entries(verbatim)) {
+        if (!isObject(entry) || entry['type'] !== 'tex') continue;
+        tags.add(name);
+        const aliases = entry['aliases'];
+        if (Array.isArray(aliases)) {
+            for (const alias of aliases) {
+                if (typeof alias === 'string') tags.add(alias);
+            }
+        }
+    }
+    return tags.size > 0 ? [...tags] : undefined;
+}
+
+/**
+ * Extracts the math backend from a SvelTeX object.
+ *
+ * The backend can sit in two places: directly as a `mathBackend` property (a
+ * resolved `Sveltex` instance exposes one) or, for a config that just declares
+ * backend choices, as `backendChoices.mathBackend`.
+ *
+ * @returns The backend, or `undefined` if none is declared.
+ */
+function readMathBackend(
+    config: Record<string, unknown>,
+): MathBackend | undefined {
+    const isBackend = (value: unknown): value is MathBackend =>
+        value === 'mathjax' ||
+        value === 'katex' ||
+        value === 'custom' ||
+        value === 'none';
+    if (isBackend(config['mathBackend'])) return config['mathBackend'];
+    const choices = config['backendChoices'];
+    if (isObject(choices) && isBackend(choices['mathBackend'])) {
+        return choices['mathBackend'];
+    }
+    return undefined;
 }
 
 /**
@@ -224,21 +301,65 @@ export async function loadConfigSnapshot(
     try {
         const imported: unknown = await import(pathToFileURL(configPath).href);
         const mod = isObject(imported) ? imported : {};
-        // SvelTeX configs are typically `export default { ... }`.
-        const candidate = isObject(mod['default'])
-            ? mod['default']
-            : isObject(mod['config'])
-              ? mod['config']
-              : mod;
+        const { candidate, mathBackend } = resolveConfigCandidate(mod);
 
         return {
             verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
+            latexTags: readLatexTags(candidate) ?? base.latexTags,
             extensions: readExtensions(candidate, base.extensions),
             mathDelims: readMathDelims(candidate, base.mathDelims),
+            mathBackend: mathBackend ?? base.mathBackend,
             directives: readDirectives(candidate),
             configPath,
         };
     } catch {
         return { ...base, configPath };
     }
+}
+
+/**
+ * Picks, out of an imported config module, the object to read settings from
+ * and the math backend.
+ *
+ * A SvelTeX config file usually does one of:
+ *
+ *  - `export const preprocessor = await sveltex(choices, config)` — the export
+ *    is a resolved `Sveltex` instance. The instance exposes `mathBackend`
+ *    directly and a fully-merged `configuration` object (verbatim, math, ...).
+ *  - `export default { ... }` / `export const config = { ... }` — a plain
+ *    config object, possibly alongside a `backendChoices` object.
+ *
+ * This walks every export, prefers a `Sveltex`-instance-shaped value, and
+ * otherwise falls back to a plain `default` / `config` object.
+ *
+ * @param mod - The imported config module namespace.
+ * @returns The object to read region settings from, and the math backend if
+ * one could be determined.
+ */
+function resolveConfigCandidate(mod: Record<string, unknown>): {
+    candidate: Record<string, unknown>;
+    mathBackend: MathBackend | undefined;
+} {
+    // A resolved `Sveltex` instance has both a `mathBackend` and a
+    // `configuration` getter; prefer it wherever it is exported.
+    for (const value of Object.values(mod)) {
+        if (
+            isObject(value) &&
+            'mathBackend' in value &&
+            'configuration' in value &&
+            isObject(value['configuration'])
+        ) {
+            return {
+                candidate: value['configuration'],
+                mathBackend: readMathBackend(value),
+            };
+        }
+    }
+    // Otherwise fall back to a plain config object.
+    const candidate = isObject(mod['default'])
+        ? mod['default']
+        : isObject(mod['config'])
+          ? mod['config']
+          : mod;
+    return { candidate, mathBackend: readMathBackend(candidate) };
 }

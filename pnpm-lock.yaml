@@ -378,6 +378,9 @@ importers:
       '@nvl/sveltex':
         specifier: workspace:*
         version: link:../sveltex
+      '@nvl/sveltex-math-language-server':
+        specifier: workspace:*
+        version: link:../sveltex-math-language-server
       svelte-language-server:
         specifier: ^0.18.0
         version: 0.18.0(picomatch@4.0.4)(typescript@5.9.3)

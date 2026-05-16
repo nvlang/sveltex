@@ -39,6 +39,7 @@ import {
     type InitializeParams,
     type InitializeResult,
     type Location,
+    type Position,
     type PrepareRenameParams,
     type PublishDiagnosticsParams,
     type Range,
@@ -48,13 +49,18 @@ import {
     type SignatureHelpParams,
     type TextDocumentPositionParams,
 } from 'vscode-languageserver-protocol';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { SvelteProxy } from './svelte-proxy.js';
-import { computeRegions } from './regions.js';
+import { computeRegions, type Region } from './regions.js';
 import {
     buildVirtualSvelte,
     type VirtualSvelteDocument,
 } from './virtual-svelte.js';
+import {
+    RegionForwarder,
+    isLatexVerbatimRegion,
+} from './region-forwarding.js';
 import {
     defaultConfigSnapshot,
     loadConfigSnapshot,
@@ -89,6 +95,8 @@ interface OpenDocument {
     text: string;
     /** LSP document version. */
     version: number;
+    /** The document's regions (gap-free, sorted), as used to build `virtual`. */
+    regions: Region[];
     /** The generated virtual `.svelte` document and its source map. */
     virtual: VirtualSvelteDocument;
 }
@@ -135,6 +143,13 @@ export function createServer(connection: Connection): void {
         },
     });
 
+    /**
+     * Forwards hover/completion in non-delegated regions to dedicated child
+     * servers: the math language server for `math` regions, TexLab for LaTeX
+     * `verbatim` regions. Spawns its children lazily on first use.
+     */
+    const regionForwarder = new RegionForwarder(config);
+
     /** Returns whether a URI denotes a SvelTeX document. */
     function isSveltexUri(uri: string): boolean {
         return uri.endsWith(SVELTEX_EXTENSION);
@@ -150,13 +165,59 @@ export function createServer(connection: Connection): void {
     }
 
     /**
+     * Returns the region of `doc` that contains `position`.
+     *
+     * @param doc - The open document.
+     * @param position - A caret position in `.sveltex` coordinates.
+     * @returns The containing {@link Region}, or `undefined` if the position is
+     * out of range.
+     *
+     * @remarks
+     * Regions tile the document gap-free, so the position lands in exactly one
+     * — except a caret exactly on an interior boundary, which is resolved to
+     * the region the boundary _opens_ (so a caret right after a `$…$` is
+     * treated as the following region, not the math one).
+     */
+    function regionAt(doc: OpenDocument, position: Position): Region | undefined {
+        const textDoc = TextDocument.create(
+            'mem://sveltex',
+            'sveltex',
+            doc.version,
+            doc.text,
+        );
+        const offset = textDoc.offsetAt(position);
+        if (offset < 0 || offset > doc.text.length) return undefined;
+        for (const region of doc.regions) {
+            if (offset >= region.sourceStart && offset < region.sourceEnd) {
+                return region;
+            }
+        }
+        // A caret at the very end of the document belongs to the last region.
+        return doc.regions.at(-1);
+    }
+
+    /**
+     * Whether a request landing in `region` should be forwarded to a dedicated
+     * child server (rather than the Svelte proxy).
+     *
+     * `true` for a `math` region (forwarded to the math language server) and
+     * for a `verbatim` region whose tag is a configured LaTeX environment
+     * (forwarded to TexLab). `RegionForwarder` makes the final call about
+     * whether a child is actually available; this is just the fast gate.
+     */
+    function isForwardableRegion(doc: OpenDocument, region: Region): boolean {
+        if (region.kind === 'math') return true;
+        return isLatexVerbatimRegion(doc.text, region, config.latexTags);
+    }
+
+    /**
      * Rebuilds the regions, virtual document and source map for `text` and
      * stores them against `uri`.
      */
     function rebuild(uri: string, text: string, version: number): OpenDocument {
         const regions = computeRegions(text, config);
         const virtual = buildVirtualSvelte(text, regions);
-        const doc: OpenDocument = { uri, text, version, virtual };
+        const doc: OpenDocument = { uri, text, version, regions, virtual };
         documents.set(uri, doc);
         return doc;
     }
@@ -267,6 +328,9 @@ export function createServer(connection: Connection): void {
             if (root) {
                 config = await loadConfigSnapshot(root);
             }
+            // The forwarder needs the resolved config (math backend, LaTeX
+            // tags) before any request can be routed.
+            regionForwarder.updateConfig(config);
 
             // Start the embedded Svelte server with the host's own initialize
             // params so its TypeScript service resolves the real project.
@@ -284,10 +348,28 @@ export function createServer(connection: Connection): void {
             // requests are actually requested by the editor) and the native
             // Markdown features this server adds. `textDocumentSync` is forced
             // to `Full` because the virtual document is rebuilt wholesale.
+            //
+            // The completion trigger characters are extended with `\` and `{`:
+            // the editor only re-requests completion on a trigger character it
+            // was told about, and those two open a TeX command / a
+            // `\begin{...}` environment name inside a forwarded math or LaTeX
+            // region.
+            const childCompletion = childCapabilities?.completionProvider;
+            const triggerCharacters = [
+                ...new Set([
+                    ...(childCompletion?.triggerCharacters ?? []),
+                    '\\',
+                    '{',
+                ]),
+            ];
             return {
                 capabilities: {
                     ...(childCapabilities ?? {}),
                     textDocumentSync: TextDocumentSyncKind.Full,
+                    completionProvider: {
+                        ...(childCompletion ?? {}),
+                        triggerCharacters,
+                    },
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
@@ -302,7 +384,7 @@ export function createServer(connection: Connection): void {
     connection.onShutdown(async () => {
         for (const timer of reparseTimers.values()) clearTimeout(timer);
         reparseTimers.clear();
-        await proxy.stop();
+        await Promise.all([proxy.stop(), regionForwarder.stop()]);
     });
 
     // ----- document synchronization -----------------------------------------
@@ -361,6 +443,20 @@ export function createServer(connection: Connection): void {
     // ----- proxied, position-mapped language features -----------------------
 
     connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
+        // A hover inside a non-delegated region (math, LaTeX verbatim) is
+        // handled by a dedicated child server, not the Svelte proxy.
+        const doc = documents.get(params.textDocument.uri);
+        if (doc) {
+            const region = regionAt(doc, params.position);
+            if (region && isForwardableRegion(doc, region)) {
+                return regionForwarder.forwardHover(
+                    doc.text,
+                    doc.uri,
+                    region,
+                    params.position,
+                );
+            }
+        }
         const proxied = await proxyPositionRequest<Hover | null>(
             'textDocument/hover',
             params,
@@ -370,6 +466,18 @@ export function createServer(connection: Connection): void {
     });
 
     connection.onCompletion(async (params: CompletionParams) => {
+        const doc = documents.get(params.textDocument.uri);
+        if (doc) {
+            const region = regionAt(doc, params.position);
+            if (region && isForwardableRegion(doc, region)) {
+                return regionForwarder.forwardCompletion(
+                    doc.text,
+                    doc.uri,
+                    region,
+                    params.position,
+                );
+            }
+        }
         const proxied = await proxyPositionRequest<
             Parameters<typeof remapCompletion>[0]
         >('textDocument/completion', params);
