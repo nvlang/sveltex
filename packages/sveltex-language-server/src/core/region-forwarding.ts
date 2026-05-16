@@ -20,11 +20,12 @@
 // responses are mapped region → `.sveltex` afterwards.
 
 import { createRequire } from 'node:module';
-import type {
-    CompletionItem,
-    CompletionList,
-    Hover,
-    Position,
+import {
+    CompletionItemKind,
+    type CompletionItem,
+    type CompletionList,
+    type Hover,
+    type Position,
 } from 'vscode-languageserver-protocol';
 import { LspProxy } from './lsp-proxy.js';
 import { findTexlab } from './texlab.js';
@@ -109,7 +110,7 @@ function describeResult(result: unknown): string {
     if (Array.isArray(result)) return `${String(result.length)} item(s)`;
     if (typeof result === 'object') {
         if ('items' in result) {
-            const items = (result as { items: unknown }).items;
+            const items = result.items;
             if (Array.isArray(items)) {
                 return `${String(items.length)} item(s)`;
             }
@@ -117,6 +118,33 @@ function describeResult(result: unknown): string {
         if ('contents' in result) return 'a hover';
     }
     return 'a result';
+}
+
+/**
+ * Relabels `Text`-kind completion items as `Function`.
+ *
+ * TexLab tags every command completion `CompletionItemKind.Text` — the generic
+ * "a word that occurs in the document" kind. VS Code routes `Text` items
+ * through the `editor.suggest.showWords` toggle and folds them in with
+ * buffer-word suggestions, so a user who has turned word suggestions off (a
+ * common preference) sees *no* `<tex>` completions at all. A LaTeX control
+ * sequence is a function-like macro, not a stray word, so it is presented as
+ * `Function`: both more accurate and immune to the `showWords` toggle.
+ *
+ * @param result - A completion result already remapped to `.sveltex` coords.
+ * @returns The same result with every `Text`-kind item relabelled `Function`.
+ */
+export function withFunctionCompletionKind(
+    result: CompletionItem[] | CompletionList | null,
+): CompletionItem[] | CompletionList | null {
+    if (!result) return result;
+    const toFunctionKind = (item: CompletionItem): CompletionItem =>
+        item.kind === CompletionItemKind.Text
+            ? { ...item, kind: CompletionItemKind.Function }
+            : item;
+    return Array.isArray(result)
+        ? result.map(toFunctionKind)
+        : { ...result, items: result.items.map(toFunctionKind) };
 }
 
 /**
@@ -157,7 +185,7 @@ export class RegionForwarder {
      * Sink for child-server lifecycle log lines, wired by the host to the
      * editor's output channel. Defaults to discarding them.
      */
-    #log: ForwarderLog;
+    readonly #log: ForwarderLog;
 
     /**
      * @param config - The resolved SvelTeX config snapshot. Replaceable via
@@ -238,7 +266,14 @@ export class RegionForwarder {
             CompletionItem[] | CompletionList | null
         >('textDocument/completion', source, sourceUri, region, position);
         if (!forwarded) return null;
-        return remapCompletion(forwarded.result, forwarded.ctx);
+        const remapped = remapCompletion(forwarded.result, forwarded.ctx);
+        // TexLab tags every command completion `kind: Text` — the generic
+        // "a word from the document" kind, which editors fold in with (and
+        // can suppress alongside) word-based suggestions. A LaTeX control
+        // sequence is a function-like macro, so present it as one.
+        return region.kind === 'verbatim'
+            ? withFunctionCompletionKind(remapped)
+            : remapped;
     }
 
     /** Shuts every spawned child server down. */

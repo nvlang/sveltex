@@ -8,9 +8,11 @@
 // whether the host machine actually has a `texlab` binary installed.
 
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { CompletionItemKind } from 'vscode-languageserver-protocol';
 import {
     RegionForwarder,
     isLatexVerbatimRegion,
+    withFunctionCompletionKind,
 } from '../../src/core/region-forwarding.js';
 import { defaultConfigSnapshot } from '../../src/core/config.js';
 import { computeRegions, type Region } from '../../src/core/regions.js';
@@ -67,6 +69,44 @@ describe('isLatexVerbatimRegion', () => {
         expect(isLatexVerbatimRegion('$a+b$', mathRegion, latexTags)).toBe(
             false,
         );
+    });
+});
+
+describe('withFunctionCompletionKind', () => {
+    it('passes a null result straight through', () => {
+        expect(withFunctionCompletionKind(null)).toBeNull();
+    });
+
+    it('relabels `Text`-kind items in an array as `Function`', () => {
+        const result = withFunctionCompletionKind([
+            { label: '\\draw', kind: CompletionItemKind.Text },
+            { label: '\\node', kind: CompletionItemKind.Text },
+        ]);
+        const items = Array.isArray(result) ? result : [];
+        expect(items.map((i) => i.kind)).toEqual([
+            CompletionItemKind.Function,
+            CompletionItemKind.Function,
+        ]);
+    });
+
+    it('leaves non-`Text` kinds (and kind-less items) untouched', () => {
+        const result = withFunctionCompletionKind([
+            { label: '\\frac', kind: CompletionItemKind.Method },
+            { label: 'plain' },
+        ]);
+        const items = Array.isArray(result) ? result : [];
+        expect(items[0]?.kind).toBe(CompletionItemKind.Method);
+        expect(items[1]?.kind).toBeUndefined();
+    });
+
+    it('relabels items inside a CompletionList and keeps `isIncomplete`', () => {
+        const result = withFunctionCompletionKind({
+            isIncomplete: true,
+            items: [{ label: '\\draw', kind: CompletionItemKind.Text }],
+        });
+        const list = result && !Array.isArray(result) ? result : undefined;
+        expect(list?.isIncomplete).toBe(true);
+        expect(list?.items[0]?.kind).toBe(CompletionItemKind.Function);
     });
 });
 
