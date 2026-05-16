@@ -1,19 +1,24 @@
 // Unit tests for region forwarding (`src/core/region-forwarding.ts`):
 // classifying LaTeX verbatim regions, forwarding math regions to the bundled
 // math language server, and the graceful "skip" behaviour when no child server
-// is available (a `custom`/`none` math backend, or TexLab not on `PATH`).
+// is available (a `custom`/`none` math backend, or TexLab not installed).
 //
-// The TexLab path is deliberately tested with TexLab made ABSENT: `PATH` is
-// blanked for the duration so `findTexlab` fails, exercising the skip branch
-// without depending on whether the host actually has TexLab installed.
+// `./texlab.js` is module-mocked so `findTexlab` always reports TexLab as
+// absent: this exercises the skip branch deterministically, regardless of
+// whether the host machine actually has a `texlab` binary installed.
 
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import {
     RegionForwarder,
     isLatexVerbatimRegion,
 } from '../../src/core/region-forwarding.js';
 import { defaultConfigSnapshot } from '../../src/core/config.js';
 import { computeRegions, type Region } from '../../src/core/regions.js';
+
+vi.mock('../../src/core/texlab.js', () => ({
+    findTexlab: () => undefined,
+    isTexlabAvailable: () => false,
+}));
 
 describe('isLatexVerbatimRegion', () => {
     const latexTags = ['tex', 'latex', 'tikz'];
@@ -195,22 +200,9 @@ describe('RegionForwarder — math regions', () => {
 });
 
 describe('RegionForwarder — TexLab absent', () => {
-    // Blank `PATH` so `findTexlab` cannot find a TexLab binary, regardless of
-    // whether the host machine has one installed.
-    let savedPath: string | undefined;
     let forwarder: RegionForwarder;
 
-    beforeEach(() => {
-        savedPath = process.env['PATH'];
-        process.env['PATH'] = '';
-    });
-
     afterEach(async () => {
-        if (savedPath === undefined) {
-            delete process.env['PATH'];
-        } else {
-            process.env['PATH'] = savedPath;
-        }
         await forwarder.stop();
     });
 
@@ -222,7 +214,8 @@ describe('RegionForwarder — TexLab absent', () => {
         );
         expect(region).toBeDefined();
         if (!region) return;
-        // No `texlab` on `PATH`: forwarding must return `null`, not throw.
+        // `findTexlab` is mocked to `undefined`: forwarding must return
+        // `null`, not throw.
         const completion = await forwarder.forwardCompletion(
             source,
             'file:///doc.sveltex',

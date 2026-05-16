@@ -56,11 +56,30 @@ describe('findTexlab', () => {
             PATH: dirWithout,
             ...(isWindows ? { PATHEXT: '.CMD;.EXE' } : {}),
         };
-        expect(findTexlab(env)).toBeUndefined();
+        // `[]` disables the well-known-directory fallback, which would
+        // otherwise find a `texlab` the host machine happens to have.
+        expect(findTexlab(env, [])).toBeUndefined();
     });
 
     it('returns undefined when PATH is unset', () => {
-        expect(findTexlab({})).toBeUndefined();
+        expect(findTexlab({}, [])).toBeUndefined();
+    });
+
+    it('finds texlab in a well-known directory when not on PATH', () => {
+        const env: NodeJS.ProcessEnv = {
+            PATH: dirWithout,
+            ...(isWindows ? { PATHEXT: '.CMD;.EXE' } : {}),
+        };
+        // GUI-launched editors get a stripped `PATH`; the fallback covers it.
+        expect(findTexlab(env, [dirWithTexlab])).toBe(texlabPath);
+    });
+
+    it('prefers a PATH match over a well-known directory', () => {
+        const env: NodeJS.ProcessEnv = {
+            PATH: dirWithTexlab,
+            ...(isWindows ? { PATHEXT: '.CMD;.EXE' } : {}),
+        };
+        expect(findTexlab(env, [dirWithout])).toBe(texlabPath);
     });
 
     it('tolerates empty segments in PATH', () => {
@@ -83,7 +102,7 @@ describe('findTexlab', () => {
     });
 
     it('isTexlabAvailable mirrors findTexlab', () => {
-        expect(isTexlabAvailable({ PATH: dirWithout })).toBe(false);
+        expect(isTexlabAvailable({ PATH: dirWithout }, [])).toBe(false);
         expect(
             isTexlabAvailable({
                 PATH: dirWithTexlab,
