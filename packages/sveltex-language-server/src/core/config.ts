@@ -40,6 +40,22 @@ export interface MathDelimsSnapshot {
 export type MathBackend = 'mathjax' | 'katex' | 'custom' | 'none';
 
 /**
+ * The `\documentclass` line and preamble that SvelTeX wraps a TeX verbatim
+ * environment's content in when it compiles it to a `.tex` file.
+ *
+ * The LSP mirrors this when building the virtual document it forwards to
+ * TexLab, so completion / hover see the project's _actual_ packages and
+ * preamble macros (`\usepackage{…}`, `\newcommand{…}`, …) rather than a
+ * generic guess.
+ */
+export interface TexScaffold {
+    /** The full `\documentclass[…]{…}` line. */
+    documentClass: string;
+    /** Everything between `\documentclass` and `\begin{document}`. */
+    preamble: string;
+}
+
+/**
  * The minimal, immutable view of a resolved `sveltex.config.*` that the LSP
  * core needs in order to split a document into {@link Region}s and route
  * region-specific language requests.
@@ -68,6 +84,13 @@ export interface SveltexConfigSnapshot {
     mathBackend: MathBackend;
     /** Markdown directive settings. */
     directives: DirectiveEscapeSettings;
+    /**
+     * Per-tag {@link TexScaffold} for the project's TeX verbatim environments,
+     * keyed by lower-cased tag name (every alias of a `type: 'tex'` entry maps
+     * to the same scaffold). Empty when no config file declares one — in which
+     * case the LSP falls back to a generic built-in scaffold.
+     */
+    texScaffolds: Record<string, TexScaffold>;
     /**
      * Absolute path of the config file the snapshot was loaded from, or
      * `undefined` if no config file was found and defaults are in use.
@@ -98,6 +121,7 @@ export function defaultConfigSnapshot(): SveltexConfigSnapshot {
         mathDelims: getDefaultMathConfig('mathjax').delims,
         mathBackend: 'mathjax',
         directives: { enabled: false, bracesArePartOfDirective: null },
+        texScaffolds: {},
         configPath: undefined,
     };
 }
@@ -162,6 +186,76 @@ function readLatexTags(
         }
     }
     return tags.size > 0 ? [...tags] : undefined;
+}
+
+/**
+ * SvelTeX's default TeX preamble — used when a `type: 'tex'` verbatim entry
+ * declares none. Mirrors the documented default of `verbatim.<env>.preamble`.
+ */
+const DEFAULT_TEX_PREAMBLE = [
+    '\\usepackage{microtype}',
+    '\\usepackage{tikz}',
+    '\\usepackage{mathtools}',
+    '\\usepackage{xcolor}',
+].join('\n');
+
+/**
+ * Renders a verbatim entry's `documentClass` setting (a string, or a
+ * `{ name, options }` object, or absent) into a `\documentclass[…]{…}` line.
+ * SvelTeX's default class for TeX components is `standalone`.
+ */
+function readDocumentClass(value: unknown): string {
+    if (typeof value === 'string') return `\\documentclass{${value}}`;
+    let name = 'standalone';
+    let options: string[] = [];
+    if (isObject(value)) {
+        if (typeof value['name'] === 'string') name = value['name'];
+        if (Array.isArray(value['options'])) {
+            options = value['options'].filter(
+                (option): option is string => typeof option === 'string',
+            );
+        }
+    }
+    return options.length > 0
+        ? `\\documentclass[${options.join(',')}]{${name}}`
+        : `\\documentclass{${name}}`;
+}
+
+/**
+ * Extracts a {@link TexScaffold} for every `type: 'tex'` verbatim environment
+ * in a user config object, keyed by lower-cased tag (its name and each alias).
+ *
+ * This is the `\documentclass` + `preamble` SvelTeX itself wraps the
+ * environment's content in; the LSP reuses it so TexLab sees the project's
+ * real packages and preamble macros. (SvelTeX additionally folds in
+ * preset-derived packages via its internal `extendedPreamble`; the explicit
+ * `preamble` string read here is the part that carries the user's intent.)
+ */
+function readTexScaffolds(
+    config: Record<string, unknown>,
+): Record<string, TexScaffold> {
+    const verbatim = config['verbatim'];
+    if (!isObject(verbatim)) return {};
+    const scaffolds: Record<string, TexScaffold> = {};
+    for (const [name, entry] of Object.entries(verbatim)) {
+        if (!isObject(entry) || entry['type'] !== 'tex') continue;
+        const scaffold: TexScaffold = {
+            documentClass: readDocumentClass(entry['documentClass']),
+            preamble:
+                typeof entry['preamble'] === 'string'
+                    ? entry['preamble']
+                    : DEFAULT_TEX_PREAMBLE,
+        };
+        const tags = [name];
+        const aliases = entry['aliases'];
+        if (Array.isArray(aliases)) {
+            for (const alias of aliases) {
+                if (typeof alias === 'string') tags.push(alias);
+            }
+        }
+        for (const tag of tags) scaffolds[tag.toLowerCase()] = scaffold;
+    }
+    return scaffolds;
 }
 
 /**
@@ -310,6 +404,7 @@ export async function loadConfigSnapshot(
             mathDelims: readMathDelims(candidate, base.mathDelims),
             mathBackend: mathBackend ?? base.mathBackend,
             directives: readDirectives(candidate),
+            texScaffolds: readTexScaffolds(candidate),
             configPath,
         };
     } catch {

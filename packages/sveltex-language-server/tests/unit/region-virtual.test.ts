@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+    buildLatexScaffold,
     buildRegionVirtualDocument,
     latexRegionScaffold,
 } from '../../src/core/region-virtual.js';
@@ -159,5 +160,36 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
         // mapping itself is still identity, so `\f|` -> char 1 on that line.
         const preambleLines = latexRegionScaffold.prefix.split('\n').length - 1;
         expect(generated).toEqual({ line: preambleLines, character: 1 });
+    });
+
+    it('embeds a verbatim region in a caller-supplied scaffold', () => {
+        // The forwarder passes the project's real `sveltex.config.*` scaffold;
+        // `buildRegionVirtualDocument` must use it instead of the default.
+        const source = '<tex>\\R</tex>';
+        const scaffold = buildLatexScaffold(
+            '\\documentclass{standalone}',
+            '\\newcommand{\\R}{\\mathbb{R}}',
+        );
+        const v = buildRegionVirtualDocument(
+            source,
+            wholeRegion(source, 'verbatim'),
+            scaffold,
+        );
+        expect(v.text).toBe(`${scaffold.prefix}\\R${scaffold.suffix}`);
+    });
+});
+
+describe('buildLatexScaffold', () => {
+    it('wraps a documentclass and preamble into prefix/suffix', () => {
+        const scaffold = buildLatexScaffold(
+            '\\documentclass{standalone}',
+            '\\usepackage{tikz}',
+        );
+        expect(scaffold.prefix).toBe(
+            '\\documentclass{standalone}\n' +
+                '\\usepackage{tikz}\n' +
+                '\\begin{document}\n',
+        );
+        expect(scaffold.suffix).toBe('\n\\end{document}\n');
     });
 });

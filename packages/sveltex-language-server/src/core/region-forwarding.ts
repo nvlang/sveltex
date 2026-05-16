@@ -28,7 +28,11 @@ import type {
 } from 'vscode-languageserver-protocol';
 import { LspProxy } from './lsp-proxy.js';
 import { findTexlab } from './texlab.js';
-import { buildRegionVirtualDocument } from './region-virtual.js';
+import {
+    buildLatexScaffold,
+    buildRegionVirtualDocument,
+    type LatexScaffold,
+} from './region-virtual.js';
 import type { Region } from './regions.js';
 import type { MathBackend, SveltexConfigSnapshot } from './config.js';
 import { remapCompletion, remapHover, type RemapContext } from './remap.js';
@@ -251,7 +255,11 @@ export class RegionForwarder {
         const target = await this.#proxyForRegion(source, region);
         if (!target) return null;
 
-        const virtual = buildRegionVirtualDocument(source, region);
+        const virtual = buildRegionVirtualDocument(
+            source,
+            region,
+            this.#latexScaffoldFor(source, region),
+        );
         const generatedPosition =
             virtual.sourceMap.sourcePositionToGenerated(position);
         // The position can fall on a stripped delimiter/tag — unmapped. Nothing
@@ -297,6 +305,29 @@ export class RegionForwarder {
                 textDocument: { uri: virtualUri },
             });
         }
+    }
+
+    /**
+     * Returns the {@link LatexScaffold} for a LaTeX verbatim region — the
+     * project's own, when `sveltex.config.*` declares the region's tag — or
+     * `undefined` for any other region (and for an unconfigured tag), in which
+     * case `buildRegionVirtualDocument` falls back to its built-in scaffold.
+     *
+     * Feeding TexLab the project's real `\documentclass` + preamble means its
+     * completion and hover see exactly the packages and preamble macros the
+     * block will actually be compiled with.
+     */
+    #latexScaffoldFor(
+        source: string,
+        region: Region,
+    ): LatexScaffold | undefined {
+        if (region.kind !== 'verbatim') return undefined;
+        const slice = source.slice(region.sourceStart, region.sourceEnd);
+        const tag = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(slice)?.[1];
+        if (!tag) return undefined;
+        const scaffold = this.#config.texScaffolds[tag.toLowerCase()];
+        if (!scaffold) return undefined;
+        return buildLatexScaffold(scaffold.documentClass, scaffold.preamble);
     }
 
     /**

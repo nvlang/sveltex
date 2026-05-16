@@ -42,29 +42,50 @@ export interface RegionVirtualDocument {
 }
 
 /**
- * The minimal LaTeX document a verbatim (LaTeX) region's content is embedded
- * into before being handed to TexLab.
+ * The strings a verbatim (LaTeX) region's content is wrapped in before being
+ * handed to TexLab: a `prefix` (document class + preamble + `\begin{document}`)
+ * and a `suffix` (`\end{document}`).
+ */
+export interface LatexScaffold {
+    /** Text inserted before the region content. */
+    prefix: string;
+    /** Text inserted after the region content. */
+    suffix: string;
+}
+
+/**
+ * Builds a {@link LatexScaffold} from a `\documentclass` line and a preamble.
+ *
+ * The region content ends up wrapped as
+ * `<documentClass>\n<preamble>\n\begin{document}\n…\n\end{document}\n` — the
+ * same shape SvelTeX's preprocessor compiles a TeX verbatim block into, which
+ * is what lets the LSP feed TexLab the project's _real_ packages and macros.
+ */
+export function buildLatexScaffold(
+    documentClass: string,
+    preamble: string,
+): LatexScaffold {
+    return {
+        prefix: `${documentClass}\n${preamble}\n\\begin{document}\n`,
+        suffix: '\n\\end{document}\n',
+    };
+}
+
+/**
+ * The fallback scaffold, used for a `<tex>` region whose project declares no
+ * readable `sveltex.config.*` TeX environment.
  *
  * TexLab's completion and hover are context-sensitive: a bare command fragment
- * is not treated as document-body content and yields next to nothing. Putting
- * the fragment inside `\begin{document}…\end{document}` is what unlocks
- * TexLab's command completion. The preamble also loads `amsmath` and `tikz` —
- * the packages a SvelTeX `<tex>` block most often relies on — so their
- * commands complete too, where the user's TeX distribution provides them.
- *
- * Exported so the source-map geometry is verifiable and the preamble lives in
- * exactly one place.
+ * is not treated as document-body content and yields next to nothing. Wrapping
+ * it in `\begin{document}…\end{document}` unlocks command completion; the
+ * preamble loads `amsmath` and `tikz`, the packages a `<tex>` block most often
+ * relies on. When the project's config _is_ readable the LSP instead uses its
+ * real document class + preamble — see `config.ts`'s `TexScaffold`.
  */
-export const latexRegionScaffold = {
-    /** Inserted before the region content. */
-    prefix:
-        '\\documentclass{article}\n' +
-        '\\usepackage{amsmath}\n' +
-        '\\usepackage{tikz}\n' +
-        '\\begin{document}\n',
-    /** Inserted after the region content. */
-    suffix: '\n\\end{document}\n',
-} as const;
+export const latexRegionScaffold: LatexScaffold = buildLatexScaffold(
+    '\\documentclass{article}',
+    '\\usepackage{amsmath}\n\\usepackage{tikz}',
+);
 
 /** A `[prefixLength, suffixLength]` pair describing a wrapper to strip. */
 type Wrapper = readonly [prefix: number, suffix: number];
@@ -121,12 +142,14 @@ function verbatimWrapper(slice: string): Wrapper {
  * @param source - Full text of the `.sveltex` document.
  * @param region - The region to extract. Its `kind` must be `math` or
  * `verbatim`; for any other kind the whole slice is treated as inner content.
+ * @param latexScaffold - The scaffold to wrap a `verbatim` region in; defaults
+ * to {@link latexRegionScaffold}. Ignored for `math` regions.
  * @returns The standalone virtual document and its source map.
  *
  * @remarks
  * A `math` region's virtual document is the bare inner text. A `verbatim`
- * region's is that inner text wrapped in {@link latexRegionScaffold}. Either
- * way the `SourceMap` holds one identity mapping covering the inner span —
+ * region's is that inner text wrapped in `latexScaffold`. Either way the
+ * `SourceMap` holds one identity mapping covering the inner span —
  * `[innerStart … innerEnd) ↔ [prefixLength … prefixLength + innerLength)` — so
  * a caret in the inner text maps straight back to the right `.sveltex` offset,
  * while the synthetic scaffold lines are covered by no mapping at all.
@@ -134,6 +157,7 @@ function verbatimWrapper(slice: string): Wrapper {
 export function buildRegionVirtualDocument(
     source: string,
     region: Region,
+    latexScaffold: LatexScaffold = latexRegionScaffold,
 ): RegionVirtualDocument {
     const slice = source.slice(region.sourceStart, region.sourceEnd);
     const [prefix, suffix] =
@@ -149,10 +173,11 @@ export function buildRegionVirtualDocument(
 
     // A `verbatim` region is forwarded to TexLab, which needs document-body
     // context; a `math` region goes to the bare-TeX math server, which does
-    // not. Embed the former in a minimal LaTeX document.
+    // not. Embed the former in the LaTeX scaffold (the project's, or the
+    // built-in default).
     const scaffold =
         region.kind === 'verbatim'
-            ? latexRegionScaffold
+            ? latexScaffold
             : { prefix: '', suffix: '' };
     const text = `${scaffold.prefix}${innerText}${scaffold.suffix}`;
 

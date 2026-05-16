@@ -83,6 +83,39 @@ describe('config file location and loading', () => {
         expect(snapshot.configPath).toContain('sveltex.config.mjs');
     });
 
+    it("reads documentClass and preamble of a `type: 'tex'` environment", async () => {
+        writeFileSync(
+            join(dir, 'sveltex.config.mjs'),
+            [
+                'export default {',
+                '  verbatim: {',
+                '    tex: {',
+                "      type: 'tex',",
+                "      aliases: ['TikZ'],",
+                "      documentClass: 'standalone',",
+                "      preamble: '\\\\usepackage{tikz}',",
+                '    },',
+                '  },',
+                '};',
+                '',
+            ].join('\n'),
+        );
+        const snapshot = await loadConfigSnapshot(dir);
+        // The tag name and each alias (lower-cased) share one scaffold.
+        expect(snapshot.texScaffolds['tex']).toEqual({
+            documentClass: '\\documentclass{standalone}',
+            preamble: '\\usepackage{tikz}',
+        });
+        expect(snapshot.texScaffolds['tikz']).toEqual(
+            snapshot.texScaffolds['tex'],
+        );
+    });
+
+    it('has no texScaffolds when there is no config file', async () => {
+        const snapshot = await loadConfigSnapshot(dir);
+        expect(snapshot.texScaffolds).toEqual({});
+    });
+
     it('reads the math backend from a `backendChoices` config object', async () => {
         writeFileSync(
             join(dir, 'sveltex.config.mjs'),
