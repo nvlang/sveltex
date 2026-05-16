@@ -1,17 +1,20 @@
 // Integration tests for the SvelTeX language server (`src/core/server.ts`).
 //
-// The whole server is spawned as a child process and driven over stdio — the
-// same way the VS Code extension drives it — so the `initialize` handshake,
-// region-aware request routing, and the new math-region forwarding are all
-// exercised end to end. These tests focus on the SvelTeX server's OWN
-// behaviour (capabilities, native Markdown features, math forwarding); the
-// embedded `svelte-language-server` it spawns is incidental here.
+// The whole server is spawned as a child process and driven end to end: the
+// `initialize` handshake, region-aware request routing, and the math-region
+// forwarding are all exercised. Two transports are covered — stdio (the bulk
+// of the tests) and Node IPC (the transport the `vscode-sveltex` extension's
+// `vscode-languageclient` uses), so the path the VS Code extension actually
+// takes is verified too. The embedded `svelte-language-server` the SvelTeX
+// server spawns is incidental here.
 
 import { fork, type ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+    IPCMessageReader,
+    IPCMessageWriter,
     StreamMessageReader,
     StreamMessageWriter,
     createProtocolConnection,
@@ -225,5 +228,60 @@ describe('SvelTeX language server (spawned over stdio)', () => {
                 '\\alpha',
             );
         }
+    });
+});
+
+describe('SvelTeX language server — Node IPC transport', () => {
+    // The `vscode-sveltex` extension launches `bin/server.js` with
+    // `vscode-languageclient`'s `TransportKind.ipc`, which forks the server
+    // with a `--node-ipc` argument and an IPC channel. This block reproduces
+    // exactly that launch, so the transport the VS Code extension relies on is
+    // verified — not just the stdio path.
+    let server: Spawned;
+
+    beforeAll(async () => {
+        const child = fork(SERVER_BIN, ['--node-ipc'], {
+            stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+            execArgv: [],
+        });
+        const connection = createProtocolConnection(
+            new IPCMessageReader(child),
+            new IPCMessageWriter(child),
+        );
+        const star = connection as unknown as MessageConnection;
+        star.onNotification(() => undefined);
+        star.onRequest(() => null);
+        connection.listen();
+        const initializeResult =
+            await connection.sendRequest<InitializeResult>('initialize', {
+                processId: process.pid,
+                rootUri: null,
+                workspaceFolders: null,
+                capabilities: {},
+            });
+        await connection.sendNotification('initialized', {});
+        server = { connection, child, initializeResult };
+    });
+
+    afterAll(async () => {
+        await stop(server);
+    });
+
+    it('completes the initialize handshake over IPC', () => {
+        expect(server.initializeResult.serverInfo?.name).toBe(
+            'sveltex-language-server',
+        );
+    });
+
+    it('answers math completion over the IPC transport', async () => {
+        const uri = 'file:///tmp/ipc-math.sveltex';
+        await open(server, uri, 'Math: $\\bet$ done.\n');
+        const result = await server.connection.sendRequest<
+            CompletionItem[] | CompletionList | null
+        >('textDocument/completion', {
+            textDocument: { uri },
+            position: { line: 0, character: 11 },
+        });
+        expect(items(result).map((i) => i.label)).toContain('\\beta');
     });
 });

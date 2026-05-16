@@ -13,6 +13,26 @@ preprocessor for Svelte that aims to combine markdown, Svelte, and (some) LaTeX.
 -   `<script>` languages: JavaScript, TypeScript
 -   `<style>` languages: CSS, SCSS, SASS, PostCSS, Stylus
 
+### Language server
+
+The extension also starts the SvelTeX language server
+([`@nvl/sveltex-language-server`](https://www.npmjs.com/package/@nvl/sveltex-language-server)),
+which brings IntelliSense to `.sveltex` files:
+
+-   Svelte / Markdown / TypeScript diagnostics, hover, completion,
+    go-to-definition, references, rename and more (the real
+    `svelte-language-server`, proxied for the Svelte parts of the file).
+-   TeX command completion (triggered on `\`) and hover inside math
+    expressions, matching the project's math backend (KaTeX or MathJax).
+-   Inside LaTeX tags, full LaTeX assistance when the
+    [TexLab](https://github.com/latex-lsp/texlab) language server is installed
+    and on `PATH` (otherwise this is skipped silently).
+-   A Markdown heading outline, folding ranges and selection ranges.
+
+The language server starts automatically; if it cannot start, syntax
+highlighting still works and the failure is logged to the
+"SvelTeX Language Server" output channel.
+
 ![screenshot](https://raw.githubusercontent.com/nvlang/sveltex/main/packages/vscode-sveltex/res/screenshot-ayu-dark-bordered.png)
 
 ## Requirements
