@@ -1,0 +1,72 @@
+{
+  "name": "@nvl/sveltex-language-server",
+  "version": "0.1.0",
+  "description": "Language Server Protocol implementation for SvelTeX (Svelte + Markdown + LaTeX)",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "N. V. Lang",
+    "email": "npm@nvlang.dev",
+    "url": "https://nvlang.dev/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nvlang/sveltex.git",
+    "directory": "packages/sveltex-language-server"
+  },
+  "bugs": {
+    "url": "https://github.com/nvlang/sveltex/issues"
+  },
+  "homepage": "https://sveltex.dev",
+  "keywords": [
+    "sveltex",
+    "svelte",
+    "markdown",
+    "latex",
+    "lsp",
+    "language-server"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./bin/server.js": "./bin/server.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "sveltex-language-server": "bin/server.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "package.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "clean": "rimraf coverage dist tmp",
+    "build": "pnpm run clean && tsc -p tsconfig.json",
+    "lint": "eslint . && tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nvl/sveltex": "workspace:*",
+    "svelte-language-server": "^0.18.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-uri": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.15",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.6"
+  }
+}

@@ -2,6 +2,12 @@ import vscode = require('vscode');
 import fs = require('node:fs');
 import crypto = require('node:crypto');
 import path = require('node:path');
+// This extension is compiled as CommonJS, so `vscode-languageclient` is brought
+// in with the `import … = require(…)` form (consistent with the imports above).
+// The Node entry point is referenced by its concrete file path: the package
+// predates the npm `exports` field and its `typings` entry points at the
+// browser-flavoured API, so `vscode-languageclient/node` would not type-check.
+import lc = require('vscode-languageclient/lib/node/main.js');
 
 const defaultLatexTags = ['tex', 'latex', 'tikz'];
 const defaultEscapeTags = ['verb', 'verbatim'];
@@ -51,6 +57,70 @@ function updateGrammarFile(
     fs.writeFileSync(path.join(grammarDir, 'sveltex.tmLanguage.json'), grammar);
 }
 
+/**
+ * The running SvelTeX language client, or `undefined` before activation /
+ * after deactivation. The client launches `@nvl/sveltex-language-server`'s
+ * `bin/server.js` as a child process and speaks LSP with it.
+ */
+let client: lc.LanguageClient | undefined;
+
+/**
+ * Resolves the absolute path of the SvelTeX language server's executable
+ * (`@nvl/sveltex-language-server/bin/server.js`).
+ *
+ * The server is a regular runtime dependency of this extension, so a plain
+ * module resolution finds it. `bin/server.js` calls `startServer()`, which
+ * creates an LSP connection from the process's argv-selected transport — the
+ * `LanguageClient` below selects Node IPC.
+ */
+function resolveLanguageServerModule(): string {
+    return require.resolve('@nvl/sveltex-language-server/bin/server.js');
+}
+
+/**
+ * Constructs and starts the SvelTeX {@link LanguageClient}.
+ *
+ * This mirrors the official `svelte-vscode` extension's setup: a
+ * `vscode-languageclient` client launches the language server as a child
+ * process over Node IPC. The SvelTeX server itself then spawns and proxies the
+ * real `svelte-language-server` (see `@nvl/sveltex-language-server`).
+ */
+function startLanguageClient(): lc.LanguageClient {
+    const serverModule = resolveLanguageServerModule();
+
+    // Run the server module as a forked Node process, communicating over IPC.
+    // The same configuration is reused for the debug profile; the SvelTeX
+    // server needs no special debug flags.
+    const serverOptions: lc.ServerOptions = {
+        run: { module: serverModule, transport: lc.TransportKind.ipc },
+        debug: { module: serverModule, transport: lc.TransportKind.ipc },
+    };
+
+    const clientOptions: lc.LanguageClientOptions = {
+        // Only `.sveltex` files (the `sveltex` language id) are handled here.
+        documentSelector: [
+            { scheme: 'file', language: 'sveltex' },
+            { scheme: 'untitled', language: 'sveltex' },
+        ],
+        diagnosticCollectionName: 'sveltex',
+        synchronize: {
+            // React to changes of the user's SvelTeX configuration file.
+            fileEvents: vscode.workspace.createFileSystemWatcher(
+                '**/sveltex.config.{js,cjs,mjs,ts}',
+            ),
+        },
+    };
+
+    const languageClient = new lc.LanguageClient(
+        'sveltex',
+        'SvelTeX Language Server',
+        serverOptions,
+        clientOptions,
+    );
+    void languageClient.start();
+    return languageClient;
+}
+
 function activate(context: vscode.ExtensionContext) {
     const grammarDir = path.join(context.extensionPath, 'syntaxes');
 
@@ -84,10 +154,28 @@ function activate(context: vscode.ExtensionContext) {
             }
         }),
     );
+
+    // Start the language server. A failure here must not break the syntax
+    // highlighting the extension already provides, so it is logged rather than
+    // thrown.
+    try {
+        client = startLanguageClient();
+    } catch (error) {
+        void vscode.window.showErrorMessage(
+            `SvelTeX: failed to start the language server. ${String(error)}`,
+        );
+    }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function deactivate() {}
+async function deactivate(): Promise<void> {
+    // Capture and clear the reference up front so the `await` cannot race with
+    // a concurrent reassignment of `client`.
+    const runningClient = client;
+    client = undefined;
+    if (runningClient) {
+        await runningClient.stop();
+    }
+}
 
 export = {
     activate,
