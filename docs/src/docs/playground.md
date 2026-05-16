@@ -33,7 +33,8 @@ no server involved.
 
 <Playground />
 
-The playground uses the `marked` Markdown backend, the `escape` code backend
-(code is shown verbatim, not syntax-highlighted), and the `katex` math backend.
-For the full list of available backends and configuration options, see the
+The playground uses SvelTeX's fuller, recommended backends: the `unified`
+Markdown backend (powered by remark and rehype), the `shiki` code backend
+(syntax-highlighted code), and the `mathjax` math backend. For the full list of
+available backends and configuration options, see the
 [Markdown](/docs/markdown), [Code](/docs/code), and [Math](/docs/math) pages.

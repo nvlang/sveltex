@@ -258,6 +258,23 @@ function resetInput(): void {
     margin: 1.5rem 0;
 }
 
+/*
+ * On wide viewports the playground would otherwise be capped at the narrow
+ * VitePress prose-column width, leaving each output pane too cramped for the
+ * tab bar to fit on one row. Break the playground out of that column,
+ * expanding it rightward (into the otherwise-empty right margin) so both panes
+ * are roomy. The expansion grows with the viewport and is capped so the
+ * playground never overflows the page content area; below 1280px it is 0, so
+ * narrow layouts are unaffected.
+ */
+@media (min-width: 1280px) {
+    .stx-playground {
+        --stx-expand: clamp(0px, 100vw - 1010px, 300px);
+        width: calc(100% + var(--stx-expand));
+        margin-right: calc(-1 * var(--stx-expand));
+    }
+}
+
 .stx-playground__panes {
     display: grid;
     grid-template-columns: 1fr;
@@ -331,7 +348,13 @@ function resetInput(): void {
 
 .stx-tabs {
     display: flex;
-    flex-wrap: wrap;
+    /*
+     * Keep the tab bar a single horizontal row. On wide viewports the widened
+     * output pane (see `.stx-playground` above) has ample room for every tab;
+     * on narrow ones the row scrolls horizontally rather than stacking the
+     * tabs vertically.
+     */
+    flex-wrap: nowrap;
     overflow-x: auto;
 }
 
