@@ -1,4 +1,4 @@
-# `@nvl/sveltex-sv`
+# `@nvl/sv`
 
 A community [`sv`](https://svelte.dev/docs/cli/overview) add-on for
 [SvelTeX](https://sveltex.dev) (Svelte + Markdown + LaTeX).
@@ -19,10 +19,11 @@ wires the SvelTeX preprocessor and the `.sveltex` extension into your
 
 ## Usage
 
-In an existing SvelteKit project, run:
+In an existing SvelteKit project, run (`@nvl` is the org-handle shorthand
+the `sv` CLI resolves to this `@nvl/sv` package):
 
 ```shell
-npx sv add @nvl/sveltex-sv
+npx sv add @nvl
 ```
 
 ...and follow the prompts.
@@ -32,7 +33,7 @@ npx sv add @nvl/sveltex-sv
 All options can be set non-interactively via the `sv` CLI:
 
 ```shell
-npx sv add @nvl/sveltex-sv="markdownBackend:unified+codeBackend:shiki+mathBackend:mathjax+demoRoute:yes"
+npx sv add @nvl/sv="markdownBackend:unified+codeBackend:shiki+mathBackend:mathjax+demoRoute:yes"
 ```
 
 ### `markdownBackend`
