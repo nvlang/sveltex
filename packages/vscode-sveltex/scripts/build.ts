@@ -6,8 +6,11 @@
 //      JSON that VS Code consumes.
 //   2. Bundle — esbuild the extension entry point and the three language
 //      servers it transitively launches into self-contained files under
-//      `dist/`. The published `.vsix` ships only `dist/` (plus grammars and
-//      assets) and no `node_modules`, so every server must be bundled.
+//      `dist/`, then copy in TypeScript's `lib.*.d.ts` files: the bundled
+//      `svelte-language-server` embeds the TypeScript compiler, which needs
+//      those data files at runtime but which esbuild cannot inline. The
+//      published `.vsix` ships only `dist/` (plus grammars and assets) and no
+//      `node_modules`.
 //   3. Type-check — run `tsc --noEmit` over `src/`. esbuild strips types
 //      without checking them, so this is what actually catches type errors.
 //
@@ -263,6 +266,53 @@ async function bundleServers(bundles: ServerBundle[]): Promise<void> {
     );
 }
 
+/**
+ * Copies TypeScript's standard-library declaration files (`lib.*.d.ts`) into
+ * `dist/`, alongside the bundled servers.
+ *
+ * The bundled `svelte-language-server` embeds the TypeScript compiler, which at
+ * runtime locates its built-in `lib` files relative to its own module path —
+ * once bundled, that is `dist/svelte-language-server.js`. Those `.d.ts` files
+ * are data, not code, so esbuild does not inline them. Without this copy the
+ * embedded TypeScript service starts with no standard library at all (`Array`,
+ * `Promise`, the DOM, … all undefined): every `<script>` block then degrades
+ * to `any` with no completion and only nonsensical diagnostics.
+ *
+ * @param bundles - The resolved server bundles; the `svelte-language-server`
+ * entry pins the exact TypeScript version to copy the lib from.
+ * @throws If the TypeScript lib directory cannot be located or is empty.
+ */
+function copyTypeScriptLib(bundles: ServerBundle[]): void {
+    const svelteServer = bundles.find(
+        (bundle) => bundle.name === 'svelte-language-server',
+    );
+    if (!svelteServer) {
+        throw new Error(
+            'Cannot copy the TypeScript lib: the svelte-language-server ' +
+                'bundle was not resolved.',
+        );
+    }
+    // Resolve TypeScript exactly as the bundled `svelte-language-server` does,
+    // so the lib files match the compiler version baked into the bundle.
+    const tsPackageJson = nodeModule
+        .createRequire(svelteServer.entry)
+        .resolve('typescript/package.json');
+    const libDir = path.join(path.dirname(tsPackageJson), 'lib');
+    let copied = 0;
+    for (const file of fs.readdirSync(libDir)) {
+        if (file.startsWith('lib') && file.endsWith('.d.ts')) {
+            fs.copyFileSync(
+                path.join(libDir, file),
+                path.join(distDir, file),
+            );
+            copied += 1;
+        }
+    }
+    if (copied === 0) {
+        throw new Error(`No \`lib.*.d.ts\` files found under ${libDir}.`);
+    }
+}
+
 // ----- step 3: type-check (tsc --noEmit) ------------------------------------
 
 /**
@@ -289,6 +339,7 @@ async function main(): Promise<void> {
     fs.mkdirSync(distDir, { recursive: true });
     const servers = resolveServerBundles();
     await Promise.all([bundleExtension(), bundleServers(servers)]);
+    copyTypeScriptLib(servers);
     typeCheck();
 }
 
