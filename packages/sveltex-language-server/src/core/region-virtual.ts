@@ -48,15 +48,20 @@ export interface RegionVirtualDocument {
  * TexLab's completion and hover are context-sensitive: a bare command fragment
  * is not treated as document-body content and yields next to nothing. Putting
  * the fragment inside `\begin{document}…\end{document}` is what unlocks
- * TexLab's command completion. The preamble is deliberately minimal — core
- * LaTeX only — so it stays unopinionated about which packages a project loads.
+ * TexLab's command completion. The preamble also loads `amsmath` and `tikz` —
+ * the packages a SvelTeX `<tex>` block most often relies on — so their
+ * commands complete too, where the user's TeX distribution provides them.
  *
  * Exported so the source-map geometry is verifiable and the preamble lives in
  * exactly one place.
  */
 export const latexRegionScaffold = {
     /** Inserted before the region content. */
-    prefix: '\\documentclass{article}\n\\begin{document}\n',
+    prefix:
+        '\\documentclass{article}\n' +
+        '\\usepackage{amsmath}\n' +
+        '\\usepackage{tikz}\n' +
+        '\\begin{document}\n',
     /** Inserted after the region content. */
     suffix: '\n\\end{document}\n',
 } as const;

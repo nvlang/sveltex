@@ -155,8 +155,9 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             line: 0,
             character: 6, // `\foo` -> `\f|` is source char 6
         });
-        // The two-line scaffold preamble pushes the body to line 2; the
+        // The scaffold preamble pushes the body down by its line count; the
         // mapping itself is still identity, so `\f|` -> char 1 on that line.
-        expect(generated).toEqual({ line: 2, character: 1 });
+        const preambleLines = latexRegionScaffold.prefix.split('\n').length - 1;
+        expect(generated).toEqual({ line: preambleLines, character: 1 });
     });
 });
