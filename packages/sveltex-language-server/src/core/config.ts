@@ -71,8 +71,7 @@ export function defaultConfigSnapshot(): SveltexConfigSnapshot {
     return {
         verbatimTags: ['tex', 'latex', 'tikz', 'verb', 'verbatim'],
         extensions: ['.sveltex'],
-        mathDelims: getDefaultMathConfig('mathjax')
-            .delims as MathDelimsSnapshot,
+        mathDelims: getDefaultMathConfig('mathjax').delims,
         directives: { enabled: false, bracesArePartOfDirective: null },
         configPath: undefined,
     };
