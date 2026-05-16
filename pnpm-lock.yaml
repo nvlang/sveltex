@@ -407,6 +407,40 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@24.12.4)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@24.12.4)(typescript@5.9.3))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
 
+  packages/sveltex-math-language-server:
+    dependencies:
+      vscode-languageserver:
+        specifier: ^9.0.1
+        version: 9.0.1
+      vscode-languageserver-protocol:
+        specifier: ^3.17.5
+        version: 3.17.5
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.12
+        version: 1.0.12
+    devDependencies:
+      '@mathjax/src':
+        specifier: ^4.1.2
+        version: 4.1.2
+      '@types/node':
+        specifier: ^24.10.15
+        version: 24.12.4
+      katex:
+        specifier: ^0.16.46
+        version: 0.16.46
+      tslib:
+        specifier: ^2.8.1
+        version: 2.8.1
+      tsx:
+        specifier: ^4.22.0
+        version: 4.22.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@24.12.4)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@24.12.4)(typescript@5.9.3))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
+
   packages/vscode-sveltex:
     dependencies:
       '@nvl/sveltex-language-server':

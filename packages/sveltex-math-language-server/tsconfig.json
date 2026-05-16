@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "./dist",
+    "noEmit": false,
+    "lib": ["ESNext"],
+    "target": "ES2022",
+    // `tslib` is not a dependency of this package; emit any TS helpers inline.
+    "importHelpers": false
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules", "tests", "scripts"]
+}
