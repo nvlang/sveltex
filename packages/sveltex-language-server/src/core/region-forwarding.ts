@@ -82,6 +82,20 @@ export function isLatexVerbatimRegion(
 type ForwardableMethod = 'textDocument/hover' | 'textDocument/completion';
 
 /**
+ * A sink for human-readable, operational log lines about the lifecycle of the
+ * child language servers (TexLab and the math language server).
+ *
+ * Spawning a child is best-effort and was previously silent: if `texlab` was
+ * not on `PATH`, or a child crashed on start, forwarding simply returned
+ * nothing with no trace. The host wires this sink to the editor's output
+ * channel so those outcomes are visible and diagnosable.
+ */
+export type ForwarderLog = (message: string) => void;
+
+/** A {@link ForwarderLog} that discards every message. */
+const noopLog: ForwarderLog = () => undefined;
+
+/**
  * Manages the child language servers that back non-delegated regions of one
  * SvelTeX workspace, and forwards hover/completion requests to them.
  *
@@ -89,14 +103,20 @@ type ForwardableMethod = 'textDocument/hover' | 'textDocument/completion';
  * lazily on first use and reused for the lifetime of the server.
  */
 export class RegionForwarder {
-    /** The math language server child, spawned on first math request. */
-    #mathProxy: LspProxy | undefined;
-    /** Whether a math-server spawn has been attempted (success or failure). */
-    #mathStartTried = false;
-    /** The TexLab child, spawned on first LaTeX-verbatim request. */
-    #texlabProxy: LspProxy | undefined;
-    /** Whether a TexLab spawn has been attempted. */
-    #texlabStartTried = false;
+    /**
+     * The math language server child, spawned lazily on the first math
+     * request. This holds the in-flight spawn *promise*, not the resolved
+     * proxy: a `<tex>`/`$…$` document typically triggers several region
+     * requests at once, and they must all await the one spawn — caching only a
+     * "spawn started" flag would let every request after the first see no
+     * proxy yet and give up.
+     */
+    #mathProxyPromise: Promise<LspProxy | undefined> | undefined;
+    /**
+     * The TexLab child, spawned lazily on the first LaTeX-verbatim request.
+     * Holds the in-flight spawn promise — see {@link RegionForwarder.#mathProxyPromise}.
+     */
+    #texlabProxyPromise: Promise<LspProxy | undefined> | undefined;
     /** The resolved SvelTeX config snapshot (backend, latex tags). */
     #config: SveltexConfigSnapshot;
     /** Monotonic counter making each forwarded virtual document URI unique. */
@@ -110,11 +130,23 @@ export class RegionForwarder {
     #mathServerPathOverride: string | undefined;
 
     /**
+     * Sink for child-server lifecycle log lines, wired by the host to the
+     * editor's output channel. Defaults to discarding them.
+     */
+    #log: ForwarderLog;
+
+    /**
      * @param config - The resolved SvelTeX config snapshot. Replaceable via
      * {@link updateConfig} when the workspace config is (re)loaded.
+     * @param log - Optional sink for child-server lifecycle log lines (TexLab /
+     * the math server found, started, or failed). Defaults to discarding them.
      */
-    public constructor(config: SveltexConfigSnapshot) {
+    public constructor(
+        config: SveltexConfigSnapshot,
+        log: ForwarderLog = noopLog,
+    ) {
         this.#config = config;
+        this.#log = log;
     }
 
     /** Replaces the config snapshot (e.g. after the config file is loaded). */
@@ -187,12 +219,15 @@ export class RegionForwarder {
 
     /** Shuts every spawned child server down. */
     public async stop(): Promise<void> {
-        await Promise.all([
-            this.#mathProxy?.stop(),
-            this.#texlabProxy?.stop(),
+        // Await any in-flight spawn first so a child still starting up is not
+        // leaked past `stop()`.
+        const [mathProxy, texlabProxy] = await Promise.all([
+            this.#mathProxyPromise,
+            this.#texlabProxyPromise,
         ]);
-        this.#mathProxy = undefined;
-        this.#texlabProxy = undefined;
+        this.#mathProxyPromise = undefined;
+        this.#texlabProxyPromise = undefined;
+        await Promise.all([mathProxy?.stop(), texlabProxy?.stop()]);
     }
 
     /**
@@ -221,7 +256,13 @@ export class RegionForwarder {
             virtual.sourceMap.sourcePositionToGenerated(position);
         // The position can fall on a stripped delimiter/tag — unmapped. Nothing
         // to forward in that case.
-        if (!generatedPosition) return null;
+        if (!generatedPosition) {
+            this.#log(
+                `${method}: caret is on a ${region.kind} delimiter/tag, ` +
+                    'not inside the region — not forwarded.',
+            );
+            return null;
+        }
 
         // A fresh URI per call keeps the child's document state from going
         // stale as region boundaries shift between edits; the child treats
@@ -292,17 +333,25 @@ export class RegionForwarder {
     /**
      * Returns the math language server proxy, spawning it on first use.
      *
+     * Concurrent first-callers all await the one spawn (see
+     * {@link RegionForwarder.#mathProxyPromise}).
+     *
      * @returns The running proxy, or `undefined` if the configured math
      * backend has no language server (`custom` / `none`) or the spawn failed.
      */
     async #ensureMathProxy(): Promise<LspProxy | undefined> {
+        // The backend check is per-call, not cached: `updateConfig` may switch
+        // a `none`/`custom` project to `mathjax`/`katex` after construction.
         if (!FORWARDABLE_MATH_BACKENDS.has(this.#config.mathBackend)) {
             return undefined;
         }
-        if (this.#mathStartTried) {
-            return this.#mathProxy?.isRunning ? this.#mathProxy : undefined;
-        }
-        this.#mathStartTried = true;
+        this.#mathProxyPromise ??= this.#startMathProxy();
+        const proxy = await this.#mathProxyPromise;
+        return proxy?.isRunning ? proxy : undefined;
+    }
+
+    /** Spawns and initializes the math language server child. */
+    async #startMathProxy(): Promise<LspProxy | undefined> {
         try {
             const proxy = new LspProxy(
                 {
@@ -318,38 +367,56 @@ export class RegionForwarder {
                 processId: process.pid,
                 rootUri: null,
                 capabilities: {},
-                // The backend is `mathjax` or `katex` here — the membership
-                // check above already excluded the other values.
+                // The backend is `mathjax` or `katex` here — `#ensureMathProxy`
+                // already excluded the other values.
                 initializationOptions: {
                     backend: this.#config.mathBackend,
                 },
             });
-            this.#mathProxy = proxy;
+            this.#log(
+                `Math language server started (${this.#config.mathBackend}).`,
+            );
             return proxy;
-        } catch {
+        } catch (error) {
             // A failed spawn must not break the rest of the language server.
-            this.#mathProxy = undefined;
+            this.#log(
+                'Math language server failed to start: ' +
+                    (error instanceof Error ? error.message : String(error)),
+            );
             return undefined;
         }
     }
 
     /**
-     * Returns the TexLab proxy, spawning it on first use.
+     * Returns the TexLab proxy, spawning it on first use. TexLab support is
+     * best-effort — a missing or unstartable `texlab` yields `undefined` — but
+     * no longer silent: each outcome is logged via {@link RegionForwarder.#log}.
+     *
+     * Concurrent first-callers all await the one spawn (see
+     * {@link RegionForwarder.#mathProxyPromise}).
      *
      * @returns The running proxy, or `undefined` if `texlab` is not on `PATH`
-     * or the spawn failed. Either way the failure is silent — TexLab support
-     * is best-effort.
+     * or the spawn failed.
      */
     async #ensureTexlabProxy(): Promise<LspProxy | undefined> {
-        if (this.#texlabStartTried) {
-            return this.#texlabProxy?.isRunning
-                ? this.#texlabProxy
-                : undefined;
-        }
-        this.#texlabStartTried = true;
+        this.#texlabProxyPromise ??= this.#startTexlabProxy();
+        const proxy = await this.#texlabProxyPromise;
+        return proxy?.isRunning ? proxy : undefined;
+    }
+
+    /** Locates, spawns, and initializes the TexLab child. */
+    async #startTexlabProxy(): Promise<LspProxy | undefined> {
         const texlabPath = findTexlab();
-        if (!texlabPath) return undefined;
+        if (!texlabPath) {
+            this.#log(
+                'TexLab not found on PATH — hover/completion in LaTeX ' +
+                    'verbatim regions is disabled. Install `texlab` and make ' +
+                    'sure it is on the PATH the editor process sees.',
+            );
+            return undefined;
+        }
         try {
+            this.#log(`TexLab found at ${texlabPath}; starting…`);
             const proxy = new LspProxy(
                 { kind: 'spawn', command: texlabPath },
                 'texlab',
@@ -359,10 +426,13 @@ export class RegionForwarder {
                 rootUri: null,
                 capabilities: {},
             });
-            this.#texlabProxy = proxy;
+            this.#log('TexLab started.');
             return proxy;
-        } catch {
-            this.#texlabProxy = undefined;
+        } catch (error) {
+            this.#log(
+                'TexLab failed to start: ' +
+                    (error instanceof Error ? error.message : String(error)),
+            );
             return undefined;
         }
     }

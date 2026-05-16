@@ -147,8 +147,14 @@ export function createServer(connection: Connection): void {
      * Forwards hover/completion in non-delegated regions to dedicated child
      * servers: the math language server for `math` regions, TexLab for LaTeX
      * `verbatim` regions. Spawns its children lazily on first use.
+     *
+     * Its lifecycle log lines (TexLab / math server found, started, failed)
+     * are routed to the editor's output channel so a missing or crashing
+     * child is visible rather than a silent loss of language features.
      */
-    const regionForwarder = new RegionForwarder(config);
+    const regionForwarder = new RegionForwarder(config, (message) => {
+        connection.console.info(`[sveltex] ${message}`);
+    });
 
     /** Returns whether a URI denotes a SvelTeX document. */
     function isSveltexUri(uri: string): boolean {
