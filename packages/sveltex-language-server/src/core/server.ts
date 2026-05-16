@@ -108,6 +108,31 @@ const REPARSE_DEBOUNCE_MS = 150;
 const SVELTEX_EXTENSION = '.sveltex';
 
 /**
+ * Returns a fresh object with the listed keys of `source` whose value is
+ * defined; a key whose value is `undefined`, or a missing `source`, is omitted
+ * entirely.
+ *
+ * Used to fold the embedded Svelte server's proxied capabilities into this
+ * server's `initialize` response. A capability the child lacks must be
+ * *absent*, not present-and-`undefined`: under `exactOptionalPropertyTypes` an
+ * explicit `undefined` is a type error, and an editor seeing the key at all
+ * would fire requests this server can answer only with `-32601`.
+ */
+function pickDefined<T extends object, K extends keyof T>(
+    source: T | undefined,
+    keys: readonly K[],
+): Partial<Pick<T, K>> {
+    const picked: Partial<Pick<T, K>> = {};
+    if (!source) return picked;
+    for (const key of keys) {
+        if (source[key] !== undefined) {
+            picked[key] = source[key];
+        }
+    }
+    return picked;
+}
+
+/**
  * Wires a SvelTeX language server onto the given connection.
  *
  * @param connection - An LSP {@link Connection}, already created for whatever
@@ -360,13 +385,23 @@ export function createServer(connection: Connection): void {
                 );
             }
 
-            // Advertise ONLY the capabilities this server actually handles —
-            // the proxied request types plus the native Markdown features.
-            // Spreading the child's full capability set (`...childCapabilities`)
-            // would also advertise features with no handler here (pull
-            // diagnostics, semantic tokens, inlay hints, document colours, code
-            // lenses, type definition, …); the editor would then fire those
-            // requests and each would come back `-32601 Unhandled method`.
+            // Advertise ONLY what this server actually answers, in two groups:
+            //
+            //  - Native — handled here directly (`textDocumentSync`, the
+            //    Markdown document-symbol / folding / selection features) or by
+            //    forwarding to the math / TexLab children (`hover`,
+            //    `completion`). Always advertised: they work even when the
+            //    Svelte child is unavailable.
+            //  - Proxied — forwarded verbatim to `svelte-language-server` with
+            //    no local fallback. Advertised only if that child advertises
+            //    them; otherwise the editor fires requests this server can
+            //    answer only with `-32601`. `svelte-language-server` has no
+            //    `textDocument/documentLink` handler, for one — advertising it
+            //    unconditionally flooded the editor log with failures.
+            //
+            // Spreading the child's *whole* capability set is wrong too: it
+            // pulls in pull diagnostics, semantic tokens, inlay hints, … which
+            // have no handler here at all.
             //
             // `textDocumentSync` is `Full` because the virtual document is
             // rebuilt wholesale. The completion trigger characters are extended
@@ -384,25 +419,28 @@ export function createServer(connection: Connection): void {
             ];
             return {
                 capabilities: {
+                    // Native — handled here, or via the math / TexLab
+                    // children; advertised unconditionally.
                     textDocumentSync: TextDocumentSyncKind.Full,
                     hoverProvider: true,
                     completionProvider: {
                         ...(childCompletion ?? {}),
                         triggerCharacters,
                     },
-                    definitionProvider: true,
-                    referencesProvider: true,
-                    documentHighlightProvider: true,
-                    signatureHelpProvider:
-                        childCapabilities?.signatureHelpProvider ?? {},
-                    renameProvider: { prepareProvider: true },
-                    codeActionProvider:
-                        childCapabilities?.codeActionProvider ?? true,
-                    documentLinkProvider:
-                        childCapabilities?.documentLinkProvider ?? {},
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
+                    // Proxied — forwarded to `svelte-language-server`; each is
+                    // advertised only if that child advertises it.
+                    ...pickDefined(childCapabilities, [
+                        'definitionProvider',
+                        'referencesProvider',
+                        'documentHighlightProvider',
+                        'signatureHelpProvider',
+                        'renameProvider',
+                        'codeActionProvider',
+                        'documentLinkProvider',
+                    ]),
                 },
                 serverInfo: {
                     name: 'sveltex-language-server',
