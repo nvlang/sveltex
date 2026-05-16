@@ -308,6 +308,27 @@ export class Sveltex<
             return;
         }
 
+        return this._markup(content, filename);
+    };
+
+    /**
+     * Runs the SvelTeX preprocessing pipeline on a document.
+     *
+     * Shared implementation behind {@link markup | `markup`} (which adds the
+     * filename/extension guard) and {@link trace | `trace`} (which passes an
+     * `onStage` callback to capture intermediate output).
+     *
+     * @param content - The document to preprocess.
+     * @param filename - The (real or synthetic) filename of the document.
+     * @param onStage - Optional callback invoked with each significant
+     * intermediate pipeline output, used by `trace`.
+     * @returns The preprocessed content, or `undefined` if an error occurred.
+     */
+    private async _markup(
+        content: string,
+        filename: string,
+        onStage?: (name: string, output: string) => void,
+    ): Promise<Processed | undefined> {
         const markdownHandler = this._markdownHandler;
         const codeHandler = this._codeHandler;
         const mathHandler = this._mathHandler;
@@ -323,6 +344,8 @@ export class Sveltex<
                 this._verbatimHandler.verbEnvs,
                 this._configuration.markdown.directives,
             );
+
+            onStage?.('Escaped document', escapedDocument);
 
             let headId: string | undefined = undefined;
             let headSnippet: ProcessedSnippet | undefined = undefined;
@@ -496,6 +519,8 @@ export class Sveltex<
             );
             /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 
+            onStage?.('Rendered Markdown', html);
+
             let code = unescapeSnippets(html, processedSnippets);
             code = unescapeColons(code);
             if (prependToProcessed.length > 0) {
@@ -515,7 +540,43 @@ export class Sveltex<
             log('error', prettifyError(err));
             return;
         }
-    };
+    }
+
+    /**
+     * Runs the preprocessing pipeline and captures its intermediate stages.
+     *
+     * Unlike {@link markup | `markup`}, this skips the filename/extension
+     * guard and always processes `content`. It is intended for tooling and
+     * documentation — in particular the pipeline playground — and, like the
+     * rest of SvelTeX, never executes any code from the document; it only
+     * transforms it.
+     *
+     * @param content - The document to preprocess.
+     * @param filename - A synthetic filename; only its extension is
+     * significant to the handlers. Defaults to `'+page.sveltex'`.
+     * @returns The final emitted Svelte `code` and the labelled intermediate
+     * pipeline `stages`, in pipeline order.
+     */
+    public async trace(
+        content: string,
+        filename: string = '+page.sveltex',
+    ): Promise<{
+        code: string;
+        stages: { name: string; output: string }[];
+    }> {
+        const stages: { name: string; output: string }[] = [];
+        const result = await this._markup(
+            content,
+            filename,
+            (name, output) => {
+                stages.push({ name, output });
+            },
+        );
+        if (result === undefined) {
+            return { code: '', stages };
+        }
+        return { code: result.code, stages };
+    }
 
     /**
      * Deep copy of the configuration object.

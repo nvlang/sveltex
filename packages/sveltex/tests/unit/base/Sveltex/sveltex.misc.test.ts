@@ -106,3 +106,58 @@ describe('multiple math snippets in a single document', () => {
         expect(code).toContain(' done.');
     });
 });
+
+describe('Sveltex.trace', () => {
+    fixture();
+
+    test('captures the intermediate pipeline stages and final code', async () => {
+        const preprocessor = await sveltex(
+            {
+                markdownBackend: 'marked',
+                codeBackend: 'escape',
+                mathBackend: 'none',
+            },
+            {},
+        );
+        const { code, stages } = await preprocessor.trace(
+            '# Title\n\nText with `inline code`.',
+        );
+        // The two labelled intermediate stages, in pipeline order.
+        expect(stages.map((s) => s.name)).toEqual([
+            'Escaped document',
+            'Rendered Markdown',
+        ]);
+        for (const stage of stages) {
+            expect(typeof stage.output).toBe('string');
+        }
+        // The final stage is the emitted Svelte code; the Markdown rendered.
+        expect(code).toContain('<h1');
+        expect(code.length).toBeGreaterThan(0);
+    });
+
+    test('yields empty code when preprocessing throws', async () => {
+        const debugModule = await import('../../../../src/utils/debug.js');
+        const logSpy = vi
+            .spyOn(debugModule, 'log')
+            .mockReturnValue(undefined);
+        const escapeModule = await import('../../../../src/utils/escape.js');
+        const escapeSpy = vi
+            .spyOn(escapeModule, 'escape')
+            .mockImplementation(() => {
+                throw new Error('boom');
+            });
+        const preprocessor = await sveltex(
+            {
+                markdownBackend: 'marked',
+                codeBackend: 'escape',
+                mathBackend: 'none',
+            },
+            {},
+        );
+        const { code, stages } = await preprocessor.trace('# Title');
+        expect(code).toBe('');
+        expect(stages).toEqual([]);
+        escapeSpy.mockRestore();
+        logSpy.mockRestore();
+    });
+});
