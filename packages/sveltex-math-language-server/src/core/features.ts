@@ -90,9 +90,10 @@ function buildCompletionItem(
         // A fixed sort group keeps categories clustered; the name disambiguates
         // within a group, so completion order is stable and predictable.
         sortText: `${sortPrefix(command.category)}${command.name}`,
-        // `filterText` is the bare name so the editor filters as the user types
-        // letters after the backslash.
-        filterText: command.name,
+        // No `filterText` — it defaults to `label`. `textEdit.range` starts at
+        // the `\`, so the editor's filter query is the typed text *including*
+        // that `\` (`\alp`); it must be matched against `\alpha` (the label),
+        // not the bare `alpha`, or the item is filtered out and never shown.
         insertTextFormat: InsertTextFormat.PlainText,
         textEdit: { range: replaceRange, newText: insertText },
     };

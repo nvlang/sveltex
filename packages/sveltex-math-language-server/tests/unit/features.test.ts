@@ -68,6 +68,21 @@ describe('computeCompletion', () => {
         }
     });
 
+    it('leaves filterText unset so it defaults to the `\\name` label', () => {
+        // Regression: a bare-name `filterText` (`frac`) combined with a
+        // `textEdit.range` that starts at the backslash makes the editor
+        // filter its query (`\fra`, *with* the backslash) against `frac` —
+        // no match, so the item is hidden and completion appears broken.
+        const result = computeCompletion(
+            'x = \\fra',
+            { line: 0, character: 8 },
+            katex,
+        );
+        const frac = result.items.find((i) => i.label === '\\frac');
+        expect(frac).toBeDefined();
+        expect(frac?.filterText).toBeUndefined();
+    });
+
     it('inserts a bare environment name inside `\\begin{...}`', () => {
         const result = computeCompletion(
             '\\begin{ali',
