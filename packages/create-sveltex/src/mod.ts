@@ -1,30 +1,34 @@
 #!/usr/bin/env node
-/* eslint-disable */
 
-import minimist from 'minimist';
-import { Plop, run } from 'plop';
+/**
+ * `create-sveltex` is **deprecated**.
+ *
+ * SvelTeX is now distributed as a community add-on for the official Svelte CLI
+ * (`sv`). This binary no longer scaffolds a project; it only prints a notice
+ * pointing users to the supported workflows.
+ */
 
-const args = process.argv.slice(2);
-const argv = minimist(args);
+import pc from 'picocolors';
 
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+const lines = [
+    '',
+    pc.bgYellow(pc.black(' create-sveltex is deprecated ')),
+    '',
+    'SvelTeX is now a community add-on for the official Svelte CLI (sv).',
+    '',
+    pc.bold('To add SvelTeX to an existing SvelteKit project:'),
+    '  ' + pc.cyan('npx sv add @nvl/sveltex-sv'),
+    '',
+    pc.bold('To create a new SvelteKit project from scratch:'),
+    '  ' + pc.cyan('npx sv create'),
+    '  (then run ' + pc.cyan('npx sv add @nvl/sveltex-sv') + ' inside it)',
+    '',
+    'See ' + pc.underline('https://sveltex.dev') + ' for documentation.',
+    '',
+];
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+console.log(lines.join('\n'));
 
-Plop.prepare(
-    {
-        cwd: argv['cwd'],
-        configPath: join(__dirname, 'plopfile.js'),
-        preload: argv['preload'] || [],
-        completion: argv['completion'],
-    },
-    (env) =>
-        Plop.execute(env, (env) => {
-            const options = {
-                ...env,
-                dest: process.cwd(), // this will make the destination path to be based on the cwd when calling the wrapper
-            };
-            return run(options, undefined, true);
-        }),
-);
+// Exit non-zero so that scripted/CI usage of `create-sveltex` surfaces the
+// deprecation instead of silently succeeding with nothing scaffolded.
+process.exit(1);

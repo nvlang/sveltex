@@ -1,7 +1,7 @@
 {
   "name": "create-sveltex",
-  "version": "0.1.4",
-  "description": "Create a new SvelTeX project",
+  "version": "0.2.0",
+  "description": "Deprecated: use `npx sv add @nvl/sveltex-sv` instead",
   "type": "module",
   "license": "MIT",
   "main": "./dist/mod.js",
@@ -9,20 +9,16 @@
   "types": "./dist/mod.d.ts",
   "private": false,
   "scripts": {
-    "start": "plop",
     "build": "tsc -p tsconfig.json",
     "prepublish": "pnpm run build"
   },
   "keywords": [
     "sveltex",
-    "generator",
+    "deprecated",
     "svelte",
-    "mdx",
     "markdown",
     "tex",
     "latex",
-    "math",
-    "preprocess",
     "preprocessor"
   ],
   "author": {
@@ -35,7 +31,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nvlang/sveltex.git"
+    "url": "git+https://github.com/nvlang/sveltex.git",
+    "directory": "packages/create-sveltex"
   },
   "bugs": {
     "url": "https://github.com/nvlang/sveltex/issues"
@@ -44,26 +41,14 @@
   "files": [
     "dist",
     "package.json",
-    "template",
     "LICENSE",
     "README.md"
   ],
-  "devDependencies": {
-    "@types/minimist": "^1.2.5"
-  },
   "preferGlobal": true,
   "bin": {
     "create-sveltex": "./dist/mod.js"
   },
   "dependencies": {
-    "inquirer": "9.3.5",
-    "minimist": "^1.2.8",
-    "picocolors": "^1.1.1",
-    "plop": "^4.0.5"
-  },
-  "overrides": {
-    "node-plop": {
-      "inquirer": "9.3.5"
-    }
+    "picocolors": "^1.1.1"
   }
 }

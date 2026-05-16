@@ -1,69 +1,39 @@
-# `create-sveltex`
+# `create-sveltex` (deprecated)
 
-> [!IMPORTANT]
-> The `create-sveltex` package will be deprecated in the future in favor of a
-> community adder / add-on for the official Svelte CLI (see
-> [#12](https://github.com/nvlang/sveltex/issues/12)), as soon as such add-ons
-> are [supported](https://github.com/sveltejs/cli/issues/184) (and I find the
-> time to do it).
+> [!WARNING]
+> **`create-sveltex` is deprecated.** SvelTeX is now distributed as a community
+> add-on for the official [Svelte CLI](https://svelte.dev/docs/cli/overview)
+> (`sv`). This package no longer scaffolds a project; running it only prints a
+> notice pointing to the supported workflows below.
 
-`create-sveltex` is a Node.js package intended to be run with `pnpm dlx`,
-`bunx`, `npx`, or `yarn dlx` to create a new SvelTeX project. It should not be
-used to add [SvelTeX] to an existing project.
+## What to use instead
 
-## Creating a project
+### Add SvelTeX to an existing SvelteKit project
 
 ```bash
-pnpm dlx create-sveltex # If using PNPM
-bunx     create-sveltex # If using Bun
-npx      create-sveltex # If using NPM
-yarn dlx create-sveltex # If using Yarn
+npx sv add @nvl/sveltex-sv
 ```
 
-...and follow the prompts.
+This applies the [`@nvl/sveltex-sv`](https://www.npmjs.com/package/@nvl/sveltex-sv)
+community add-on: it installs [SvelTeX] and the backends you pick, creates a
+`sveltex.config.{js,ts}`, and wires the preprocessor into your
+`svelte.config.{js,ts}`.
 
-## Supported tools
+### Create a new SvelteKit project
 
-Always included:
--   [TypeScript], for type-checking.
+```bash
+npx sv create
+```
 
-Pick one:
--   Preferred package manager: [PNPM], [Bun], [NPM], or [Yarn].
+...then run `npx sv add @nvl/sveltex-sv` inside the new project.
 
-Optional:
--   [Prettier], for code formatting.
--   [ESLint], for linting.
--   [Playwright], for end-to-end testing.
--   [Vitest], for unit testing.
--   [TailwindCSS], for utility-first CSS.
--   [Husky], for Git hooks. Includes [`lint-staged`] pre-commit git hook.
--   [Commitlint], for commit message linting. Adds a commit-msg git hook if
-    Husky is also selected.
--   `.vscode` folder with some helpful workspace settings.
+## Why the change?
 
-## Acknowledgments
-
-`create-sveltex` is inspired by [`create-svelte`], from which it borrows some
-code for the template files.
-
-`create-sveltex` is powered by [Plop], a great tool for code generation which
-uses [Inquirer.js] for prompts and [Handlebars] for templating.
+The Svelte CLI now [supports community
+add-ons](https://github.com/sveltejs/cli/issues/184). Rather than maintaining a
+separate project scaffolder (which duplicated tooling already provided by `sv
+add`, such as TailwindCSS, ESLint, Prettier, and adapters), SvelTeX integration
+is now a focused `sv` add-on. See [issue
+#12](https://github.com/nvlang/sveltex/issues/12).
 
 [SvelTeX]: https://www.npmjs.com/package/@nvl/sveltex
-[TypeScript]: https://www.typescriptlang.org/
-[PNPM]: https://pnpm.io/
-[Bun]: https://bun.sh/
-[NPM]: https://www.npmjs.com/
-[Yarn]: https://yarnpkg.com/
-[Prettier]: https://prettier.io/
-[ESLint]: https://eslint.org/
-[Playwright]: https://playwright.dev/
-[Vitest]: https://vitest.dev/
-[TailwindCSS]: https://tailwindcss.com/
-[Husky]: https://typicode.github.io/husky/
-[`lint-staged`]: https://github.com/lint-staged/lint-staged
-[Commitlint]: https://commitlint.js.org/
-[`create-svelte`]: https://www.npmjs.com/package/create-svelte
-[Plop]: https://plopjs.com/
-[Inquirer.js]: https://github.com/SBoudrias/Inquirer.js
-[Handlebars]: https://github.com/handlebars-lang/handlebars.js
