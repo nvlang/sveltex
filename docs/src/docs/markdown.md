@@ -1,6 +1,6 @@
 ---
-title: Math
-description: Use MathJax or KaTeX with SvelTeX.
+title: Markdown
+description: Use unified, markdown-it, micromark, or marked with SvelTeX.
 outline: deep
 ---
 
@@ -23,8 +23,8 @@ import { PhMarkdownLogo, PhLifebuoy, PhDotsSix, PhGear, PhListDashes } from '@ph
 # Markdown
 
 <p class="text-lg py-2">
-Render math expressions that don't require a full TeX distribution at build-time
-with MathJax or KaTeX.
+Write your content in Markdown, interleaved with Svelte components and syntax,
+and render it at build-time with the Markdown processor of your choice.
 </p>
 
 <div class="features-list mt-8">
