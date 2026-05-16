@@ -125,6 +125,7 @@ const forceCjsPlugin: esbuild.Plugin = {
         // JavaScript-only flags — so no `u` flag here. The filter is anchored
         // to the bare package name; the package's own intra-package imports
         // are relative paths and so are never intercepted.
+        // eslint-disable-next-line require-unicode-regexp -- Go regex, no `u`
         const filter = new RegExp(`^(${escaped.join('|')})$`);
         build.onResolve({ filter }, (args) => {
             // Re-resolve the bare specifier from the importer's directory with
@@ -233,8 +234,8 @@ function resolveServerBundles(): ServerBundle[] {
             throw new Error(
                 `Cannot resolve "${moduleId}" while bundling the SvelTeX ` +
                     `extension. Build the workspace packages first ` +
-                    `(\`pnpm --recursive build\` from the monorepo root). ` +
-                    `Underlying error: ${String(error)}`,
+                    `(\`pnpm --recursive build\` from the monorepo root).`,
+                { cause: error },
             );
         }
     });
@@ -252,7 +253,7 @@ function resolveServerBundles(): ServerBundle[] {
  */
 async function bundleServers(bundles: ServerBundle[]): Promise<void> {
     await Promise.all(
-        bundles.map((bundle) =>
+        bundles.map(async (bundle) =>
             esbuild.build({
                 ...sharedOptions,
                 entryPoints: [bundle.entry],
