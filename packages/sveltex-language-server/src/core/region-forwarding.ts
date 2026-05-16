@@ -100,6 +100,26 @@ export type ForwarderLog = (message: string) => void;
 const noopLog: ForwarderLog = () => undefined;
 
 /**
+ * A short, human-readable description of a forwarded request's raw result —
+ * used to log what a child server (notably TexLab) actually returned, so an
+ * empty `<tex>` completion can be told apart from a routing failure.
+ */
+function describeResult(result: unknown): string {
+    if (result === null || result === undefined) return 'nothing';
+    if (Array.isArray(result)) return `${String(result.length)} item(s)`;
+    if (typeof result === 'object') {
+        if ('items' in result) {
+            const items = (result as { items: unknown }).items;
+            if (Array.isArray(items)) {
+                return `${String(items.length)} item(s)`;
+            }
+        }
+        if ('contents' in result) return 'a hover';
+    }
+    return 'a result';
+}
+
+/**
  * Manages the child language servers that back non-delegated regions of one
  * SvelTeX workspace, and forwards hover/completion requests to them.
  *
@@ -293,6 +313,11 @@ export class RegionForwarder {
                 textDocument: { uri: virtualUri },
                 position: generatedPosition,
             });
+            if (region.kind === 'verbatim') {
+                this.#log(
+                    `${method} forwarded to TexLab → ${describeResult(result)}`,
+                );
+            }
             const ctx: RemapContext = {
                 sourceUri,
                 virtualUri,
