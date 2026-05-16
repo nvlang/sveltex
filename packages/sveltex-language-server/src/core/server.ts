@@ -23,6 +23,7 @@ import {
     DidOpenTextDocumentNotification,
     PublishDiagnosticsNotification,
     TextDocumentSyncKind,
+    type ClientCapabilities,
     type CodeActionParams,
     type CompletionItem,
     type CompletionParams,
@@ -47,6 +48,7 @@ import {
     type RenameParams,
     type SelectionRangeParams,
     type SignatureHelpParams,
+    type TextDocumentClientCapabilities,
     type TextDocumentPositionParams,
 } from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -130,6 +132,29 @@ function pickDefined<T extends object, K extends keyof T>(
         }
     }
     return picked;
+}
+
+/**
+ * Returns a copy of `capabilities` with the pull-diagnostics capability
+ * (`textDocument.diagnostic`) removed.
+ *
+ * `svelte-language-server` switches to pull-only diagnostics — answering
+ * `textDocument/diagnostic` requests and no longer *pushing*
+ * `publishDiagnostics` — the moment the client claims to support them. This
+ * server forwards only pushed diagnostics and advertises no pull
+ * `diagnosticProvider` of its own, so it hides the capability from the child,
+ * keeping it in push mode; otherwise diagnostics silently never appear.
+ */
+function withoutPullDiagnostics(
+    capabilities: ClientCapabilities,
+): ClientCapabilities {
+    const textDocument = capabilities.textDocument;
+    if (!textDocument?.diagnostic) return capabilities;
+    const nextTextDocument: TextDocumentClientCapabilities = {
+        ...textDocument,
+    };
+    delete nextTextDocument.diagnostic;
+    return { ...capabilities, textDocument: nextTextDocument };
 }
 
 /**
@@ -374,10 +399,19 @@ export function createServer(connection: Connection): void {
             regionForwarder.setMathServerPath(serverPaths.mathLanguageServer);
 
             // Start the embedded Svelte server with the host's own initialize
-            // params so its TypeScript service resolves the real project.
+            // params (so its TypeScript service resolves the real project) —
+            // but with the pull-diagnostics capability stripped. With it,
+            // `svelte-language-server` answers diagnostics only on demand via
+            // `textDocument/diagnostic` and stops *pushing* `publishDiagnostics`
+            // notifications; this server forwards only pushed diagnostics (it
+            // advertises no `diagnosticProvider`, so the editor never pulls),
+            // so without the strip diagnostics would silently never appear.
             let childCapabilities: InitializeResult['capabilities'] | undefined;
             try {
-                const childResult = await proxy.start(params);
+                const childResult = await proxy.start({
+                    ...params,
+                    capabilities: withoutPullDiagnostics(params.capabilities),
+                });
                 childCapabilities = childResult.capabilities;
             } catch (error) {
                 connection.console.error(
