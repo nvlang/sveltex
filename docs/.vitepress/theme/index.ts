@@ -15,6 +15,8 @@ import './fonts/fonts.pcss';
 
 import { PhInfo, PhWarning } from '@phosphor-icons/vue';
 
+import Playground from './playground/Playground.vue';
+
 export default {
     extends: DefaultTheme,
     Layout: () => {
@@ -27,6 +29,7 @@ export default {
         app.use(FloatingVue, { boundary: 'body' });
         app.component('PhInfo', PhInfo);
         app.component('PhWarning', PhWarning);
+        app.component('Playground', Playground);
         // app.component('PhLightning', PhLightning);
         // app.component('PhHammer', PhHammer);
         // app.component('PhTextT', PhTextT);

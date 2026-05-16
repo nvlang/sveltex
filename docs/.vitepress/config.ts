@@ -28,8 +28,24 @@ export default defineConfig({
         },
         esbuild: { target: ESBUILD_MODULES_TARGET },
         build: {
-            rollupOptions: { external: ['@nvl/sveltex'] },
+            rollupOptions: {
+                // `@nvl/sveltex` is externalized (see `optimizeDeps.exclude`
+                // above). `/playground/sveltex-playground.mjs` is the
+                // pre-built SvelTeX browser bundle (emitted into
+                // `src/public/` by `scripts/build-playground.mjs`); the
+                // playground worker imports it from that runtime URL, so
+                // Rollup must not try to resolve or bundle it.
+                external: ['@nvl/sveltex', '/playground/sveltex-playground.mjs'],
+            },
             target: ESBUILD_MODULES_TARGET,
+        },
+        // The playground Web Worker (`theme/playground/worker.ts`) imports the
+        // pre-built SvelTeX bundle from the runtime URL above; keep Rollup
+        // from trying to resolve it when bundling the worker.
+        worker: {
+            rollupOptions: {
+                external: ['/playground/sveltex-playground.mjs'],
+            },
         },
     },
     markdown: {
@@ -146,6 +162,7 @@ export default defineConfig({
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Docs', link: '/docs' },
+            { text: 'Playground', link: '/docs/playground' },
         ],
         editLink: {
             pattern: 'https://github.com/nvlang/sveltex/edit/main/docs/:path',
@@ -171,6 +188,7 @@ export default defineConfig({
                 items: [
                     { text: 'Overview', link: '/' },
                     { text: 'Getting Started', link: '/getting-started' },
+                    { text: 'Playground', link: '/playground' },
                     { text: 'Acknowledgments', link: '/acknowledgments' },
                 ],
             },

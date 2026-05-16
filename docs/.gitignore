@@ -1,0 +1,4 @@
+# Generated browser bundle of the SvelTeX preprocessor for the playground.
+# Produced by `scripts/build-playground.mjs` (runs via predev/prebuild).
+src/public/playground/sveltex-playground.mjs
+src/public/playground/sveltex-playground.mjs.map
