@@ -47,7 +47,7 @@ const addonOptions = defineAddonOptions()
     .add('markdownBackend', {
         question: 'Which Markdown backend would you like to use?',
         type: 'select',
-        default: 'unified' as MarkdownBackend,
+        default: 'unified',
         options: [
             { value: 'unified', label: 'unified.js', hint: 'recommended' },
             { value: 'markdown-it', label: 'markdown-it' },
@@ -60,7 +60,7 @@ const addonOptions = defineAddonOptions()
         question:
             'Which code backend (syntax highlighter) would you like to use?',
         type: 'select',
-        default: 'shiki' as CodeBackend,
+        default: 'shiki',
         options: [
             { value: 'shiki', label: 'Shiki', hint: 'recommended' },
             { value: 'starry-night', label: 'starry-night' },
@@ -72,7 +72,7 @@ const addonOptions = defineAddonOptions()
     .add('mathBackend', {
         question: 'Which math backend would you like to use?',
         type: 'select',
-        default: 'mathjax' as MathBackend,
+        default: 'mathjax',
         options: [
             { value: 'mathjax', label: 'MathJax' },
             { value: 'katex', label: 'KaTeX' },
