@@ -1,15 +1,17 @@
 {
+  // The extension is compiled and bundled by esbuild (see `scripts/build.ts`);
+  // this config exists purely to type-check `src/`. Hence `noEmit` — `dist/`
+  // is produced entirely by esbuild.
   "compilerOptions": {
     "module": "CommonJS",
-    "target": "ESNext",
-    "outDir": "dist",
-    "rootDir": "src",
-    "lib": ["ESNext"],
-    "sourceMap": true,
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "strict": true,
     "noImplicitAny": true,
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]

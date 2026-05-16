@@ -59,22 +59,72 @@ function updateGrammarFile(
 
 /**
  * The running SvelTeX language client, or `undefined` before activation /
- * after deactivation. The client launches `@nvl/sveltex-language-server`'s
- * `bin/server.js` as a child process and speaks LSP with it.
+ * after deactivation. The client launches the SvelTeX language server as a
+ * child process and speaks LSP with it.
  */
 let client: lc.LanguageClient | undefined;
 
 /**
- * Resolves the absolute path of the SvelTeX language server's executable
- * (`@nvl/sveltex-language-server/bin/server.js`).
+ * The three language servers this extension transitively launches, located.
  *
- * The server is a regular runtime dependency of this extension, so a plain
- * module resolution finds it. `bin/server.js` calls `startServer()`, which
- * creates an LSP connection from the process's argv-selected transport — the
- * `LanguageClient` below selects Node IPC.
+ * `sveltexLanguageServer` is the server the {@link LanguageClient} below forks
+ * directly. That server in turn forks the other two — `svelteLanguageServer`
+ * (the real `svelte-language-server`) and `mathLanguageServer`
+ * (`@nvl/sveltex-math-language-server`) — and so it needs to be told where they
+ * are: their paths travel to it through the client's `initializationOptions`.
  */
-function resolveLanguageServerModule(): string {
-    return require.resolve('@nvl/sveltex-language-server/bin/server.js');
+interface ServerPaths {
+    /** Path of the SvelTeX language server entry point. */
+    sveltexLanguageServer: string;
+    /** Path of the `svelte-language-server` entry point. */
+    svelteLanguageServer: string;
+    /** Path of the SvelTeX math language server entry point. */
+    mathLanguageServer: string;
+}
+
+/**
+ * Locates the three language server entry points.
+ *
+ * The published extension is a self-contained esbuild bundle: `extension.js`
+ * and all three servers are bundled side by side into `dist/` (see
+ * `scripts/build.ts`), and the `.vsix` ships no `node_modules`. So the servers
+ * are looked up first as `dist/` siblings of this file; that is the path that
+ * works in a packaged install.
+ *
+ * As a fallback — useful when the extension is run un-bundled during
+ * development — each server is resolved from `node_modules` via
+ * `require.resolve`. The SvelTeX server is a direct dependency, and the other
+ * two are dependencies of _it_, so all three resolve from this extension's
+ * location.
+ *
+ * @param extensionPath - The extension's root directory
+ * (`context.extensionPath`).
+ */
+function resolveServerPaths(extensionPath: string): ServerPaths {
+    const distDir = path.join(extensionPath, 'dist');
+
+    // Returns the bundled `dist/<name>.js` if it exists, else resolves
+    // `moduleId` from `node_modules`.
+    const locate = (name: string, moduleId: string): string => {
+        const bundled = path.join(distDir, `${name}.js`);
+        if (fs.existsSync(bundled)) return bundled;
+        return require.resolve(moduleId);
+    };
+
+    return {
+        sveltexLanguageServer: locate(
+            'sveltex-language-server',
+            '@nvl/sveltex-language-server/bin/server.js',
+        ),
+        svelteLanguageServer: locate(
+            'svelte-language-server',
+            'svelte-language-server/bin/server.js',
+        ),
+        mathLanguageServer: locate(
+            'sveltex-math-language-server',
+            '@nvl/sveltex-math-language-server/bin/server.js',
+        ),
+    };
 }
 
 /**
@@ -83,10 +133,17 @@ function resolveLanguageServerModule(): string {
  * This mirrors the official `svelte-vscode` extension's setup: a
  * `vscode-languageclient` client launches the language server as a child
  * process over Node IPC. The SvelTeX server itself then spawns and proxies the
- * real `svelte-language-server` (see `@nvl/sveltex-language-server`).
+ * real `svelte-language-server` and the SvelTeX math language server. Because
+ * the packaged extension ships no `node_modules`, the SvelTeX server cannot
+ * resolve those two children itself — their bundled paths are passed to it via
+ * `initializationOptions.serverPaths`.
+ *
+ * @param extensionPath - The extension's root directory
+ * (`context.extensionPath`), used to locate the bundled servers.
  */
-function startLanguageClient(): lc.LanguageClient {
-    const serverModule = resolveLanguageServerModule();
+function startLanguageClient(extensionPath: string): lc.LanguageClient {
+    const serverPaths = resolveServerPaths(extensionPath);
+    const serverModule = serverPaths.sveltexLanguageServer;
 
     // Run the server module as a forked Node process, communicating over IPC.
     // The same configuration is reused for the debug profile; the SvelTeX
@@ -103,6 +160,15 @@ function startLanguageClient(): lc.LanguageClient {
             { scheme: 'untitled', language: 'sveltex' },
         ],
         diagnosticCollectionName: 'sveltex',
+        // The SvelTeX server resolves its own two child servers from these
+        // paths; without them it would fall back to a `node_modules` lookup
+        // that fails in the packaged, dependency-free extension.
+        initializationOptions: {
+            serverPaths: {
+                svelteLanguageServer: serverPaths.svelteLanguageServer,
+                mathLanguageServer: serverPaths.mathLanguageServer,
+            },
+        },
         synchronize: {
             // React to changes of the user's SvelTeX configuration file.
             fileEvents: vscode.workspace.createFileSystemWatcher(
@@ -159,7 +225,7 @@ function activate(context: vscode.ExtensionContext) {
     // highlighting the extension already provides, so it is logged rather than
     // thrown.
     try {
-        client = startLanguageClient();
+        client = startLanguageClient(context.extensionPath);
     } catch (error) {
         void vscode.window.showErrorMessage(
             `SvelTeX: failed to start the language server. ${String(error)}`,

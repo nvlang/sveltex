@@ -39,13 +39,20 @@ const FORWARDABLE_MATH_BACKENDS: ReadonlySet<MathBackend> = new Set<MathBackend>
 );
 
 /**
- * Resolves the absolute path of the bundled math language server's
- * `bin/server.js`.
+ * Resolves the absolute path of the math language server's `bin/server.js`.
  *
  * `@nvl/sveltex-math-language-server` is a regular dependency of this package,
- * so a plain module resolution finds it.
+ * so a plain module resolution finds it — the standalone and Zed scenarios.
+ *
+ * A host that has bundled the math server to a sibling file (the VS Code
+ * extension) cannot rely on `node_modules` and passes the bundled file's
+ * absolute path explicitly via `override`.
+ *
+ * @param override - An explicit absolute path to use instead of resolving from
+ * `node_modules`. When given, it is returned verbatim.
  */
-function resolveMathServerPath(): string {
+function resolveMathServerPath(override?: string): string {
+    if (override) return override;
     const require = createRequire(import.meta.url);
     return require.resolve('@nvl/sveltex-math-language-server/bin/server.js');
 }
@@ -94,6 +101,13 @@ export class RegionForwarder {
     #config: SveltexConfigSnapshot;
     /** Monotonic counter making each forwarded virtual document URI unique. */
     #virtualDocCounter = 0;
+    /**
+     * An explicit `@nvl/sveltex-math-language-server` `bin/server.js` path, or
+     * `undefined` to resolve it from `node_modules`. Set via
+     * {@link setMathServerPath} before the math child is first spawned. See
+     * {@link resolveMathServerPath}.
+     */
+    #mathServerPathOverride: string | undefined;
 
     /**
      * @param config - The resolved SvelTeX config snapshot. Replaceable via
@@ -106,6 +120,21 @@ export class RegionForwarder {
     /** Replaces the config snapshot (e.g. after the config file is loaded). */
     public updateConfig(config: SveltexConfigSnapshot): void {
         this.#config = config;
+    }
+
+    /**
+     * Overrides the location of the math language server child.
+     *
+     * Standalone use needs no override — the server is resolved from
+     * `node_modules`. A host that has bundled the server to a sibling file (the
+     * VS Code extension) calls this with that file's absolute path before any
+     * math region is forwarded, since `node_modules` will not exist at runtime.
+     *
+     * @param serverPath - Absolute path of the math server's `bin/server.js`,
+     * or `undefined` to keep resolving from `node_modules`.
+     */
+    public setMathServerPath(serverPath: string | undefined): void {
+        this.#mathServerPathOverride = serverPath;
     }
 
     /**
@@ -278,7 +307,9 @@ export class RegionForwarder {
             const proxy = new LspProxy(
                 {
                     kind: 'fork',
-                    module: resolveMathServerPath(),
+                    module: resolveMathServerPath(
+                        this.#mathServerPathOverride,
+                    ),
                     args: ['--stdio'],
                 },
                 'sveltex-math-language-server',

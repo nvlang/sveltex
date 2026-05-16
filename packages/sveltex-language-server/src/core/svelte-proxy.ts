@@ -37,11 +37,21 @@ import {
  * Resolves the absolute path of `svelte-language-server`'s `bin/server.js`.
  *
  * The package's `exports` map intentionally exposes `./bin/server.js`, so a
- * plain module resolution works from this package's location.
+ * plain module resolution works from this package's location — the standalone
+ * and Zed scenarios, where the server runs out of `node_modules`.
  *
- * @throws If `svelte-language-server` is not installed.
+ * A host that has bundled `svelte-language-server` to a sibling file (the VS
+ * Code extension does exactly this — see `packages/vscode-sveltex`) cannot rely
+ * on `node_modules` existing and passes the bundled file's absolute path
+ * explicitly via `override`.
+ *
+ * @param override - An explicit absolute path to use instead of resolving from
+ * `node_modules`. When given, it is returned verbatim.
+ * @throws If `override` is omitted and `svelte-language-server` is not
+ * installed.
  */
-export function resolveSvelteServerPath(): string {
+export function resolveSvelteServerPath(override?: string): string {
+    if (override) return override;
     const require = createRequire(import.meta.url);
     return require.resolve('svelte-language-server/bin/server.js');
 }
@@ -78,9 +88,30 @@ export class SvelteProxy {
     #connection: ProtocolConnection | undefined;
     #initializeResult: InitializeResult | undefined;
     readonly #handlers: SvelteProxyHandlers;
+    /**
+     * An explicit `svelte-language-server` `bin/server.js` path, or `undefined`
+     * to resolve it from `node_modules`. Set via {@link setServerPath} before
+     * {@link start}. See {@link resolveSvelteServerPath}.
+     */
+    #serverPathOverride: string | undefined;
 
     public constructor(handlers: SvelteProxyHandlers) {
         this.#handlers = handlers;
+    }
+
+    /**
+     * Overrides the location of the child `svelte-language-server`.
+     *
+     * Standalone use (Zed, the CLI) needs no override — the server is resolved
+     * from `node_modules`. A host that has bundled the server to a sibling file
+     * (the VS Code extension) calls this with that file's absolute path before
+     * {@link start}, since `node_modules` will not exist at runtime.
+     *
+     * @param serverPath - Absolute path of the child's `bin/server.js`, or
+     * `undefined` to keep resolving from `node_modules`.
+     */
+    public setServerPath(serverPath: string | undefined): void {
+        this.#serverPathOverride = serverPath;
     }
 
     /** The `InitializeResult` returned by the child, available after `start`. */
@@ -106,7 +137,7 @@ export class SvelteProxy {
     public async start(
         initializeParams: InitializeParams,
     ): Promise<InitializeResult> {
-        const serverPath = resolveSvelteServerPath();
+        const serverPath = resolveSvelteServerPath(this.#serverPathOverride);
         // `--node-ipc` is NOT passed: with no transport flag the child's
         // `createConnection()` defaults to stdio, which is what the stream
         // reader/writer below expect. `stdio: 'pipe'` gives us those streams.

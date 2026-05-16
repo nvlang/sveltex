@@ -1,8 +1,31 @@
+# Files excluded from the published `.vsix`.
+#
+# The extension is an esbuild bundle: `dist/` holds `extension.js` plus the
+# three bundled language servers, and is fully self-contained. So the package
+# ships `dist/`, the JSON TextMate grammars, the language configurations and a
+# few assets — and nothing else. In particular it ships no `node_modules`
+# (everything is bundled; `vsce package --no-dependencies` confirms this) and
+# no TypeScript sources.
+
+# Sources and build tooling — bundled into `dist/`, not shipped.
+src/**
+scripts/**
+tsconfig.json
+
+# Dependencies — bundled into `dist/`; never ship the (pnpm-symlinked) tree.
+node_modules/**
+
+# Grammar sources — only the generated `*.tmLanguage.json` files are shipped.
+**/*.tmLanguage.yaml
+syntaxes/sveltex.tmLanguage.json_default
+
+# Editor / VCS / tooling metadata.
 .vscode/**
 .vscode-test/**
 .gitignore
-syntaxes/sveltex.tmLanguage.json_default
+.gitattributes
+
+# Oversized or redundant assets — `res/icon@256.png` is the only icon shipped.
 res/screenshot-*.png
 res/icon@128.png
 res/icon.svg
-**/*.tmLanguage.yaml

@@ -40,7 +40,7 @@
   ],
   "scripts": {
     "vscode:prepublish": "pnpm build",
-    "build": "tsx scripts/build.ts && tsc -p tsconfig.json"
+    "build": "tsx scripts/build.ts"
   },
   "extensionDependencies": [
     "svelte.svelte-vscode"
@@ -182,7 +182,9 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.19.41",
     "@types/vscode": "^1.82.0",
+    "esbuild": "^0.25.2",
     "js-yaml": "^4.1.1",
-    "tsx": "^4.22.0"
+    "tsx": "^4.22.0",
+    "typescript": "^5.9.3"
   }
 }

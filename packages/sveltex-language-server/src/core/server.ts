@@ -332,6 +332,16 @@ export function createServer(connection: Connection): void {
             // tags) before any request can be routed.
             regionForwarder.updateConfig(config);
 
+            // A host that has bundled the child servers (the VS Code
+            // extension) cannot rely on `node_modules` existing next to this
+            // server, so it passes the bundled servers' absolute paths in
+            // `initializationOptions`. When the field is absent — standalone
+            // use, the Zed extension — the proxies fall back to resolving the
+            // children from `node_modules` exactly as before.
+            const serverPaths = readServerPaths(params.initializationOptions);
+            proxy.setServerPath(serverPaths.svelteLanguageServer);
+            regionForwarder.setMathServerPath(serverPaths.mathLanguageServer);
+
             // Start the embedded Svelte server with the host's own initialize
             // params so its TypeScript service resolves the real project.
             let childCapabilities: InitializeResult['capabilities'] | undefined;
@@ -649,4 +659,66 @@ function uriToPath(uri: string): string | undefined {
     } catch {
         return undefined;
     }
+}
+
+/**
+ * Absolute paths of the child servers this server spawns, as a host may
+ * optionally supply them. Each field is `undefined` when the host did not
+ * provide a path, in which case the corresponding child is resolved from
+ * `node_modules` by its proxy.
+ */
+interface ResolvedServerPaths {
+    /** Path of `svelte-language-server`'s `bin/server.js`, if supplied. */
+    svelteLanguageServer: string | undefined;
+    /**
+     * Path of `@nvl/sveltex-math-language-server`'s `bin/server.js`, if
+     * supplied.
+     */
+    mathLanguageServer: string | undefined;
+}
+
+/**
+ * Extracts the optional child-server paths from an `initialize` request's
+ * `initializationOptions`.
+ *
+ * A host that has bundled the child servers and so cannot resolve them from
+ * `node_modules` (the VS Code extension) passes their absolute paths under a
+ * `serverPaths` object:
+ *
+ * ```jsonc
+ * "initializationOptions": {
+ *   "serverPaths": {
+ *     "svelteLanguageServer": "/abs/path/to/svelte-language-server.js",
+ *     "mathLanguageServer": "/abs/path/to/sveltex-math-language-server.js"
+ *   }
+ * }
+ * ```
+ *
+ * The field is entirely optional: any standalone client (the Zed extension,
+ * the CLI, the test harness) omits it, and every path then resolves from
+ * `node_modules` as before. Non-string entries are ignored.
+ *
+ * @param initializationOptions - The raw `initializationOptions` value, of
+ * unknown shape.
+ * @returns The resolved paths; fields are `undefined` when not supplied.
+ */
+function readServerPaths(initializationOptions: unknown): ResolvedServerPaths {
+    const empty: ResolvedServerPaths = {
+        svelteLanguageServer: undefined,
+        mathLanguageServer: undefined,
+    };
+    if (typeof initializationOptions !== 'object' || !initializationOptions) {
+        return empty;
+    }
+    const serverPaths = (initializationOptions as Record<string, unknown>)[
+        'serverPaths'
+    ];
+    if (typeof serverPaths !== 'object' || !serverPaths) return empty;
+    const record = serverPaths as Record<string, unknown>;
+    const asPath = (value: unknown): string | undefined =>
+        typeof value === 'string' && value.length > 0 ? value : undefined;
+    return {
+        svelteLanguageServer: asPath(record['svelteLanguageServer']),
+        mathLanguageServer: asPath(record['mathLanguageServer']),
+    };
 }
