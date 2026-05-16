@@ -131,7 +131,7 @@ function detectVerbatimRanges(
     const ranges: TaggedRange[] = [];
     if (verbatimTags.length === 0) return ranges;
     const alternation = verbatimTags
-        .map((t) => t.replace(/[.*+?^${}()|[\]\\]/gu, '\\$1'))
+        .map((t) => t.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
         .join('|');
     // Matches `<tag ...>...</tag>` (with lazy inner content) or `<tag ... />`.
     // `s` flag: `.` spans newlines. `u` flag is required by the repo's lint.
@@ -148,6 +148,33 @@ function detectVerbatimRanges(
         });
     }
     return ranges;
+}
+
+/**
+ * Returns a copy of `document` with every character inside one of `ranges`
+ * replaced by a space; newline characters are kept, so offsets _and_ line
+ * numbers are preserved.
+ *
+ * It is used to hide already-classified snippets from the verbatim-tag scan:
+ * a `<tex>` written inside an inline-code span (`` `<tex>` ``), a string in a
+ * `<script>`, etc. must not be mistaken for the opening of a verbatim
+ * environment — otherwise its match runs greedily to the next, unrelated
+ * `</tex>` and swallows the real block in between.
+ */
+function maskRanges(
+    document: string,
+    ranges: readonly TaggedRange[],
+): string {
+    if (ranges.length === 0) return document;
+    const chars = document.split('');
+    for (const range of ranges) {
+        const end = Math.min(range.end, chars.length);
+        for (let i = Math.max(0, range.start); i < end; i += 1) {
+            const ch = chars[i];
+            if (ch !== '\n' && ch !== '\r') chars[i] = ' ';
+        }
+    }
+    return chars.join('');
 }
 
 /**
@@ -210,7 +237,17 @@ export function computeRegions(
             });
         }
 
-        tagged.push(...detectVerbatimRanges(document, verbatimTags));
+        // Scan for verbatim environments over a copy of the document with
+        // every snippet found above blanked out. A bare regex scan of the raw
+        // document would anchor on a `<tex>` that is really inside an
+        // inline-code span and pair it with a *later*, unrelated `</tex>` —
+        // swallowing the genuine verbatim block in between.
+        tagged.push(
+            ...detectVerbatimRanges(
+                maskRanges(document, tagged),
+                verbatimTags,
+            ),
+        );
     } catch {
         // If SvelTeX's parser throws (malformed input mid-edit is common), fall
         // back to treating the whole document as delegated Markdown. The Svelte

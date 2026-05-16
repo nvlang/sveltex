@@ -81,6 +81,22 @@ describe('computeRegions — classification', () => {
         ).toContain('<tex>');
     });
 
+    it('detects the real `<tex>` block when `<tex>` also appears in prose', () => {
+        // The inline-code `` `<tex>` `` must not anchor a verbatim match that
+        // runs to the genuine block's `</tex>` and swallows it.
+        const source =
+            'Use the `<tex>` tag.\n\n<tex>\n\\draw (0,0);\n</tex>\n\nDone.\n';
+        const regions = computeRegions(source, config);
+        const verbatim = regions.filter((r) => r.kind === 'verbatim');
+        expect(verbatim).toHaveLength(1);
+        const slice = source.slice(
+            verbatim[0]?.sourceStart,
+            verbatim[0]?.sourceEnd,
+        );
+        expect(slice.startsWith('<tex>\n')).toBe(true);
+        expect(slice.trimEnd().endsWith('</tex>')).toBe(true);
+    });
+
     it('classifies a fenced code block as non-delegated `code`', () => {
         const source = 'text\n\n```js\nconst a = 1;\n```\n\nmore';
         const regions = computeRegions(source, config);
