@@ -1,11 +1,12 @@
 # Files excluded from the published `.vsix`.
 #
-# The extension is an esbuild bundle: `dist/` holds `extension.js`, the three
-# bundled language servers and TypeScript's `lib.*.d.ts` files (which the
-# bundled `svelte-language-server` loads at runtime), and is fully
-# self-contained. So the package ships `dist/`, the JSON TextMate grammars, the
-# language configurations and a few assets — and nothing else. In particular it
-# ships no `node_modules` (`vsce package --no-dependencies` confirms this).
+# The extension is an esbuild bundle: `dist/` holds `extension.js` and the two
+# bundled SvelTeX language servers, and is fully self-contained. So the package
+# ships `dist/`, the JSON TextMate grammars, the language configurations and a
+# few assets — and nothing else. In particular it ships no `node_modules`
+# (`vsce package --no-dependencies` confirms this). `svelte-language-server` is
+# not shipped at all — the extension reuses the copy that the required
+# `svelte.svelte-vscode` extension installs.
 
 # Sources and build tooling — bundled into `dist/`, not shipped.
 src/**

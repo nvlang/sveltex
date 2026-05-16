@@ -82,20 +82,50 @@ interface ServerPaths {
     mathLanguageServer: string;
 }
 
+/** The id of the official Svelte extension this one depends on. */
+const SVELTE_EXTENSION_ID = 'svelte.svelte-vscode';
+
+/**
+ * Locates `svelte-language-server`'s entry point.
+ *
+ * `svelte-language-server` is deliberately NOT bundled into this extension: it
+ * embeds the TypeScript compiler and `svelte2tsx`, which load `.d.ts` data
+ * files at runtime that esbuild cannot inline — a bundled copy runs with no
+ * standard library, so every `<script>` block degrades to `any`. Instead, this
+ * extension declares `svelte.svelte-vscode` as an `extensionDependency` and
+ * reuses the complete, un-bundled `svelte-language-server` that extension
+ * already ships under its `node_modules`. As a bonus the two extensions then
+ * stay on the same server version.
+ *
+ * @returns The absolute path of `svelte-language-server/bin/server.js`.
+ * @throws If neither the Svelte extension nor a local `node_modules` copy can
+ * be located.
+ */
+function resolveSvelteLanguageServer(): string {
+    const svelteExtension = vscode.extensions.getExtension(SVELTE_EXTENSION_ID);
+    if (svelteExtension) {
+        const fromExtension = path.join(
+            svelteExtension.extensionPath,
+            'node_modules',
+            'svelte-language-server',
+            'bin',
+            'server.js',
+        );
+        if (fs.existsSync(fromExtension)) return fromExtension;
+    }
+    // Fallback for an un-bundled development checkout, where the package is a
+    // resolvable (transitive) dependency of this extension.
+    return require.resolve('svelte-language-server/bin/server.js');
+}
+
 /**
  * Locates the three language server entry points.
  *
- * The published extension is a self-contained esbuild bundle: `extension.js`
- * and all three servers are bundled side by side into `dist/` (see
- * `scripts/build.ts`), and the `.vsix` ships no `node_modules`. So the servers
- * are looked up first as `dist/` siblings of this file; that is the path that
- * works in a packaged install.
- *
- * As a fallback — useful when the extension is run un-bundled during
- * development — each server is resolved from `node_modules` via
- * `require.resolve`. The SvelTeX server is a direct dependency, and the other
- * two are dependencies of _it_, so all three resolve from this extension's
- * location.
+ * The two SvelTeX servers are esbuild-bundled side by side into `dist/` (see
+ * `scripts/build.ts`); the published `.vsix` ships no `node_modules`, so they
+ * are looked up first as `dist/` siblings of this file, with a `require.resolve`
+ * fallback for the un-bundled development case. `svelte-language-server` is
+ * handled separately — see {@link resolveSvelteLanguageServer}.
  *
  * @param extensionPath - The extension's root directory
  * (`context.extensionPath`).
@@ -116,10 +146,7 @@ function resolveServerPaths(extensionPath: string): ServerPaths {
             'sveltex-language-server',
             '@nvl/sveltex-language-server/bin/server.js',
         ),
-        svelteLanguageServer: locate(
-            'svelte-language-server',
-            'svelte-language-server/bin/server.js',
-        ),
+        svelteLanguageServer: resolveSvelteLanguageServer(),
         mathLanguageServer: locate(
             'sveltex-math-language-server',
             '@nvl/sveltex-math-language-server/bin/server.js',
