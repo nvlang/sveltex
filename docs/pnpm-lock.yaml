@@ -42,6 +42,9 @@ importers:
       autoprefixer:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.14)
+      esbuild:
+        specifier: ^0.25.2
+        version: 0.25.2
       markdown-it-container:
         specifier: ^4.0.0
         version: 4.0.0
