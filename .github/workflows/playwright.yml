@@ -135,11 +135,15 @@ jobs:
 
       - name: Run Playwright tests
         # On a manual `update_snapshots` run, regenerate the golden images
-        # (`playwright:golden`) instead of comparing against them. `--shard`
-        # restricts this job to its slice of the suite.
+        # (`--update-snapshots`) instead of comparing against them; `--shard`
+        # restricts this job to its quarter of the suite. Invoke the
+        # Playwright binary directly with `pnpm exec`: routing through the
+        # `pnpm playwright` script forwards a stray `--`, which Playwright
+        # then reads as a (non-matching) test-file filter.
         run: >-
-          pnpm ${{ inputs.update_snapshots && 'playwright:golden' || 'playwright' }}
-          -- --shard=${{ matrix.shard }}/4
+          pnpm exec playwright test
+          ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
+          --shard=${{ matrix.shard }}/4
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
