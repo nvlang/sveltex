@@ -27,6 +27,9 @@ jobs:
   publish:
     name: Publish to NPM and JSR
     runs-on: ubuntu-latest
+    # Runs as a deployment to the `release` environment so npm trusted
+    # publishing (OIDC) can match the publish against this environment.
+    environment: release
     steps:
       - uses: actions/checkout@v5
         with:
