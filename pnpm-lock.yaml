@@ -465,6 +465,9 @@ importers:
       '@nvl/sveltex-language-server':
         specifier: workspace:*
         version: link:../sveltex-language-server
+      '@nvl/sveltex-math-language-server':
+        specifier: workspace:*
+        version: link:../sveltex-math-language-server
       vscode-languageclient:
         specifier: ^9.0.1
         version: 9.0.1
@@ -5909,7 +5912,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
+      vitest: 4.1.6(@types/node@24.12.4)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@24.12.4)(typescript@5.9.3))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.6':
     dependencies:
@@ -5965,7 +5968,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vitest: 4.1.6(@types/node@22.19.19)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
+      vitest: 4.1.6(@types/node@24.12.4)(@vitest/coverage-v8@4.1.6)(@vitest/ui@4.1.6)(jsdom@24.1.0)(msw@2.14.6(@types/node@24.12.4)(typescript@5.9.3))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.29.2)(tsx@4.22.0)(yaml@2.9.0))
 
   '@vitest/utils@4.1.6':
     dependencies:

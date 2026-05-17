@@ -176,6 +176,7 @@
   },
   "dependencies": {
     "@nvl/sveltex-language-server": "workspace:*",
+    "@nvl/sveltex-math-language-server": "workspace:*",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
