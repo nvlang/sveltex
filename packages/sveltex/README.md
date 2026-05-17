@@ -54,36 +54,38 @@
 **Note:** See the [docs] for more information.<br>
 **Note**: This package is [ESM-only].
 
-<details>
-<summary><b>Creating a new project</b></summary>
+### Adding SvelTeX to a project
 
-You can use the [`create-sveltex`] package to create a new project using SvelTeX:
+The quickest way is the [`@nvl/sv`] community add-on for the [Svelte CLI]
+(`sv`). In a SvelteKit project, run:
 
 ```sh
-pnpm dlx create-sveltex # If using PNPM
-bunx     create-sveltex # If using Bun
-npx      create-sveltex # If using NPM
-yarn dlx create-sveltex # If using Yarn
+npx sv add @nvl
 ```
 
-...and follow the prompts.
+…and follow the prompts. It installs `@nvl/sveltex` and the peer dependencies
+for the backends you pick, creates a `sveltex.config.{js,ts}`, and wires the
+SvelTeX preprocessor and the `.sveltex` extension into your
+`svelte.config.{js,ts}`. Starting from scratch? Run `npx sv create` first,
+then `npx sv add @nvl` inside the new project.
 
-</details>
+> [!NOTE]
+> `sv add @nvl` resolves the [`@nvl/sv`] add-on from npm — `@nvl` is the
+> org-handle shorthand `sv` expands to the `@nvl/sv` package. Svelte's
+> community-add-on support is still experimental, and `@nvl/sv` itself is in
+> alpha; community add-ons are not vetted by the Svelte maintainers.
 
-<details>
-<summary><b>Adding to an existing project</b></summary>
+### Manual setup
 
-#### Installation
+If you're not on SvelteKit, or would rather wire things up by hand:
 
 ```sh
-pnpm add -D @nvl/sveltex     # If using PNPM
+pnpm add -D @nvl/sveltex     # If using pnpm
 bun  add -D @nvl/sveltex     # If using Bun
-npm  add -D @nvl/sveltex     # If using NPM
+npm  add -D @nvl/sveltex     # If using npm
 yarn add -D @nvl/sveltex     # If using Yarn
 deno add -D jsr:@nvl/sveltex # If using Deno
 ```
-
-#### Basic steup
 
 ```js
 // svelte.config.js
@@ -108,14 +110,10 @@ const config = {
 export default config;
 ```
 
-Now, install the backends (see IntelliSense or the error message you'd get if
-you tried to run the above code without installing the backends), and you should
-be good to go. Create a `+page.sveltex` file in your `src/routes` directory, and
-start adding markdown, math, code blocks, and even TeX components.
-
-See the [docs] for more information on how to use SvelTeX.
-
-</details>
+Then install the backends you chose — IntelliSense, or the error SvelTeX
+throws without them, will tell you which — create a `+page.sveltex` file under
+`src/routes`, and start writing Markdown, math, code blocks and TeX
+components. See the [docs] for more.
 
 <div align="center">
 <picture>
@@ -127,16 +125,32 @@ See the [docs] for more information on how to use SvelTeX.
 
 ## Editor integration
 
-For VS Code, you can install the official [SvelTeX extension] from the
-marketplace. This will provide syntax highlighting for `.sveltex` files.
+SvelTeX has first-class editor support: syntax highlighting **and** a language
+server ([`@nvl/sveltex-language-server`]) that proxies the real Svelte tooling
+for the Svelte parts of a `.sveltex` file and adds native Markdown, math and
+frontmatter features.
 
-For other editors, you'd need to configure syntax highlighting yourself using
-the SvelTeX [TextMate grammar] provided within the VS Code extension.
+- **VS Code** — install the [SvelTeX extension] (VS Code Marketplace; also on
+  [Open VSX] for VSCodium, Cursor, Windsurf, …). It bundles the language
+  server, so diagnostics, hover, completion, go-to-definition, rename and more
+  work out of the box.
+- **Zed** — the [SvelTeX Zed extension] provides tree-sitter highlighting and
+  launches the same language server.
+- **Other LSP-capable editors** (Neovim, Emacs, Sublime Text, …) — run
+  [`@nvl/sveltex-language-server`] directly; it speaks LSP over stdio
+  (`node …/bin/server.js --stdio`).
+- **Syntax highlighting only** — [`@nvl/tree-sitter-sveltex`] is a standalone
+  tree-sitter grammar; the VS Code extension also ships a [TextMate grammar].
 
-Proper LSP-style language support is not currently implemented. Doing so via
-e.g. [request forwarding] could be an immense enrichment to the developer
-experience, but it's not something I can currently commit to. Contributions for
-this would be extremely welcome.
+Inside a `.sveltex` file the language server additionally forwards math
+regions to a bundled math language server (TeX command completion and rich
+hover) and LaTeX `<tex>` / `<tikz>` regions to [TexLab], when a `texlab`
+binary is on `PATH`.
+
+> [!NOTE]
+> The language-server, Zed-extension and tree-sitter packages are new and
+> currently in **alpha** — expect rough edges and breaking changes before
+> `1.0.0`.
 
 ## Acknowledgments
 
@@ -150,8 +164,12 @@ libraries. Some notable examples are MathJax and TikZ.
 
 [docs]: https://sveltex.dev/docs
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
-[`create-sveltex`]: https://www.npmjs.com/package/create-sveltex
+[Svelte CLI]: https://svelte.dev/docs/cli/overview
+[`@nvl/sv`]: https://www.npmjs.com/package/@nvl/sv
+[`@nvl/sveltex-language-server`]: https://www.npmjs.com/package/@nvl/sveltex-language-server
+[`@nvl/tree-sitter-sveltex`]: https://www.npmjs.com/package/@nvl/tree-sitter-sveltex
 [SvelTeX extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
-[TextMate grammar]: ../vscode-sveltex/syntaxes
-[request forwarding]: https://code.visualstudio.com/api/language-extensions/embedded-languages#request-forwarding
+[Open VSX]: https://open-vsx.org/extension/sveltex-preprocessor/sveltex
+[SvelTeX Zed extension]: https://github.com/nvlang/sveltex/tree/main/editors/zed
+[TextMate grammar]: https://github.com/nvlang/sveltex/tree/main/packages/vscode-sveltex/syntaxes
 [acknowledgments]: https://sveltex.dev/docs/acknowledgments
