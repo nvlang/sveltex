@@ -175,6 +175,32 @@ describe('computeFrontmatterHover', () => {
             computeFrontmatterHover(source, { line: 1, character: 8 }),
         ).toBeNull();
     });
+
+    it('documents a meta name written as a key (the mapping form)', () => {
+        // `meta: { description: … }` — the name is a key, not a `name:` value.
+        const source = [
+            '---',
+            'meta:',
+            '  description: A summary',
+            '---',
+        ].join('\n');
+        const hover = computeFrontmatterHover(source, {
+            line: 2,
+            character: 6,
+        });
+        expect(bodyOf(hover)).toContain('<meta name="description">');
+    });
+
+    it('documents a meta name written as a top-level key', () => {
+        const source = ['---', 'viewport: width=device-width', '---'].join(
+            '\n',
+        );
+        const hover = computeFrontmatterHover(source, {
+            line: 1,
+            character: 3,
+        });
+        expect(bodyOf(hover)).toContain('<meta name="viewport">');
+    });
 });
 
 describe('computeFrontmatterCompletion', () => {
@@ -242,5 +268,17 @@ describe('computeFrontmatterCompletion', () => {
             computeFrontmatterCompletion(source, { line: 99, character: 0 })
                 .items,
         ).toEqual([]);
+    });
+
+    it('includes meta names among the key suggestions', () => {
+        // A metadata name is written directly as a key in the `meta`
+        // mapping form and the top-level form.
+        const source = ['---', 'meta:', '  desc', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 2,
+            character: 6,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('description');
+        expect(labels).toContain('title');
     });
 });

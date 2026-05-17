@@ -223,6 +223,22 @@ const META_HTTP_EQUIV: Readonly<Record<string, FrontmatterEntryDoc>> = {
     },
 };
 
+/**
+ * Every name a user may write as a frontmatter *key*.
+ *
+ * Besides the structural keys, this includes the `<meta>` `name` /
+ * `http-equiv` values: SvelTeX's `interpretFrontmatter` accepts a metadata
+ * name written directly as a key — at the top level (`description: …`) or in
+ * the `meta: { description: … }` mapping form — not only as the value of a
+ * `name:` entry in the `meta: [{ name: … }]` array form. The three name
+ * spaces are disjoint, so the merge is unambiguous.
+ */
+const ALL_FRONTMATTER_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    ...FRONTMATTER_SCHEMA,
+    ...META_NAMES,
+    ...META_HTTP_EQUIV,
+};
+
 /** A key or value token located on a frontmatter line. */
 interface Token {
     /** The bare token text. */
@@ -361,9 +377,11 @@ export function computeFrontmatterHover(
     const { key, value } = parseFrontmatterLine(line);
     const caret = position.character;
 
-    // Caret on the key — describe the frontmatter key itself.
+    // Caret on the key — describe the frontmatter key itself. A key may be a
+    // structural key or a metadata name written directly (see
+    // `ALL_FRONTMATTER_KEYS`).
     if (key && caretOn(caret, key)) {
-        const doc = FRONTMATTER_SCHEMA[key.name];
+        const doc = ALL_FRONTMATTER_KEYS[key.name];
         return doc ? entryHover(key, doc, position.line) : null;
     }
 
@@ -432,7 +450,7 @@ export function computeFrontmatterCompletion(
     let entries: Readonly<Record<string, FrontmatterEntryDoc>>;
     let kind: CompletionItemKind;
     if (context.kind === 'key') {
-        entries = FRONTMATTER_SCHEMA;
+        entries = ALL_FRONTMATTER_KEYS;
         kind = CompletionItemKind.Property;
     } else if (context.ofKey === 'name') {
         entries = META_NAMES;
