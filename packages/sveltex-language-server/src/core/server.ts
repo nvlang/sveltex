@@ -73,6 +73,7 @@ import {
     computeFoldingRanges,
     computeSelectionRanges,
 } from './markdown.js';
+import { computeFrontmatterHover } from './frontmatter.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -541,6 +542,11 @@ export function createServer(connection: Connection): void {
                     region,
                     params.position,
                 );
+            }
+            // Frontmatter is non-delegated — the Svelte child never sees it —
+            // so its keys are documented natively.
+            if (region?.kind === 'frontmatter') {
+                return computeFrontmatterHover(doc.text, params.position);
             }
         }
         const proxied = await proxyPositionRequest<Hover | null>(
