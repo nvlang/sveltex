@@ -118,4 +118,58 @@ describe('computeFrontmatterHover', () => {
             computeFrontmatterHover(source, { line: 99, character: 0 }),
         ).toBeNull();
     });
+
+    it('documents a standard `<meta name>` value', () => {
+        const source = [
+            '---',
+            'meta:',
+            '  - name: description',
+            '---',
+        ].join('\n');
+        const hover = computeFrontmatterHover(source, {
+            line: 2,
+            character: 14,
+        });
+        expect(bodyOf(hover)).toContain('<meta name="description">');
+        // The range covers just the `description` value token.
+        expect(hover?.range).toEqual({
+            start: { line: 2, character: 10 },
+            end: { line: 2, character: 21 },
+        });
+    });
+
+    it('documents a standard `<meta http-equiv>` value', () => {
+        const source = [
+            '---',
+            'meta:',
+            '  - http-equiv: content-security-policy',
+            '---',
+        ].join('\n');
+        const hover = computeFrontmatterHover(source, {
+            line: 2,
+            character: 20,
+        });
+        expect(bodyOf(hover)).toContain(
+            '<meta http-equiv="content-security-policy">',
+        );
+    });
+
+    it('documents the `name` key itself when the caret is on the key', () => {
+        const source = ['---', 'meta:', '  - name: viewport', '---'].join(
+            '\n',
+        );
+        // Character 5 is inside `name` — the key, not the `viewport` value.
+        const hover = computeFrontmatterHover(source, {
+            line: 2,
+            character: 5,
+        });
+        expect(bodyOf(hover)).toContain('renders `<meta name>`');
+    });
+
+    it('returns null for an unrecognised `<meta name>` value', () => {
+        const source = ['---', 'name: bogusmetaname', '---'].join('\n');
+        expect(
+            computeFrontmatterHover(source, { line: 1, character: 8 }),
+        ).toBeNull();
+    });
 });

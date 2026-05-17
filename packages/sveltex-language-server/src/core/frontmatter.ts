@@ -1,19 +1,19 @@
-// File description: Hover documentation for keys in a `.sveltex` frontmatter
-// block.
+// File description: Hover documentation for a `.sveltex` frontmatter block.
 //
 // A `.sveltex` document may open with a YAML / TOML / JSON frontmatter block.
 // SvelTeX reads it and renders the recognised keys into the document's
 // `<svelte:head>` — `title` becomes `<title>`, `meta` becomes `<meta>` tags,
-// and so on. That mapping is not obvious from the frontmatter alone, so this
-// module backs each known key with a one-line description and a documentation
-// link (MDN for the keys that map to an HTML head element).
+// and so on. This module documents that mapping on hover: each known
+// frontmatter key, and each standard `<meta>` `name` / `http-equiv` value, is
+// backed by a one-line description and a documentation link (MDN for the keys
+// and values that map to an HTML head construct).
 //
 // Frontmatter is a non-delegated region: the embedded Svelte language server
 // never sees it. The hover here is therefore computed natively. It needs no
 // position mapping — a frontmatter region is verbatim `.sveltex` source, so a
-// key's line/character already are its source coordinates — and no real
-// YAML/TOML/JSON parse: a key is recognised by a small line-shaped pattern that
-// covers all three syntaxes.
+// token's line/character already are its source coordinates — and no real
+// YAML/TOML/JSON parse: a key/value pair is recognised by a small line-shaped
+// pattern that covers all three syntaxes.
 
 import {
     MarkupKind,
@@ -21,13 +21,13 @@ import {
     type Position,
 } from 'vscode-languageserver-protocol';
 
-/** Documentation for one recognised frontmatter key. */
-interface FrontmatterKeyDoc {
-    /** A one-line description of what the key does. */
+/** Documentation for one recognised frontmatter key or `<meta>` value. */
+interface FrontmatterEntryDoc {
+    /** A one-line description of what the key or value does. */
     readonly summary: string;
-    /** The HTML head element/attribute the key renders to, if any. */
+    /** The HTML head element/attribute it renders to, if any. */
     readonly element?: string;
-    /** A documentation URL — MDN for HTML keys, the SvelTeX site otherwise. */
+    /** A documentation URL — MDN for HTML entries, the SvelTeX site else. */
     readonly docUrl: string;
 }
 
@@ -42,7 +42,7 @@ const MDN = 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element';
  * nested keys a user writes inside `base`, `meta` and `link` entries. Each maps
  * to an HTML `<head>` construct (except `imports`, which is SvelTeX's own).
  */
-const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterKeyDoc>> = {
+const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterEntryDoc>> = {
     title: {
         summary:
             "Sets the document's title — rendered as the page's `<title>` " +
@@ -127,57 +127,181 @@ const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterKeyDoc>> = {
     },
 };
 
-/** A key token located on a frontmatter line. */
-interface KeyMatch {
-    /** The bare key name. */
+/**
+ * Standard `<meta name="…">` values — what a user writes as the value of a
+ * `name:` entry inside `meta`. Mirrors `@nvl/sveltex`'s `MetaName` type.
+ */
+const META_NAMES: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    charset: {
+        summary:
+            "Declares the document's character encoding, emitted as " +
+            '`<meta charset>`. In practice this is always `utf-8`.',
+        element: '<meta charset>',
+        docUrl: `${MDN}/meta`,
+    },
+    author: {
+        summary: "The name of the document's author.",
+        element: '<meta name="author">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    'application-name': {
+        summary:
+            'The name of the web application the page represents; used by ' +
+            'browsers when the site is pinned or installed.',
+        element: '<meta name="application-name">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    description: {
+        summary:
+            "A short, accurate summary of the page's content. Search " +
+            'engines often show it beneath the title in results.',
+        element: '<meta name="description">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    generator: {
+        summary: 'The identifier of the software that generated the page.',
+        element: '<meta name="generator">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    keywords: {
+        summary:
+            'A comma-separated list of keywords relevant to the page — ' +
+            'largely ignored by modern search engines.',
+        element: '<meta name="keywords">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    viewport: {
+        summary:
+            'Hints to the browser on how to size and scale the viewport — ' +
+            'essential for a page to render well on mobile devices.',
+        element: '<meta name="viewport">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    referrer: {
+        summary:
+            'Controls the `Referer` header sent for requests the page ' +
+            'initiates.',
+        element: '<meta name="referrer">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    'theme-color': {
+        summary:
+            'Suggests a colour for browsers to tint surrounding UI with, ' +
+            'such as the address bar or the task switcher.',
+        element: '<meta name="theme-color">',
+        docUrl: `${MDN}/meta/name`,
+    },
+    'color-scheme': {
+        summary:
+            'Declares which colour schemes (e.g. `light`, `dark`) the ' +
+            'document is comfortable being rendered in.',
+        element: '<meta name="color-scheme">',
+        docUrl: `${MDN}/meta/name`,
+    },
+};
+
+/**
+ * Standard `<meta http-equiv="…">` values — what a user writes as the value
+ * of an `http-equiv:` entry. Mirrors `@nvl/sveltex`'s `MetaHttpEquiv` type.
+ */
+const META_HTTP_EQUIV: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    'content-security-policy': {
+        summary:
+            'Defines a Content Security Policy for the document, ' +
+            'restricting which resources it may load and execute.',
+        element: '<meta http-equiv="content-security-policy">',
+        docUrl: `${MDN}/meta`,
+    },
+    'default-style': {
+        summary: 'Sets the name of the preferred (default) stylesheet.',
+        element: '<meta http-equiv="default-style">',
+        docUrl: `${MDN}/meta`,
+    },
+};
+
+/** A key or value token located on a frontmatter line. */
+interface Token {
+    /** The bare token text. */
     readonly name: string;
-    /** Character offset of the first character of the key on its line. */
+    /** Character offset of the first character of the token on its line. */
     readonly start: number;
-    /** Character offset one past the last character of the key. */
+    /** Character offset one past the last character of the token. */
     readonly end: number;
 }
 
-/**
- * Locates the key token on a single frontmatter line, if the line declares
- * one.
- *
- * Recognises all three frontmatter syntaxes with one shape: `key:` (YAML /
- * JSON), `key =` (TOML), an optionally quoted key, an optional leading YAML
- * list-item dash, and a TOML `[table]` / `[[array]]` header.
- *
- * @param line - A single line of frontmatter text.
- * @returns The key and its character range, or `undefined` if the line holds
- * no key.
- */
-function findFrontmatterKey(line: string): KeyMatch | undefined {
-    // `key:` / `key =` / `"key":`, with an optional `- ` list-item prefix.
-    const keyValue = /^(\s*(?:-\s+)?)(['"]?)([A-Za-z_][\w-]*)\2\s*[:=]/u.exec(
-        line,
-    );
-    if (keyValue) {
-        const [, indent = '', quote = '', name = ''] = keyValue;
-        const start = indent.length + quote.length;
-        return { name, start, end: start + name.length };
-    }
-    // TOML table header: `[base]`, `[[meta]]`.
-    const table = /^(\s*\[+\s*)([A-Za-z_][\w-]*)/u.exec(line);
-    if (table) {
-        const [, prefix = '', name = ''] = table;
-        return { name, start: prefix.length, end: prefix.length + name.length };
-    }
-    return undefined;
+/** The key and (when present) first value token of a frontmatter line. */
+interface LineTokens {
+    readonly key?: Token;
+    readonly value?: Token;
 }
 
 /**
- * Builds the Markdown body shown when hovering a frontmatter key.
+ * Splits a single frontmatter line into its key and first value token.
  *
- * @param name - The bare key name.
- * @param doc - The key's {@link FrontmatterKeyDoc}.
+ * Recognises all three frontmatter syntaxes with one shape: `key: value`
+ * (YAML / JSON), `key = value` (TOML), optionally quoted tokens, an optional
+ * leading YAML list-item dash, and a TOML `[table]` / `[[array]]` header
+ * (which has a key but no value).
+ *
+ * @param line - A single line of frontmatter text.
+ * @returns The key and value tokens found on the line (either may be absent).
  */
-function frontmatterHoverMarkdown(
-    name: string,
-    doc: FrontmatterKeyDoc,
-): string {
+function parseFrontmatterLine(line: string): LineTokens {
+    // `key: value` / `key = value` / `"key": "value"`, with an optional `- `
+    // list-item prefix. The value is the first token after the separator.
+    const keyValue =
+        /^(\s*(?:-\s+)?)(['"]?)([A-Za-z_][\w-]*)\2(\s*[:=]\s*)(['"]?)([\w-][\w./-]*)?/u.exec(
+            line,
+        );
+    if (keyValue) {
+        const [, indent = '', kq = '', key = '', sep = '', vq = '', value] =
+            keyValue;
+        const keyStart = indent.length + kq.length;
+        const key_: Token = {
+            name: key,
+            start: keyStart,
+            end: keyStart + key.length,
+        };
+        if (value === undefined || value.length === 0) return { key: key_ };
+        // The closing key quote is `\2`, i.e. another `kq`.
+        const valueStart =
+            indent.length + kq.length * 2 + key.length + sep.length + vq.length;
+        return {
+            key: key_,
+            value: {
+                name: value,
+                start: valueStart,
+                end: valueStart + value.length,
+            },
+        };
+    }
+    // TOML table header: `[base]`, `[[meta]]` — a key with no value.
+    const table = /^(\s*\[+\s*)([A-Za-z_][\w-]*)/u.exec(line);
+    if (table) {
+        const [, prefix = '', name = ''] = table;
+        return {
+            key: {
+                name,
+                start: prefix.length,
+                end: prefix.length + name.length,
+            },
+        };
+    }
+    return {};
+}
+
+/** Whether the caret column falls on (or just past the end of) `token`. */
+function caretOn(caret: number, token: Token): boolean {
+    return caret >= token.start && caret <= token.end;
+}
+
+/**
+ * Builds the Markdown body shown when hovering a frontmatter key or value.
+ *
+ * @param name - The bare token text.
+ * @param doc - The token's {@link FrontmatterEntryDoc}.
+ */
+function entryHoverMarkdown(name: string, doc: FrontmatterEntryDoc): string {
     const heading = doc.element
         ? `**\`${name}\`** — renders \`${doc.element}\``
         : `**\`${name}\`**`;
@@ -195,14 +319,33 @@ function frontmatterHoverMarkdown(
     ].join('\n');
 }
 
+/** Wraps an entry doc and its token into an LSP {@link Hover}. */
+function entryHover(
+    token: Token,
+    doc: FrontmatterEntryDoc,
+    line: number,
+): Hover {
+    return {
+        contents: {
+            kind: MarkupKind.Markdown,
+            value: entryHoverMarkdown(token.name, doc),
+        },
+        range: {
+            start: { line, character: token.start },
+            end: { line, character: token.end },
+        },
+    };
+}
+
 /**
  * Computes the hover for a caret inside a `.sveltex` frontmatter region.
  *
  * @param source - Full text of the `.sveltex` document.
  * @param position - The caret position, in `.sveltex` coordinates. The caller
  * guarantees it falls inside a `frontmatter` region.
- * @returns A {@link Hover} describing the frontmatter key under the caret, or
- * `null` when the caret is not on a recognised key.
+ * @returns A {@link Hover} describing the frontmatter key — or, on a `name:` /
+ * `http-equiv:` line, the standard `<meta>` value — under the caret, or `null`
+ * when the caret is not on a recognised token.
  */
 export function computeFrontmatterHover(
     source: string,
@@ -211,24 +354,27 @@ export function computeFrontmatterHover(
     const line = source.split(/\r\n?|\n/u)[position.line];
     if (line === undefined) return null;
 
-    const key = findFrontmatterKey(line);
-    if (!key) return null;
-    // The caret must land on the key token itself, not on its value.
-    if (position.character < key.start || position.character > key.end) {
-        return null;
+    const { key, value } = parseFrontmatterLine(line);
+    const caret = position.character;
+
+    // Caret on the key — describe the frontmatter key itself.
+    if (key && caretOn(caret, key)) {
+        const doc = FRONTMATTER_SCHEMA[key.name];
+        return doc ? entryHover(key, doc, position.line) : null;
     }
 
-    const doc = FRONTMATTER_SCHEMA[key.name];
-    if (!doc) return null;
+    // Caret on the value of a `name:` / `http-equiv:` entry — describe the
+    // standard metadata name or pragma directive it selects.
+    if (key && value && caretOn(caret, value)) {
+        const schema =
+            key.name === 'name'
+                ? META_NAMES
+                : key.name === 'http-equiv'
+                  ? META_HTTP_EQUIV
+                  : undefined;
+        const doc = schema?.[value.name];
+        if (doc) return entryHover(value, doc, position.line);
+    }
 
-    return {
-        contents: {
-            kind: MarkupKind.Markdown,
-            value: frontmatterHoverMarkdown(key.name, doc),
-        },
-        range: {
-            start: { line: position.line, character: key.start },
-            end: { line: position.line, character: key.end },
-        },
-    };
+    return null;
 }
