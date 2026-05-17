@@ -3,7 +3,10 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Hover } from 'vscode-languageserver-protocol';
-import { computeFrontmatterHover } from '../../src/core/frontmatter.js';
+import {
+    computeFrontmatterCompletion,
+    computeFrontmatterHover,
+} from '../../src/core/frontmatter.js';
 
 /** The Markdown body of a hover, or `''` when there is no hover. */
 function bodyOf(hover: Hover | null): string {
@@ -171,5 +174,73 @@ describe('computeFrontmatterHover', () => {
         expect(
             computeFrontmatterHover(source, { line: 1, character: 8 }),
         ).toBeNull();
+    });
+});
+
+describe('computeFrontmatterCompletion', () => {
+    it('suggests frontmatter keys when a key is being typed', () => {
+        const source = ['---', 'ti', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 1,
+            character: 2,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('title');
+        expect(labels).toContain('meta');
+        expect(labels).toContain('imports');
+    });
+
+    it('replaces the partial key already typed', () => {
+        const source = ['---', 'ti', '---'].join('\n');
+        const title = computeFrontmatterCompletion(source, {
+            line: 1,
+            character: 2,
+        }).items.find((i) => i.label === 'title');
+        expect(title?.textEdit).toEqual({
+            range: {
+                start: { line: 1, character: 0 },
+                end: { line: 1, character: 2 },
+            },
+            newText: 'title',
+        });
+    });
+
+    it('suggests `<meta name>` values after `name:`', () => {
+        const source = ['---', 'meta:', '  - name: ', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 2,
+            character: 10,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('description');
+        expect(labels).toContain('viewport');
+        expect(labels).toContain('keywords');
+    });
+
+    it('suggests `<meta http-equiv>` values after `http-equiv:`', () => {
+        const source = ['---', 'meta:', '  - http-equiv: ', '---'].join(
+            '\n',
+        );
+        const labels = computeFrontmatterCompletion(source, {
+            line: 2,
+            character: 16,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('content-security-policy');
+    });
+
+    it('suggests nothing for a free-form value', () => {
+        const source = ['---', 'title: My Doc', '---'].join('\n');
+        const result = computeFrontmatterCompletion(source, {
+            line: 1,
+            character: 10,
+        });
+        expect(result.items).toEqual([]);
+        expect(result.isIncomplete).toBe(false);
+    });
+
+    it('returns an empty list when the caret line is out of range', () => {
+        const source = ['---', 'title: x', '---'].join('\n');
+        expect(
+            computeFrontmatterCompletion(source, { line: 99, character: 0 })
+                .items,
+        ).toEqual([]);
     });
 });

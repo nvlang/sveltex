@@ -1,22 +1,26 @@
-// File description: Hover documentation for a `.sveltex` frontmatter block.
+// File description: Hover and completion for a `.sveltex` frontmatter block.
 //
 // A `.sveltex` document may open with a YAML / TOML / JSON frontmatter block.
 // SvelTeX reads it and renders the recognised keys into the document's
 // `<svelte:head>` — `title` becomes `<title>`, `meta` becomes `<meta>` tags,
-// and so on. This module documents that mapping on hover: each known
-// frontmatter key, and each standard `<meta>` `name` / `http-equiv` value, is
-// backed by a one-line description and a documentation link (MDN for the keys
-// and values that map to an HTML head construct).
+// and so on. This module documents that mapping: each known frontmatter key,
+// and each standard `<meta>` `name` / `http-equiv` value, is backed by a
+// one-line description and a documentation link (MDN for the keys and values
+// that map to an HTML head construct). It surfaces that knowledge two ways —
+// as hover text, and as completion suggestions.
 //
 // Frontmatter is a non-delegated region: the embedded Svelte language server
-// never sees it. The hover here is therefore computed natively. It needs no
-// position mapping — a frontmatter region is verbatim `.sveltex` source, so a
-// token's line/character already are its source coordinates — and no real
-// YAML/TOML/JSON parse: a key/value pair is recognised by a small line-shaped
-// pattern that covers all three syntaxes.
+// never sees it. Hover and completion here are therefore computed natively.
+// They need no position mapping — a frontmatter region is verbatim `.sveltex`
+// source, so a token's line/character already are its source coordinates —
+// and no real YAML/TOML/JSON parse: a key/value pair is recognised by a small
+// line-shaped pattern that covers all three syntaxes.
 
 import {
+    CompletionItemKind,
     MarkupKind,
+    type CompletionItem,
+    type CompletionList,
     type Hover,
     type Position,
 } from 'vscode-languageserver-protocol';
@@ -377,4 +381,94 @@ export function computeFrontmatterHover(
     }
 
     return null;
+}
+
+/** Whether the caret on a frontmatter line is completing a key or a value. */
+type CompletionContext =
+    | { readonly kind: 'key' }
+    | { readonly kind: 'value'; readonly ofKey: string };
+
+/**
+ * Classifies a caret on a frontmatter line as completing a key or a value.
+ *
+ * The caret is in value position once it is past the `:` / `=` separator of a
+ * `key:` / `key =` pair; everywhere else a key is being typed.
+ *
+ * @param line - The frontmatter line the caret is on.
+ * @param caret - The caret's character offset within the line.
+ */
+function completionContext(line: string, caret: number): CompletionContext {
+    const pair = /^(\s*(?:-\s+)?)(['"]?)([A-Za-z_][\w-]*)\2(\s*)([:=])/u.exec(
+        line,
+    );
+    if (pair) {
+        const [match = '', , , key = ''] = pair;
+        if (caret > match.length - 1) return { kind: 'value', ofKey: key };
+    }
+    return { kind: 'key' };
+}
+
+/**
+ * Computes the completion list for a caret inside a `.sveltex` frontmatter
+ * region: the frontmatter keys when a key is being typed, or the standard
+ * `<meta>` `name` / `http-equiv` values when the caret is on the value of
+ * such an entry.
+ *
+ * @param source - Full text of the `.sveltex` document.
+ * @param position - The caret position, in `.sveltex` coordinates. The caller
+ * guarantees it falls inside a `frontmatter` region.
+ * @returns A {@link CompletionList} — empty (but never `null`) when nothing
+ * sensible can be suggested.
+ */
+export function computeFrontmatterCompletion(
+    source: string,
+    position: Position,
+): CompletionList {
+    const empty: CompletionList = { isIncomplete: false, items: [] };
+    const line = source.split(/\r\n?|\n/u)[position.line];
+    if (line === undefined) return empty;
+
+    const context = completionContext(line, position.character);
+    let entries: Readonly<Record<string, FrontmatterEntryDoc>>;
+    let kind: CompletionItemKind;
+    if (context.kind === 'key') {
+        entries = FRONTMATTER_SCHEMA;
+        kind = CompletionItemKind.Property;
+    } else if (context.ofKey === 'name') {
+        entries = META_NAMES;
+        kind = CompletionItemKind.EnumMember;
+    } else if (context.ofKey === 'http-equiv') {
+        entries = META_HTTP_EQUIV;
+        kind = CompletionItemKind.EnumMember;
+    } else {
+        // The value of any other key is free-form — nothing to suggest.
+        return empty;
+    }
+
+    // The inserted text replaces the partial identifier already typed.
+    const typed = /[A-Za-z0-9_-]*$/u.exec(line.slice(0, position.character));
+    const range = {
+        start: {
+            line: position.line,
+            character: position.character - (typed?.[0] ?? '').length,
+        },
+        end: { line: position.line, character: position.character },
+    };
+
+    const items = Object.entries(entries).map(
+        ([name, doc]): CompletionItem => {
+            const item: CompletionItem = {
+                label: name,
+                kind,
+                documentation: {
+                    kind: MarkupKind.Markdown,
+                    value: doc.summary,
+                },
+                textEdit: { range, newText: name },
+            };
+            if (doc.element) item.detail = doc.element;
+            return item;
+        },
+    );
+    return { isIncomplete: false, items };
 }

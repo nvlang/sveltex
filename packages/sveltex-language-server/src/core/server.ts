@@ -73,7 +73,10 @@ import {
     computeFoldingRanges,
     computeSelectionRanges,
 } from './markdown.js';
-import { computeFrontmatterHover } from './frontmatter.js';
+import {
+    computeFrontmatterCompletion,
+    computeFrontmatterHover,
+} from './frontmatter.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -566,6 +569,13 @@ export function createServer(connection: Connection): void {
                     doc.text,
                     doc.uri,
                     region,
+                    params.position,
+                );
+            }
+            // Frontmatter is non-delegated — suggest its keys/values natively.
+            if (region?.kind === 'frontmatter') {
+                return computeFrontmatterCompletion(
+                    doc.text,
                     params.position,
                 );
             }
