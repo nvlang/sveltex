@@ -13,6 +13,14 @@ on:
       - packages/sveltex/tsconfig.json
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: >-
+          Regenerate the golden snapshots instead of comparing against them,
+          and upload the result as an artifact for review.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -112,7 +120,9 @@ jobs:
         working-directory: packages/sveltex
 
       - name: Run Playwright tests
-        run: pnpm playwright
+        # On a manual `update_snapshots` run, regenerate the golden images
+        # (`playwright:golden`) instead of comparing against them.
+        run: pnpm ${{ inputs.update_snapshots && 'playwright:golden' || 'playwright' }}
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
@@ -122,3 +132,14 @@ jobs:
           name: playwright-report
           path: packages/sveltex/playwright-report/
           retention-days: 30
+
+      - name: Upload regenerated golden snapshots for review
+        # Only on a manual `update_snapshots` run. `playwright:golden` may
+        # report failures for snapshots that changed, so upload regardless of
+        # the run's outcome.
+        if: ${{ always() && inputs.update_snapshots }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-golden-snapshots
+          path: packages/sveltex/tests/e2e/snapshots/
+          retention-days: 14
