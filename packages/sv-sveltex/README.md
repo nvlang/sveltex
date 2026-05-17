@@ -1,5 +1,10 @@
 # `@nvl/sv`
 
+> [!WARNING]
+> **This package is in alpha.** It is brand new and under active development.
+> Its API, behaviour, and configuration may change at any time, and breaking
+> changes should be expected before version `1.0.0`.
+
 A community [`sv`](https://svelte.dev/docs/cli/overview) add-on for
 [SvelTeX](https://sveltex.dev) (Svelte + Markdown + LaTeX).
 

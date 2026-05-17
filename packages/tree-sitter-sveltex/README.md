@@ -1,5 +1,10 @@
 # tree-sitter-sveltex
 
+> [!WARNING]
+> **This package is in alpha.** It is brand new and under active development.
+> Its API, behaviour, and configuration may change at any time, and breaking
+> changes should be expected before version `1.0.0`.
+
 A [tree-sitter] grammar for **SvelTeX** (`.sveltex`) documents.
 
 A `.sveltex` file is a [Svelte](https://svelte.dev) component whose markup is

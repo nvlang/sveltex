@@ -1,5 +1,10 @@
 # `@nvl/sveltex-math-language-server`
 
+> [!WARNING]
+> **This package is in alpha.** It is brand new and under active development.
+> Its API, behaviour, and configuration may change at any time, and breaking
+> changes should be expected before version `1.0.0`.
+
 A small, standalone Language Server Protocol (LSP) implementation that provides
 editor assistance for **TeX math** — the math written inside the `$…$` /
 `$$…$$` / `\(…\)` / `\[…\]` regions of a [SvelTeX](https://sveltex.dev)

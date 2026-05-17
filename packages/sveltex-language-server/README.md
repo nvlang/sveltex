@@ -1,5 +1,10 @@
 # `@nvl/sveltex-language-server`
 
+> [!WARNING]
+> **This package is in alpha.** It is brand new and under active development.
+> Its API, behaviour, and configuration may change at any time, and breaking
+> changes should be expected before version `1.0.0`.
+
 A Language Server Protocol (LSP) implementation for
 [SvelTeX](https://sveltex.dev) — the Svelte preprocessor that lets a `.sveltex`
 file mix Markdown, Svelte, and embedded LaTeX / math / code.
