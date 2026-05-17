@@ -270,15 +270,38 @@ describe('computeFrontmatterCompletion', () => {
         ).toEqual([]);
     });
 
-    it('includes meta names among the key suggestions', () => {
-        // A metadata name is written directly as a key in the `meta`
-        // mapping form and the top-level form.
+    it('inside `meta`, suggests meta names but not top-level keys', () => {
         const source = ['---', 'meta:', '  desc', '---'].join('\n');
         const labels = computeFrontmatterCompletion(source, {
             line: 2,
             character: 6,
         }).items.map((i) => i.label);
         expect(labels).toContain('description');
+        expect(labels).toContain('viewport');
+        // `title` belongs at the top level, not inside `meta`.
+        expect(labels).not.toContain('title');
+        expect(labels).not.toContain('base');
+    });
+
+    it('inside `base`, suggests base keys but not top-level keys', () => {
+        const source = ['---', 'base:', '  t', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 2,
+            character: 3,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('target');
+        expect(labels).not.toContain('title');
+    });
+
+    it('at the top level, suggests structural keys and meta names', () => {
+        const source = ['---', 't', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 1,
+            character: 1,
+        }).items.map((i) => i.label);
         expect(labels).toContain('title');
+        expect(labels).toContain('meta');
+        // A metadata name is also valid written as a top-level key.
+        expect(labels).toContain('description');
     });
 });

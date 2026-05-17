@@ -239,6 +239,53 @@ const ALL_FRONTMATTER_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
     ...META_HTTP_EQUIV,
 };
 
+/**
+ * Selects named entries from a schema map, skipping any that are absent.
+ *
+ * @param source - The schema map to pick from.
+ * @param names - The entry names to keep.
+ */
+function subset(
+    source: Readonly<Record<string, FrontmatterEntryDoc>>,
+    names: readonly string[],
+): Record<string, FrontmatterEntryDoc> {
+    const out: Record<string, FrontmatterEntryDoc> = {};
+    for (const name of names) {
+        const doc = source[name];
+        if (doc) out[name] = doc;
+    }
+    return out;
+}
+
+/** Keys completion offers at the frontmatter top level. */
+const TOP_LEVEL_COMPLETIONS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    ...subset(FRONTMATTER_SCHEMA, [
+        'title',
+        'noscript',
+        'base',
+        'meta',
+        'link',
+        'imports',
+    ]),
+    // A metadata name may also be written directly as a top-level key.
+    ...META_NAMES,
+    ...META_HTTP_EQUIV,
+};
+
+/** Keys completion offers inside a `meta` block. */
+const META_COMPLETIONS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    ...META_NAMES,
+    ...META_HTTP_EQUIV,
+    // The object keys of the `meta: [{ name: … }]` array form.
+    ...subset(FRONTMATTER_SCHEMA, ['name', 'http-equiv', 'content']),
+};
+
+/** Keys completion offers inside a `base` block. */
+const BASE_COMPLETIONS = subset(FRONTMATTER_SCHEMA, ['target']);
+
+/** Keys completion offers inside a `link` item. */
+const LINK_COMPLETIONS = subset(FRONTMATTER_SCHEMA, ['rel']);
+
 /** A key or value token located on a frontmatter line. */
 interface Token {
     /** The bare token text. */
@@ -427,6 +474,52 @@ function completionContext(line: string, caret: number): CompletionContext {
 }
 
 /**
+ * Finds which block a caret line sits inside — `meta`, `base` or `link` — by
+ * walking up to the nearest enclosing key: a less-indented YAML/JSON key, or
+ * a TOML `[table]` header. `undefined` means the frontmatter top level.
+ *
+ * @param lines - The `.sveltex` document split into lines.
+ * @param lineIndex - The caret's line index.
+ */
+function frontmatterContext(
+    lines: readonly string[],
+    lineIndex: number,
+): string | undefined {
+    const indentOf = (s: string): number =>
+        (/^\s*/u.exec(s)?.[0] ?? '').length;
+    let minIndent = indentOf(lines[lineIndex] ?? '');
+    for (let i = lineIndex - 1; i >= 0; i -= 1) {
+        const raw = lines[i] ?? '';
+        const trimmed = raw.trim();
+        if (trimmed === '' || trimmed.startsWith('#')) continue;
+        // The frontmatter fence — the top of the block has been reached.
+        if (/^[-+]{3,}$/u.test(trimmed)) break;
+        // A TOML `[table]` / `[[table]]` header is the enclosing table.
+        const toml = /^\[+\s*([A-Za-z_][\w-]*)/u.exec(trimmed);
+        if (toml) {
+            const name = toml[1];
+            return name === 'meta' || name === 'base' || name === 'link'
+                ? name
+                : undefined;
+        }
+        // YAML / JSON: an ancestor is any line indented less than the caret.
+        const indent = indentOf(raw);
+        if (indent < minIndent) {
+            minIndent = indent;
+            const keyName = parseFrontmatterLine(raw).key?.name;
+            if (
+                keyName === 'meta' ||
+                keyName === 'base' ||
+                keyName === 'link'
+            ) {
+                return keyName;
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
  * Computes the completion list for a caret inside a `.sveltex` frontmatter
  * region: the frontmatter keys when a key is being typed, or the standard
  * `<meta>` `name` / `http-equiv` values when the caret is on the value of
@@ -443,14 +536,25 @@ export function computeFrontmatterCompletion(
     position: Position,
 ): CompletionList {
     const empty: CompletionList = { isIncomplete: false, items: [] };
-    const line = source.split(/\r\n?|\n/u)[position.line];
+    const lines = source.split(/\r\n?|\n/u);
+    const line = lines[position.line];
     if (line === undefined) return empty;
 
     const context = completionContext(line, position.character);
     let entries: Readonly<Record<string, FrontmatterEntryDoc>>;
     let kind: CompletionItemKind;
     if (context.kind === 'key') {
-        entries = ALL_FRONTMATTER_KEYS;
+        // Offer only the keys valid in the block the caret sits in — so e.g.
+        // `title` is not suggested inside a `meta` block.
+        const where = frontmatterContext(lines, position.line);
+        entries =
+            where === 'meta'
+                ? META_COMPLETIONS
+                : where === 'base'
+                  ? BASE_COMPLETIONS
+                  : where === 'link'
+                    ? LINK_COMPLETIONS
+                    : TOP_LEVEL_COMPLETIONS;
         kind = CompletionItemKind.Property;
     } else if (context.ofKey === 'name') {
         entries = META_NAMES;
