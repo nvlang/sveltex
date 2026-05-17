@@ -129,3 +129,21 @@ jobs:
         # upstream branch.
         if: steps.changesets.outputs.published == 'true'
         run: git push --follow-tags
+
+      - name: Publish the VS Code extension to the Marketplace
+        # The extension (`packages/vscode-sveltex`) is excluded from the npm
+        # publish above, so it needs its own publish step. `changeset tag`
+        # (run by `ci:publish`) created a `sveltex@<version>` tag at HEAD only
+        # if the extension's version was bumped this release cycle — when it
+        # was, publish that version to the VS Code Marketplace.
+        if: steps.changesets.outputs.published == 'true'
+        working-directory: packages/vscode-sveltex
+        run: |
+          if git tag --points-at HEAD | grep -q '^sveltex@'; then
+            echo 'Extension released this cycle — publishing to the Marketplace.'
+            pnpm dlx @vscode/vsce@3 publish --no-dependencies
+          else
+            echo 'Extension version unchanged — nothing to publish.'
+          fi
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
