@@ -6,6 +6,7 @@
   "engines": {
     "node": ">=16"
   },
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "clean": "pnpm --recursive clean",
     "build": "pnpm --recursive build",
