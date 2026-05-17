@@ -44,6 +44,13 @@
     <img alt="CodeCov coverage" src="https://img.shields.io/codecov/c/github/nvlang/sveltex?flag=sveltex&style=flat-square&logo=codecov&label=&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
 </picture>
 ](https://codecov.io/gh/nvlang/sveltex)
+[
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=a3acb7&labelColor=21262d&color=21262d">
+    <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
+    <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
+</picture>
+](https://scorecard.dev/viewer/?uri=github.com/nvlang/sveltex)
 
 </div>
 </div>
