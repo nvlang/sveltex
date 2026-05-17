@@ -27,6 +27,14 @@ permissions:
   packages: read
   statuses: write
 
+# pnpm 11 hard-errors on dependency build scripts that aren't allow-listed.
+# Some CI installs run outside the workspace — the e2e `_template`, and the
+# throwaway projects `@nvl/sv`'s test harness scaffolds — and so can't see the
+# root `pnpm-workspace.yaml` allow-list. Allow all build scripts in CI, where
+# the lockfile already pins every dependency.
+env:
+  pnpm_config_dangerously_allow_all_builds: 'true'
+
 jobs:
   test:
     name: Run Playwright Tests
