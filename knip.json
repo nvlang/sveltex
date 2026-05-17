@@ -1,5 +1,41 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/mod.ts"],
-  "project": ["src/**/*.ts", "tests/unit/**/*.ts", "/*.ts", "/*.js"]
+  "ignoreBinaries": ["generate-projects"],
+  "workspaces": {
+    ".": {
+      "ignoreDependencies": [
+        "tslib",
+        "husky",
+        "deno",
+        "@commitlint/config-conventional",
+        "@commitlint/types"
+      ]
+    },
+    "packages/sveltex": {
+      "ignoreDependencies": [
+        "tslib",
+        "@types/katex",
+        "@mathjax/mathjax-fira-font",
+        "@mathjax/mathjax-newcm-font",
+        "speech-rule-engine"
+      ]
+    },
+    "packages/sveltex-language-server": {
+      "ignoreDependencies": ["tslib"]
+    },
+    "packages/sveltex-math-language-server": {
+      "ignoreDependencies": ["tslib", "katex", "@mathjax/src"]
+    },
+    "packages/tree-sitter-sveltex": {
+      "ignoreDependencies": ["node-addon-api"]
+    },
+    "packages/vscode-sveltex": {
+      "entry": ["src/extension.ts"],
+      "ignoreDependencies": [
+        "@nvl/sveltex-language-server",
+        "@nvl/sveltex-math-language-server",
+        "svelte-language-server"
+      ]
+    }
+  }
 }
