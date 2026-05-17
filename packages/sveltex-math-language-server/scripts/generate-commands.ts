@@ -21,6 +21,15 @@
 //    default `input/tex` config loads — plus the ones its `autoload` extension
 //    pulls in on demand — and read the token keys back out.
 //
+// On top of the bare command set, each command is enriched with documentation
+// metadata: a usage signature, the providing package and a one-line
+// description, read from `scripts/data/<backend>-docs.json` (curated from each
+// engine's reference docs); and, for symbol commands, the Unicode glyph the
+// command renders as — taken from the engine's own symbol tables — plus that
+// glyph's Unicode standard name, looked up in the Unicode Character Database.
+// All of it is baked into the generated file; the published package keeps no
+// runtime dependency and never touches the network.
+//
 // The imports below are deliberately dynamic and routed through `string`-typed
 // specifier variables: that keeps the monorepo's root `tsc` from following into
 // `katex`/`@mathjax/src` internals when it sweeps `**/scripts`. `katex` and
@@ -29,18 +38,16 @@
 //
 // Run with: `pnpm --filter @nvl/sveltex-math-language-server generate`
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { format, resolveConfig } from 'prettier';
+
+/** Directory holding this script (`scripts/`). */
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 
 /** Output path of the generated module, relative to this script. */
-const OUTPUT = join(
-    dirname(fileURLToPath(import.meta.url)),
-    '..',
-    'src',
-    'data',
-    'commands.generated.ts',
-);
+const OUTPUT = join(SCRIPT_DIR, '..', 'src', 'data', 'commands.generated.ts');
 
 /**
  * The category a command falls into. Drives the LSP `CompletionItemKind` and
@@ -48,12 +55,22 @@ const OUTPUT = join(
  */
 type CommandCategory = 'function' | 'symbol' | 'macro' | 'environment';
 
-/** A single extracted TeX command. */
+/** A single extracted, enriched TeX command. */
 interface RawCommand {
     /** The command name, WITHOUT the leading backslash (e.g. `frac`). */
     name: string;
     /** The command's category. */
     category: CommandCategory;
+    /** A usage signature (`\sqrt[degree]{radicand}`); args-taking commands. */
+    signature?: string;
+    /** The Unicode glyph the command renders as, if it stands for one. */
+    unicode?: string;
+    /** The Unicode standard name of `unicode`, lower-cased. */
+    unicodeName?: string;
+    /** The backend package/extension (or KaTeX doc section) it belongs to. */
+    package?: string;
+    /** A one-line description of what the command does. */
+    description?: string;
 }
 
 /**
@@ -91,7 +108,8 @@ function bareName(key: string): string {
 /**
  * Extracts every command KaTeX supports from the `katex` package source.
  *
- * @returns The de-duplicated, sorted KaTeX command list.
+ * @returns The de-duplicated, sorted KaTeX command list (with each symbol's
+ * Unicode replacement glyph attached, where the source provides one).
  */
 async function extractKatex(): Promise<RawCommand[]> {
     // Routed through `string` variables so `tsc` does not resolve into these.
@@ -154,8 +172,32 @@ async function extractKatex(): Promise<RawCommand[]> {
     for (const key of Object.keys(symbols.text)) add(key, 'symbol', true);
     for (const key of Object.keys(macros)) add(key, 'macro', true);
 
+    // KaTeX records each symbol's Unicode replacement glyph in the `replace`
+    // field of its `symbols` entry; collect those so a symbol command can show
+    // the glyph it stands for. Only `\`-prefixed keys are user-typeable names.
+    const unicodeByName = new Map<string, string>();
+    for (const table of [symbols.math, symbols.text]) {
+        for (const [key, value] of Object.entries(table)) {
+            if (!key.startsWith('\\')) continue;
+            const name = bareName(key);
+            const replace = (value as { replace?: unknown }).replace;
+            if (
+                typeof replace === 'string' &&
+                replace.length > 0 &&
+                !unicodeByName.has(name)
+            ) {
+                unicodeByName.set(name, replace);
+            }
+        }
+    }
+
     return [...byName.entries()]
-        .map(([name, category]) => ({ name, category }))
+        .map(([name, category]): RawCommand => {
+            const unicode = unicodeByName.get(name);
+            return unicode
+                ? { name, category, unicode }
+                : { name, category };
+        })
         .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -217,9 +259,32 @@ interface MathjaxMap {
 }
 
 /**
+ * Reads the Unicode glyph off a MathJax symbol-map value.
+ *
+ * Symbol and delimiter maps store `Symbol` instances whose `char` property is
+ * the replacement glyph (`new Symbol('alpha', 'α', …)`). Anything else — a
+ * macro, a parser callback tuple — yields `undefined`.
+ *
+ * @param value - A value read from a captured MathJax token map.
+ */
+function mathjaxCharOf(value: unknown): string | undefined {
+    let char: unknown;
+    if (typeof value === 'string') {
+        char = value;
+    } else if (value && typeof value === 'object' && 'char' in value) {
+        char = value.char;
+    }
+    if (typeof char === 'string' && char.length > 0 && char.length <= 8) {
+        return char;
+    }
+    return undefined;
+}
+
+/**
  * Extracts every command the default MathJax TeX configuration supports.
  *
- * @returns The de-duplicated, sorted MathJax command list.
+ * @returns The de-duplicated, sorted MathJax command list (with each symbol's
+ * Unicode replacement glyph attached, where the source provides one).
  */
 async function extractMathjax(): Promise<RawCommand[]> {
     const handlerSpec = '@mathjax/src/mjs/input/tex/MapHandler.js';
@@ -242,6 +307,7 @@ async function extractMathjax(): Promise<RawCommand[]> {
     }
 
     const byName = new Map<string, CommandCategory>();
+    const unicodeByName = new Map<string, string>();
     const add = (key: string, category: CommandCategory): void => {
         const name = bareName(key);
         if (!isCommandKey(name)) return;
@@ -258,12 +324,136 @@ async function extractMathjax(): Promise<RawCommand[]> {
                 : kind === 'CommandMap' || kind === 'MacroMap'
                   ? 'macro'
                   : 'symbol';
-        for (const key of map.map.keys()) add(key, category);
+        for (const [key, value] of map.map.entries()) {
+            add(key, category);
+            // Symbol/delimiter maps carry the glyph each command renders as.
+            if (category === 'symbol') {
+                const name = bareName(key);
+                const char = mathjaxCharOf(value);
+                if (char && isCommandKey(name) && !unicodeByName.has(name)) {
+                    unicodeByName.set(name, char);
+                }
+            }
+        }
     }
 
     return [...byName.entries()]
-        .map(([name, category]) => ({ name, category }))
+        .map(([name, category]): RawCommand => {
+            const unicode = unicodeByName.get(name);
+            return unicode
+                ? { name, category, unicode }
+                : { name, category };
+        })
         .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ---------------------------------------------------------------------------
+// Documentation metadata
+// ---------------------------------------------------------------------------
+
+/** One entry of a `scripts/data/<backend>-docs.json` reference-metadata file. */
+interface CommandDoc {
+    /** Usage signature, e.g. `\sqrt[degree]{radicand}` (args-taking only). */
+    signature?: string;
+    /** The providing package/extension, or KaTeX support-table section. */
+    package?: string;
+    /** A one-line description of the command. */
+    description?: string;
+}
+
+/**
+ * Loads a backend's documentation-metadata file
+ * (`scripts/data/<backend>-docs.json`) — a map of bare command name to
+ * {@link CommandDoc}, curated from that engine's reference docs.
+ *
+ * Returns an empty map when the file is absent, so the generator still runs;
+ * the commands simply carry no documentation metadata.
+ *
+ * @param backend - `'katex'` or `'mathjax'`.
+ */
+function loadDocs(backend: 'katex' | 'mathjax'): Record<string, CommandDoc> {
+    const path = join(SCRIPT_DIR, 'data', `${backend}-docs.json`);
+    try {
+        return JSON.parse(readFileSync(path, 'utf8')) as Record<
+            string,
+            CommandDoc
+        >;
+    } catch {
+        process.stderr.write(
+            `  (no ${backend}-docs.json — skipping doc metadata for ${backend})\n`,
+        );
+        return {};
+    }
+}
+
+/**
+ * Fetches the Unicode Character Database's `UnicodeData.txt` and builds a
+ * code-point → standard-name map (names lower-cased).
+ *
+ * Best-effort: on any failure (offline, etc.) an empty map is returned and the
+ * generated commands simply carry no `unicodeName`. The names that ARE found
+ * are baked into the generated file, so the published package never fetches.
+ */
+async function fetchUnicodeNames(): Promise<Map<number, string>> {
+    const url = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
+    const names = new Map<number, string>();
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+        const text = await response.text();
+        for (const line of text.split('\n')) {
+            if (!line) continue;
+            const fields = line.split(';');
+            const codePoint = Number.parseInt(fields[0] ?? '', 16);
+            const name = fields[1] ?? '';
+            // Names in angle brackets (`<control>`, `<CJK Ideograph, First>`)
+            // are range/label placeholders, not real character names.
+            if (Number.isNaN(codePoint) || !name || name.startsWith('<')) {
+                continue;
+            }
+            names.set(codePoint, name.toLowerCase());
+        }
+    } catch (error) {
+        process.stderr.write(
+            `  (could not fetch Unicode names: ${String(error)})\n`,
+        );
+    }
+    return names;
+}
+
+/**
+ * Enriches a bare command list with documentation metadata and Unicode names.
+ *
+ * @param commands - The extracted commands (`name`, `category`, maybe
+ * `unicode`).
+ * @param unicodeNames - Code-point → name map from {@link fetchUnicodeNames}.
+ * @param docs - The backend's {@link CommandDoc} map from {@link loadDocs}.
+ * @returns The same commands with `unicodeName` / `signature` / `package` /
+ * `description` filled in where data was available.
+ */
+function enrich(
+    commands: RawCommand[],
+    unicodeNames: Map<number, string>,
+    docs: Record<string, CommandDoc>,
+): RawCommand[] {
+    return commands.map((command): RawCommand => {
+        const enriched: RawCommand = { ...command };
+        if (command.unicode) {
+            const codePoint = command.unicode.codePointAt(0);
+            const name =
+                codePoint === undefined
+                    ? undefined
+                    : unicodeNames.get(codePoint);
+            if (name) enriched.unicodeName = name;
+        }
+        const doc = docs[command.name];
+        if (doc) {
+            if (doc.signature) enriched.signature = doc.signature;
+            if (doc.package) enriched.package = doc.package;
+            if (doc.description) enriched.description = doc.description;
+        }
+        return enriched;
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -272,21 +462,43 @@ async function extractMathjax(): Promise<RawCommand[]> {
 
 /** Serialises a command list as a TypeScript array literal. */
 function serialiseList(commands: RawCommand[]): string {
+    const field = (key: string, value: string | undefined): string =>
+        value === undefined ? '' : `, ${key}: ${JSON.stringify(value)}`;
     return commands
-        .map((c) => `    { name: ${JSON.stringify(c.name)}, category: ${JSON.stringify(c.category)} },`)
+        .map(
+            (c) =>
+                `    { name: ${JSON.stringify(c.name)}` +
+                `, category: ${JSON.stringify(c.category)}` +
+                field('signature', c.signature) +
+                field('unicode', c.unicode) +
+                field('unicodeName', c.unicodeName) +
+                field('package', c.package) +
+                field('description', c.description) +
+                ' },',
+        )
         .join('\n');
 }
 
 /** Generates the `commands.generated.ts` module and writes it to disk. */
 async function main(): Promise<void> {
-    const katex = await extractKatex();
-    const mathjax = await extractMathjax();
+    const unicodeNames = await fetchUnicodeNames();
+    const katex = enrich(
+        await extractKatex(),
+        unicodeNames,
+        loadDocs('katex'),
+    );
+    const mathjax = enrich(
+        await extractMathjax(),
+        unicodeNames,
+        loadDocs('mathjax'),
+    );
 
     const header = [
         '// File description: GENERATED FILE — do not edit by hand.',
         '//',
         '// The per-backend TeX command lists below are extracted directly from the',
-        '// `katex` and `@mathjax/src` package sources by `scripts/generate-commands.ts`.',
+        '// `katex` and `@mathjax/src` package sources by `scripts/generate-commands.ts`,',
+        '// then enriched with documentation metadata and Unicode names.',
         '// Regenerate with: `pnpm --filter @nvl/sveltex-math-language-server generate`.',
         '',
         "import type { CommandCategory, MathCommand } from '../core/commands.js';",
@@ -313,7 +525,13 @@ async function main(): Promise<void> {
         '',
     ].join('\n');
 
-    writeFileSync(OUTPUT, header, 'utf8');
+    // Enriched entries are long; let Prettier wrap them with the repo's own
+    // config so the generated file is committable as-is — no manual reformat.
+    const formatted = await format(header, {
+        ...(await resolveConfig(OUTPUT)),
+        parser: 'typescript',
+    });
+    writeFileSync(OUTPUT, formatted, 'utf8');
     process.stdout.write(
         `Generated ${OUTPUT}\n` +
             `  KaTeX:   ${String(katex.length)} commands\n` +

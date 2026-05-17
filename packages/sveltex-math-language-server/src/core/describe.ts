@@ -1,13 +1,15 @@
-// File description: Human-readable descriptions for TeX commands, used in both
-// completion-item documentation and hover.
+// File description: Human-readable descriptions and hover text for TeX
+// commands, used in both completion-item documentation and hover.
 //
-// A description is built from two parts: a generic, category-driven sentence
-// (always available, so EVERY supported command gets *some* documentation) and,
-// for the commands users reach for most, a specific hand-written gloss. The
-// hand-written set is intentionally small — it covers the high-frequency
-// commands where a generic sentence is unhelpful; everything else falls back to
-// the category sentence. Nothing here claims a command exists: the command set
-// itself is sourced from the backend in `data/commands.generated.ts`.
+// A command's one-line description is the first available of three sources:
+// the documentation metadata merged into `data/commands.generated.ts` from
+// each engine's reference docs (the richest, but not exhaustive); a small
+// curated map of hand-written glosses for high-frequency commands; and finally
+// a generic, category-driven sentence, so EVERY supported command gets *some*
+// description. Hover additionally shows the command's signature, the Unicode
+// glyph it stands for (when any), and a backend/package/category footer.
+// Nothing here claims a command exists: the command set itself is sourced from
+// the backend in `data/commands.generated.ts`.
 
 import type {
     CommandCategory,
@@ -101,39 +103,66 @@ const BACKEND_LABEL: Readonly<Record<MathLspBackend, string>> = {
 };
 
 /**
- * Returns the one-line description of a command (curated gloss if available,
- * otherwise the category sentence).
+ * Returns the one-line description of a command: the documentation-sourced
+ * description when the generator merged one in, else a curated gloss, else the
+ * generic category sentence (which is always available).
  *
  * @param command - The command to describe.
  */
 export function describeCommand(command: MathCommand): string {
-    return GLOSSES[command.name] ?? CATEGORY_SENTENCE[command.category];
+    return (
+        command.description ??
+        GLOSSES[command.name] ??
+        CATEGORY_SENTENCE[command.category]
+    );
 }
 
 /**
  * Builds the Markdown body shown on hover for a command.
  *
+ * The body is, in order: a fenced `latex` block with the command's signature
+ * (its arguments spelled out when it takes any); for a command that stands for
+ * a Unicode glyph, that glyph and its Unicode standard name; the one-line
+ * description; and a dimmed footer naming the backend, the providing package
+ * (when known) and the category.
+ *
  * @param command - The command being hovered.
- * @param backend - The active backend, named in the text so the user knows
+ * @param backend - The active backend, named in the footer so the user knows
  * which engine's support they are seeing.
- * @returns A Markdown string: a fenced `\command` line, the description, and a
- * note of the backend and category.
+ * @returns A Markdown string.
  */
 export function hoverMarkdown(
     command: MathCommand,
     backend: MathLspBackend,
 ): string {
+    const lines: string[] = [];
+
+    // The signature comes first: how the command is actually used. A merged-in
+    // `signature` spells out the arguments; otherwise the bare `\name` (or a
+    // `\begin…\end` pair for an environment) stands in.
     const usage =
-        command.category === 'environment'
+        command.signature ??
+        (command.category === 'environment'
             ? `\\begin{${command.name}} … \\end{${command.name}}`
-            : `\\${command.name}`;
-    return [
-        '```latex',
-        usage,
-        '```',
-        '',
-        describeCommand(command),
-        '',
-        `_${BACKEND_LABEL[backend]} ${command.category}._`,
-    ].join('\n');
+            : `\\${command.name}`);
+    lines.push('```latex', usage, '```', '');
+
+    // For a command that denotes a Unicode glyph, show the glyph and its
+    // Unicode standard name — e.g. `∮ (contour integral)`.
+    if (command.unicode) {
+        const named = command.unicodeName
+            ? ` (${command.unicodeName})`
+            : '';
+        lines.push(`**${command.unicode}**${named}`, '');
+    }
+
+    lines.push(describeCommand(command), '');
+
+    // A dimmed footer: backend · package (when known) · category.
+    const footer = [BACKEND_LABEL[backend], command.package, command.category]
+        .filter((part): part is string => Boolean(part))
+        .join(' · ');
+    lines.push(`_${footer}_`);
+
+    return lines.join('\n');
 }

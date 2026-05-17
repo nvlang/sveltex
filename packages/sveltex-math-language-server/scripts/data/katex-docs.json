@@ -1,0 +1,3951 @@
+{
+  " ": {
+    "package": "Layout",
+    "description": "Inserts an interword horizontal space (control space)."
+  },
+  "!": {
+    "package": "Layout",
+    "description": "Inserts a negative thin horizontal space."
+  },
+  "\"": {
+    "signature": "\\\"{character}",
+    "package": "Accents",
+    "description": "Places a diaeresis text accent over the character."
+  },
+  "#": {
+    "package": "Symbols and Punctuation",
+    "description": "A literal number (hash) sign."
+  },
+  "$": {
+    "package": "Symbols and Punctuation",
+    "description": "A literal dollar sign."
+  },
+  "%": {
+    "package": "Symbols and Punctuation",
+    "description": "A literal percent sign."
+  },
+  "&": {
+    "package": "Symbols and Punctuation",
+    "description": "A literal ampersand."
+  },
+  "'": {
+    "signature": "\\'{character}",
+    "package": "Accents",
+    "description": "Places a prime accent above the character."
+  },
+  ",": {
+    "package": "Layout",
+    "description": "Inserts a thin horizontal space."
+  },
+  ".": {
+    "signature": "\\.{character}",
+    "package": "Accents",
+    "description": "Places a dot text accent over the character."
+  },
+  ":": {
+    "package": "Layout",
+    "description": "Inserts a medium horizontal space."
+  },
+  ";": {
+    "package": "Layout",
+    "description": "Inserts a thick horizontal space."
+  },
+  "=": {
+    "signature": "\\={character}",
+    "package": "Accents",
+    "description": "Places a macron text accent over the character."
+  },
+  ">": {
+    "package": "Layout",
+    "description": "Inserts a medium horizontal space."
+  },
+  "Alpha": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Alpha."
+  },
+  "And": {
+    "package": "Operators",
+    "description": "The ampersand symbol as a binary operator."
+  },
+  "Bbb": {
+    "signature": "\\Bbb{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in blackboard-bold font."
+  },
+  "Bbbk": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold lowercase letter k."
+  },
+  "Beta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Beta."
+  },
+  "Big": {
+    "signature": "\\Big delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following delimiter larger than \\big."
+  },
+  "Bigg": {
+    "signature": "\\Bigg delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following delimiter to the largest fixed size."
+  },
+  "Biggl": {
+    "signature": "\\Biggl delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following opening delimiter to the largest fixed size."
+  },
+  "Biggm": {
+    "signature": "\\Biggm delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following relational delimiter to the largest fixed size."
+  },
+  "Biggr": {
+    "signature": "\\Biggr delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following closing delimiter to the largest fixed size."
+  },
+  "Bigl": {
+    "signature": "\\Bigl delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following opening delimiter larger than \\bigl."
+  },
+  "Bigm": {
+    "signature": "\\Bigm delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following relational delimiter larger than \\bigm."
+  },
+  "Bigr": {
+    "signature": "\\Bigr delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following closing delimiter larger than \\bigr."
+  },
+  "Bmatrix": {
+    "signature": "\\begin{Bmatrix} rows \\end{Bmatrix}",
+    "package": "Environments",
+    "description": "A matrix enclosed in curly braces."
+  },
+  "Bmatrix*": {
+    "signature": "\\begin{Bmatrix*}[align] rows \\end{Bmatrix*}",
+    "package": "Environments",
+    "description": "A brace-enclosed matrix with a column-alignment option."
+  },
+  "Box": {
+    "package": "Symbols and Punctuation",
+    "description": "An empty square symbol."
+  },
+  "Bra": {
+    "signature": "\\Bra{state}",
+    "package": "Special Notation",
+    "description": "Typesets a bra vector with auto-sized delimiters."
+  },
+  "Braket": {
+    "signature": "\\Braket{state}",
+    "package": "Special Notation",
+    "description": "Typesets a bra-ket inner product with auto-sized delimiters."
+  },
+  "Bumpeq": {
+    "package": "Relations",
+    "description": "The double-bump-over-equals relation."
+  },
+  "CD": {
+    "signature": "\\begin{CD} rows \\end{CD}",
+    "package": "Environments",
+    "description": "A commutative diagram environment."
+  },
+  "Cap": {
+    "package": "Operators",
+    "description": "The double-intersection operator."
+  },
+  "Chi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Chi."
+  },
+  "Colonapprox": {
+    "package": "Relations",
+    "description": "A double colon followed by an approximately-equal sign."
+  },
+  "Coloneq": {
+    "package": "Relations",
+    "description": "A double colon followed by an equals sign."
+  },
+  "Coloneqq": {
+    "package": "Relations",
+    "description": "A double colon followed by a doubled equals sign."
+  },
+  "Colonsim": {
+    "package": "Relations",
+    "description": "A double colon followed by a similar sign."
+  },
+  "Complex": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of complex numbers."
+  },
+  "Cup": {
+    "package": "Operators",
+    "description": "The double-union operator."
+  },
+  "Dagger": {
+    "package": "Symbols and Punctuation",
+    "description": "A double-dagger symbol."
+  },
+  "Darr": {
+    "package": "Relations",
+    "description": "A downward arrow."
+  },
+  "Delta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Delta."
+  },
+  "Diamond": {
+    "package": "Symbols and Punctuation",
+    "description": "A large diamond symbol."
+  },
+  "Doteq": {
+    "package": "Relations",
+    "description": "The dot-over-and-under equals relation."
+  },
+  "Downarrow": {
+    "package": "Delimiters",
+    "description": "Downward double arrow, usable as a stretchy delimiter."
+  },
+  "Epsilon": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Epsilon."
+  },
+  "Eqcolon": {
+    "package": "Relations",
+    "description": "An equals sign followed by a double colon."
+  },
+  "Eqqcolon": {
+    "package": "Relations",
+    "description": "A doubled equals sign followed by a double colon."
+  },
+  "Eta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Eta."
+  },
+  "Finv": {
+    "package": "Letters and Unicode",
+    "description": "The reflected (turned) capital F symbol."
+  },
+  "Game": {
+    "package": "Letters and Unicode",
+    "description": "The reflected (turned) capital G symbol."
+  },
+  "Gamma": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Gamma."
+  },
+  "H": {
+    "signature": "\\H{character}",
+    "package": "Accents",
+    "description": "Places a double-acute (Hungarian umlaut) text accent over the character."
+  },
+  "Harr": {
+    "package": "Relations",
+    "description": "A left-right arrow."
+  },
+  "Huge": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to the largest font size."
+  },
+  "Im": {
+    "package": "Letters and Unicode",
+    "description": "The imaginary-part symbol."
+  },
+  "Iota": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Iota."
+  },
+  "Join": {
+    "package": "Relations",
+    "description": "The join (bowtie) relation."
+  },
+  "KaTeX": {
+    "package": "Symbols and Punctuation",
+    "description": "The KaTeX logo."
+  },
+  "Kappa": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Kappa."
+  },
+  "Ket": {
+    "signature": "\\Ket{state}",
+    "package": "Special Notation",
+    "description": "Typesets a ket vector with auto-sized delimiters."
+  },
+  "LARGE": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to an extra-large font size."
+  },
+  "LaTeX": {
+    "package": "Symbols and Punctuation",
+    "description": "The LaTeX logo."
+  },
+  "Lambda": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Lambda."
+  },
+  "Large": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to a larger font size."
+  },
+  "Larr": {
+    "package": "Relations",
+    "description": "A leftward arrow."
+  },
+  "Leftarrow": {
+    "package": "Relations",
+    "description": "A leftward double arrow."
+  },
+  "Leftrightarrow": {
+    "package": "Relations",
+    "description": "A left-right double arrow."
+  },
+  "Lleftarrow": {
+    "package": "Relations",
+    "description": "A leftward triple arrow."
+  },
+  "Longleftarrow": {
+    "package": "Relations",
+    "description": "A long leftward double arrow."
+  },
+  "Longleftrightarrow": {
+    "package": "Relations",
+    "description": "A long left-right double arrow."
+  },
+  "Longrightarrow": {
+    "package": "Relations",
+    "description": "A long rightward double arrow."
+  },
+  "Lrarr": {
+    "package": "Relations",
+    "description": "A left-right arrow."
+  },
+  "Lsh": {
+    "package": "Relations",
+    "description": "An upward-then-left shift arrow."
+  },
+  "Mu": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Mu."
+  },
+  "N": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of natural numbers."
+  },
+  "Nu": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Nu."
+  },
+  "Omega": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Omega."
+  },
+  "Omicron": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Omicron."
+  },
+  "Overrightarrow": {
+    "signature": "\\Overrightarrow{content}",
+    "package": "Accents",
+    "description": "Draws a rightward double arrow above the content."
+  },
+  "P": {
+    "package": "Symbols and Punctuation",
+    "description": "A pilcrow (paragraph) symbol."
+  },
+  "Phi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Phi."
+  },
+  "Pi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Pi."
+  },
+  "Pr": {
+    "package": "Operators",
+    "description": "The probability operator."
+  },
+  "Psi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Psi."
+  },
+  "R": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of real numbers."
+  },
+  "Rarr": {
+    "package": "Relations",
+    "description": "A rightward arrow."
+  },
+  "Re": {
+    "package": "Letters and Unicode",
+    "description": "The real-part symbol."
+  },
+  "Reals": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of real numbers."
+  },
+  "Rho": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Rho."
+  },
+  "Rightarrow": {
+    "package": "Relations",
+    "description": "A rightward double arrow."
+  },
+  "Rrightarrow": {
+    "package": "Relations",
+    "description": "A rightward triple arrow."
+  },
+  "Rsh": {
+    "package": "Relations",
+    "description": "An upward-then-right shift arrow."
+  },
+  "S": {
+    "package": "Symbols and Punctuation",
+    "description": "A section symbol."
+  },
+  "Set": {
+    "signature": "\\Set{expression}",
+    "package": "Logic and Set Theory",
+    "description": "Typesets a set in builder notation with auto-sized braces."
+  },
+  "Sigma": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Sigma."
+  },
+  "Subset": {
+    "package": "Relations",
+    "description": "The double-subset relation."
+  },
+  "Supset": {
+    "package": "Relations",
+    "description": "The double-superset relation."
+  },
+  "Tau": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Tau."
+  },
+  "TeX": {
+    "package": "Symbols and Punctuation",
+    "description": "The TeX logo."
+  },
+  "TextOrMath": {
+    "signature": "\\TextOrMath{textmode}{mathmode}",
+    "package": "Macros",
+    "description": "Selects one body in text mode and another in math mode."
+  },
+  "Theta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Theta."
+  },
+  "Uarr": {
+    "package": "Relations",
+    "description": "An upward arrow."
+  },
+  "Uparrow": {
+    "package": "Delimiters",
+    "description": "Upward double arrow, usable as a stretchy delimiter."
+  },
+  "Updownarrow": {
+    "package": "Delimiters",
+    "description": "Up-and-down double arrow, usable as a stretchy delimiter."
+  },
+  "Upsilon": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Upsilon."
+  },
+  "Vdash": {
+    "package": "Relations",
+    "description": "The forces relation with a doubled vertical bar."
+  },
+  "Vert": {
+    "package": "Delimiters",
+    "description": "Double vertical bar delimiter."
+  },
+  "Vmatrix": {
+    "signature": "\\begin{Vmatrix} rows \\end{Vmatrix}",
+    "package": "Environments",
+    "description": "A matrix enclosed in double vertical bars."
+  },
+  "Vmatrix*": {
+    "signature": "\\begin{Vmatrix*}[align] rows \\end{Vmatrix*}",
+    "package": "Environments",
+    "description": "A double-vertical-bar matrix with a column-alignment option."
+  },
+  "Vvdash": {
+    "package": "Relations",
+    "description": "The forces relation with a tripled vertical bar."
+  },
+  "Xi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Xi."
+  },
+  "Z": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of integers."
+  },
+  "Zeta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Zeta."
+  },
+  "^": {
+    "signature": "\\^{character}",
+    "package": "Accents",
+    "description": "Places a circumflex text accent over the character."
+  },
+  "_": {
+    "package": "Symbols and Punctuation",
+    "description": "A literal underscore."
+  },
+  "`": {
+    "signature": "\\`{character}",
+    "package": "Accents",
+    "description": "Places a grave text accent over the character."
+  },
+  "acute": {
+    "signature": "\\acute{character}",
+    "package": "Accents",
+    "description": "Places an acute accent over the character."
+  },
+  "alef": {
+    "package": "Letters and Unicode",
+    "description": "The aleph cardinal-number symbol."
+  },
+  "alefsym": {
+    "package": "Letters and Unicode",
+    "description": "The aleph cardinal-number symbol."
+  },
+  "aleph": {
+    "package": "Letters and Unicode",
+    "description": "The aleph cardinal-number symbol."
+  },
+  "align": {
+    "signature": "\\begin{align} rows \\end{align}",
+    "package": "Environments",
+    "description": "Aligns multiple equations at marked alignment points, with numbering."
+  },
+  "align*": {
+    "signature": "\\begin{align*} rows \\end{align*}",
+    "package": "Environments",
+    "description": "Aligns multiple equations at marked alignment points, without numbering."
+  },
+  "alignat": {
+    "signature": "\\begin{alignat}{cols} rows \\end{alignat}",
+    "package": "Environments",
+    "description": "Aligns equations at several alignment points with controlled spacing."
+  },
+  "alignat*": {
+    "signature": "\\begin{alignat*}{cols} rows \\end{alignat*}",
+    "package": "Environments",
+    "description": "An alignat environment without equation numbering."
+  },
+  "aligned": {
+    "signature": "\\begin{aligned} rows \\end{aligned}",
+    "package": "Environments",
+    "description": "An alignment block usable inside other math, without numbering."
+  },
+  "alignedat": {
+    "signature": "\\begin{alignedat}{cols} rows \\end{alignedat}",
+    "package": "Environments",
+    "description": "An alignat-style alignment block usable inside other math."
+  },
+  "allowbreak": {
+    "package": "Layout",
+    "description": "Permits a line break at this point."
+  },
+  "alpha": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter alpha."
+  },
+  "amalg": {
+    "package": "Operators",
+    "description": "The amalgamation (coproduct) operator."
+  },
+  "angle": {
+    "package": "Symbols and Punctuation",
+    "description": "An angle symbol."
+  },
+  "approx": {
+    "package": "Relations",
+    "description": "The approximately-equal relation."
+  },
+  "approxcolon": {
+    "package": "Relations",
+    "description": "An approximately-equal sign followed by a colon."
+  },
+  "approxcoloncolon": {
+    "package": "Relations",
+    "description": "An approximately-equal sign followed by a double colon."
+  },
+  "approxeq": {
+    "package": "Relations",
+    "description": "The approximately-equal-or-equal relation."
+  },
+  "arccos": {
+    "package": "Operators",
+    "description": "The inverse-cosine (arccosine) function operator."
+  },
+  "arcctg": {
+    "package": "Operators",
+    "description": "The inverse-cotangent function operator."
+  },
+  "arcsin": {
+    "package": "Operators",
+    "description": "The inverse-sine (arcsine) function operator."
+  },
+  "arctan": {
+    "package": "Operators",
+    "description": "The inverse-tangent (arctangent) function operator."
+  },
+  "arctg": {
+    "package": "Operators",
+    "description": "The arctangent function operator."
+  },
+  "arg": {
+    "package": "Operators",
+    "description": "The argument operator."
+  },
+  "argmax": {
+    "package": "Operators",
+    "description": "The arg-max operator."
+  },
+  "argmin": {
+    "package": "Operators",
+    "description": "The arg-min operator."
+  },
+  "array": {
+    "signature": "\\begin{array}{cols} rows \\end{array}",
+    "package": "Environments",
+    "description": "A general array with an explicit column specification."
+  },
+  "ast": {
+    "package": "Operators",
+    "description": "An asterisk binary operator."
+  },
+  "asymp": {
+    "package": "Relations",
+    "description": "The asymptotically-equal relation."
+  },
+  "backepsilon": {
+    "package": "Relations",
+    "description": "The reversed small epsilon (such-that) relation."
+  },
+  "backprime": {
+    "package": "Symbols and Punctuation",
+    "description": "A reversed prime symbol."
+  },
+  "backsim": {
+    "package": "Relations",
+    "description": "The reversed similar-to relation."
+  },
+  "backsimeq": {
+    "package": "Relations",
+    "description": "The reversed similar-or-equal relation."
+  },
+  "backslash": {
+    "package": "Delimiters",
+    "description": "Backslash delimiter."
+  },
+  "bar": {
+    "signature": "\\bar{character}",
+    "package": "Accents",
+    "description": "Places a bar (macron) accent over the character."
+  },
+  "barwedge": {
+    "package": "Operators",
+    "description": "The barred-wedge (nand) operator."
+  },
+  "bcancel": {
+    "signature": "\\bcancel{content}",
+    "package": "Layout",
+    "description": "Strikes the content through with a backward diagonal line."
+  },
+  "because": {
+    "package": "Logic and Set Theory",
+    "description": "The because symbol (three dots in an inverted triangle)."
+  },
+  "beta": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter beta."
+  },
+  "beth": {
+    "package": "Letters and Unicode",
+    "description": "The beth cardinal-number symbol."
+  },
+  "between": {
+    "package": "Relations",
+    "description": "The between relation."
+  },
+  "bf": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following characters to bold font."
+  },
+  "big": {
+    "signature": "\\big delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following delimiter slightly larger than normal."
+  },
+  "bigcap": {
+    "package": "Operators",
+    "description": "The big intersection operator."
+  },
+  "bigcirc": {
+    "package": "Operators",
+    "description": "A large circle binary operator."
+  },
+  "bigcup": {
+    "package": "Operators",
+    "description": "The big union operator."
+  },
+  "bigg": {
+    "signature": "\\bigg delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following delimiter larger than \\Big."
+  },
+  "biggl": {
+    "signature": "\\biggl delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following opening delimiter larger than \\Bigl."
+  },
+  "biggm": {
+    "signature": "\\biggm delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following relational delimiter larger than \\Bigm."
+  },
+  "biggr": {
+    "signature": "\\biggr delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following closing delimiter larger than \\Bigr."
+  },
+  "bigl": {
+    "signature": "\\bigl delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following opening delimiter slightly larger than normal."
+  },
+  "bigm": {
+    "signature": "\\bigm delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following relational delimiter slightly larger than normal."
+  },
+  "bigodot": {
+    "package": "Operators",
+    "description": "The big circled-dot operator."
+  },
+  "bigoplus": {
+    "package": "Operators",
+    "description": "The big direct-sum operator."
+  },
+  "bigotimes": {
+    "package": "Operators",
+    "description": "The big tensor-product operator."
+  },
+  "bigr": {
+    "signature": "\\bigr delimiter",
+    "package": "Delimiters",
+    "description": "Sizes the following closing delimiter slightly larger than normal."
+  },
+  "bigsqcup": {
+    "package": "Operators",
+    "description": "The big square-union operator."
+  },
+  "bigstar": {
+    "package": "Symbols and Punctuation",
+    "description": "A large filled star symbol."
+  },
+  "bigtriangledown": {
+    "package": "Symbols and Punctuation",
+    "description": "A large downward-pointing triangle symbol."
+  },
+  "bigtriangleup": {
+    "package": "Symbols and Punctuation",
+    "description": "A large upward-pointing triangle symbol."
+  },
+  "biguplus": {
+    "package": "Operators",
+    "description": "The big multiset-union operator."
+  },
+  "bigvee": {
+    "package": "Operators",
+    "description": "The big logical-or (join) operator."
+  },
+  "bigwedge": {
+    "package": "Operators",
+    "description": "The big logical-and (meet) operator."
+  },
+  "binom": {
+    "signature": "\\binom{n}{k}",
+    "package": "Operators",
+    "description": "Typesets a binomial coefficient."
+  },
+  "blacklozenge": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled lozenge symbol."
+  },
+  "blacksquare": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled square symbol."
+  },
+  "blacktriangle": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled upward-pointing triangle symbol."
+  },
+  "blacktriangledown": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled downward-pointing triangle symbol."
+  },
+  "blacktriangleleft": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled left-pointing triangle symbol."
+  },
+  "blacktriangleright": {
+    "package": "Symbols and Punctuation",
+    "description": "A filled right-pointing triangle symbol."
+  },
+  "bm": {
+    "signature": "\\bm{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument as bold symbols."
+  },
+  "bmatrix": {
+    "signature": "\\begin{bmatrix} rows \\end{bmatrix}",
+    "package": "Environments",
+    "description": "A matrix enclosed in square brackets."
+  },
+  "bmatrix*": {
+    "signature": "\\begin{bmatrix*}[align] rows \\end{bmatrix*}",
+    "package": "Environments",
+    "description": "A bracketed matrix with a column-alignment option."
+  },
+  "bmod": {
+    "package": "Operators",
+    "description": "The binary modulo operator."
+  },
+  "bold": {
+    "signature": "\\bold{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in bold font."
+  },
+  "boldsymbol": {
+    "signature": "\\boldsymbol{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument as bold symbols."
+  },
+  "bot": {
+    "package": "Symbols and Punctuation",
+    "description": "The bottom (logical falsity) symbol."
+  },
+  "bowtie": {
+    "package": "Relations",
+    "description": "The bowtie relation."
+  },
+  "boxdot": {
+    "package": "Operators",
+    "description": "A dot inside a square binary operator."
+  },
+  "boxed": {
+    "signature": "\\boxed{content}",
+    "package": "Layout",
+    "description": "Draws a box around the content."
+  },
+  "boxminus": {
+    "package": "Operators",
+    "description": "A minus inside a square binary operator."
+  },
+  "boxplus": {
+    "package": "Operators",
+    "description": "A plus inside a square binary operator."
+  },
+  "boxtimes": {
+    "package": "Operators",
+    "description": "A times inside a square binary operator."
+  },
+  "bra": {
+    "signature": "\\bra{state}",
+    "package": "Special Notation",
+    "description": "Typesets a quantum-mechanics bra vector."
+  },
+  "braket": {
+    "signature": "\\braket{state}",
+    "package": "Special Notation",
+    "description": "Typesets a quantum-mechanics bra-ket inner product."
+  },
+  "breve": {
+    "signature": "\\breve{character}",
+    "package": "Accents",
+    "description": "Places a breve accent over the character."
+  },
+  "bullet": {
+    "package": "Operators",
+    "description": "A filled bullet binary operator."
+  },
+  "bumpeq": {
+    "package": "Relations",
+    "description": "The bump-over-equals relation."
+  },
+  "cal": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its following characters in calligraphic font."
+  },
+  "cancel": {
+    "signature": "\\cancel{content}",
+    "package": "Layout",
+    "description": "Strikes the content through with a diagonal line."
+  },
+  "cap": {
+    "package": "Operators",
+    "description": "The set-intersection operator."
+  },
+  "cases": {
+    "signature": "\\begin{cases} rows \\end{cases}",
+    "package": "Environments",
+    "description": "A brace-delimited list of cases aligned in two columns."
+  },
+  "cdot": {
+    "package": "Operators",
+    "description": "A centred multiplication dot."
+  },
+  "cdotp": {
+    "package": "Operators",
+    "description": "A centred dot with punctuation spacing."
+  },
+  "cdots": {
+    "package": "Symbols and Punctuation",
+    "description": "A horizontally centred ellipsis."
+  },
+  "centerdot": {
+    "package": "Operators",
+    "description": "A bold centred dot binary operator."
+  },
+  "cfrac": {
+    "signature": "\\cfrac{numerator}{denominator}",
+    "package": "Operators",
+    "description": "Typesets a continued fraction."
+  },
+  "ch": {
+    "package": "Operators",
+    "description": "The hyperbolic-cosine function operator."
+  },
+  "char": {
+    "signature": "\\char\"hexcode",
+    "package": "Letters and Unicode",
+    "description": "Inserts a character by its numeric (typically hexadecimal) code point."
+  },
+  "check": {
+    "signature": "\\check{character}",
+    "package": "Accents",
+    "description": "Places a caron (hacek) accent over the character."
+  },
+  "checkmark": {
+    "package": "Symbols and Punctuation",
+    "description": "A check-mark symbol."
+  },
+  "chi": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter chi."
+  },
+  "circ": {
+    "package": "Operators",
+    "description": "A small ring (composition) operator."
+  },
+  "circeq": {
+    "package": "Relations",
+    "description": "The ring-over-equals relation."
+  },
+  "circlearrowleft": {
+    "package": "Relations",
+    "description": "A counterclockwise circular arrow."
+  },
+  "circlearrowright": {
+    "package": "Relations",
+    "description": "A clockwise circular arrow."
+  },
+  "circledR": {
+    "package": "Symbols and Punctuation",
+    "description": "A circled capital R (registered-trademark) symbol."
+  },
+  "circledS": {
+    "package": "Symbols and Punctuation",
+    "description": "A circled capital S symbol."
+  },
+  "circledast": {
+    "package": "Operators",
+    "description": "An asterisk inside a circle operator."
+  },
+  "circledcirc": {
+    "package": "Operators",
+    "description": "A small circle inside a circle operator."
+  },
+  "circleddash": {
+    "package": "Operators",
+    "description": "A dash inside a circle operator."
+  },
+  "clap": {
+    "signature": "\\clap{content}",
+    "package": "Layout",
+    "description": "Typesets the content with zero width, centred at the insertion point."
+  },
+  "cline": {
+    "package": "Environments",
+    "description": "Draws a partial horizontal line across selected array columns."
+  },
+  "clubs": {
+    "package": "Symbols and Punctuation",
+    "description": "A club card-suit symbol."
+  },
+  "clubsuit": {
+    "package": "Symbols and Punctuation",
+    "description": "A club card-suit symbol."
+  },
+  "cnums": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of complex numbers."
+  },
+  "colon": {
+    "package": "Symbols and Punctuation",
+    "description": "A colon with relation spacing."
+  },
+  "colonapprox": {
+    "package": "Relations",
+    "description": "A colon followed by an approximately-equal sign."
+  },
+  "coloncolon": {
+    "package": "Relations",
+    "description": "A double colon relation."
+  },
+  "coloncolonapprox": {
+    "package": "Relations",
+    "description": "A double colon followed by an approximately-equal sign."
+  },
+  "coloncolonequals": {
+    "package": "Relations",
+    "description": "A double colon followed by an equals sign."
+  },
+  "coloncolonminus": {
+    "package": "Relations",
+    "description": "A double colon followed by a minus sign."
+  },
+  "coloncolonsim": {
+    "package": "Relations",
+    "description": "A double colon followed by a similar sign."
+  },
+  "coloneq": {
+    "package": "Relations",
+    "description": "A colon followed by an equals sign."
+  },
+  "coloneqq": {
+    "package": "Relations",
+    "description": "A colon followed by a doubled equals sign."
+  },
+  "colonequals": {
+    "package": "Relations",
+    "description": "A colon followed by an equals sign."
+  },
+  "colonminus": {
+    "package": "Relations",
+    "description": "A colon followed by a minus sign."
+  },
+  "colonsim": {
+    "package": "Relations",
+    "description": "A colon followed by a similar sign."
+  },
+  "color": {
+    "signature": "\\color{color} content",
+    "package": "Style, Color, Size, and Font",
+    "description": "Sets the colour of all following content in the current group."
+  },
+  "colorbox": {
+    "signature": "\\colorbox{color}{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Draws a coloured background box behind the content."
+  },
+  "complement": {
+    "package": "Logic and Set Theory",
+    "description": "The set-complement symbol."
+  },
+  "cong": {
+    "package": "Relations",
+    "description": "The congruence relation."
+  },
+  "coprod": {
+    "package": "Operators",
+    "description": "The coproduct big operator."
+  },
+  "copyright": {
+    "package": "Symbols and Punctuation",
+    "description": "A copyright symbol."
+  },
+  "cos": {
+    "package": "Operators",
+    "description": "The cosine trigonometric function operator."
+  },
+  "cosec": {
+    "package": "Operators",
+    "description": "The cosecant trigonometric function operator."
+  },
+  "cosh": {
+    "package": "Operators",
+    "description": "The hyperbolic-cosine function operator."
+  },
+  "cot": {
+    "package": "Operators",
+    "description": "The cotangent trigonometric function operator."
+  },
+  "cotg": {
+    "package": "Operators",
+    "description": "The cotangent function operator."
+  },
+  "coth": {
+    "package": "Operators",
+    "description": "The hyperbolic-cotangent function operator."
+  },
+  "cr": {
+    "package": "Environments",
+    "description": "Ends the current row in an array or matrix environment."
+  },
+  "csc": {
+    "package": "Operators",
+    "description": "The cosecant trigonometric function operator."
+  },
+  "ctg": {
+    "package": "Operators",
+    "description": "The cotangent function operator."
+  },
+  "cth": {
+    "package": "Operators",
+    "description": "The hyperbolic-cotangent function operator."
+  },
+  "cup": {
+    "package": "Operators",
+    "description": "The set-union operator."
+  },
+  "curlyeqprec": {
+    "package": "Relations",
+    "description": "The curly-equals-or-precedes relation."
+  },
+  "curlyeqsucc": {
+    "package": "Relations",
+    "description": "The curly-equals-or-succeeds relation."
+  },
+  "curlyvee": {
+    "package": "Operators",
+    "description": "A curly logical-or operator."
+  },
+  "curlywedge": {
+    "package": "Operators",
+    "description": "A curly logical-and operator."
+  },
+  "curvearrowleft": {
+    "package": "Relations",
+    "description": "A leftward curving arrow."
+  },
+  "curvearrowright": {
+    "package": "Relations",
+    "description": "A rightward curving arrow."
+  },
+  "dArr": {
+    "package": "Relations",
+    "description": "A short downward double arrow."
+  },
+  "dag": {
+    "package": "Symbols and Punctuation",
+    "description": "A dagger symbol."
+  },
+  "dagger": {
+    "package": "Symbols and Punctuation",
+    "description": "A dagger symbol."
+  },
+  "daleth": {
+    "package": "Letters and Unicode",
+    "description": "The daleth cardinal-number symbol."
+  },
+  "darr": {
+    "package": "Relations",
+    "description": "A short downward arrow."
+  },
+  "darray": {
+    "signature": "\\begin{darray}{cols} rows \\end{darray}",
+    "package": "Environments",
+    "description": "A general array typeset in display style."
+  },
+  "dashleftarrow": {
+    "package": "Relations",
+    "description": "A dashed leftward arrow."
+  },
+  "dashrightarrow": {
+    "package": "Relations",
+    "description": "A dashed rightward arrow."
+  },
+  "dashv": {
+    "package": "Relations",
+    "description": "The reversed turnstile relation."
+  },
+  "dbinom": {
+    "signature": "\\dbinom{n}{k}",
+    "package": "Operators",
+    "description": "Typesets a binomial coefficient in display style."
+  },
+  "dblcolon": {
+    "package": "Relations",
+    "description": "A double colon relation."
+  },
+  "dcases": {
+    "signature": "\\begin{dcases} rows \\end{dcases}",
+    "package": "Environments",
+    "description": "A cases environment typeset in display style."
+  },
+  "ddag": {
+    "package": "Symbols and Punctuation",
+    "description": "A double-dagger symbol."
+  },
+  "ddagger": {
+    "package": "Symbols and Punctuation",
+    "description": "A double-dagger symbol."
+  },
+  "ddddot": {
+    "signature": "\\ddddot{character}",
+    "package": "Accents",
+    "description": "Places a quadruple dot accent over the character."
+  },
+  "dddot": {
+    "signature": "\\dddot{character}",
+    "package": "Accents",
+    "description": "Places a triple dot accent over the character."
+  },
+  "ddot": {
+    "signature": "\\ddot{character}",
+    "package": "Accents",
+    "description": "Places a double dot (diaeresis) accent over the character."
+  },
+  "ddots": {
+    "package": "Symbols and Punctuation",
+    "description": "A diagonal ellipsis."
+  },
+  "def": {
+    "signature": "\\def\\name{definition}",
+    "package": "Macros",
+    "description": "Defines a new macro (not persistent between expressions)."
+  },
+  "deg": {
+    "package": "Operators",
+    "description": "The degree operator."
+  },
+  "degree": {
+    "package": "Symbols and Punctuation",
+    "description": "A degree symbol."
+  },
+  "delta": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter delta."
+  },
+  "det": {
+    "package": "Operators",
+    "description": "The determinant operator."
+  },
+  "dfrac": {
+    "signature": "\\dfrac{numerator}{denominator}",
+    "package": "Operators",
+    "description": "Typesets a fraction in display style."
+  },
+  "diagdown": {
+    "package": "Symbols and Punctuation",
+    "description": "A downward diagonal line symbol."
+  },
+  "diagup": {
+    "package": "Symbols and Punctuation",
+    "description": "An upward diagonal line symbol."
+  },
+  "diamond": {
+    "package": "Symbols and Punctuation",
+    "description": "A small diamond symbol."
+  },
+  "diamonds": {
+    "package": "Symbols and Punctuation",
+    "description": "A diamond card-suit symbol."
+  },
+  "diamondsuit": {
+    "package": "Symbols and Punctuation",
+    "description": "A diamond card-suit symbol."
+  },
+  "digamma": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase digamma letter."
+  },
+  "dim": {
+    "package": "Operators",
+    "description": "The dimension operator."
+  },
+  "displaystyle": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches to display style typesetting."
+  },
+  "div": {
+    "package": "Operators",
+    "description": "The division-sign operator."
+  },
+  "divideontimes": {
+    "package": "Operators",
+    "description": "A division-on-times operator."
+  },
+  "dot": {
+    "signature": "\\dot{character}",
+    "package": "Accents",
+    "description": "Places a single dot accent over the character."
+  },
+  "doteq": {
+    "package": "Relations",
+    "description": "The dot-over-equals relation."
+  },
+  "doteqdot": {
+    "package": "Relations",
+    "description": "The dots-over-and-under equals relation."
+  },
+  "dotplus": {
+    "package": "Operators",
+    "description": "A dotted-plus operator."
+  },
+  "dots": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis whose position adapts to context."
+  },
+  "dotsb": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis for use between binary operators."
+  },
+  "dotsc": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis for use between commas."
+  },
+  "dotsi": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis for use with integrals."
+  },
+  "dotsm": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis for use between multiplied terms."
+  },
+  "dotso": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis for other uses."
+  },
+  "doublebarwedge": {
+    "package": "Operators",
+    "description": "A double-barred wedge operator."
+  },
+  "doublecap": {
+    "package": "Operators",
+    "description": "The double-intersection operator."
+  },
+  "doublecup": {
+    "package": "Operators",
+    "description": "The double-union operator."
+  },
+  "downarrow": {
+    "package": "Delimiters",
+    "description": "Downward arrow, usable as a stretchy delimiter."
+  },
+  "downdownarrows": {
+    "package": "Relations",
+    "description": "A pair of downward arrows."
+  },
+  "downharpoonleft": {
+    "package": "Relations",
+    "description": "A downward harpoon with a leftward barb."
+  },
+  "downharpoonright": {
+    "package": "Relations",
+    "description": "A downward harpoon with a rightward barb."
+  },
+  "drcases": {
+    "signature": "\\begin{drcases} rows \\end{drcases}",
+    "package": "Environments",
+    "description": "A right-brace cases environment typeset in display style."
+  },
+  "edef": {
+    "signature": "\\edef\\name{definition}",
+    "package": "Macros",
+    "description": "Defines a macro, expanding its body at definition time."
+  },
+  "ell": {
+    "package": "Letters and Unicode",
+    "description": "Script lowercase letter l."
+  },
+  "emph": {
+    "signature": "\\emph{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content with emphasis (usually italic)."
+  },
+  "empty": {
+    "package": "Logic and Set Theory",
+    "description": "The empty-set symbol."
+  },
+  "emptyset": {
+    "package": "Logic and Set Theory",
+    "description": "The empty-set symbol."
+  },
+  "enspace": {
+    "package": "Layout",
+    "description": "Inserts a horizontal space one en wide."
+  },
+  "epsilon": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter epsilon."
+  },
+  "eqcirc": {
+    "package": "Relations",
+    "description": "The equals-with-ring relation."
+  },
+  "eqcolon": {
+    "package": "Relations",
+    "description": "An equals sign followed by a colon."
+  },
+  "eqqcolon": {
+    "package": "Relations",
+    "description": "A doubled equals sign followed by a colon."
+  },
+  "eqsim": {
+    "package": "Relations",
+    "description": "The equal-or-similar relation."
+  },
+  "eqslantgtr": {
+    "package": "Relations",
+    "description": "The slanted equal-or-greater-than relation."
+  },
+  "eqslantless": {
+    "package": "Relations",
+    "description": "The slanted equal-or-less-than relation."
+  },
+  "equalscolon": {
+    "package": "Relations",
+    "description": "An equals sign followed by a colon."
+  },
+  "equalscoloncolon": {
+    "package": "Relations",
+    "description": "An equals sign followed by a double colon."
+  },
+  "equation": {
+    "signature": "\\begin{equation} rows \\end{equation}",
+    "package": "Environments",
+    "description": "A single numbered display equation."
+  },
+  "equation*": {
+    "signature": "\\begin{equation*} rows \\end{equation*}",
+    "package": "Environments",
+    "description": "A single unnumbered display equation."
+  },
+  "equiv": {
+    "package": "Relations",
+    "description": "The equivalence (identical-to) relation."
+  },
+  "eta": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter eta."
+  },
+  "eth": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase eth letter."
+  },
+  "exist": {
+    "package": "Logic and Set Theory",
+    "description": "The existential quantifier (there exists) symbol."
+  },
+  "exists": {
+    "package": "Logic and Set Theory",
+    "description": "The existential quantifier (there exists) symbol."
+  },
+  "exp": {
+    "package": "Operators",
+    "description": "The exponential function operator."
+  },
+  "expandafter": {
+    "package": "Macros",
+    "description": "Expands the token after the next one first."
+  },
+  "fallingdotseq": {
+    "package": "Relations",
+    "description": "The falling-dots-equals relation."
+  },
+  "fcolorbox": {
+    "signature": "\\fcolorbox{border}{background}{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Draws a coloured background box with a coloured border behind the content."
+  },
+  "flat": {
+    "package": "Symbols and Punctuation",
+    "description": "A musical flat symbol."
+  },
+  "footnotesize": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to footnote font size."
+  },
+  "forall": {
+    "package": "Logic and Set Theory",
+    "description": "The universal quantifier (for all) symbol."
+  },
+  "frac": {
+    "signature": "\\frac{numerator}{denominator}",
+    "package": "Operators",
+    "description": "Typesets a fraction with the given numerator and denominator."
+  },
+  "frak": {
+    "signature": "\\frak{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in Fraktur font."
+  },
+  "frown": {
+    "package": "Relations",
+    "description": "The frown relation."
+  },
+  "futurelet": {
+    "signature": "\\futurelet\\name\\token",
+    "package": "Macros",
+    "description": "Binds a name to the token following the next one."
+  },
+  "gamma": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter gamma."
+  },
+  "gather": {
+    "signature": "\\begin{gather} rows \\end{gather}",
+    "package": "Environments",
+    "description": "Centres multiple equations on separate lines, with numbering."
+  },
+  "gather*": {
+    "signature": "\\begin{gather*} rows \\end{gather*}",
+    "package": "Environments",
+    "description": "Centres multiple equations on separate lines, without numbering."
+  },
+  "gathered": {
+    "signature": "\\begin{gathered} rows \\end{gathered}",
+    "package": "Environments",
+    "description": "A gather-style block usable inside other math, without numbering."
+  },
+  "gcd": {
+    "package": "Operators",
+    "description": "The greatest-common-divisor operator."
+  },
+  "gdef": {
+    "signature": "\\gdef\\name{definition}",
+    "package": "Macros",
+    "description": "Defines a new macro that persists between expressions."
+  },
+  "ge": {
+    "package": "Relations",
+    "description": "The greater-than-or-equal relation."
+  },
+  "genfrac": {
+    "signature": "\\genfrac{ldelim}{rdelim}{thickness}{style}{numer}{denom}",
+    "package": "Operators",
+    "description": "Typesets a generalised fraction with custom delimiters, bar thickness, and style."
+  },
+  "geq": {
+    "package": "Relations",
+    "description": "The greater-than-or-equal relation."
+  },
+  "geqq": {
+    "package": "Relations",
+    "description": "The greater-than-or-equal relation with a doubled bar."
+  },
+  "geqslant": {
+    "package": "Relations",
+    "description": "The slanted greater-than-or-equal relation."
+  },
+  "gets": {
+    "package": "Logic and Set Theory",
+    "description": "A short leftward arrow."
+  },
+  "gg": {
+    "package": "Relations",
+    "description": "The much-greater-than relation."
+  },
+  "ggg": {
+    "package": "Relations",
+    "description": "The very-much-greater-than relation."
+  },
+  "gggtr": {
+    "package": "Relations",
+    "description": "The very-much-greater-than relation."
+  },
+  "gimel": {
+    "package": "Letters and Unicode",
+    "description": "The gimel cardinal-number symbol."
+  },
+  "global": {
+    "package": "Macros",
+    "description": "Prefix that makes the following definition persist between expressions."
+  },
+  "gnapprox": {
+    "package": "Relations",
+    "description": "The greater-than-and-not-approximately-equal relation."
+  },
+  "gneq": {
+    "package": "Relations",
+    "description": "The greater-than-and-not-equal relation."
+  },
+  "gneqq": {
+    "package": "Relations",
+    "description": "The greater-than-and-not-equal relation with a doubled bar."
+  },
+  "gnsim": {
+    "package": "Relations",
+    "description": "The greater-than-and-not-similar relation."
+  },
+  "grave": {
+    "signature": "\\grave{character}",
+    "package": "Accents",
+    "description": "Places a grave accent over the character."
+  },
+  "gt": {
+    "package": "Relations",
+    "description": "The greater-than relation."
+  },
+  "gtrapprox": {
+    "package": "Relations",
+    "description": "The greater-than-or-approximately-equal relation."
+  },
+  "gtrdot": {
+    "package": "Operators",
+    "description": "A greater-than dot operator."
+  },
+  "gtreqless": {
+    "package": "Relations",
+    "description": "The greater-than-equal-to-or-less-than relation."
+  },
+  "gtreqqless": {
+    "package": "Relations",
+    "description": "The greater-equal-or-less relation with doubled bars."
+  },
+  "gtrless": {
+    "package": "Relations",
+    "description": "The greater-than-or-less-than relation."
+  },
+  "gtrsim": {
+    "package": "Relations",
+    "description": "The greater-than-or-similar relation."
+  },
+  "gvertneqq": {
+    "package": "Relations",
+    "description": "The greater-than-and-not-equal relation with a vertical stroke."
+  },
+  "hArr": {
+    "package": "Relations",
+    "description": "A short left-right double arrow."
+  },
+  "harr": {
+    "package": "Relations",
+    "description": "A short left-right arrow."
+  },
+  "hat": {
+    "signature": "\\hat{character}",
+    "package": "Accents",
+    "description": "Places a circumflex (hat) accent over the character."
+  },
+  "hbar": {
+    "package": "Letters and Unicode",
+    "description": "Reduced Planck constant (h-bar)."
+  },
+  "hbox": {
+    "signature": "\\hbox{content}",
+    "package": "Layout",
+    "description": "Typesets the content in an unbreakable horizontal box in text mode."
+  },
+  "hdashline": {
+    "package": "Environments",
+    "description": "Draws a horizontal dashed rule between array or matrix rows."
+  },
+  "hearts": {
+    "package": "Symbols and Punctuation",
+    "description": "A heart card-suit symbol."
+  },
+  "heartsuit": {
+    "package": "Symbols and Punctuation",
+    "description": "A heart card-suit symbol."
+  },
+  "hom": {
+    "package": "Operators",
+    "description": "The hom operator."
+  },
+  "hookleftarrow": {
+    "package": "Relations",
+    "description": "A leftward arrow with a hook."
+  },
+  "hookrightarrow": {
+    "package": "Relations",
+    "description": "A rightward arrow with a hook."
+  },
+  "hphantom": {
+    "signature": "\\hphantom{content}",
+    "package": "Layout",
+    "description": "Reserves only the horizontal space of the content."
+  },
+  "href": {
+    "signature": "\\href{url}{content}",
+    "package": "HTML",
+    "description": "Wraps content in a hyperlink to the given URL."
+  },
+  "hskip": {
+    "signature": "\\hskip{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space of the given distance."
+  },
+  "hslash": {
+    "package": "Letters and Unicode",
+    "description": "Reduced Planck constant drawn with a slash."
+  },
+  "hspace": {
+    "signature": "\\hspace{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space of the given distance."
+  },
+  "hspace*": {
+    "signature": "\\hspace*{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space that is not removed at line breaks."
+  },
+  "html": {
+    "package": "HTML",
+    "description": "Non-standard family of commands that attach raw HTML attributes."
+  },
+  "htmlClass": {
+    "signature": "\\htmlClass{class}{content}",
+    "package": "HTML",
+    "description": "Adds one or more HTML classes to the rendered content."
+  },
+  "htmlData": {
+    "signature": "\\htmlData{data}{content}",
+    "package": "HTML",
+    "description": "Adds HTML data-* attributes to the rendered content."
+  },
+  "htmlId": {
+    "signature": "\\htmlId{id}{content}",
+    "package": "HTML",
+    "description": "Adds an HTML id attribute to the rendered content."
+  },
+  "htmlStyle": {
+    "signature": "\\htmlStyle{css}{content}",
+    "package": "HTML",
+    "description": "Adds inline CSS styles to the rendered content."
+  },
+  "huge": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to a very large font size."
+  },
+  "iff": {
+    "package": "Logic and Set Theory",
+    "description": "A long left-right double arrow meaning if and only if."
+  },
+  "iiint": {
+    "package": "Operators",
+    "description": "The triple integral operator."
+  },
+  "iint": {
+    "package": "Operators",
+    "description": "The double integral operator."
+  },
+  "image": {
+    "package": "Letters and Unicode",
+    "description": "The imaginary-part symbol."
+  },
+  "imageof": {
+    "package": "Relations",
+    "description": "The image-of relation arrow."
+  },
+  "imath": {
+    "package": "Letters and Unicode",
+    "description": "Dotless lowercase letter i."
+  },
+  "impliedby": {
+    "package": "Logic and Set Theory",
+    "description": "A long leftward double arrow meaning is implied by."
+  },
+  "implies": {
+    "package": "Logic and Set Theory",
+    "description": "A long rightward double arrow meaning implies."
+  },
+  "in": {
+    "package": "Logic and Set Theory",
+    "description": "The set-membership (element of) symbol."
+  },
+  "includegraphics": {
+    "signature": "\\includegraphics[options]{url}",
+    "package": "HTML",
+    "description": "Embeds an external image at the given size."
+  },
+  "inf": {
+    "package": "Operators",
+    "description": "The infimum operator."
+  },
+  "infin": {
+    "package": "Symbols and Punctuation",
+    "description": "The infinity symbol."
+  },
+  "infty": {
+    "package": "Symbols and Punctuation",
+    "description": "The infinity symbol."
+  },
+  "injlim": {
+    "package": "Operators",
+    "description": "The injective-limit operator."
+  },
+  "int": {
+    "package": "Operators",
+    "description": "The integral operator."
+  },
+  "intercal": {
+    "package": "Operators",
+    "description": "The intercal (transpose-like) operator."
+  },
+  "intop": {
+    "package": "Operators",
+    "description": "An integral operator that places limits above and below."
+  },
+  "iota": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter iota."
+  },
+  "isin": {
+    "package": "Logic and Set Theory",
+    "description": "The set-membership (element of) symbol."
+  },
+  "it": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following characters to italic font."
+  },
+  "jmath": {
+    "package": "Letters and Unicode",
+    "description": "Dotless lowercase letter j."
+  },
+  "kappa": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter kappa."
+  },
+  "ker": {
+    "package": "Operators",
+    "description": "The kernel operator."
+  },
+  "kern": {
+    "signature": "\\kern{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space of the given distance."
+  },
+  "ket": {
+    "signature": "\\ket{state}",
+    "package": "Special Notation",
+    "description": "Typesets a quantum-mechanics ket vector."
+  },
+  "lArr": {
+    "package": "Relations",
+    "description": "A short leftward double arrow."
+  },
+  "lBrace": {
+    "package": "Delimiters",
+    "description": "Left white curly brace delimiter."
+  },
+  "lVert": {
+    "package": "Delimiters",
+    "description": "Left double vertical bar delimiter."
+  },
+  "lambda": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter lambda."
+  },
+  "land": {
+    "package": "Logic and Set Theory",
+    "description": "The logical-and operator."
+  },
+  "lang": {
+    "package": "Delimiters",
+    "description": "Left angle bracket delimiter."
+  },
+  "langle": {
+    "package": "Delimiters",
+    "description": "Left angle bracket delimiter."
+  },
+  "large": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to a large font size."
+  },
+  "larr": {
+    "package": "Relations",
+    "description": "A short leftward arrow."
+  },
+  "lbrace": {
+    "package": "Delimiters",
+    "description": "Left curly brace delimiter."
+  },
+  "lbrack": {
+    "package": "Delimiters",
+    "description": "Left square bracket delimiter."
+  },
+  "lceil": {
+    "package": "Delimiters",
+    "description": "Left ceiling delimiter."
+  },
+  "ldotp": {
+    "package": "Operators",
+    "description": "A low dot with punctuation spacing."
+  },
+  "ldots": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis on the text baseline."
+  },
+  "le": {
+    "package": "Relations",
+    "description": "The less-than-or-equal relation."
+  },
+  "leadsto": {
+    "package": "Relations",
+    "description": "A wavy rightward arrow meaning leads to."
+  },
+  "left": {
+    "package": "Delimiters",
+    "description": "Begins an automatically-sized left delimiter, paired with \\right."
+  },
+  "leftarrow": {
+    "package": "Relations",
+    "description": "A leftward arrow."
+  },
+  "leftarrowtail": {
+    "package": "Relations",
+    "description": "A leftward arrow with a tail."
+  },
+  "leftharpoondown": {
+    "package": "Relations",
+    "description": "A leftward harpoon with a downward barb."
+  },
+  "leftharpoonup": {
+    "package": "Relations",
+    "description": "A leftward harpoon with an upward barb."
+  },
+  "leftleftarrows": {
+    "package": "Relations",
+    "description": "A pair of leftward arrows."
+  },
+  "leftrightarrow": {
+    "package": "Logic and Set Theory",
+    "description": "A left-right arrow."
+  },
+  "leftrightarrows": {
+    "package": "Relations",
+    "description": "A leftward arrow above a rightward arrow."
+  },
+  "leftrightharpoons": {
+    "package": "Relations",
+    "description": "Stacked left and right harpoons."
+  },
+  "leftrightsquigarrow": {
+    "package": "Relations",
+    "description": "A left-right squiggly arrow."
+  },
+  "leftthreetimes": {
+    "package": "Operators",
+    "description": "A left three-times operator."
+  },
+  "leq": {
+    "package": "Relations",
+    "description": "The less-than-or-equal relation."
+  },
+  "leqq": {
+    "package": "Relations",
+    "description": "The less-than-or-equal relation with a doubled bar."
+  },
+  "leqslant": {
+    "package": "Relations",
+    "description": "The slanted less-than-or-equal relation."
+  },
+  "lessapprox": {
+    "package": "Relations",
+    "description": "The less-than-or-approximately-equal relation."
+  },
+  "lessdot": {
+    "package": "Operators",
+    "description": "A less-than dot operator."
+  },
+  "lesseqgtr": {
+    "package": "Relations",
+    "description": "The less-than-equal-to-or-greater-than relation."
+  },
+  "lesseqqgtr": {
+    "package": "Relations",
+    "description": "The less-equal-or-greater relation with doubled bars."
+  },
+  "lessgtr": {
+    "package": "Relations",
+    "description": "The less-than-or-greater-than relation."
+  },
+  "lesssim": {
+    "package": "Relations",
+    "description": "The less-than-or-similar relation."
+  },
+  "let": {
+    "signature": "\\let\\name=\\target",
+    "package": "Macros",
+    "description": "Binds a name to the current meaning of another token."
+  },
+  "lfloor": {
+    "package": "Delimiters",
+    "description": "Left floor delimiter."
+  },
+  "lg": {
+    "package": "Operators",
+    "description": "The base-ten logarithm operator."
+  },
+  "lgroup": {
+    "package": "Delimiters",
+    "description": "Left group delimiter."
+  },
+  "lhd": {
+    "package": "Operators",
+    "description": "A left-pointing triangle operator."
+  },
+  "lim": {
+    "package": "Operators",
+    "description": "The limit operator."
+  },
+  "liminf": {
+    "package": "Operators",
+    "description": "The limit-inferior operator."
+  },
+  "limits": {
+    "package": "Operators",
+    "description": "Forces the following operator to place sub/superscripts as limits."
+  },
+  "limsup": {
+    "package": "Operators",
+    "description": "The limit-superior operator."
+  },
+  "ll": {
+    "package": "Relations",
+    "description": "The much-less-than relation."
+  },
+  "llap": {
+    "signature": "\\llap{content}",
+    "package": "Layout",
+    "description": "Typesets the content with zero width, overlapping to the left."
+  },
+  "llbracket": {
+    "package": "Delimiters",
+    "description": "Left double square bracket delimiter."
+  },
+  "llcorner": {
+    "package": "Delimiters",
+    "description": "Lower-left corner delimiter."
+  },
+  "lll": {
+    "package": "Relations",
+    "description": "The very-much-less-than relation."
+  },
+  "llless": {
+    "package": "Relations",
+    "description": "The very-much-less-than relation."
+  },
+  "lmoustache": {
+    "package": "Delimiters",
+    "description": "Left moustache delimiter."
+  },
+  "ln": {
+    "package": "Operators",
+    "description": "The natural-logarithm operator."
+  },
+  "lnapprox": {
+    "package": "Relations",
+    "description": "The less-than-and-not-approximately-equal relation."
+  },
+  "lneq": {
+    "package": "Relations",
+    "description": "The less-than-and-not-equal relation."
+  },
+  "lneqq": {
+    "package": "Relations",
+    "description": "The less-than-and-not-equal relation with a doubled bar."
+  },
+  "lnot": {
+    "package": "Logic and Set Theory",
+    "description": "The logical-negation symbol."
+  },
+  "lnsim": {
+    "package": "Relations",
+    "description": "The less-than-and-not-similar relation."
+  },
+  "log": {
+    "package": "Operators",
+    "description": "The logarithm operator."
+  },
+  "long": {
+    "package": "Macros",
+    "description": "Prefix permitting paragraph breaks in a macro argument."
+  },
+  "longleftarrow": {
+    "package": "Relations",
+    "description": "A long leftward arrow."
+  },
+  "longleftrightarrow": {
+    "package": "Relations",
+    "description": "A long left-right arrow."
+  },
+  "longmapsto": {
+    "package": "Relations",
+    "description": "A long bar-tailed rightward mapping arrow."
+  },
+  "longrightarrow": {
+    "package": "Relations",
+    "description": "A long rightward arrow."
+  },
+  "looparrowleft": {
+    "package": "Relations",
+    "description": "A leftward arrow with a loop."
+  },
+  "looparrowright": {
+    "package": "Relations",
+    "description": "A rightward arrow with a loop."
+  },
+  "lor": {
+    "package": "Logic and Set Theory",
+    "description": "The logical-or operator."
+  },
+  "lozenge": {
+    "package": "Symbols and Punctuation",
+    "description": "A lozenge (diamond) symbol."
+  },
+  "lparen": {
+    "package": "Delimiters",
+    "description": "Left parenthesis delimiter."
+  },
+  "lq": {
+    "package": "Symbols and Punctuation",
+    "description": "A left (opening) single quotation mark."
+  },
+  "lrArr": {
+    "package": "Relations",
+    "description": "A short left-right double arrow."
+  },
+  "lrarr": {
+    "package": "Relations",
+    "description": "A short left-right arrow."
+  },
+  "lrcorner": {
+    "package": "Delimiters",
+    "description": "Lower-right corner delimiter."
+  },
+  "lt": {
+    "package": "Delimiters",
+    "description": "Less-than sign usable as a left delimiter."
+  },
+  "ltimes": {
+    "package": "Operators",
+    "description": "The left semidirect-product operator."
+  },
+  "lvert": {
+    "package": "Delimiters",
+    "description": "Left single vertical bar delimiter."
+  },
+  "lvertneqq": {
+    "package": "Relations",
+    "description": "The less-than-and-not-equal relation with a vertical stroke."
+  },
+  "makeatletter": {
+    "package": "Macros",
+    "description": "Makes the at-sign a letter so it can appear in command names."
+  },
+  "maltese": {
+    "package": "Symbols and Punctuation",
+    "description": "A Maltese-cross symbol."
+  },
+  "mapsto": {
+    "package": "Logic and Set Theory",
+    "description": "A bar-tailed rightward arrow denoting a mapping."
+  },
+  "mathbb": {
+    "signature": "\\mathbb{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in blackboard-bold font."
+  },
+  "mathbf": {
+    "signature": "\\mathbf{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in bold roman font."
+  },
+  "mathbin": {
+    "signature": "\\mathbin{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as a binary operator for spacing purposes."
+  },
+  "mathcal": {
+    "signature": "\\mathcal{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in calligraphic font."
+  },
+  "mathchoice": {
+    "signature": "\\mathchoice{display}{text}{script}{scriptscript}",
+    "package": "Macros",
+    "description": "Selects one of four bodies depending on the current math style."
+  },
+  "mathclose": {
+    "signature": "\\mathclose{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as a closing delimiter for spacing purposes."
+  },
+  "mathellipsis": {
+    "package": "Symbols and Punctuation",
+    "description": "An ellipsis on the text baseline."
+  },
+  "mathfrak": {
+    "signature": "\\mathfrak{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in Fraktur font."
+  },
+  "mathinner": {
+    "signature": "\\mathinner{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as inner material for spacing purposes."
+  },
+  "mathit": {
+    "signature": "\\mathit{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in italic font."
+  },
+  "mathnormal": {
+    "signature": "\\mathnormal{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in the normal math italic font."
+  },
+  "mathop": {
+    "signature": "\\mathop{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as a large operator for spacing purposes."
+  },
+  "mathopen": {
+    "signature": "\\mathopen{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as an opening delimiter for spacing purposes."
+  },
+  "mathord": {
+    "signature": "\\mathord{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as an ordinary symbol for spacing purposes."
+  },
+  "mathpunct": {
+    "signature": "\\mathpunct{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as punctuation for spacing purposes."
+  },
+  "mathrel": {
+    "signature": "\\mathrel{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Treats its argument as a relation for spacing purposes."
+  },
+  "mathring": {
+    "signature": "\\mathring{character}",
+    "package": "Accents",
+    "description": "Places a ring accent over the character."
+  },
+  "mathrlap": {
+    "signature": "\\mathrlap{content}",
+    "package": "Layout",
+    "description": "Math-mode variant of \\rlap that overlaps content to the right."
+  },
+  "mathrm": {
+    "signature": "\\mathrm{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in upright roman font."
+  },
+  "mathscr": {
+    "signature": "\\mathscr{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in script font."
+  },
+  "mathsf": {
+    "signature": "\\mathsf{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in sans-serif font."
+  },
+  "mathsfit": {
+    "signature": "\\mathsfit{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in italic sans-serif font."
+  },
+  "mathsterling": {
+    "package": "Symbols and Punctuation",
+    "description": "The pounds-sterling currency symbol."
+  },
+  "mathstrut": {
+    "package": "Layout",
+    "description": "Inserts an invisible strut with the height of a parenthesis."
+  },
+  "mathtt": {
+    "signature": "\\mathtt{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in monospace (typewriter) font."
+  },
+  "matrix": {
+    "signature": "\\begin{matrix} rows \\end{matrix}",
+    "package": "Environments",
+    "description": "An unbordered matrix of elements."
+  },
+  "matrix*": {
+    "signature": "\\begin{matrix*}[align] rows \\end{matrix*}",
+    "package": "Environments",
+    "description": "An unbordered matrix with a column-alignment option."
+  },
+  "max": {
+    "package": "Operators",
+    "description": "The maximum operator."
+  },
+  "measuredangle": {
+    "package": "Symbols and Punctuation",
+    "description": "A measured-angle symbol."
+  },
+  "medspace": {
+    "package": "Layout",
+    "description": "Inserts a medium horizontal space."
+  },
+  "mho": {
+    "package": "Symbols and Punctuation",
+    "description": "The mho (inverted ohm) symbol."
+  },
+  "mid": {
+    "package": "Logic and Set Theory",
+    "description": "A vertical bar denoting divides or such-that."
+  },
+  "middle": {
+    "package": "Delimiters",
+    "description": "Sizes a delimiter placed between \\left and \\right."
+  },
+  "min": {
+    "package": "Operators",
+    "description": "The minimum operator."
+  },
+  "minuscolon": {
+    "package": "Relations",
+    "description": "A minus sign followed by a colon."
+  },
+  "minuscoloncolon": {
+    "package": "Relations",
+    "description": "A minus sign followed by a double colon."
+  },
+  "minuso": {
+    "package": "Symbols and Punctuation",
+    "description": "A minus sign with a small circle."
+  },
+  "mkern": {
+    "signature": "\\mkern{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space measured in math units."
+  },
+  "models": {
+    "package": "Relations",
+    "description": "The models (semantic entailment) relation."
+  },
+  "mp": {
+    "package": "Operators",
+    "description": "The minus-or-plus operator."
+  },
+  "mskip": {
+    "signature": "\\mskip{distance}",
+    "package": "Layout",
+    "description": "Inserts horizontal space measured in math units."
+  },
+  "mu": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter mu."
+  },
+  "multicolumn": {
+    "package": "Environments",
+    "description": "Spans a single entry across several array columns."
+  },
+  "multimap": {
+    "package": "Relations",
+    "description": "The multimap relation."
+  },
+  "nLeftarrow": {
+    "package": "Relations",
+    "description": "A negated leftward double arrow."
+  },
+  "nLeftrightarrow": {
+    "package": "Relations",
+    "description": "A negated left-right double arrow."
+  },
+  "nRightarrow": {
+    "package": "Relations",
+    "description": "A negated rightward double arrow."
+  },
+  "nVDash": {
+    "package": "Relations",
+    "description": "The negated double-turnstile relation with a doubled bar."
+  },
+  "nVdash": {
+    "package": "Relations",
+    "description": "The negated forces relation with a doubled bar."
+  },
+  "nabla": {
+    "package": "Letters and Unicode",
+    "description": "The nabla (del) operator symbol."
+  },
+  "natnums": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of natural numbers."
+  },
+  "natural": {
+    "package": "Symbols and Punctuation",
+    "description": "A musical natural symbol."
+  },
+  "ncong": {
+    "package": "Relations",
+    "description": "The not-congruent relation."
+  },
+  "ne": {
+    "package": "Relations",
+    "description": "The not-equal relation."
+  },
+  "nearrow": {
+    "package": "Relations",
+    "description": "A northeast-pointing arrow."
+  },
+  "neg": {
+    "package": "Logic and Set Theory",
+    "description": "The logical-negation symbol."
+  },
+  "negmedspace": {
+    "package": "Layout",
+    "description": "Inserts a negative medium horizontal space."
+  },
+  "negthickspace": {
+    "package": "Layout",
+    "description": "Inserts a negative thick horizontal space."
+  },
+  "negthinspace": {
+    "package": "Layout",
+    "description": "Inserts a negative thin horizontal space."
+  },
+  "neq": {
+    "package": "Relations",
+    "description": "The not-equal relation."
+  },
+  "newcommand": {
+    "signature": "\\newcommand\\name[nargs]{definition}",
+    "package": "Macros",
+    "description": "Defines a new command, erroring if it already exists."
+  },
+  "newline": {
+    "package": "Layout",
+    "description": "Forces a line break."
+  },
+  "nexists": {
+    "package": "Logic and Set Theory",
+    "description": "The negated existential quantifier (there does not exist) symbol."
+  },
+  "ngeq": {
+    "package": "Relations",
+    "description": "The not-greater-than-or-equal relation."
+  },
+  "ngeqq": {
+    "package": "Relations",
+    "description": "The not-greater-than-or-equal relation with a doubled bar."
+  },
+  "ngeqslant": {
+    "package": "Relations",
+    "description": "The negated slanted greater-than-or-equal relation."
+  },
+  "ngtr": {
+    "package": "Relations",
+    "description": "The not-greater-than relation."
+  },
+  "ni": {
+    "package": "Logic and Set Theory",
+    "description": "The reversed membership (contains as element) symbol."
+  },
+  "nleftarrow": {
+    "package": "Relations",
+    "description": "A negated leftward arrow."
+  },
+  "nleftrightarrow": {
+    "package": "Relations",
+    "description": "A negated left-right arrow."
+  },
+  "nleq": {
+    "package": "Relations",
+    "description": "The not-less-than-or-equal relation."
+  },
+  "nleqq": {
+    "package": "Relations",
+    "description": "The not-less-than-or-equal relation with a doubled bar."
+  },
+  "nleqslant": {
+    "package": "Relations",
+    "description": "The negated slanted less-than-or-equal relation."
+  },
+  "nless": {
+    "package": "Relations",
+    "description": "The not-less-than relation."
+  },
+  "nmid": {
+    "package": "Relations",
+    "description": "The does-not-divide relation."
+  },
+  "nobreak": {
+    "package": "Layout",
+    "description": "Prevents a line break at this point."
+  },
+  "nobreakspace": {
+    "package": "Layout",
+    "description": "Inserts a non-breaking interword space."
+  },
+  "noexpand": {
+    "package": "Macros",
+    "description": "Prevents the following token from being expanded."
+  },
+  "nonumber": {
+    "package": "Environments",
+    "description": "Suppresses the equation number on the current row."
+  },
+  "normalsize": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to the normal font size."
+  },
+  "not": {
+    "package": "Layout",
+    "description": "Overlays a negation slash on the following symbol."
+  },
+  "notag": {
+    "package": "Environments",
+    "description": "Suppresses the equation number on the current row."
+  },
+  "notin": {
+    "package": "Logic and Set Theory",
+    "description": "The negated set-membership (not an element of) symbol."
+  },
+  "notni": {
+    "package": "Logic and Set Theory",
+    "description": "The negated reversed-membership symbol."
+  },
+  "nparallel": {
+    "package": "Relations",
+    "description": "The not-parallel relation."
+  },
+  "nprec": {
+    "package": "Relations",
+    "description": "The does-not-precede relation."
+  },
+  "npreceq": {
+    "package": "Relations",
+    "description": "The does-not-precede-or-equal relation."
+  },
+  "nrightarrow": {
+    "package": "Relations",
+    "description": "A negated rightward arrow."
+  },
+  "nshortmid": {
+    "package": "Relations",
+    "description": "The short does-not-divide relation."
+  },
+  "nshortparallel": {
+    "package": "Relations",
+    "description": "The short not-parallel relation."
+  },
+  "nsim": {
+    "package": "Relations",
+    "description": "The not-similar-to relation."
+  },
+  "nsubseteq": {
+    "package": "Relations",
+    "description": "The not-a-subset-or-equal relation."
+  },
+  "nsubseteqq": {
+    "package": "Relations",
+    "description": "The not-a-subset-or-equal relation with a doubled bar."
+  },
+  "nsucc": {
+    "package": "Relations",
+    "description": "The does-not-succeed relation."
+  },
+  "nsucceq": {
+    "package": "Relations",
+    "description": "The does-not-succeed-or-equal relation."
+  },
+  "nsupseteq": {
+    "package": "Relations",
+    "description": "The not-a-superset-or-equal relation."
+  },
+  "nsupseteqq": {
+    "package": "Relations",
+    "description": "The not-a-superset-or-equal relation with a doubled bar."
+  },
+  "ntriangleleft": {
+    "package": "Relations",
+    "description": "The not-a-left-triangle relation."
+  },
+  "ntrianglelefteq": {
+    "package": "Relations",
+    "description": "The not-a-left-triangle-or-equal relation."
+  },
+  "ntriangleright": {
+    "package": "Relations",
+    "description": "The not-a-right-triangle relation."
+  },
+  "ntrianglerighteq": {
+    "package": "Relations",
+    "description": "The not-a-right-triangle-or-equal relation."
+  },
+  "nu": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter nu."
+  },
+  "nvDash": {
+    "package": "Relations",
+    "description": "The does-not-entail relation."
+  },
+  "nvdash": {
+    "package": "Relations",
+    "description": "The does-not-prove relation."
+  },
+  "nwarrow": {
+    "package": "Relations",
+    "description": "A northwest-pointing arrow."
+  },
+  "odot": {
+    "package": "Operators",
+    "description": "A dot inside a circle operator."
+  },
+  "oiiint": {
+    "package": "Operators",
+    "description": "The closed triple (volume) integral operator."
+  },
+  "oiint": {
+    "package": "Operators",
+    "description": "The closed double (surface) integral operator."
+  },
+  "oint": {
+    "package": "Operators",
+    "description": "The contour (closed-loop) integral operator."
+  },
+  "omega": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter omega."
+  },
+  "omicron": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter omicron."
+  },
+  "ominus": {
+    "package": "Operators",
+    "description": "A minus inside a circle operator."
+  },
+  "operatorname": {
+    "signature": "\\operatorname{name}",
+    "package": "Operators",
+    "description": "Typesets its argument as an upright named operator."
+  },
+  "operatorname*": {
+    "signature": "\\operatorname*{name}",
+    "package": "Operators",
+    "description": "Typesets its argument as a named operator that takes limits."
+  },
+  "operatornamewithlimits": {
+    "signature": "\\operatornamewithlimits{name}",
+    "package": "Operators",
+    "description": "Typesets its argument as a named operator that takes limits."
+  },
+  "oplus": {
+    "package": "Operators",
+    "description": "A plus inside a circle operator."
+  },
+  "origof": {
+    "package": "Relations",
+    "description": "The original-of relation arrow."
+  },
+  "oslash": {
+    "package": "Operators",
+    "description": "A slash inside a circle operator."
+  },
+  "otimes": {
+    "package": "Operators",
+    "description": "A times inside a circle operator."
+  },
+  "overbrace": {
+    "signature": "\\overbrace{content}^{label}",
+    "package": "Accents",
+    "description": "Draws a horizontal brace above the content, with an optional superscript label."
+  },
+  "overbracket": {
+    "signature": "\\overbracket{content}^{label}",
+    "package": "Accents",
+    "description": "Draws a square bracket above the content."
+  },
+  "overgroup": {
+    "signature": "\\overgroup{content}",
+    "package": "Accents",
+    "description": "Draws a stretchy upward-curving brace-like mark above the content."
+  },
+  "overleftarrow": {
+    "signature": "\\overleftarrow{content}",
+    "package": "Accents",
+    "description": "Draws a leftward arrow above the content."
+  },
+  "overleftharpoon": {
+    "signature": "\\overleftharpoon{content}",
+    "package": "Accents",
+    "description": "Draws a leftward harpoon above the content."
+  },
+  "overleftrightarrow": {
+    "signature": "\\overleftrightarrow{content}",
+    "package": "Accents",
+    "description": "Draws a left-right arrow above the content."
+  },
+  "overline": {
+    "signature": "\\overline{content}",
+    "package": "Accents",
+    "description": "Draws a horizontal line above the content."
+  },
+  "overlinesegment": {
+    "signature": "\\overlinesegment{content}",
+    "package": "Accents",
+    "description": "Draws a line segment with end ticks above the content."
+  },
+  "overrightarrow": {
+    "signature": "\\overrightarrow{content}",
+    "package": "Accents",
+    "description": "Draws a rightward arrow above the content."
+  },
+  "overrightharpoon": {
+    "signature": "\\overrightharpoon{content}",
+    "package": "Accents",
+    "description": "Draws a rightward harpoon above the content."
+  },
+  "overset": {
+    "signature": "\\overset{above}{base}",
+    "package": "Layout",
+    "description": "Places the first argument above the second."
+  },
+  "owns": {
+    "package": "Relations",
+    "description": "The reversed membership (contains as element) relation."
+  },
+  "par": {
+    "package": "Macros",
+    "description": "Inserts a paragraph break."
+  },
+  "parallel": {
+    "package": "Relations",
+    "description": "The parallel relation."
+  },
+  "partial": {
+    "package": "Letters and Unicode",
+    "description": "The partial differential symbol."
+  },
+  "perp": {
+    "package": "Relations",
+    "description": "The perpendicular relation."
+  },
+  "phantom": {
+    "signature": "\\phantom{content}",
+    "package": "Layout",
+    "description": "Reserves space the size of the content without drawing it."
+  },
+  "phase": {
+    "signature": "\\phase{content}",
+    "package": "Layout",
+    "description": "Typesets the content as a phasor angle with an angle bracket."
+  },
+  "phi": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter phi."
+  },
+  "pi": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter pi."
+  },
+  "pitchfork": {
+    "package": "Relations",
+    "description": "The pitchfork relation."
+  },
+  "plim": {
+    "package": "Operators",
+    "description": "The probability-limit operator."
+  },
+  "plusmn": {
+    "package": "Operators",
+    "description": "The plus-or-minus operator."
+  },
+  "pm": {
+    "package": "Operators",
+    "description": "The plus-or-minus operator."
+  },
+  "pmatrix": {
+    "signature": "\\begin{pmatrix} rows \\end{pmatrix}",
+    "package": "Environments",
+    "description": "A matrix enclosed in parentheses."
+  },
+  "pmatrix*": {
+    "signature": "\\begin{pmatrix*}[align] rows \\end{pmatrix*}",
+    "package": "Environments",
+    "description": "A parenthesised matrix with a column-alignment option."
+  },
+  "pmb": {
+    "signature": "\\pmb{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument as poor-man's bold by overprinting."
+  },
+  "pounds": {
+    "package": "Symbols and Punctuation",
+    "description": "The pounds-sterling currency symbol."
+  },
+  "prec": {
+    "package": "Relations",
+    "description": "The precedes relation."
+  },
+  "precapprox": {
+    "package": "Relations",
+    "description": "The precedes-or-approximately-equal relation."
+  },
+  "preccurlyeq": {
+    "package": "Relations",
+    "description": "The precedes-or-curly-equals relation."
+  },
+  "preceq": {
+    "package": "Relations",
+    "description": "The precedes-or-equal relation."
+  },
+  "precnapprox": {
+    "package": "Relations",
+    "description": "The precedes-and-not-approximately-equal relation."
+  },
+  "precneqq": {
+    "package": "Relations",
+    "description": "The precedes-and-not-equal relation."
+  },
+  "precnsim": {
+    "package": "Relations",
+    "description": "The precedes-and-not-similar relation."
+  },
+  "precsim": {
+    "package": "Relations",
+    "description": "The precedes-or-similar relation."
+  },
+  "prime": {
+    "package": "Symbols and Punctuation",
+    "description": "A prime symbol."
+  },
+  "prod": {
+    "package": "Operators",
+    "description": "The product big operator."
+  },
+  "projlim": {
+    "package": "Operators",
+    "description": "The projective-limit operator."
+  },
+  "propto": {
+    "package": "Relations",
+    "description": "The proportional-to relation."
+  },
+  "providecommand": {
+    "signature": "\\providecommand\\name[nargs]{definition}",
+    "package": "Macros",
+    "description": "Defines a command only if it is not already defined."
+  },
+  "psi": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter psi."
+  },
+  "qquad": {
+    "package": "Layout",
+    "description": "Inserts a horizontal space two quads wide."
+  },
+  "quad": {
+    "package": "Layout",
+    "description": "Inserts a horizontal space one quad wide."
+  },
+  "r": {
+    "signature": "\\r{character}",
+    "package": "Accents",
+    "description": "Places a ring text accent over the character."
+  },
+  "rArr": {
+    "package": "Relations",
+    "description": "A short rightward double arrow."
+  },
+  "rVert": {
+    "package": "Delimiters",
+    "description": "Right double vertical bar delimiter."
+  },
+  "raisebox": {
+    "signature": "\\raisebox{distance}{content}",
+    "package": "Layout",
+    "description": "Raises or lowers the content by the given distance."
+  },
+  "rang": {
+    "package": "Delimiters",
+    "description": "Right angle bracket delimiter."
+  },
+  "rangle": {
+    "package": "Delimiters",
+    "description": "Right angle bracket delimiter."
+  },
+  "rarr": {
+    "package": "Relations",
+    "description": "A short rightward arrow."
+  },
+  "ratio": {
+    "package": "Relations",
+    "description": "A colon used to denote a ratio."
+  },
+  "rbrace": {
+    "package": "Delimiters",
+    "description": "Right curly brace delimiter."
+  },
+  "rbrack": {
+    "package": "Delimiters",
+    "description": "Right square bracket delimiter."
+  },
+  "rcases": {
+    "signature": "\\begin{rcases} rows \\end{rcases}",
+    "package": "Environments",
+    "description": "A cases environment with the brace on the right side."
+  },
+  "rceil": {
+    "package": "Delimiters",
+    "description": "Right ceiling delimiter."
+  },
+  "real": {
+    "package": "Letters and Unicode",
+    "description": "The real-part symbol."
+  },
+  "reals": {
+    "package": "Letters and Unicode",
+    "description": "Blackboard-bold symbol for the set of real numbers."
+  },
+  "relax": {
+    "package": "Macros",
+    "description": "A do-nothing command that halts macro expansion."
+  },
+  "renewcommand": {
+    "signature": "\\renewcommand\\name[nargs]{definition}",
+    "package": "Macros",
+    "description": "Redefines an existing command."
+  },
+  "restriction": {
+    "package": "Relations",
+    "description": "The restriction arrow (an upward harpoon)."
+  },
+  "rfloor": {
+    "package": "Delimiters",
+    "description": "Right floor delimiter."
+  },
+  "rgroup": {
+    "package": "Delimiters",
+    "description": "Right group delimiter."
+  },
+  "rhd": {
+    "package": "Operators",
+    "description": "A right-pointing triangle operator."
+  },
+  "rho": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter rho."
+  },
+  "right": {
+    "package": "Delimiters",
+    "description": "Ends an automatically-sized right delimiter, paired with \\left."
+  },
+  "rightarrow": {
+    "package": "Relations",
+    "description": "A rightward arrow."
+  },
+  "rightarrowtail": {
+    "package": "Relations",
+    "description": "A rightward arrow with a tail."
+  },
+  "rightharpoondown": {
+    "package": "Relations",
+    "description": "A rightward harpoon with a downward barb."
+  },
+  "rightharpoonup": {
+    "package": "Relations",
+    "description": "A rightward harpoon with an upward barb."
+  },
+  "rightleftarrows": {
+    "package": "Relations",
+    "description": "A rightward arrow above a leftward arrow."
+  },
+  "rightleftharpoons": {
+    "package": "Relations",
+    "description": "Stacked right and left harpoons."
+  },
+  "rightrightarrows": {
+    "package": "Relations",
+    "description": "A pair of rightward arrows."
+  },
+  "rightsquigarrow": {
+    "package": "Relations",
+    "description": "A rightward squiggly arrow."
+  },
+  "rightthreetimes": {
+    "package": "Operators",
+    "description": "A right three-times operator."
+  },
+  "risingdotseq": {
+    "package": "Relations",
+    "description": "The rising-dots-equals relation."
+  },
+  "rlap": {
+    "signature": "\\rlap{content}",
+    "package": "Layout",
+    "description": "Typesets the content with zero width, overlapping to the right."
+  },
+  "rm": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following characters to roman font."
+  },
+  "rmoustache": {
+    "package": "Delimiters",
+    "description": "Right moustache delimiter."
+  },
+  "rparen": {
+    "package": "Delimiters",
+    "description": "Right parenthesis delimiter."
+  },
+  "rq": {
+    "package": "Symbols and Punctuation",
+    "description": "A right (closing) single quotation mark."
+  },
+  "rrbracket": {
+    "package": "Delimiters",
+    "description": "Right double square bracket delimiter."
+  },
+  "rtimes": {
+    "package": "Operators",
+    "description": "The right semidirect-product operator."
+  },
+  "rvert": {
+    "package": "Delimiters",
+    "description": "Right single vertical bar delimiter."
+  },
+  "scriptscriptstyle": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches to scriptscript style typesetting."
+  },
+  "scriptsize": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to script (small) font size."
+  },
+  "scriptstyle": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches to script style typesetting."
+  },
+  "sdot": {
+    "package": "Symbols and Punctuation",
+    "description": "A small centred dot."
+  },
+  "searrow": {
+    "package": "Relations",
+    "description": "A southeast-pointing arrow."
+  },
+  "sec": {
+    "package": "Operators",
+    "description": "The secant trigonometric function operator."
+  },
+  "set": {
+    "signature": "\\set{expression}",
+    "package": "Logic and Set Theory",
+    "description": "Typesets a set in builder notation."
+  },
+  "setminus": {
+    "package": "Operators",
+    "description": "The set-difference operator."
+  },
+  "sf": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following characters to sans-serif font."
+  },
+  "sh": {
+    "package": "Operators",
+    "description": "The hyperbolic-sine function operator."
+  },
+  "sharp": {
+    "package": "Symbols and Punctuation",
+    "description": "A musical sharp symbol."
+  },
+  "shortmid": {
+    "package": "Relations",
+    "description": "A short divides relation."
+  },
+  "shortparallel": {
+    "package": "Relations",
+    "description": "A short parallel relation."
+  },
+  "sigma": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter sigma."
+  },
+  "sim": {
+    "package": "Relations",
+    "description": "The similar-to relation."
+  },
+  "simcolon": {
+    "package": "Relations",
+    "description": "A similar sign followed by a colon."
+  },
+  "simcoloncolon": {
+    "package": "Relations",
+    "description": "A similar sign followed by a double colon."
+  },
+  "simeq": {
+    "package": "Relations",
+    "description": "The similar-or-equal relation."
+  },
+  "sin": {
+    "package": "Operators",
+    "description": "The sine trigonometric function operator."
+  },
+  "sinh": {
+    "package": "Operators",
+    "description": "The hyperbolic-sine function operator."
+  },
+  "small": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to a small font size."
+  },
+  "smallfrown": {
+    "package": "Relations",
+    "description": "A small frown relation."
+  },
+  "smallint": {
+    "package": "Operators",
+    "description": "A small integral sign that does not grow."
+  },
+  "smallmatrix": {
+    "signature": "\\begin{smallmatrix} rows \\end{smallmatrix}",
+    "package": "Environments",
+    "description": "A matrix typeset at a smaller, inline size."
+  },
+  "smallsetminus": {
+    "package": "Operators",
+    "description": "A small set-difference operator."
+  },
+  "smallsmile": {
+    "package": "Relations",
+    "description": "A small smile relation."
+  },
+  "smile": {
+    "package": "Relations",
+    "description": "The smile relation."
+  },
+  "space": {
+    "package": "Layout",
+    "description": "Inserts an interword horizontal space."
+  },
+  "spades": {
+    "package": "Symbols and Punctuation",
+    "description": "A spade card-suit symbol."
+  },
+  "spadesuit": {
+    "package": "Symbols and Punctuation",
+    "description": "A spade card-suit symbol."
+  },
+  "sphericalangle": {
+    "package": "Symbols and Punctuation",
+    "description": "A spherical-angle symbol."
+  },
+  "split": {
+    "signature": "\\begin{split} rows \\end{split}",
+    "package": "Environments",
+    "description": "Splits a long equation across lines within an equation environment."
+  },
+  "sqcap": {
+    "package": "Operators",
+    "description": "The square-intersection operator."
+  },
+  "sqcup": {
+    "package": "Operators",
+    "description": "The square-union operator."
+  },
+  "sqrt": {
+    "signature": "\\sqrt[index]{radicand}",
+    "package": "Operators",
+    "description": "Typesets a square root; the optional argument gives the index."
+  },
+  "sqsubset": {
+    "package": "Relations",
+    "description": "The square-subset relation."
+  },
+  "sqsubseteq": {
+    "package": "Relations",
+    "description": "The square-subset-or-equal relation."
+  },
+  "sqsupset": {
+    "package": "Relations",
+    "description": "The square-superset relation."
+  },
+  "sqsupseteq": {
+    "package": "Relations",
+    "description": "The square-superset-or-equal relation."
+  },
+  "square": {
+    "package": "Symbols and Punctuation",
+    "description": "An empty square symbol."
+  },
+  "stackrel": {
+    "signature": "\\stackrel{above}{base}",
+    "package": "Layout",
+    "description": "Stacks the first argument as a superscript above the second."
+  },
+  "star": {
+    "package": "Symbols and Punctuation",
+    "description": "A five-pointed star symbol."
+  },
+  "sub": {
+    "package": "Relations",
+    "description": "The subset relation."
+  },
+  "subarray": {
+    "signature": "\\begin{subarray}{cols} rows \\end{subarray}",
+    "package": "Environments",
+    "description": "A small array used inside subscripts or superscripts."
+  },
+  "sube": {
+    "package": "Relations",
+    "description": "The subset-or-equal relation."
+  },
+  "subset": {
+    "package": "Logic and Set Theory",
+    "description": "The subset relation symbol."
+  },
+  "subseteq": {
+    "package": "Relations",
+    "description": "The subset-or-equal relation."
+  },
+  "subseteqq": {
+    "package": "Relations",
+    "description": "The subset-or-equal relation with a doubled bar."
+  },
+  "subsetneq": {
+    "package": "Relations",
+    "description": "The subset-and-not-equal relation."
+  },
+  "subsetneqq": {
+    "package": "Relations",
+    "description": "The subset-and-not-equal relation with a doubled bar."
+  },
+  "succ": {
+    "package": "Relations",
+    "description": "The succeeds relation."
+  },
+  "succapprox": {
+    "package": "Relations",
+    "description": "The succeeds-or-approximately-equal relation."
+  },
+  "succcurlyeq": {
+    "package": "Relations",
+    "description": "The succeeds-or-curly-equals relation."
+  },
+  "succeq": {
+    "package": "Relations",
+    "description": "The succeeds-or-equal relation."
+  },
+  "succnapprox": {
+    "package": "Relations",
+    "description": "The succeeds-and-not-approximately-equal relation."
+  },
+  "succneqq": {
+    "package": "Relations",
+    "description": "The succeeds-and-not-equal relation."
+  },
+  "succnsim": {
+    "package": "Relations",
+    "description": "The succeeds-and-not-similar relation."
+  },
+  "succsim": {
+    "package": "Relations",
+    "description": "The succeeds-or-similar relation."
+  },
+  "sum": {
+    "package": "Operators",
+    "description": "The summation big operator."
+  },
+  "sup": {
+    "package": "Operators",
+    "description": "The supremum operator."
+  },
+  "supe": {
+    "package": "Relations",
+    "description": "The superset-or-equal relation."
+  },
+  "supset": {
+    "package": "Logic and Set Theory",
+    "description": "The superset relation symbol."
+  },
+  "supseteq": {
+    "package": "Relations",
+    "description": "The superset-or-equal relation."
+  },
+  "supseteqq": {
+    "package": "Relations",
+    "description": "The superset-or-equal relation with a doubled bar."
+  },
+  "supsetneq": {
+    "package": "Relations",
+    "description": "The superset-and-not-equal relation."
+  },
+  "supsetneqq": {
+    "package": "Relations",
+    "description": "The superset-and-not-equal relation with a doubled bar."
+  },
+  "surd": {
+    "package": "Symbols and Punctuation",
+    "description": "The radical (square-root sign) symbol."
+  },
+  "swarrow": {
+    "package": "Relations",
+    "description": "A southwest-pointing arrow."
+  },
+  "tag": {
+    "signature": "\\tag{label}",
+    "package": "Environments",
+    "description": "Attaches a custom label to a display equation."
+  },
+  "tag*": {
+    "signature": "\\tag*{label}",
+    "package": "Layout",
+    "description": "Attaches a custom label without parentheses to a display equation."
+  },
+  "tan": {
+    "package": "Operators",
+    "description": "The tangent trigonometric function operator."
+  },
+  "tanh": {
+    "package": "Operators",
+    "description": "The hyperbolic-tangent function operator."
+  },
+  "tau": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter tau."
+  },
+  "tbinom": {
+    "signature": "\\tbinom{n}{k}",
+    "package": "Operators",
+    "description": "Typesets a binomial coefficient in text (inline) style."
+  },
+  "text": {
+    "signature": "\\text{content}",
+    "package": "Letters and Unicode",
+    "description": "Typesets its argument in upright text mode within math."
+  },
+  "textbf": {
+    "signature": "\\textbf{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in bold."
+  },
+  "textcolor": {
+    "signature": "\\textcolor{color}{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its argument in the given colour."
+  },
+  "textit": {
+    "signature": "\\textit{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in italic."
+  },
+  "textmd": {
+    "signature": "\\textmd{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in medium weight."
+  },
+  "textnormal": {
+    "signature": "\\textnormal{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in the document's normal font."
+  },
+  "textrm": {
+    "signature": "\\textrm{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in upright roman."
+  },
+  "textsf": {
+    "signature": "\\textsf{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in sans-serif."
+  },
+  "textstyle": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches to text (inline) style typesetting."
+  },
+  "texttt": {
+    "signature": "\\texttt{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in monospace."
+  },
+  "textup": {
+    "signature": "\\textup{content}",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets text-mode content in upright shape."
+  },
+  "tfrac": {
+    "signature": "\\tfrac{numerator}{denominator}",
+    "package": "Operators",
+    "description": "Typesets a fraction in text (inline) style."
+  },
+  "tg": {
+    "package": "Operators",
+    "description": "The tangent function operator."
+  },
+  "th": {
+    "package": "Operators",
+    "description": "The hyperbolic-tangent function operator."
+  },
+  "therefore": {
+    "package": "Logic and Set Theory",
+    "description": "The therefore symbol (three dots in a triangle)."
+  },
+  "theta": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter theta."
+  },
+  "thetasym": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase theta letter."
+  },
+  "thickapprox": {
+    "package": "Relations",
+    "description": "A bold approximately-equal relation."
+  },
+  "thicksim": {
+    "package": "Relations",
+    "description": "A bold similar-to relation."
+  },
+  "thickspace": {
+    "package": "Layout",
+    "description": "Inserts a thick horizontal space."
+  },
+  "thinspace": {
+    "package": "Layout",
+    "description": "Inserts a thin horizontal space."
+  },
+  "tilde": {
+    "signature": "\\tilde{character}",
+    "package": "Accents",
+    "description": "Places a small tilde accent over the character."
+  },
+  "times": {
+    "package": "Operators",
+    "description": "The multiplication-cross operator."
+  },
+  "tiny": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following text to the smallest font size."
+  },
+  "to": {
+    "package": "Logic and Set Theory",
+    "description": "A short rightward arrow."
+  },
+  "top": {
+    "package": "Symbols and Punctuation",
+    "description": "The top (logical truth) symbol."
+  },
+  "triangle": {
+    "package": "Symbols and Punctuation",
+    "description": "An upward-pointing triangle symbol."
+  },
+  "triangledown": {
+    "package": "Symbols and Punctuation",
+    "description": "A downward-pointing triangle symbol."
+  },
+  "triangleleft": {
+    "package": "Symbols and Punctuation",
+    "description": "A left-pointing triangle symbol."
+  },
+  "trianglelefteq": {
+    "package": "Relations",
+    "description": "The left-triangle-or-equal relation."
+  },
+  "triangleq": {
+    "package": "Relations",
+    "description": "The triangle-over-equals relation."
+  },
+  "triangleright": {
+    "package": "Symbols and Punctuation",
+    "description": "A right-pointing triangle symbol."
+  },
+  "trianglerighteq": {
+    "package": "Relations",
+    "description": "The right-triangle-or-equal relation."
+  },
+  "tt": {
+    "package": "Style, Color, Size, and Font",
+    "description": "Switches the following characters to monospace font."
+  },
+  "twoheadleftarrow": {
+    "package": "Relations",
+    "description": "A leftward arrow with two heads."
+  },
+  "twoheadrightarrow": {
+    "package": "Relations",
+    "description": "A rightward arrow with two heads."
+  },
+  "u": {
+    "signature": "\\u{character}",
+    "package": "Accents",
+    "description": "Places a breve text accent over the character."
+  },
+  "uArr": {
+    "package": "Relations",
+    "description": "A short upward double arrow."
+  },
+  "uarr": {
+    "package": "Relations",
+    "description": "A short upward arrow."
+  },
+  "ulcorner": {
+    "package": "Delimiters",
+    "description": "Upper-left corner delimiter."
+  },
+  "underbar": {
+    "signature": "\\underbar{content}",
+    "package": "Accents",
+    "description": "Draws a bar directly under the content."
+  },
+  "underbrace": {
+    "signature": "\\underbrace{content}_{label}",
+    "package": "Accents",
+    "description": "Draws a horizontal brace below the content, with an optional subscript label."
+  },
+  "underbracket": {
+    "signature": "\\underbracket{content}_{label}",
+    "package": "Accents",
+    "description": "Draws a square bracket below the content."
+  },
+  "undergroup": {
+    "signature": "\\undergroup{content}",
+    "package": "Accents",
+    "description": "Draws a stretchy downward-curving brace-like mark below the content."
+  },
+  "underleftarrow": {
+    "signature": "\\underleftarrow{content}",
+    "package": "Accents",
+    "description": "Draws a leftward arrow below the content."
+  },
+  "underleftrightarrow": {
+    "signature": "\\underleftrightarrow{content}",
+    "package": "Accents",
+    "description": "Draws a left-right arrow below the content."
+  },
+  "underline": {
+    "signature": "\\underline{content}",
+    "package": "Accents",
+    "description": "Draws a horizontal line below the content."
+  },
+  "underlinesegment": {
+    "signature": "\\underlinesegment{content}",
+    "package": "Accents",
+    "description": "Draws a line segment with end ticks below the content."
+  },
+  "underrightarrow": {
+    "signature": "\\underrightarrow{content}",
+    "package": "Accents",
+    "description": "Draws a rightward arrow below the content."
+  },
+  "underset": {
+    "signature": "\\underset{below}{base}",
+    "package": "Layout",
+    "description": "Places the first argument below the second."
+  },
+  "unlhd": {
+    "package": "Operators",
+    "description": "An underlined left-pointing triangle operator."
+  },
+  "unrhd": {
+    "package": "Operators",
+    "description": "An underlined right-pointing triangle operator."
+  },
+  "uparrow": {
+    "package": "Delimiters",
+    "description": "Upward arrow, usable as a stretchy delimiter."
+  },
+  "updownarrow": {
+    "package": "Delimiters",
+    "description": "Up-and-down arrow, usable as a stretchy delimiter."
+  },
+  "upharpoonleft": {
+    "package": "Relations",
+    "description": "An upward harpoon with a leftward barb."
+  },
+  "upharpoonright": {
+    "package": "Relations",
+    "description": "An upward harpoon with a rightward barb."
+  },
+  "uplus": {
+    "package": "Operators",
+    "description": "The multiset-union operator."
+  },
+  "upsilon": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter upsilon."
+  },
+  "upuparrows": {
+    "package": "Relations",
+    "description": "A pair of upward arrows."
+  },
+  "urcorner": {
+    "package": "Delimiters",
+    "description": "Upper-right corner delimiter."
+  },
+  "url": {
+    "signature": "\\url{url}",
+    "package": "HTML",
+    "description": "Typesets a URL as a clickable link showing the address itself."
+  },
+  "utilde": {
+    "signature": "\\utilde{characters}",
+    "package": "Accents",
+    "description": "Places a stretchy tilde accent under one or more characters."
+  },
+  "v": {
+    "signature": "\\v{character}",
+    "package": "Accents",
+    "description": "Places a caron text accent over the character."
+  },
+  "vDash": {
+    "package": "Relations",
+    "description": "The double-turnstile entailment relation."
+  },
+  "varDelta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Delta drawn in italic form."
+  },
+  "varGamma": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Gamma drawn in italic form."
+  },
+  "varLambda": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Lambda drawn in italic form."
+  },
+  "varOmega": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Omega drawn in italic form."
+  },
+  "varPhi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Phi drawn in italic form."
+  },
+  "varPi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Pi drawn in italic form."
+  },
+  "varPsi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Psi drawn in italic form."
+  },
+  "varSigma": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Sigma drawn in italic form."
+  },
+  "varTheta": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Theta drawn in italic form."
+  },
+  "varUpsilon": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Upsilon drawn in italic form."
+  },
+  "varXi": {
+    "package": "Letters and Unicode",
+    "description": "The uppercase Greek letter Xi drawn in italic form."
+  },
+  "varepsilon": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter epsilon."
+  },
+  "varinjlim": {
+    "package": "Operators",
+    "description": "The injective-limit operator with a directed-arrow notation."
+  },
+  "varkappa": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter kappa."
+  },
+  "varliminf": {
+    "package": "Operators",
+    "description": "The lower-limit operator with an underbar notation."
+  },
+  "varlimsup": {
+    "package": "Operators",
+    "description": "The upper-limit operator with an overbar notation."
+  },
+  "varnothing": {
+    "package": "Logic and Set Theory",
+    "description": "The empty-set symbol drawn as a slashed circle."
+  },
+  "varphi": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter phi."
+  },
+  "varpi": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter pi."
+  },
+  "varprojlim": {
+    "package": "Operators",
+    "description": "The projective-limit operator with a directed-arrow notation."
+  },
+  "varpropto": {
+    "package": "Relations",
+    "description": "A variant proportional-to relation."
+  },
+  "varrho": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter rho."
+  },
+  "varsigma": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter sigma."
+  },
+  "varsubsetneq": {
+    "package": "Relations",
+    "description": "A variant subset-and-not-equal relation."
+  },
+  "varsubsetneqq": {
+    "package": "Relations",
+    "description": "A variant subset-and-not-equal relation with a doubled bar."
+  },
+  "varsupsetneq": {
+    "package": "Relations",
+    "description": "A variant superset-and-not-equal relation."
+  },
+  "varsupsetneqq": {
+    "package": "Relations",
+    "description": "A variant superset-and-not-equal relation with a doubled bar."
+  },
+  "vartheta": {
+    "package": "Letters and Unicode",
+    "description": "A variant form of the lowercase Greek letter theta."
+  },
+  "vartriangle": {
+    "package": "Relations",
+    "description": "A small triangle relation."
+  },
+  "vartriangleleft": {
+    "package": "Relations",
+    "description": "The left-triangle (normal-subgroup) relation."
+  },
+  "vartriangleright": {
+    "package": "Relations",
+    "description": "The right-triangle relation."
+  },
+  "vcentcolon": {
+    "package": "Relations",
+    "description": "A vertically centred colon relation."
+  },
+  "vcenter": {
+    "signature": "\\vcenter{content}",
+    "package": "Layout",
+    "description": "Vertically centres the content on the math axis."
+  },
+  "vdash": {
+    "package": "Relations",
+    "description": "The provability (turnstile) relation."
+  },
+  "vdots": {
+    "package": "Symbols and Punctuation",
+    "description": "A vertical ellipsis."
+  },
+  "vec": {
+    "signature": "\\vec{character}",
+    "package": "Accents",
+    "description": "Places a small rightward arrow accent over the character."
+  },
+  "vee": {
+    "package": "Operators",
+    "description": "The logical-or (join) operator."
+  },
+  "veebar": {
+    "package": "Operators",
+    "description": "An exclusive-or (xor) operator."
+  },
+  "verb": {
+    "signature": "\\verb!content!",
+    "package": "Style, Color, Size, and Font",
+    "description": "Typesets its delimited argument verbatim in monospace."
+  },
+  "vert": {
+    "package": "Delimiters",
+    "description": "Single vertical bar delimiter."
+  },
+  "vmatrix": {
+    "signature": "\\begin{vmatrix} rows \\end{vmatrix}",
+    "package": "Environments",
+    "description": "A matrix enclosed in single vertical bars."
+  },
+  "vmatrix*": {
+    "signature": "\\begin{vmatrix*}[align] rows \\end{vmatrix*}",
+    "package": "Environments",
+    "description": "A vertical-bar matrix with a column-alignment option."
+  },
+  "vphantom": {
+    "signature": "\\vphantom{content}",
+    "package": "Layout",
+    "description": "Reserves only the vertical space of the content."
+  },
+  "wedge": {
+    "package": "Operators",
+    "description": "The logical-and (meet) operator."
+  },
+  "weierp": {
+    "package": "Letters and Unicode",
+    "description": "The Weierstrass p symbol."
+  },
+  "widecheck": {
+    "signature": "\\widecheck{characters}",
+    "package": "Accents",
+    "description": "Places a stretchy caron accent over one or more characters."
+  },
+  "widehat": {
+    "signature": "\\widehat{characters}",
+    "package": "Accents",
+    "description": "Places a stretchy circumflex accent over one or more characters."
+  },
+  "widetilde": {
+    "signature": "\\widetilde{characters}",
+    "package": "Accents",
+    "description": "Places a stretchy tilde accent over one or more characters."
+  },
+  "wp": {
+    "package": "Letters and Unicode",
+    "description": "The Weierstrass p symbol."
+  },
+  "wr": {
+    "package": "Operators",
+    "description": "The wreath-product operator."
+  },
+  "xLeftarrow": {
+    "signature": "\\xLeftarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible leftward double arrow with labels."
+  },
+  "xLeftrightarrow": {
+    "signature": "\\xLeftrightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible left-right double arrow with labels."
+  },
+  "xRightarrow": {
+    "signature": "\\xRightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible rightward double arrow with labels."
+  },
+  "xcancel": {
+    "signature": "\\xcancel{content}",
+    "package": "Layout",
+    "description": "Strikes the content through with crossing diagonal lines."
+  },
+  "xdef": {
+    "signature": "\\xdef\\name{definition}",
+    "package": "Macros",
+    "description": "Defines a persistent macro, expanding its body at definition time."
+  },
+  "xhookleftarrow": {
+    "signature": "\\xhookleftarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible hooked leftward arrow with labels."
+  },
+  "xhookrightarrow": {
+    "signature": "\\xhookrightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible hooked rightward arrow with labels."
+  },
+  "xi": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter xi."
+  },
+  "xleftarrow": {
+    "signature": "\\xleftarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible leftward arrow with text above and below."
+  },
+  "xleftharpoondown": {
+    "signature": "\\xleftharpoondown[under]{over}",
+    "package": "Relations",
+    "description": "An extensible leftward down-barbed harpoon with labels."
+  },
+  "xleftharpoonup": {
+    "signature": "\\xleftharpoonup[under]{over}",
+    "package": "Relations",
+    "description": "An extensible leftward up-barbed harpoon with labels."
+  },
+  "xleftrightarrow": {
+    "signature": "\\xleftrightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible left-right arrow with labels."
+  },
+  "xleftrightharpoons": {
+    "signature": "\\xleftrightharpoons[under]{over}",
+    "package": "Relations",
+    "description": "Extensible stacked left-right harpoons with labels."
+  },
+  "xlongequal": {
+    "signature": "\\xlongequal[under]{over}",
+    "package": "Relations",
+    "description": "An extensible long equals sign with labels."
+  },
+  "xmapsto": {
+    "signature": "\\xmapsto[under]{over}",
+    "package": "Relations",
+    "description": "An extensible mapping arrow with labels."
+  },
+  "xrightarrow": {
+    "signature": "\\xrightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible rightward arrow with text above and below."
+  },
+  "xrightharpoondown": {
+    "signature": "\\xrightharpoondown[under]{over}",
+    "package": "Relations",
+    "description": "An extensible rightward down-barbed harpoon with labels."
+  },
+  "xrightharpoonup": {
+    "signature": "\\xrightharpoonup[under]{over}",
+    "package": "Relations",
+    "description": "An extensible rightward up-barbed harpoon with labels."
+  },
+  "xrightleftharpoons": {
+    "signature": "\\xrightleftharpoons[under]{over}",
+    "package": "Relations",
+    "description": "Extensible stacked right-left harpoons with labels."
+  },
+  "xtofrom": {
+    "signature": "\\xtofrom[under]{over}",
+    "package": "Relations",
+    "description": "An extensible to-and-from arrow pair with labels."
+  },
+  "xtwoheadleftarrow": {
+    "signature": "\\xtwoheadleftarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible two-headed leftward arrow with labels."
+  },
+  "xtwoheadrightarrow": {
+    "signature": "\\xtwoheadrightarrow[under]{over}",
+    "package": "Relations",
+    "description": "An extensible two-headed rightward arrow with labels."
+  },
+  "yen": {
+    "package": "Symbols and Punctuation",
+    "description": "The yen currency symbol."
+  },
+  "zeta": {
+    "package": "Letters and Unicode",
+    "description": "The lowercase Greek letter zeta."
+  },
+  "{": {
+    "package": "Delimiters",
+    "description": "Literal left curly brace delimiter."
+  },
+  "|": {
+    "package": "Delimiters",
+    "description": "Vertical bar delimiter."
+  },
+  "~": {
+    "signature": "\\~{character}",
+    "package": "Accents",
+    "description": "Places a tilde text accent over the character."
+  }
+}

@@ -31,12 +31,44 @@ export type CommandCategory = 'function' | 'symbol' | 'macro' | 'environment';
  * `name` never includes the leading backslash — it is the bare control word
  * (e.g. `frac`). The backslash is added by the completion/hover layer so the
  * data is uniform regardless of how the user typed the trigger.
+ *
+ * Only `name` and `category` are always present: they come from the backend's
+ * own package source and so are exhaustive and exact. The remaining fields are
+ * documentation metadata, merged in from each engine's reference docs by
+ * `scripts/generate-commands.ts`; any of them may be absent for a given
+ * command, and the hover/completion layer degrades gracefully when they are.
  */
 export interface MathCommand {
     /** The command name without its leading backslash (e.g. `frac`). */
     name: string;
     /** Which {@link CommandCategory} the command belongs to. */
     category: CommandCategory;
+    /**
+     * A usage signature spelling out the command's arguments, e.g.
+     * `\sqrt[degree]{radicand}`. Present only for commands that take
+     * arguments — a no-argument command (`\alpha`, `\sin`) has none.
+     */
+    signature?: string;
+    /**
+     * The single Unicode character the command stands for, e.g. `α` for
+     * `\alpha` or `∮` for `\oint`. Present only for commands that denote one
+     * Unicode glyph.
+     */
+    unicode?: string;
+    /**
+     * The Unicode standard name of {@link MathCommand.unicode}, lower-cased
+     * (e.g. `greek small letter alpha`, `contour integral`). Present only
+     * alongside `unicode`, and only when the name could be resolved.
+     */
+    unicodeName?: string;
+    /**
+     * The backend package/extension the command belongs to — a MathJax
+     * extension name (`base`, `ams`, `physics`, …) or, for KaTeX, the section
+     * of its support table the command is documented under.
+     */
+    package?: string;
+    /** A one-line, human-readable description of what the command does. */
+    description?: string;
 }
 
 /** The math backends this server can emulate. */
