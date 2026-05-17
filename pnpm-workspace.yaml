@@ -5,3 +5,6 @@ onlyBuiltDependencies:
   - core-js-pure
   - deno
   - esbuild
+  - msw
+  - tree-sitter
+  - tree-sitter-cli
