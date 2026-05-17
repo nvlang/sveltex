@@ -50,6 +50,11 @@ updates:
     # Branch to create pull requests against
     target-branch: 'dependencies'
 
+    # Conventional-commit prefix, matching the npm entry above.
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'
+
     # When to check for updates
     schedule:
       # How often to check for updates
@@ -60,3 +65,9 @@ updates:
 
       # Timezone for time of day (zone identifier)
       timezone: 'Europe/Paris'
+
+    # One grouped pull request per cycle, rather than one per action.
+    groups:
+      github-actions:
+        patterns:
+          - '*'

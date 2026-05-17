@@ -35,10 +35,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Set up TeX Live
-        uses: TeX-Live/setup-texlive-action@v3
+        uses: TeX-Live/setup-texlive-action@5ead3060cb9c2d6bf985c23b38a30669a13a3f3c # v3
         with:
           packages: |
             scheme-basic
@@ -54,13 +54,13 @@ jobs:
             lipsum
             xcolor
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         name: Install pnpm
         with:
           run_install: false
 
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: lts/*
           cache: pnpm
