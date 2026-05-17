@@ -12,8 +12,11 @@ on:
   schedule:
     - cron: '18 9 * * 3'
   push:
+    # Scorecard only analyses the default branch — `ossf/scorecard-action`
+    # errors ("Only the default branch main is supported") on any other
+    # branch, so this must stay `main` even though work targets `develop`.
     branches:
-      - develop
+      - main
 
 # Read-only by default; the analysis job elevates only what it needs.
 permissions: read-all
