@@ -42,34 +42,42 @@ const { test, testCases } = setupTest(
         // SvelTeX requires SvelteKit, so only the `kit-*` variants apply.
         filter: (testCase) => testCase.variant.includes('kit'),
         browser: false,
-        // The add-on pins `@nvl/sveltex` to `^0.5.0`, which is not yet published
-        // to npm. After the add-on has run, the `sv` test harness performs a
-        // real `pnpm install` of every scaffolded project from a shared
-        // workspace root. To keep that install resolvable (the assertions only
-        // inspect generated file contents, not a working SvelTeX install), a
-        // `pnpm.overrides` entry is written into that workspace-root
-        // `package.json` redirecting `@nvl/sveltex` to the local monorepo
-        // package via a relative `file:` specifier.
+        // The add-on pins `@nvl/sveltex` to `^0.5.0`, which is not yet
+        // published to npm. After the add-on has run, the `sv` test harness
+        // performs a real `pnpm install` of every scaffolded project from a
+        // shared workspace root. To keep that install resolvable (the
+        // assertions only inspect generated file contents, not a working
+        // SvelTeX install), an `overrides` entry redirecting `@nvl/sveltex`
+        // to the local monorepo package via a relative `file:` specifier is
+        // appended to that workspace root's `pnpm-workspace.yaml` — pnpm 11
+        // reads `overrides` from there, not from `package.json`.
         preAdd: ({ cwd }) => {
-            // The harness lays out each scaffolded project as a direct child of
-            // the shared workspace root, so the root is the project's parent.
+            // The harness lays out each scaffolded project as a direct child
+            // of the shared workspace root, so the root is the project's
+            // parent — and it has already written a `pnpm-workspace.yaml`
+            // there. `preAdd` runs once per scaffolded project, so append the
+            // override only the first time.
             const workspaceRoot = path.dirname(cwd);
-            const rootPkgPath = path.resolve(workspaceRoot, 'package.json');
-            const rootPkg = JSON.parse(
-                fs.readFileSync(rootPkgPath, 'utf8'),
-            ) as {
-                pnpm?: { overrides?: Record<string, string> };
-            };
+            const workspaceYamlPath = path.resolve(
+                workspaceRoot,
+                'pnpm-workspace.yaml',
+            );
             // `file:` overrides are resolved relative to the workspace root.
             // POSIX separators keep the specifier valid on every platform.
             const relativeSveltex = path
                 .relative(workspaceRoot, localSveltexPkgDir)
                 .split(path.sep)
                 .join('/');
-            rootPkg.pnpm ??= {};
-            rootPkg.pnpm.overrides ??= {};
-            rootPkg.pnpm.overrides['@nvl/sveltex'] = `file:${relativeSveltex}`;
-            fs.writeFileSync(rootPkgPath, JSON.stringify(rootPkg), 'utf8');
+            const workspaceYaml = fs.readFileSync(workspaceYamlPath, 'utf8');
+            if (!workspaceYaml.includes('overrides:')) {
+                fs.writeFileSync(
+                    workspaceYamlPath,
+                    `${workspaceYaml.trimEnd()}\n` +
+                        `overrides:\n` +
+                        `  '@nvl/sveltex': 'file:${relativeSveltex}'\n`,
+                    'utf8',
+                );
+            }
         },
     },
 );
