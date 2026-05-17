@@ -3,18 +3,21 @@
 // A `.sveltex` document may open with a YAML / TOML / JSON frontmatter block.
 // SvelTeX reads it and renders the recognised keys into the document's
 // `<svelte:head>` — `title` becomes `<title>`, `meta` becomes `<meta>` tags,
-// and so on. This module documents that mapping: each known frontmatter key,
-// and each standard `<meta>` `name` / `http-equiv` value, is backed by a
-// one-line description and a documentation link (MDN for the keys and values
-// that map to an HTML head construct). It surfaces that knowledge two ways —
-// as hover text, and as completion suggestions.
+// and so on. This module documents that mapping, surfacing it as hover text
+// and as completion suggestions.
+//
+// Both are *context-aware*: which keys are valid depends on the block the
+// caret sits in — the top level, or inside `meta` / `base` / `link` — so e.g.
+// `title` is documented and suggested at the top level but not inside `meta`,
+// where SvelTeX would not render it as a title.
 //
 // Frontmatter is a non-delegated region: the embedded Svelte language server
 // never sees it. Hover and completion here are therefore computed natively.
 // They need no position mapping — a frontmatter region is verbatim `.sveltex`
 // source, so a token's line/character already are its source coordinates —
-// and no real YAML/TOML/JSON parse: a key/value pair is recognised by a small
-// line-shaped pattern that covers all three syntaxes.
+// and no real YAML/TOML/JSON parse: the line a key sits on, and which block
+// encloses it, are recognised by small line-shaped patterns that cover all
+// three syntaxes.
 
 import {
     CompletionItemKind,
@@ -38,15 +41,8 @@ interface FrontmatterEntryDoc {
 /** Base URL of the MDN HTML element reference. */
 const MDN = 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element';
 
-/**
- * The recognised SvelTeX frontmatter keys, keyed by bare name.
- *
- * The set mirrors the `Frontmatter` interface of `@nvl/sveltex`: the top-level
- * keys `title`, `noscript`, `base`, `meta`, `link` and `imports`, plus the
- * nested keys a user writes inside `base`, `meta` and `link` entries. Each maps
- * to an HTML `<head>` construct (except `imports`, which is SvelTeX's own).
- */
-const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterEntryDoc>> = {
+/** The structural keys valid at the frontmatter top level. */
+const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
     title: {
         summary:
             "Sets the document's title — rendered as the page's `<title>` " +
@@ -70,13 +66,6 @@ const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterEntryDoc>> = {
         element: '<base>',
         docUrl: `${MDN}/base`,
     },
-    target: {
-        summary:
-            'The default browsing context for links and forms ' +
-            '(`<base target>`) — e.g. `_blank`, `_self`, `_parent`, `_top`.',
-        element: '<base target>',
-        docUrl: `${MDN}/base#target`,
-    },
     meta: {
         summary:
             'A list of `<meta>` elements — document-level metadata such as ' +
@@ -85,42 +74,12 @@ const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterEntryDoc>> = {
         element: '<meta>',
         docUrl: `${MDN}/meta`,
     },
-    name: {
-        summary:
-            'The kind of metadata a `<meta>` element carries ' +
-            '(`<meta name>`) — e.g. `description`, `viewport`, `keywords`, ' +
-            '`author`, `theme-color`.',
-        element: '<meta name>',
-        docUrl: `${MDN}/meta#name`,
-    },
-    'http-equiv': {
-        summary:
-            'A pragma directive — a `<meta http-equiv>` element that acts ' +
-            'like the equivalent HTTP response header.',
-        element: '<meta http-equiv>',
-        docUrl: `${MDN}/meta#http-equiv`,
-    },
-    content: {
-        summary:
-            'The value of a `<meta>` element, paired with its `name` or ' +
-            '`http-equiv`.',
-        element: '<meta content>',
-        docUrl: `${MDN}/meta#content`,
-    },
     link: {
         summary:
             'A list of `<link>` elements — relationships to external ' +
             'resources such as stylesheets, icons and preloaded assets.',
         element: '<link>',
         docUrl: `${MDN}/link`,
-    },
-    rel: {
-        summary:
-            'The relationship between the document and a linked resource ' +
-            '(`<link rel>`) — e.g. `stylesheet`, `icon`, `preload`, ' +
-            '`canonical`.',
-        element: '<link rel>',
-        docUrl: `${MDN}/link#rel`,
     },
     imports: {
         summary:
@@ -132,8 +91,10 @@ const FRONTMATTER_SCHEMA: Readonly<Record<string, FrontmatterEntryDoc>> = {
 };
 
 /**
- * Standard `<meta name="…">` values — what a user writes as the value of a
- * `name:` entry inside `meta`. Mirrors `@nvl/sveltex`'s `MetaName` type.
+ * Standard `<meta name="…">` values. Mirrors `@nvl/sveltex`'s `MetaName`
+ * type. SvelTeX accepts a metadata name as a `name:` value (array form), a
+ * `meta` mapping key, or a top-level key, so these are valid both as values
+ * and as keys.
  */
 const META_NAMES: Readonly<Record<string, FrontmatterEntryDoc>> = {
     charset: {
@@ -205,8 +166,8 @@ const META_NAMES: Readonly<Record<string, FrontmatterEntryDoc>> = {
 };
 
 /**
- * Standard `<meta http-equiv="…">` values — what a user writes as the value
- * of an `http-equiv:` entry. Mirrors `@nvl/sveltex`'s `MetaHttpEquiv` type.
+ * Standard `<meta http-equiv="…">` values. Mirrors `@nvl/sveltex`'s
+ * `MetaHttpEquiv` type. Valid as an `http-equiv:` value or written as a key.
  */
 const META_HTTP_EQUIV: Readonly<Record<string, FrontmatterEntryDoc>> = {
     'content-security-policy': {
@@ -223,68 +184,133 @@ const META_HTTP_EQUIV: Readonly<Record<string, FrontmatterEntryDoc>> = {
     },
 };
 
+/** The object keys of a `meta: [{ … }]` array item. */
+const META_ITEM_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    name: {
+        summary:
+            'The kind of metadata a `<meta>` element carries ' +
+            '(`<meta name>`) — e.g. `description`, `viewport`, `keywords`, ' +
+            '`author`, `theme-color`.',
+        element: '<meta name>',
+        docUrl: `${MDN}/meta#name`,
+    },
+    'http-equiv': {
+        summary:
+            'A pragma directive — a `<meta http-equiv>` element that acts ' +
+            'like the equivalent HTTP response header.',
+        element: '<meta http-equiv>',
+        docUrl: `${MDN}/meta#http-equiv`,
+    },
+    content: {
+        summary:
+            'The value of a `<meta>` element, paired with its `name` or ' +
+            '`http-equiv`.',
+        element: '<meta content>',
+        docUrl: `${MDN}/meta#content`,
+    },
+};
+
+/** Keys valid inside a `base` block. */
+const BASE_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    href: {
+        summary:
+            'The base URL for the document (`<base href>`). Every relative ' +
+            'URL on the page is resolved against it.',
+        element: '<base href>',
+        docUrl: `${MDN}/base#href`,
+    },
+    target: {
+        summary:
+            'The default browsing context for links and forms ' +
+            '(`<base target>`) — e.g. `_blank`, `_self`, `_parent`, `_top`.',
+        element: '<base target>',
+        docUrl: `${MDN}/base#target`,
+    },
+};
+
+/** Keys valid inside a `link` item. */
+const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    rel: {
+        summary:
+            'The relationship between the document and a linked resource ' +
+            '(`<link rel>`) — e.g. `stylesheet`, `icon`, `preload`, ' +
+            '`canonical`.',
+        element: '<link rel>',
+        docUrl: `${MDN}/link#rel`,
+    },
+    href: {
+        summary:
+            'The URL of the linked resource (`<link href>`) — the ' +
+            'stylesheet, icon or asset the `<link>` points to.',
+        element: '<link href>',
+        docUrl: `${MDN}/link#href`,
+    },
+    as: {
+        summary:
+            'For `rel="preload"` / `rel="modulepreload"`, the kind of ' +
+            'content being fetched (`<link as>`) — e.g. `script`, `style`, ' +
+            '`font`, `image`.',
+        element: '<link as>',
+        docUrl: `${MDN}/link#as`,
+    },
+    type: {
+        summary:
+            'The MIME type of the linked resource (`<link type>`) — e.g. ' +
+            '`text/css` for a stylesheet.',
+        element: '<link type>',
+        docUrl: `${MDN}/link#type`,
+    },
+    crossorigin: {
+        summary:
+            'The CORS policy used when fetching the linked resource ' +
+            '(`<link crossorigin>`) — `anonymous` or `use-credentials`.',
+        element: '<link crossorigin>',
+        docUrl: `${MDN}/link#crossorigin`,
+    },
+};
+
 /**
- * Every name a user may write as a frontmatter *key*.
- *
- * Besides the structural keys, this includes the `<meta>` `name` /
- * `http-equiv` values: SvelTeX's `interpretFrontmatter` accepts a metadata
- * name written directly as a key — at the top level (`description: …`) or in
- * the `meta: { description: … }` mapping form — not only as the value of a
- * `name:` entry in the `meta: [{ name: … }]` array form. The three name
- * spaces are disjoint, so the merge is unambiguous.
+ * Every key valid at the frontmatter top level: the structural keys, plus the
+ * metadata names — which SvelTeX also accepts written directly as top-level
+ * keys (`description: …`), not only inside `meta`.
  */
-const ALL_FRONTMATTER_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
-    ...FRONTMATTER_SCHEMA,
+const TOP_LEVEL_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    ...TOP_LEVEL_STRUCTURAL,
     ...META_NAMES,
     ...META_HTTP_EQUIV,
 };
 
 /**
- * Selects named entries from a schema map, skipping any that are absent.
- *
- * @param source - The schema map to pick from.
- * @param names - The entry names to keep.
+ * Every key valid inside a `meta` block: the metadata names and pragma
+ * directives (the `meta: { description: … }` mapping form) plus the object
+ * keys of the `meta: [{ name: … }]` array form.
  */
-function subset(
-    source: Readonly<Record<string, FrontmatterEntryDoc>>,
-    names: readonly string[],
-): Record<string, FrontmatterEntryDoc> {
-    const out: Record<string, FrontmatterEntryDoc> = {};
-    for (const name of names) {
-        const doc = source[name];
-        if (doc) out[name] = doc;
+const META_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
+    ...META_NAMES,
+    ...META_HTTP_EQUIV,
+    ...META_ITEM_KEYS,
+};
+
+/**
+ * Returns the keys valid in a frontmatter block.
+ *
+ * @param where - The enclosing block from {@link frontmatterContext} —
+ * `meta` / `base` / `link`, or `undefined` for the top level.
+ */
+function keysForContext(
+    where: string | undefined,
+): Readonly<Record<string, FrontmatterEntryDoc>> {
+    switch (where) {
+        case 'meta':
+            return META_KEYS;
+        case 'base':
+            return BASE_KEYS;
+        case 'link':
+            return LINK_KEYS;
+        default:
+            return TOP_LEVEL_KEYS;
     }
-    return out;
 }
-
-/** Keys completion offers at the frontmatter top level. */
-const TOP_LEVEL_COMPLETIONS: Readonly<Record<string, FrontmatterEntryDoc>> = {
-    ...subset(FRONTMATTER_SCHEMA, [
-        'title',
-        'noscript',
-        'base',
-        'meta',
-        'link',
-        'imports',
-    ]),
-    // A metadata name may also be written directly as a top-level key.
-    ...META_NAMES,
-    ...META_HTTP_EQUIV,
-};
-
-/** Keys completion offers inside a `meta` block. */
-const META_COMPLETIONS: Readonly<Record<string, FrontmatterEntryDoc>> = {
-    ...META_NAMES,
-    ...META_HTTP_EQUIV,
-    // The object keys of the `meta: [{ name: … }]` array form.
-    ...subset(FRONTMATTER_SCHEMA, ['name', 'http-equiv', 'content']),
-};
-
-/** Keys completion offers inside a `base` block. */
-const BASE_COMPLETIONS = subset(FRONTMATTER_SCHEMA, ['target']);
-
-/** Keys completion offers inside a `link` item. */
-const LINK_COMPLETIONS = subset(FRONTMATTER_SCHEMA, ['rel']);
 
 /** A key or value token located on a frontmatter line. */
 interface Token {
@@ -363,6 +389,52 @@ function caretOn(caret: number, token: Token): boolean {
 }
 
 /**
+ * Finds which block a caret line sits inside — `meta`, `base` or `link` — by
+ * walking up to the nearest enclosing key: a less-indented YAML/JSON key, or
+ * a TOML `[table]` header. `undefined` means the frontmatter top level.
+ *
+ * @param lines - The `.sveltex` document split into lines.
+ * @param lineIndex - The caret's line index.
+ */
+function frontmatterContext(
+    lines: readonly string[],
+    lineIndex: number,
+): string | undefined {
+    const indentOf = (s: string): number =>
+        (/^\s*/u.exec(s)?.[0] ?? '').length;
+    let minIndent = indentOf(lines[lineIndex] ?? '');
+    for (let i = lineIndex - 1; i >= 0; i -= 1) {
+        const raw = lines[i] ?? '';
+        const trimmed = raw.trim();
+        if (trimmed === '' || trimmed.startsWith('#')) continue;
+        // The frontmatter fence — the top of the block has been reached.
+        if (/^[-+]{3,}$/u.test(trimmed)) break;
+        // A TOML `[table]` / `[[table]]` header is the enclosing table.
+        const toml = /^\[+\s*([A-Za-z_][\w-]*)/u.exec(trimmed);
+        if (toml) {
+            const name = toml[1];
+            return name === 'meta' || name === 'base' || name === 'link'
+                ? name
+                : undefined;
+        }
+        // YAML / JSON: an ancestor is any line indented less than the caret.
+        const indent = indentOf(raw);
+        if (indent < minIndent) {
+            minIndent = indent;
+            const keyName = parseFrontmatterLine(raw).key?.name;
+            if (
+                keyName === 'meta' ||
+                keyName === 'base' ||
+                keyName === 'link'
+            ) {
+                return keyName;
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
  * Builds the Markdown body shown when hovering a frontmatter key or value.
  *
  * @param name - The bare token text.
@@ -412,23 +484,25 @@ function entryHover(
  * guarantees it falls inside a `frontmatter` region.
  * @returns A {@link Hover} describing the frontmatter key — or, on a `name:` /
  * `http-equiv:` line, the standard `<meta>` value — under the caret, or `null`
- * when the caret is not on a recognised token.
+ * when the caret is not on a token recognised in that block.
  */
 export function computeFrontmatterHover(
     source: string,
     position: Position,
 ): Hover | null {
-    const line = source.split(/\r\n?|\n/u)[position.line];
+    const lines = source.split(/\r\n?|\n/u);
+    const line = lines[position.line];
     if (line === undefined) return null;
 
     const { key, value } = parseFrontmatterLine(line);
     const caret = position.character;
 
-    // Caret on the key — describe the frontmatter key itself. A key may be a
-    // structural key or a metadata name written directly (see
-    // `ALL_FRONTMATTER_KEYS`).
+    // Caret on the key — describe it, but only if the key is valid in the
+    // block the caret sits in. `title` inside `meta`, say, is left undocumented
+    // because SvelTeX would not render it as the page title there.
     if (key && caretOn(caret, key)) {
-        const doc = ALL_FRONTMATTER_KEYS[key.name];
+        const keys = keysForContext(frontmatterContext(lines, position.line));
+        const doc = keys[key.name];
         return doc ? entryHover(key, doc, position.line) : null;
     }
 
@@ -474,56 +548,10 @@ function completionContext(line: string, caret: number): CompletionContext {
 }
 
 /**
- * Finds which block a caret line sits inside — `meta`, `base` or `link` — by
- * walking up to the nearest enclosing key: a less-indented YAML/JSON key, or
- * a TOML `[table]` header. `undefined` means the frontmatter top level.
- *
- * @param lines - The `.sveltex` document split into lines.
- * @param lineIndex - The caret's line index.
- */
-function frontmatterContext(
-    lines: readonly string[],
-    lineIndex: number,
-): string | undefined {
-    const indentOf = (s: string): number =>
-        (/^\s*/u.exec(s)?.[0] ?? '').length;
-    let minIndent = indentOf(lines[lineIndex] ?? '');
-    for (let i = lineIndex - 1; i >= 0; i -= 1) {
-        const raw = lines[i] ?? '';
-        const trimmed = raw.trim();
-        if (trimmed === '' || trimmed.startsWith('#')) continue;
-        // The frontmatter fence — the top of the block has been reached.
-        if (/^[-+]{3,}$/u.test(trimmed)) break;
-        // A TOML `[table]` / `[[table]]` header is the enclosing table.
-        const toml = /^\[+\s*([A-Za-z_][\w-]*)/u.exec(trimmed);
-        if (toml) {
-            const name = toml[1];
-            return name === 'meta' || name === 'base' || name === 'link'
-                ? name
-                : undefined;
-        }
-        // YAML / JSON: an ancestor is any line indented less than the caret.
-        const indent = indentOf(raw);
-        if (indent < minIndent) {
-            minIndent = indent;
-            const keyName = parseFrontmatterLine(raw).key?.name;
-            if (
-                keyName === 'meta' ||
-                keyName === 'base' ||
-                keyName === 'link'
-            ) {
-                return keyName;
-            }
-        }
-    }
-    return undefined;
-}
-
-/**
  * Computes the completion list for a caret inside a `.sveltex` frontmatter
- * region: the frontmatter keys when a key is being typed, or the standard
- * `<meta>` `name` / `http-equiv` values when the caret is on the value of
- * such an entry.
+ * region: the keys valid in the enclosing block when a key is being typed, or
+ * the standard `<meta>` `name` / `http-equiv` values when the caret is on the
+ * value of such an entry.
  *
  * @param source - Full text of the `.sveltex` document.
  * @param position - The caret position, in `.sveltex` coordinates. The caller
@@ -546,15 +574,7 @@ export function computeFrontmatterCompletion(
     if (context.kind === 'key') {
         // Offer only the keys valid in the block the caret sits in — so e.g.
         // `title` is not suggested inside a `meta` block.
-        const where = frontmatterContext(lines, position.line);
-        entries =
-            where === 'meta'
-                ? META_COMPLETIONS
-                : where === 'base'
-                  ? BASE_COMPLETIONS
-                  : where === 'link'
-                    ? LINK_COMPLETIONS
-                    : TOP_LEVEL_COMPLETIONS;
+        entries = keysForContext(frontmatterContext(lines, position.line));
         kind = CompletionItemKind.Property;
     } else if (context.ofKey === 'name') {
         entries = META_NAMES;

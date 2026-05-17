@@ -201,6 +201,27 @@ describe('computeFrontmatterHover', () => {
         });
         expect(bodyOf(hover)).toContain('<meta name="viewport">');
     });
+
+    it('does not document a key that is invalid in its block', () => {
+        // `title` inside `meta` is not a title — SvelTeX would not render it
+        // as one — so it gets no hover there.
+        const source = ['---', 'meta:', '  title: x', '---'].join('\n');
+        expect(
+            computeFrontmatterHover(source, { line: 2, character: 4 }),
+        ).toBeNull();
+    });
+
+    it('documents `href` differently inside `base` and `link`', () => {
+        const base = ['---', 'base:', '  href: /docs/', '---'].join('\n');
+        expect(
+            bodyOf(computeFrontmatterHover(base, { line: 2, character: 4 })),
+        ).toContain('<base href>');
+
+        const link = ['---', 'link:', '  - href: /a.css', '---'].join('\n');
+        expect(
+            bodyOf(computeFrontmatterHover(link, { line: 2, character: 6 })),
+        ).toContain('<link href>');
+    });
 });
 
 describe('computeFrontmatterCompletion', () => {
@@ -303,5 +324,19 @@ describe('computeFrontmatterCompletion', () => {
         expect(labels).toContain('meta');
         // A metadata name is also valid written as a top-level key.
         expect(labels).toContain('description');
+    });
+
+    it('inside a `link` item, suggests link attributes', () => {
+        const source = ['---', 'link:', '  - a', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 2,
+            character: 5,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('rel');
+        expect(labels).toContain('href');
+        expect(labels).toContain('as');
+        expect(labels).toContain('type');
+        expect(labels).toContain('crossorigin');
+        expect(labels).not.toContain('title');
     });
 });
