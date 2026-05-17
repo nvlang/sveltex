@@ -1,10 +1,19 @@
 packages:
   - packages/*
 
-onlyBuiltDependencies:
-  - core-js-pure
-  - deno
-  - esbuild
-  - msw
-  - tree-sitter
-  - tree-sitter-cli
+# pnpm 11 replaced `onlyBuiltDependencies` with `allowBuilds`, a map whose
+# `true` values permit a dependency to run its install/build scripts.
+allowBuilds:
+  core-js-pure: true
+  deno: true
+  esbuild: true
+  msw: true
+  tree-sitter: true
+  tree-sitter-cli: true
+
+patchedDependencies:
+  tree-sitter@0.25.0: patches/tree-sitter@0.25.0.patch
+
+# pnpm 11 restricts `.npmrc` to auth/registry settings; everything else
+# (such as the publish-branch guard) now lives here.
+publishBranch: main
