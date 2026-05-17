@@ -107,13 +107,17 @@ piggyback on.
 - **`core/markdown.ts`** — native Markdown features (document symbols, folding
   ranges, selection ranges) computed directly from the mdast. These need no
   position mapping because the mdast carries source offsets.
+- **`core/frontmatter.ts`** — native hover and completion for a frontmatter
+  block: the frontmatter keys (`title`, `meta`, `base`, `link`, …) and the
+  standard `<meta>` names, resolved against the block the caret sits in.
 - **`core/diagnostics.ts` / `core/remap.ts`** — translate every
   position-bearing message. Requests are mapped source → generated before being
   forwarded; responses (and diagnostics) are mapped generated → source, and
   anything that lands in a non-delegated region is dropped.
 - **`core/server.ts`** — `createServer(connection)`, the orchestrator. It
   routes each request: a delegated region goes to the Svelte proxy, a math or
-  LaTeX-verbatim region to `RegionForwarder`.
+  LaTeX-verbatim region to `RegionForwarder`, and a frontmatter region to the
+  native `core/frontmatter.ts` handler.
 
 ### Why one virtual document and not many
 
@@ -143,11 +147,10 @@ This is what makes the same core reusable across editors:
   `vscode-languageclient` `LanguageClient` launches `bin/server.js` as a child
   process over Node IPC. `startServer()` creates the LSP connection;
   `createServer()` does the work.
-- **Zed** (future, not built here): the Zed extension only needs to launch
-  `bin/server.js` and talk LSP over **stdio**. Because `createServer()` is
-  transport-agnostic and `bin/server.js` already exists, _no change to this
-  package is required_ — the Zed extension is purely a thin launcher on the Zed
-  side.
+- **Zed** (`editors/zed`): a thin Zed extension that launches `bin/server.js`
+  and talks LSP over **stdio**. Because `createServer()` is transport-agnostic
+  and `bin/server.js` already exists, the Zed extension needs no change to this
+  package — it is purely a thin launcher on the Zed side.
 
 Any future host (Neovim, Emacs `lsp-mode`, Sublime LSP, ...) plugs in the same
 way: run `bin/server.js`, speak LSP.
@@ -168,11 +171,14 @@ inside non-delegated regions:
 - Signature help
 - Document links
 
-**Native** (computed from the mdast, no proxy, no mapping needed):
+**Native** (computed directly from the `.sveltex` source, no proxy, no mapping
+needed):
 
 - Document symbols (heading outline)
 - Folding ranges
 - Selection ranges
+- Frontmatter hover and completion — the frontmatter keys and standard
+  `<meta>` names, each documented with a link to MDN
 
 **Forwarded to dedicated child servers** (each non-delegated region becomes its
 own small virtual document; positions and results are mapped back):
@@ -180,9 +186,10 @@ own small virtual document; positions and results are mapped back):
 - **Math regions** (`$…$`, `$$…$$`, `\(…\)`, `\[…\]`) → the bundled
   [`@nvl/sveltex-math-language-server`](../sveltex-math-language-server),
   spawned with `initializationOptions.backend` set from the SvelTeX config's
-  `mathBackend`. TeX command completion (on `\`) and hover. When `mathBackend`
-  is `custom` or `none` — backends with no math server — math regions are
-  skipped.
+  `mathBackend`. TeX command completion (on `\`) and rich hover — the
+  command's signature, the Unicode symbol it renders, and a description. When
+  `mathBackend` is `custom` or `none` — backends with no math server — math
+  regions are skipped.
 - **LaTeX verbatim regions** (a `verbatim` environment whose tag is one of the
   configured `latexTags` — `tex` / `latex` / `tikz` by default) → a spawned
   [TexLab](https://github.com/latex-lsp/texlab) process, _if_ a `texlab` binary
@@ -190,8 +197,8 @@ own small virtual document; positions and results are mapped back):
   `texlab` is not installed, these regions are skipped silently — no error.
 
 **Document sync:** `didOpen` / `didChange` / `didClose` of the source file are
-translated into sync of the virtual `.svelte` document. Changes trigger a
-debounced full re-parse (full-document sync).
+translated into sync of the virtual `.svelte` document. Each change triggers a
+synchronous full re-parse (full-document sync).
 
 **Configuration:** `sveltex.config.{js,cjs,mjs}` is loaded on `initialize` to
 pick up verbatim-environment names, math delimiters, the math backend, and
@@ -266,6 +273,9 @@ exercise the whole stack inside VS Code:
    - Inside a LaTeX verbatim environment (`<tex> … </tex>`), completion and
      hover work _if_ a `texlab` binary is on `PATH`; if not, the editor simply
      offers nothing there (no error).
+   - In the frontmatter block, hover a key such as `title` or `description`,
+     and press <kbd>Ctrl</kbd>+<kbd>Space</kbd> while typing a key — both are
+     answered natively.
    - A heading outline appears in the Outline view (native Markdown symbols).
 
 If the language server fails to start, the extension logs an error but keeps

@@ -20,8 +20,10 @@ any editor over stdio.
 - **Command completion** — triggered on `\`. As you type `\fra…` the server
   offers `\frac`, `\frak`, … Inside `\begin{…}` / `\end{…}` it offers
   environment names instead.
-- **Hover** — hovering a command shows a short description, its category
-  (function / symbol / macro / environment) and which backend supports it.
+- **Hover** — hovering a command shows its signature when it takes arguments
+  (`\sqrt[index]{radicand}`), the Unicode glyph it stands for when it is a
+  symbol (`∮ (contour integral)`), a one-line description, and the package and
+  backend that provide it.
 
 ## Two backends, two command sets
 
@@ -58,6 +60,15 @@ are extracted directly from each backend's own package source by
   and reads the registered token keys back out. Packages that need an explicit
   `\require{}` (`physics`, `mathtools`, …) are intentionally excluded: they are
   not available out of the box, so offering them would be a false promise.
+
+On top of the bare command set, the generator enriches each command with
+documentation metadata — a usage signature, the providing package and a
+one-line description — curated from each engine's reference docs and kept in
+`scripts/data/{katex,mathjax}-docs.json`. Symbol commands additionally carry
+the Unicode glyph they render (read from the engines' own symbol tables) and
+that glyph's Unicode standard name (looked up in the Unicode Character
+Database). All of it is baked into the generated file, so hover stays a pure,
+offline lookup.
 
 `katex` and `@mathjax/src` are **devDependencies only** — the published package
 ships the generated static data and has no runtime dependency on either. Run

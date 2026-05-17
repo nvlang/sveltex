@@ -1,7 +1,8 @@
 # SvelTeX language support
 
-This extension adds syntax highlighting intended for [SvelTeX] files. SvelTeX is a
-preprocessor for Svelte that aims to combine markdown, Svelte, and (some) LaTeX.
+This extension adds language support — syntax highlighting and a full language
+server — for [SvelTeX] files. SvelTeX is a preprocessor for Svelte that aims to
+combine markdown, Svelte, and (some) LaTeX.
 
 ## Features
 
@@ -22,8 +23,13 @@ which brings IntelliSense to `.sveltex` files:
 -   Svelte / Markdown / TypeScript diagnostics, hover, completion,
     go-to-definition, references, rename and more (the real
     `svelte-language-server`, proxied for the Svelte parts of the file).
--   TeX command completion (triggered on `\`) and hover inside math
-    expressions, matching the project's math backend (KaTeX or MathJax).
+-   In math expressions (`$…$`, `$$…$$`, …), TeX command completion (triggered
+    on `\`) and hover. The hover shows the command's signature, the Unicode
+    symbol it stands for (e.g. `∮ (contour integral)`) and a short description,
+    scoped to the project's math backend (KaTeX or MathJax).
+-   In the YAML / TOML / JSON frontmatter block, hover and completion for the
+    frontmatter keys (`title`, `meta`, `base`, `link`, …) and the standard
+    `<meta>` names — each documented, with a link to MDN.
 -   Inside LaTeX tags, full LaTeX assistance when the
     [TexLab](https://github.com/latex-lsp/texlab) language server is installed
     and on `PATH` (otherwise this is skipped silently).
