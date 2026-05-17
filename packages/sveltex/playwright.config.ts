@@ -8,8 +8,8 @@
  *   1. `pnpm generate-projects` writes one isolated SvelteKit app per backend
  *      combo to `tests/e2e/projects/<combo-id>/`.
  *   2. `pnpm test:e2e:build` builds each app to static output.
- *   3. Each app is served by its own `vite preview` server on a unique port
- *      (`3100 + comboIndex`), so combos share no state and cannot interfere.
+ *   3. A single Node process (`serve-projects.ts`) serves every app's static
+ *      build, one port per combo (`3100 + comboIndex`).
  *   4. `combo.spec.ts` screenshots each generated page against its server.
  *
  * Browsers are Playwright projects; backend combos are `describe` blocks
@@ -25,7 +25,6 @@ import process from 'node:process';
 
 import {
     backendCombos,
-    comboId,
     comboPort,
     SHOWCASE_PORT,
 } from './tests/e2e/backends.js';
@@ -33,17 +32,20 @@ import {
 const combos = backendCombos();
 
 /**
- * One `vite preview` server per combo. Playwright starts them all before the
- * run; locally a still-running server is reused for fast iteration, while CI
- * always starts fresh.
+ * A single Node process serves every combo's static `adapter-static` build,
+ * one port per combo — see `tests/e2e/serve-projects.ts`. This replaces the
+ * old design of one `vite preview` process per combo: ~80 Vite processes
+ * exhausted the CI runner's memory and the job was killed mid-run. Ports are
+ * unchanged. Locally a still-running server is reused; CI starts fresh.
  */
-const comboServers = combos.map((combo, index) => ({
-    cwd: `tests/e2e/projects/${comboId(combo)}`,
-    command: 'pnpm preview',
-    url: `http://localhost:${comboPort(index)}`,
+const comboServer = {
+    command: 'node --import tsx/esm tests/e2e/serve-projects.ts',
+    // The script binds combo ports in index order; once the last one answers,
+    // every combo server is up.
+    url: `http://localhost:${comboPort(combos.length - 1)}`,
     reuseExistingServer: !process.env['CI'],
-    timeout: 60_000,
-}));
+    timeout: 120_000,
+};
 
 /**
  * Preview server for the hand-written showcase site (`tests/e2e/showcase/`).
@@ -65,7 +67,7 @@ const showcaseServer = {
  */
 const webServers = process.env['E2E_SHOWCASE_ONLY']
     ? [showcaseServer]
-    : [...comboServers, showcaseServer];
+    : [comboServer, showcaseServer];
 
 export default defineConfig({
     testDir: './tests/e2e',
