@@ -458,10 +458,10 @@ importers:
       node-gyp-build:
         specifier: ^4.8.0
         version: 4.8.4
-      tree-sitter:
-        specifier: ^0.25.0
-        version: 0.25.0(patch_hash=581e1c376edeabe3d25b64ea7bac59e14cc731627b17b97acccf0cce1dd051cb)
     devDependencies:
+      tree-sitter:
+        specifier: 0.25.0
+        version: 0.25.0(patch_hash=581e1c376edeabe3d25b64ea7bac59e14cc731627b17b97acccf0cce1dd051cb)
       tree-sitter-cli:
         specifier: ^0.26.8
         version: 0.26.8
