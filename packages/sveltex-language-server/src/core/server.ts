@@ -208,6 +208,16 @@ export function createServer(connection: Connection): void {
     });
 
     /**
+     * Logs one operational line to the editor's "SvelTeX Language Server"
+     * output channel, tagged `[sveltex]`. Carries child-server lifecycle
+     * messages and config-load outcomes — the things that, when they go
+     * wrong, would otherwise fail silently.
+     */
+    const logInfo = (message: string): void => {
+        connection.console.info(`[sveltex] ${message}`);
+    };
+
+    /**
      * Forwards hover/completion in non-delegated regions to dedicated child
      * servers: the math language server for `math` regions, TexLab for LaTeX
      * `verbatim` regions. Spawns its children lazily on first use.
@@ -216,9 +226,7 @@ export function createServer(connection: Connection): void {
      * are routed to the editor's output channel so a missing or crashing
      * child is visible rather than a silent loss of language features.
      */
-    const regionForwarder = new RegionForwarder(config, (message) => {
-        connection.console.info(`[sveltex] ${message}`);
-    });
+    const regionForwarder = new RegionForwarder(config, logInfo);
 
     /** Returns whether a URI denotes a SvelTeX document. */
     function isSveltexUri(uri: string): boolean {
@@ -397,7 +405,7 @@ export function createServer(connection: Connection): void {
             // the workspace root).
             workspaceRoot = workspaceRootOf(params);
             if (workspaceRoot) {
-                config = await loadConfigSnapshot(workspaceRoot);
+                config = await loadConfigSnapshot(workspaceRoot, logInfo);
             }
             // The forwarder needs the resolved config (math backend, LaTeX
             // tags) before any request can be routed.
@@ -514,7 +522,7 @@ export function createServer(connection: Connection): void {
                 configReloadQueued = false;
                 const root = workspaceRoot;
                 if (!root) break;
-                config = await loadConfigSnapshot(root);
+                config = await loadConfigSnapshot(root, logInfo);
                 regionForwarder.updateConfig(config);
             }
         } finally {
