@@ -19,6 +19,13 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# `docs/` is installed with `--ignore-workspace`, so pnpm 11 cannot see the
+# root `pnpm-workspace.yaml` build-script allow-list and would hard-error
+# (`ERR_PNPM_IGNORED_BUILDS`) on dependencies with install scripts. Allow all
+# build scripts here — the lockfile already pins every dependency.
+env:
+  pnpm_config_dangerously_allow_all_builds: 'true'
+
 jobs:
   build:
     name: Build the VitePress site
