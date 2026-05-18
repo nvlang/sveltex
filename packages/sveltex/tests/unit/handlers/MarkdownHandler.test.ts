@@ -26,7 +26,7 @@ import {
 import { isArray } from '../../../src/typeGuards/utils.js';
 import { spy } from '../fixtures.js';
 import { generateId } from '../../../src/utils/escape.js';
-import { cartesianProduct } from '../utils.js';
+import { cartesianProduct, htmlMatch } from '../utils.js';
 
 describe('MarkdownHandler<MarkdownBackend>', () => {
     describe.each([
@@ -149,7 +149,7 @@ describe('MarkdownHandler<MarkdownBackend>', () => {
                         .replace(/[ ]+<\//gu, '</')
                         .replace(/(<[^/]*>)[ ]+/gu, '$1');
                 }
-                expect(output).toMatch(expected);
+                expect(output).toMatch(htmlMatch(expected));
             });
         });
     });

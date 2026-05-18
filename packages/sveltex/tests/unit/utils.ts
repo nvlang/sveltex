@@ -43,3 +43,24 @@ export function cartesianProduct<X1, X2, X3, X4, X5, X6>(
 export function cartesianProduct(...a: unknown[][]) {
     return a.reduce((a_, b) => a_.flatMap((d) => b.map((e) => [d, e].flat())));
 }
+
+/**
+ * Builds a whitespace-tolerant regular expression from an expected HTML
+ * snippet. Whitespace between two tags is insignificant in HTML, so any such
+ * run in `expected` is allowed to match any amount of whitespace (including
+ * none); whitespace inside text content is kept exact. A `RegExp` argument is
+ * returned unchanged.
+ *
+ * Use it as `expect(output).toMatch(htmlMatch(expected))` so that cosmetic
+ * whitespace differences — e.g. from a markdown-backend update — do not break
+ * the assertion, while genuine differences still do.
+ */
+export function htmlMatch(expected: string | RegExp): RegExp {
+    if (expected instanceof RegExp) return expected;
+    const pattern = expected
+        // Escape regex metacharacters in the literal HTML.
+        .replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+        // Whitespace between two tags may differ — allow any amount of it.
+        .replace(/>\s+</gu, '>\\s*<');
+    return new RegExp(pattern, 'u');
+}

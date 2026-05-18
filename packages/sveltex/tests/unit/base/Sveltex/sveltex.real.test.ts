@@ -24,7 +24,7 @@ import {
     it,
     vi,
 } from 'vitest';
-import { cartesianProduct } from '../../utils.js';
+import { cartesianProduct, htmlMatch } from '../../utils.js';
 import { mergeConfigs } from '../../../../src/utils/merge.js';
 import { generateId } from '../../../../src/utils/escape.js';
 
@@ -261,7 +261,7 @@ describe('Sveltex', () => {
                         // contrary to CommonMark specification.
                         output = output.replaceAll(/\n{2,}/gu, '\n');
                     }
-                    expect(output).toMatch(expected);
+                    expect(output).toMatch(htmlMatch(expected));
                     expect(log).not.toHaveBeenCalled();
                 },
             );

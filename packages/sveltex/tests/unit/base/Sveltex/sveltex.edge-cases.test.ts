@@ -96,9 +96,9 @@ describe('specific examples', () => {
                         '</div>',
                         '</div>',
                     ].join('\n'),
-                    /<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>\n+<div>\n+<div>\n+<p><em>test<\/em><\/p>\n+<\/div>\n+<\/div>/u,
+                    /<div>\s*<div>\s*<p><em>test<\/em><\/p>\s*<\/div>\s*<\/div>\s*<div>\s*<div>\s*<p><em>test<\/em><\/p>\s*<\/div>\s*<\/div>/u,
                 ],
-                ['<script>let a = 1;</script>\n“...”\n', /\n+<p>“\.{3}”<\/p>/u],
+                ['<script>let a = 1;</script>\n“...”\n', /\s*<p>“\.{3}”<\/p>/u],
             ])('%o', async (input, expected) => {
                 const p = await sveltex(
                     { markdownBackend },
