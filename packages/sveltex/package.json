@@ -9,8 +9,13 @@
     "url": "https://nvlang.dev/"
   },
   "license": "MIT",
-  "module": "./dist/mod.js",
-  "main": "./dist/mod.js",
+  "exports": {
+    ".": {
+      "types": "./dist/mod.d.ts",
+      "default": "./dist/mod.js"
+    },
+    "./package.json": "./package.json"
+  },
   "types": "./dist/mod.d.ts",
   "private": false,
   "keywords": [
