@@ -3,9 +3,10 @@
 // carries into a `SveltexConfigSnapshot`: the minimal slice of configuration
 // that the region detector ({@link computeRegions}) needs.
 
-import { pathToFileURL } from 'node:url';
+import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import type { Readable } from 'node:stream';
 import { getDefaultMathConfig } from '@nvl/sveltex';
 // `DirectiveEscapeSettings` is not part of `@nvl/sveltex`'s public `mod.ts`
 // surface, so it is imported from the package's emitted type declarations.
@@ -371,13 +372,156 @@ function readExtensions(
     return strings.length > 0 ? strings : base;
 }
 
+/** How long the config-loader child process may run before it is killed. */
+const CONFIG_LOAD_TIMEOUT_MS = 10_000;
+
+/** Upper bound on the JSON a config-loader child may emit, as a guard. */
+const CONFIG_LOAD_MAX_BYTES = 16 * 1024 * 1024;
+
 /**
- * A monotonically increasing counter appended to the config module's import
- * URL, so each {@link loadConfigSnapshot} call re-imports it afresh instead of
- * getting the (possibly stale) cached module. This is what lets a config
- * reload after an edit actually pick the change up.
+ * Source of the ES-module script run by the config-loader child process (see
+ * {@link loadConfigViaChild}).
+ *
+ * It imports the `svelte.config.*` named in the `SVELTEX_CONFIG_PATH`
+ * environment variable and writes a JSON rendering of the module namespace to
+ * file descriptor 3. A resolved `Sveltex` instance exposes `configuration` and
+ * `mathBackend` as getters — which `JSON.stringify` would drop — so each is
+ * copied onto a plain object, both where the instance is a direct export and
+ * where it sits inside a Svelte config's `preprocess`. {@link
+ * resolveConfigCandidate} then reads that rendering exactly as if it had
+ * imported the module itself.
+ *
+ * The script deliberately contains no backtick or `${...}`, so it survives
+ * being embedded verbatim in the template literal below.
  */
-let configImportCounter = 0;
+const CONFIG_LOADER_SCRIPT = `
+import { pathToFileURL } from 'node:url';
+import { writeSync } from 'node:fs';
+
+const isObject = (value) => typeof value === 'object' && value !== null;
+
+const isSveltexInstance = (value) =>
+    isObject(value) &&
+    'configuration' in value &&
+    'mathBackend' in value &&
+    isObject(value.configuration);
+
+const plainify = (value) =>
+    isSveltexInstance(value)
+        ? { configuration: value.configuration, mathBackend: value.mathBackend }
+        : value;
+
+const mod = await import(pathToFileURL(process.env.SVELTEX_CONFIG_PATH).href);
+
+const rendered = {};
+for (const [key, value] of Object.entries(mod)) {
+    if (isSveltexInstance(value)) {
+        rendered[key] = plainify(value);
+    } else if (isObject(value) && 'preprocess' in value) {
+        const list = Array.isArray(value.preprocess)
+            ? value.preprocess
+            : [value.preprocess];
+        rendered[key] = { ...value, preprocess: list.map(plainify) };
+    } else {
+        rendered[key] = value;
+    }
+}
+
+writeSync(3, JSON.stringify(rendered));
+`;
+
+/**
+ * Imports a `svelte.config.*` in a short-lived child process and returns a
+ * JSON-safe rendering of its module namespace.
+ *
+ * A throwaway process has a throwaway ES-module cache, so every call re-reads
+ * the config *and everything it imports* — a separate `sveltex.config.*`,
+ * shared helper modules, … — none of which an in-process `import()` could
+ * invalidate (a cache-busting query only ever defeats the cache for the entry
+ * URL, never for the modules that entry transitively imports). This is what
+ * lets a live config reload actually observe edits.
+ *
+ * The rendering comes back over a private file descriptor 3, never stdout, so
+ * any logging the config (or `sveltex()`) performs cannot corrupt it.
+ *
+ * @param configPath - Absolute path of the `svelte.config.*` to import.
+ * @returns The parsed module namespace.
+ */
+async function loadConfigViaChild(
+    configPath: string,
+): Promise<Record<string, unknown>> {
+    return new Promise((resolve, reject) => {
+        const child = spawn(
+            process.execPath,
+            ['--input-type=module', '--eval', CONFIG_LOADER_SCRIPT],
+            {
+                cwd: dirname(configPath),
+                env: {
+                    ...process.env,
+                    // When this server itself runs under Electron (the VS Code
+                    // extension host), the child must be told to behave as
+                    // plain Node; the variable is harmless for a real Node
+                    // `execPath`.
+                    ELECTRON_RUN_AS_NODE: '1',
+                    SVELTEX_CONFIG_PATH: configPath,
+                },
+                // fds 0-2 are dropped, so anything the config logs is
+                // discarded; the JSON rendering returns on the private fd 3.
+                stdio: ['ignore', 'ignore', 'ignore', 'pipe'],
+                // A config that hangs on import must not wedge the reloader.
+                timeout: CONFIG_LOAD_TIMEOUT_MS,
+            },
+        );
+
+        let settled = false;
+        const fail = (error: Error): void => {
+            if (settled) return;
+            settled = true;
+            child.kill();
+            reject(error);
+        };
+
+        const resultPipe = child.stdio[3] as Readable | null;
+        if (!resultPipe) {
+            fail(new Error('config loader: result pipe unavailable'));
+            return;
+        }
+
+        const chunks: Buffer[] = [];
+        let size = 0;
+        resultPipe.on('data', (chunk: Buffer) => {
+            size += chunk.length;
+            if (size > CONFIG_LOAD_MAX_BYTES) {
+                fail(new Error('config loader: output too large'));
+                return;
+            }
+            chunks.push(chunk);
+        });
+        child.on('error', fail);
+        child.on('close', (code) => {
+            if (settled) return;
+            if (code !== 0) {
+                fail(
+                    new Error(`config loader exited with code ${String(code)}`),
+                );
+                return;
+            }
+            settled = true;
+            try {
+                const parsed: unknown = JSON.parse(
+                    Buffer.concat(chunks).toString('utf8'),
+                );
+                resolve(isObject(parsed) ? parsed : {});
+            } catch (error) {
+                reject(
+                    error instanceof Error
+                        ? error
+                        : new Error('config loader: invalid JSON output'),
+                );
+            }
+        });
+    });
+}
 
 /**
  * Loads the SvelTeX configuration for a workspace and distills it into a
@@ -397,9 +541,12 @@ let configImportCounter = 0;
  * just because the configuration is unreadable.
  *
  * @remarks
- * `.ts` configs are imported directly and rely on the host Node's TypeScript
- * support (type stripping); on a Node too old for that the import throws and
- * the defaults are used.
+ * The config is imported in a short-lived child process ({@link
+ * loadConfigViaChild}), so each call — and thus each live reload — re-reads
+ * the config and everything it imports. A `.ts` config relies on the child
+ * Node's type-stripping support; the child reuses this server's own Node
+ * binary, so it strips types exactly where the server's runtime would, and on
+ * a Node too old for it the child errors and the defaults are used.
  */
 export async function loadConfigSnapshot(
     workspaceRoot: string,
@@ -410,14 +557,11 @@ export async function loadConfigSnapshot(
 
     let mod: Record<string, unknown>;
     try {
-        // The cache-busting query defeats the ESM module cache, so a reload
-        // after the file is edited sees the new config rather than the
-        // already-imported one.
-        const url =
-            pathToFileURL(configPath).href + `?v=${++configImportCounter}`;
-        const imported: unknown = await import(url);
-        mod = isObject(imported) ? imported : {};
+        mod = await loadConfigViaChild(configPath);
     } catch {
+        // Loading must never fail the server: a missing, broken, or
+        // otherwise unloadable config falls back to the defaults (the
+        // located config path is still reported).
         return { ...base, configPath };
     }
 

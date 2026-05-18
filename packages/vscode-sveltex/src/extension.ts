@@ -197,10 +197,11 @@ function startLanguageClient(extensionPath: string): lc.LanguageClient {
             },
         },
         synchronize: {
-            // React to changes of the user's `svelte.config.*` — the SvelTeX
-            // language server reads its configuration from there.
+            // React to changes of the user's `svelte.config.*` — and of a
+            // `sveltex.config.*` it may import — so the SvelTeX language
+            // server can live-reload its configuration.
             fileEvents: vscode.workspace.createFileSystemWatcher(
-                '**/svelte.config.{js,cjs,mjs,ts,mts,cts}',
+                '**/{svelte,sveltex}.config.{js,cjs,mjs,ts,mts,cts}',
             ),
         },
     };

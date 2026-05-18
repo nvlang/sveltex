@@ -178,7 +178,7 @@ describe('config file location and loading', () => {
         expect(snapshot.mathBackend).toBe('mathjax');
     });
 
-    it('re-reads the config on reload (the import cache is busted)', async () => {
+    it('re-reads the config on each reload', async () => {
         const path = join(dir, 'svelte.config.mjs');
         writeFileSync(
             path,
@@ -187,13 +187,41 @@ describe('config file location and loading', () => {
         const first = await loadConfigSnapshot(dir);
         expect(first.mathBackend).toBe('katex');
 
-        // Edit the config and reload: the snapshot must reflect the new
-        // value rather than the module cached by the first import.
+        // Edit the config and reload: each load runs in a fresh child
+        // process, so the snapshot reflects the new value rather than a
+        // module cached by the first load.
         writeFileSync(
             path,
             "export default { preprocess: [{ mathBackend: 'none', configuration: {} }] };\n",
         );
         const second = await loadConfigSnapshot(dir);
         expect(second.mathBackend).toBe('none');
+    });
+
+    it('re-reads a config the `svelte.config.*` imports, on reload', async () => {
+        // The split-config layout: `svelte.config.*` pulls the SvelTeX
+        // settings in from a separate module. Loading in a fresh child
+        // process re-reads that imported module too — an in-process
+        // `import()` would serve it stale from the module cache.
+        const imported = join(dir, 'sveltex.config.mjs');
+        writeFileSync(
+            join(dir, 'svelte.config.mjs'),
+            [
+                "import preprocessor from './sveltex.config.mjs';",
+                'export default { preprocess: [preprocessor] };',
+                '',
+            ].join('\n'),
+        );
+        writeFileSync(
+            imported,
+            "export default { mathBackend: 'katex', configuration: {} };\n",
+        );
+        expect((await loadConfigSnapshot(dir)).mathBackend).toBe('katex');
+
+        writeFileSync(
+            imported,
+            "export default { mathBackend: 'none', configuration: {} };\n",
+        );
+        expect((await loadConfigSnapshot(dir)).mathBackend).toBe('none');
     });
 });

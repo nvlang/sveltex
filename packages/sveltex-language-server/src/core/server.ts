@@ -181,6 +181,16 @@ export function createServer(connection: Connection): void {
     let workspaceRoot: string | undefined;
 
     /**
+     * Live config-reload bookkeeping (see {@link scheduleConfigReload}). A
+     * burst of `svelte.config.*` watch events is debounced into one reload,
+     * and `configReloadInFlight`/`configReloadQueued` single-flight it —
+     * together they cap the config loader at a single child process at a time.
+     */
+    let configReloadTimer: NodeJS.Timeout | undefined;
+    let configReloadInFlight = false;
+    let configReloadQueued = false;
+
+    /**
      * The embedded Svelte language server. Notifications it emits for a virtual
      * `.svelte` URI are translated and re-emitted by the host on the
      * corresponding `.sveltex` URI.
@@ -488,20 +498,62 @@ export function createServer(connection: Connection): void {
         },
     );
 
-    // A watched `svelte.config.*` changed: reload the SvelTeX config so
-    // region detection and TexLab forwarding pick the new settings up
-    // without an LSP restart. The handler is a notification handler, so it
-    // must return synchronously — the reload runs as a discarded promise.
+    /**
+     * The config-reload pump: drains pending reload requests one at a time,
+     * re-pointing the region forwarder at each fresh snapshot.
+     *
+     * {@link loadConfigSnapshot} spawns a child process, so reloads are run
+     * strictly sequentially — `configReloadInFlight` keeps only one pump (and
+     * thus one child process) alive at a time, and requests that arrive
+     * mid-reload are coalesced into a single trailing pass via
+     * `configReloadQueued`.
+     */
+    async function runConfigReloadPump(): Promise<void> {
+        try {
+            while (configReloadQueued) {
+                configReloadQueued = false;
+                const root = workspaceRoot;
+                if (!root) break;
+                config = await loadConfigSnapshot(root);
+                regionForwarder.updateConfig(config);
+            }
+        } finally {
+            configReloadInFlight = false;
+        }
+    }
+
+    /**
+     * Debounced entry point for a config reload: a single editor save can emit
+     * several watch events in quick succession (atomic write-and-rename, …),
+     * and they collapse into one reload once the file stops changing. The
+     * debounced callback then kicks {@link runConfigReloadPump}, unless one is
+     * already running.
+     */
+    function scheduleConfigReload(): void {
+        if (configReloadTimer) clearTimeout(configReloadTimer);
+        // 200 ms: long enough to absorb a save's burst of events, short
+        // enough to still feel immediate.
+        configReloadTimer = setTimeout(() => {
+            configReloadTimer = undefined;
+            configReloadQueued = true;
+            if (configReloadInFlight) return;
+            configReloadInFlight = true;
+            void runConfigReloadPump();
+        }, 200);
+        // The debounce timer must not by itself keep the process alive.
+        configReloadTimer.unref();
+    }
+
+    // A watched `svelte.config.*` (or a `sveltex.config.*` it imports)
+    // changed: schedule a debounced reload so region detection and TexLab
+    // forwarding pick the new settings up without an LSP restart.
     connection.onDidChangeWatchedFiles((): void => {
-        const root = workspaceRoot;
-        if (!root) return;
-        void (async () => {
-            config = await loadConfigSnapshot(root);
-            regionForwarder.updateConfig(config);
-        })();
+        if (!workspaceRoot) return;
+        scheduleConfigReload();
     });
 
     connection.onShutdown(async () => {
+        if (configReloadTimer) clearTimeout(configReloadTimer);
         await Promise.all([proxy.stop(), regionForwarder.stop()]);
     });
 
