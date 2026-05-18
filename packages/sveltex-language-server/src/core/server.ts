@@ -26,6 +26,7 @@ import {
     type ClientCapabilities,
     type CodeActionParams,
     type CompletionItem,
+    type CompletionList,
     type CompletionParams,
     type DefinitionParams,
     type DidChangeTextDocumentParams,
@@ -156,6 +157,51 @@ function withoutPullDiagnostics(
     };
     delete nextTextDocument.diagnostic;
     return { ...capabilities, textDocument: nextTextDocument };
+}
+
+/**
+ * Origin marker placed on the `data` of every completion item this server
+ * produces itself: items forwarded from a region child (TexLab, the math
+ * server) and items computed natively for frontmatter.
+ *
+ * `completionItem/resolve` carries only the item, so its `data` is the sole
+ * channel for telling an item's origin apart — which is what lets a resolve
+ * request be answered correctly instead of being mis-sent to the embedded
+ * Svelte server, which errors on a completion item it never produced.
+ */
+const NATIVE_COMPLETION_ORIGIN = 'sveltex-native';
+
+/**
+ * Tags every item of a completion result with {@link NATIVE_COMPLETION_ORIGIN}
+ * — applied to the region-forwarded and frontmatter completion results so
+ * their later `completionItem/resolve` is recognised as this server's own.
+ */
+function markNativeCompletion(
+    result: CompletionItem[] | CompletionList | null,
+): CompletionItem[] | CompletionList | null {
+    if (!result) return result;
+    const mark = (item: CompletionItem): CompletionItem => ({
+        ...item,
+        data: { sveltexOrigin: NATIVE_COMPLETION_ORIGIN },
+    });
+    return Array.isArray(result)
+        ? result.map(mark)
+        : { ...result, items: result.items.map(mark) };
+}
+
+/**
+ * Whether `item` was produced by this server itself — see
+ * {@link markNativeCompletion}. Such an item is already complete: its
+ * `completionItem/resolve` is answered by returning it unchanged.
+ */
+function isNativeCompletionItem(item: CompletionItem): boolean {
+    const data: unknown = item.data;
+    return (
+        typeof data === 'object' &&
+        data !== null &&
+        (data as Record<string, unknown>)['sveltexOrigin'] ===
+            NATIVE_COMPLETION_ORIGIN
+    );
 }
 
 /**
@@ -644,18 +690,19 @@ export function createServer(connection: Connection): void {
         if (doc) {
             const region = regionAt(doc, params.position);
             if (region && isForwardableRegion(doc, region)) {
-                return regionForwarder.forwardCompletion(
-                    doc.text,
-                    doc.uri,
-                    region,
-                    params.position,
+                return markNativeCompletion(
+                    await regionForwarder.forwardCompletion(
+                        doc.text,
+                        doc.uri,
+                        region,
+                        params.position,
+                    ),
                 );
             }
             // Frontmatter is non-delegated — suggest its keys/values natively.
             if (region?.kind === 'frontmatter') {
-                return computeFrontmatterCompletion(
-                    doc.text,
-                    params.position,
+                return markNativeCompletion(
+                    computeFrontmatterCompletion(doc.text, params.position),
                 );
             }
         }
@@ -666,11 +713,15 @@ export function createServer(connection: Connection): void {
         return remapCompletion(proxied.result, proxied.ctx);
     });
 
-    // Completion items are resolved by the child unchanged: a resolved item's
-    // edits, if any, were already source-mapped when the item was first
-    // returned, and `resolve` only enriches documentation/detail.
+    // A `completionItem/resolve` goes back to whichever server produced the
+    // item. Items this server makes itself — region forwards (TexLab, the
+    // math server) and native frontmatter completion — are already complete,
+    // so they are returned unchanged; only genuine Svelte-proxy items are
+    // resolved by the embedded child. Forwarding a foreign item to the Svelte
+    // server instead makes it error on a document it never opened.
     connection.onCompletionResolve(
         async (item: CompletionItem): Promise<CompletionItem> => {
+            if (isNativeCompletionItem(item)) return item;
             if (!proxy.isRunning) return item;
             return proxy.sendRequest<CompletionItem>(
                 'completionItem/resolve',
