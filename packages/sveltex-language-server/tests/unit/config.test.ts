@@ -1,7 +1,7 @@
 // Unit tests for the SvelTeX config snapshot (`src/core/config.ts`): the
-// built-in defaults, locating a `sveltex.config.*` file, and distilling a
-// loaded config — including `mathBackend` and the LaTeX verbatim tags — into a
-// `SveltexConfigSnapshot`.
+// built-in defaults, locating a `sveltex.config.*` (or `svelte.config.*`)
+// file, and distilling a loaded config — including `mathBackend` and the LaTeX
+// verbatim tags — into a `SveltexConfigSnapshot`.
 
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
     defaultConfigSnapshot,
     findConfigFile,
+    findSvelteConfigFile,
     loadConfigSnapshot,
 } from '../../src/core/config.js';
 
@@ -176,5 +177,74 @@ describe('config file location and loading', () => {
         );
         const snapshot = await loadConfigSnapshot(dir);
         expect(snapshot.mathBackend).toBe('mathjax');
+    });
+
+    it('findSvelteConfigFile locates a `svelte.config.js`', () => {
+        const path = join(dir, 'svelte.config.js');
+        writeFileSync(path, 'export default {};\n');
+        expect(findSvelteConfigFile(dir)).toBe(path);
+    });
+
+    it('reads SvelTeX config from `svelte.config.*` when no `sveltex.config.*` exists', async () => {
+        // SvelTeX is wired into `svelte.config.mjs` as a preprocessor: a
+        // resolved `Sveltex` instance (mathBackend + configuration) sits in
+        // `preprocess`, alongside an unrelated preprocessor.
+        writeFileSync(
+            join(dir, 'svelte.config.mjs'),
+            [
+                'export default {',
+                "  extensions: ['.svelte', '.sveltex'],",
+                '  preprocess: [',
+                "    { name: 'vite-preprocess' },",
+                '    {',
+                "      mathBackend: 'katex',",
+                '      configuration: {',
+                "        verbatim: { latex: { type: 'tex', aliases: ['tikz'] } },",
+                "        extensions: ['.sveltex'],",
+                '      },',
+                '    },',
+                '  ],',
+                '};',
+                '',
+            ].join('\n'),
+        );
+        const snapshot = await loadConfigSnapshot(dir);
+        expect(snapshot.mathBackend).toBe('katex');
+        expect(snapshot.latexTags.sort()).toEqual(['latex', 'tikz']);
+        expect(snapshot.configPath).toContain('svelte.config.mjs');
+    });
+
+    it('prefers a dedicated `sveltex.config.*` over `svelte.config.*`', async () => {
+        writeFileSync(
+            join(dir, 'sveltex.config.mjs'),
+            "export default { backendChoices: { mathBackend: 'katex' } };\n",
+        );
+        writeFileSync(
+            join(dir, 'svelte.config.mjs'),
+            "export default { preprocess: [{ mathBackend: 'none', configuration: {} }] };\n",
+        );
+        const snapshot = await loadConfigSnapshot(dir);
+        expect(snapshot.mathBackend).toBe('katex');
+        expect(snapshot.configPath).toContain('sveltex.config.mjs');
+    });
+
+    it('reads `svelte.config.*` when the only `sveltex.config` is a non-loadable `.ts`', async () => {
+        writeFileSync(
+            join(dir, 'sveltex.config.ts'),
+            'export default {} as const;\n',
+        );
+        writeFileSync(
+            join(dir, 'svelte.config.mjs'),
+            [
+                'export default { preprocess: [{',
+                "  mathBackend: 'katex',",
+                "  configuration: { verbatim: { tex: { type: 'tex' } } },",
+                '}] };',
+                '',
+            ].join('\n'),
+        );
+        const snapshot = await loadConfigSnapshot(dir);
+        expect(snapshot.mathBackend).toBe('katex');
+        expect(snapshot.latexTags).toEqual(['tex']);
     });
 });

@@ -1,6 +1,8 @@
-// File description: Locates and loads the user's `sveltex.config.*` file and
-// distills it into a `SveltexConfigSnapshot` — the minimal slice of
-// configuration that the region detector ({@link computeRegions}) needs.
+// File description: Locates the user's SvelTeX configuration — a dedicated
+// `sveltex.config.*` file, or, failing that, the `svelte.config.*` that wires
+// SvelTeX in as a preprocessor — and distills it into a
+// `SveltexConfigSnapshot`: the minimal slice of configuration that the region
+// detector ({@link computeRegions}) needs.
 
 import { pathToFileURL } from 'node:url';
 import { existsSync } from 'node:fs';
@@ -92,8 +94,9 @@ export interface SveltexConfigSnapshot {
      */
     texScaffolds: Record<string, TexScaffold>;
     /**
-     * Absolute path of the config file the snapshot was loaded from, or
-     * `undefined` if no config file was found and defaults are in use.
+     * Absolute path of the file the snapshot was loaded from — a
+     * `sveltex.config.*`, or a `svelte.config.*` fallback — or `undefined` if
+     * neither was found and the built-in defaults are in use.
      */
     configPath: string | undefined;
 }
@@ -133,6 +136,33 @@ export function defaultConfigSnapshot(): SveltexConfigSnapshot {
  */
 export function findConfigFile(workspaceRoot: string): string | undefined {
     for (const name of CONFIG_FILE_NAMES) {
+        const candidate = join(workspaceRoot, name);
+        if (existsSync(candidate)) return candidate;
+    }
+    return undefined;
+}
+
+/**
+ * Candidate file names for a Svelte config, in priority order. SvelTeX must be
+ * registered there as a preprocessor, which makes `svelte.config.*` the
+ * fallback source of configuration when no `sveltex.config.*` exists. Svelte
+ * has no TypeScript-config support, so only the JS variants are listed.
+ */
+const SVELTE_CONFIG_FILE_NAMES = [
+    'svelte.config.js',
+    'svelte.config.mjs',
+    'svelte.config.cjs',
+] as const;
+
+/**
+ * Searches `workspaceRoot` for a `svelte.config.*` file.
+ *
+ * @returns The absolute path of the first one found, or `undefined`.
+ */
+export function findSvelteConfigFile(
+    workspaceRoot: string,
+): string | undefined {
+    for (const name of SVELTE_CONFIG_FILE_NAMES) {
         const candidate = join(workspaceRoot, name);
         if (existsSync(candidate)) return candidate;
     }
@@ -361,71 +391,138 @@ function readExtensions(
 }
 
 /**
- * Loads the SvelTeX config for a workspace and distills it into a
+ * Loads the SvelTeX configuration for a workspace and distills it into a
  * {@link SveltexConfigSnapshot}.
  *
+ * Resolution order:
+ *
+ *  1. A loadable, dedicated `sveltex.config.{js,mjs,cjs}` at the workspace
+ *     root.
+ *  2. Otherwise `svelte.config.{js,mjs,cjs}` — SvelTeX is, by definition,
+ *     registered there as a preprocessor, so its resolved configuration is
+ *     reachable even when the project keeps no separate `sveltex.config.*`
+ *     (or the one it keeps is a `.ts` file this loader cannot execute).
+ *  3. Otherwise the built-in {@link defaultConfigSnapshot}.
+ *
  * @param workspaceRoot - Absolute path of the workspace folder to search.
- * @returns The resolved snapshot. If no config file is found, or if it cannot
- * be loaded (syntax error, TS-only config without a loader, ...), the built-in
- * {@link defaultConfigSnapshot} is returned instead — the LSP must never fail
- * to start just because the config is unreadable.
+ * @returns The resolved snapshot. Loading never throws: a missing,
+ * syntactically broken, or otherwise unloadable config falls through to the
+ * next source, and ultimately to the defaults — the LSP must never fail to
+ * start just because the configuration is unreadable.
  *
  * @remarks
- * Only `.js` / `.mjs` / `.cjs` configs are dynamically importable here; a
- * `.ts` config is detected (so its presence is reported) but not executed,
- * since transpiling it would require pulling a bundler into the language
- * server. In that case the defaults — extended with anything statically
- * recoverable — are used. This is a deliberate v1 limitation.
- *
- * TODO: support `.ts` configs by resolving the project's TypeScript loader.
+ * Only `.js` / `.mjs` / `.cjs` modules are dynamically importable here. A
+ * `.ts` `sveltex.config` is detected (so its presence can be reported) but not
+ * executed, since transpiling it would require pulling a bundler into the
+ * language server; such a project still gets its real configuration via its
+ * `svelte.config.{js,mjs,cjs}` (step 2).
  */
 export async function loadConfigSnapshot(
     workspaceRoot: string,
 ): Promise<SveltexConfigSnapshot> {
     const base = defaultConfigSnapshot();
     const configPath = findConfigFile(workspaceRoot);
-    if (!configPath) return base;
 
-    // A TypeScript config cannot be `import()`-ed without a loader; report its
-    // path but otherwise use defaults.
-    if (configPath.endsWith('.ts')) {
-        return { ...base, configPath };
+    // 1. A dedicated, loadable `sveltex.config.{js,mjs,cjs}`.
+    if (configPath && !configPath.endsWith('.ts')) {
+        const snapshot = await snapshotFromConfigModule(configPath, base);
+        if (snapshot) return { ...snapshot, configPath };
     }
 
+    // 2. Fall back to `svelte.config.{js,mjs,cjs}`.
+    const svelteConfigPath = findSvelteConfigFile(workspaceRoot);
+    if (svelteConfigPath) {
+        const snapshot = await snapshotFromConfigModule(svelteConfigPath, base);
+        if (snapshot) return { ...snapshot, configPath: svelteConfigPath };
+    }
+
+    // 3. Nothing usable: defaults. A `sveltex.config.*` path is still
+    //    reported when one exists (e.g. an unloadable `.ts` config).
+    return configPath ? { ...base, configPath } : base;
+}
+
+/**
+ * Imports a config module — a `sveltex.config.*` or a `svelte.config.*` — and
+ * distills a {@link SveltexConfigSnapshot} from it.
+ *
+ * @returns The snapshot (with `configPath` left `undefined` for the caller to
+ * fill in), or `undefined` if the module could not be imported at all.
+ */
+async function snapshotFromConfigModule(
+    modulePath: string,
+    base: SveltexConfigSnapshot,
+): Promise<SveltexConfigSnapshot | undefined> {
+    let mod: Record<string, unknown>;
     try {
-        const imported: unknown = await import(pathToFileURL(configPath).href);
-        const mod = isObject(imported) ? imported : {};
-        const { candidate, mathBackend } = resolveConfigCandidate(mod);
-
-        return {
-            verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
-            latexTags: readLatexTags(candidate) ?? base.latexTags,
-            extensions: readExtensions(candidate, base.extensions),
-            mathDelims: readMathDelims(candidate, base.mathDelims),
-            mathBackend: mathBackend ?? base.mathBackend,
-            directives: readDirectives(candidate),
-            texScaffolds: readTexScaffolds(candidate),
-            configPath,
-        };
+        const imported: unknown = await import(pathToFileURL(modulePath).href);
+        mod = isObject(imported) ? imported : {};
     } catch {
-        return { ...base, configPath };
+        return undefined;
     }
+    const { candidate, mathBackend } = resolveConfigCandidate(mod);
+    return {
+        verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
+        latexTags: readLatexTags(candidate) ?? base.latexTags,
+        extensions: readExtensions(candidate, base.extensions),
+        mathDelims: readMathDelims(candidate, base.mathDelims),
+        mathBackend: mathBackend ?? base.mathBackend,
+        directives: readDirectives(candidate),
+        texScaffolds: readTexScaffolds(candidate),
+        configPath: undefined,
+    };
+}
+
+/**
+ * Narrowing helper: `true` for a resolved `Sveltex` instance — or anything
+ * that quacks like one — exposing both a `mathBackend` and a `configuration`
+ * object.
+ */
+function isSveltexInstance(
+    value: unknown,
+): value is { configuration: Record<string, unknown>; mathBackend: unknown } {
+    return (
+        isObject(value) &&
+        'mathBackend' in value &&
+        'configuration' in value &&
+        isObject(value['configuration'])
+    );
+}
+
+/**
+ * Finds a `Sveltex` instance inside a Svelte config's `preprocess` field —
+ * the shape of a `svelte.config.*` that configures SvelTeX inline, e.g.
+ * `preprocess: [vitePreprocess(), await sveltex(...)]`. `preprocess` may also
+ * be a single preprocessor rather than an array.
+ *
+ * @returns The instance, or `undefined` if `value` carries no SvelTeX
+ * preprocessor.
+ */
+function findSveltexInPreprocess(
+    value: unknown,
+):
+    | { configuration: Record<string, unknown>; mathBackend: unknown }
+    | undefined {
+    if (!isObject(value)) return undefined;
+    const preprocess = value['preprocess'];
+    const list = Array.isArray(preprocess) ? preprocess : [preprocess];
+    for (const entry of list) {
+        if (isSveltexInstance(entry)) return entry;
+    }
+    return undefined;
 }
 
 /**
  * Picks, out of an imported config module, the object to read settings from
- * and the math backend.
+ * and the math backend. It accommodates the shapes of both supported config
+ * files:
  *
- * A SvelTeX config file usually does one of:
- *
- *  - `export const preprocessor = await sveltex(choices, config)` — the export
- *    is a resolved `Sveltex` instance. The instance exposes `mathBackend`
- *    directly and a fully-merged `configuration` object (verbatim, math, ...).
- *  - `export default { ... }` / `export const config = { ... }` — a plain
- *    config object, possibly alongside a `backendChoices` object.
- *
- * This walks every export, prefers a `Sveltex`-instance-shaped value, and
- * otherwise falls back to a plain `default` / `config` object.
+ *  - `sveltex.config.*` — usually `export const preprocessor = await
+ *    sveltex(choices, config)`, i.e. the export is a resolved `Sveltex`
+ *    instance (which exposes `mathBackend` and a fully-merged `configuration`);
+ *    or a plain `export default { ... }` / `export const config = { ... }`,
+ *    possibly alongside a `backendChoices` object.
+ *  - `svelte.config.*` — `export default { preprocess: [..., sveltex(...)] }`,
+ *    where the `Sveltex` instance is nested in the `preprocess` array.
  *
  * @param mod - The imported config module namespace.
  * @returns The object to read region settings from, and the math backend if
@@ -435,22 +532,26 @@ function resolveConfigCandidate(mod: Record<string, unknown>): {
     candidate: Record<string, unknown>;
     mathBackend: MathBackend | undefined;
 } {
-    // A resolved `Sveltex` instance has both a `mathBackend` and a
-    // `configuration` getter; prefer it wherever it is exported.
+    // (a) A resolved `Sveltex` instance exported directly.
     for (const value of Object.values(mod)) {
-        if (
-            isObject(value) &&
-            'mathBackend' in value &&
-            'configuration' in value &&
-            isObject(value['configuration'])
-        ) {
+        if (isSveltexInstance(value)) {
             return {
-                candidate: value['configuration'],
+                candidate: value.configuration,
                 mathBackend: readMathBackend(value),
             };
         }
     }
-    // Otherwise fall back to a plain config object.
+    // (b) A `Sveltex` instance nested in a Svelte config's `preprocess`.
+    for (const value of Object.values(mod)) {
+        const instance = findSveltexInPreprocess(value);
+        if (instance) {
+            return {
+                candidate: instance.configuration,
+                mathBackend: readMathBackend(instance),
+            };
+        }
+    }
+    // (c) A plain config object.
     const candidate = isObject(mod['default'])
         ? mod['default']
         : isObject(mod['config'])
