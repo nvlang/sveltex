@@ -103,14 +103,30 @@ jobs:
           path: packages/sveltex/html/
           retention-days: 30
 
-      # Pre-publish sanity checks on `@nvl/sveltex` as it will be published:
-      # `publint` validates the manifest, `@arethetypeswrong/cli` checks that
-      # consumers can resolve the published types. `--profile esm-only`
-      # because the package intentionally ships no CommonJS build.
-      - name: Check @nvl/sveltex packaging
+      # Pre-publish sanity checks on the packages as they'll be published.
+      # `publint` validates each package's manifest; `@arethetypeswrong/cli`
+      # (`attw`) verifies that consumers can resolve the published types.
+      #
+      # `publint` runs on every npm-published package. `attw` runs only on the
+      # three that expose a typed, importable library surface — it's skipped
+      # for `@nvl/sv` and `@nvl/tree-sitter-sveltex` (which ship no types) and
+      # for the deprecated `create-sveltex` CLI. `vscode-sveltex` is excluded
+      # from both: it's published to the extension marketplaces via `vsce`,
+      # not to npm. `--profile esm-only` because these packages intentionally
+      # ship no CommonJS build; `--exclude-entrypoints ./bin/server.js` skips
+      # the language servers' CLI shim, which is launched, not imported.
+      - name: Check package manifests and type resolution
         run: |
-          pnpm --filter @nvl/sveltex exec publint
+          for pkg in @nvl/sveltex @nvl/sv @nvl/sveltex-language-server \
+                     @nvl/sveltex-math-language-server create-sveltex \
+                     @nvl/tree-sitter-sveltex; do
+            pnpm --filter "$pkg" exec publint
+          done
           pnpm --filter @nvl/sveltex exec attw --pack . --profile esm-only
+          pnpm --filter @nvl/sveltex-language-server exec attw --pack . \
+            --profile esm-only --exclude-entrypoints ./bin/server.js
+          pnpm --filter @nvl/sveltex-math-language-server exec attw --pack . \
+            --profile esm-only --exclude-entrypoints ./bin/server.js
 
       - name: Determine current branch
         run:
