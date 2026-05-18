@@ -51,7 +51,5 @@ changes, and submit a pull request. Furthermore:
 
 ## Security
 
-If you find a security vulnerability, please do NOT open an issue. Email
-[security@sveltex.dev](mailto:security@sveltex.dev) instead. This email address
-is hosted with Proton Mail, so you can use PGP encryption for your message
-(highly recommended).
+If you discover a security vulnerability, please do **not** open a public
+issue — see [`SECURITY.md`](./SECURITY.md) for how to report it privately.
