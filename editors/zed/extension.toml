@@ -12,14 +12,15 @@ repository = "https://github.com/nvlang/sveltex"
 #
 # NOTE FOR MAINTAINERS: `rev` must be bumped to a *pushed* commit SHA of the
 # `nvlang/sveltex` repository whenever the grammar changes — Zed builds the
-# grammar from the remote, not from the working tree. The SHA below is the
-# commit that introduced the grammar package. Until the grammar is split into
+# grammar from the remote, not from the working tree. A local-only commit
+# (one not on a pushed branch) fails with "failed to compile grammar".
+# Until the grammar is split into
 # its own repository (the usual Zed convention is one repo per grammar, e.g.
 # `tree-sitter-grammars/tree-sitter-svelte`), the `path` field keeps it
 # building from this monorepo subdirectory.
 [grammars.sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "ad04acf6bb238f75019a248a0e7162d4e6caf7dd"
+rev = "2eb1ebe001e1bd3d488617f3db625f1e2b8d49f0"
 path = "packages/tree-sitter-sveltex"
 
 # The SvelTeX language server. Zed launches it over stdio; see `src/lib.rs`.
