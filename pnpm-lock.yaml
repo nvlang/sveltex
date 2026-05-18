@@ -125,6 +125,9 @@ importers:
       hast-util-from-html:
         specifier: ^2.0.3
         version: 2.0.3
+      hast-util-to-html:
+        specifier: ^9.0.5
+        version: 9.0.5
       html-escaper:
         specifier: ^3.0.3
         version: 3.0.3
@@ -282,9 +285,6 @@ importers:
       hast-util-find-and-replace:
         specifier: ^5.0.1
         version: 5.0.1
-      hast-util-to-html:
-        specifier: ^9.0.5
-        version: 9.0.5
       hastscript:
         specifier: ^9.0.1
         version: 9.0.1

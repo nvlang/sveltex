@@ -84,7 +84,6 @@
     "@vitest/ui": "^4.1.6",
     "@wooorm/starry-night": "^3.9.0",
     "hast-util-find-and-replace": "^5.0.1",
-    "hast-util-to-html": "^9.0.5",
     "hastscript": "^9.0.1",
     "highlight.js": "^11.11.1",
     "husky": "^9.1.7",
@@ -126,6 +125,7 @@
     "find-cache-directory": "^6.0.0",
     "glob": "^13.0.6",
     "hast-util-from-html": "^2.0.3",
+    "hast-util-to-html": "^9.0.5",
     "html-escaper": "^3.0.3",
     "html-tag-names": "^2.1.0",
     "js-yaml": "^4.1.1",
@@ -167,7 +167,6 @@
     "@mathjax/src": ">=4.0.0 <5.0.0",
     "@wooorm/starry-night": ">=3.3.0",
     "hast-util-find-and-replace": ">=5.0.1",
-    "hast-util-to-html": ">=9.0.1",
     "highlight.js": ">=11.9.0",
     "katex": ">=0.16.10",
     "markdown-it": ">=14.1.0",
@@ -188,9 +187,6 @@
       "optional": true
     },
     "hast-util-find-and-replace": {
-      "optional": true
-    },
-    "hast-util-to-html": {
       "optional": true
     },
     "highlight.js": {
