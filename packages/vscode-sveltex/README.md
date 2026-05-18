@@ -73,39 +73,4 @@ This extension contributes the following settings:
 -   For `<script>` tags, CoffeeScript is not supported. However, since SvelteKit
     doesn't support CoffeeScript, this is not a priority.
 
-## Release Notes
-
-### 1.0.0
-
-Initial release.
-
-### 1.0.1
-
-#### Documentation
-
--   Improved `README.md` for rendering on the VS Code Marketplace.
-
-### 1.0.2
-
-#### Fixes
-
--   Increased specificity of scopes of some pattern injections to avoid
-    conflicts with e.g. the comment or string scopes within script blocks.
-
-#### Dev Dependencies
-
--   Updated `@types/node`: `^20.14.9` → `^20.14.10`.
-
-
-### 1.0.3
-
-#### Documentation
-
--   Fixed link to screenshot in `README.md`.
-
-#### Build
-
--   Reduce extension size by not bundling unnecessary files.
-
-
 [SvelTeX]: https://sveltex.dev/
