@@ -163,7 +163,7 @@ inside non-delegated regions:
 - Diagnostics (merged with native ones)
 - Hover
 - Completion (+ completion-item resolve)
-- Go-to-definition / declaration
+- Go-to-definition
 - Find references
 - Document highlight
 - Code actions

@@ -6,7 +6,7 @@ combine markdown, Svelte, and (some) LaTeX.
 
 ## Features
 
--   Svelte + Markdown syntax highlighting (incl. fenced code blocks, though only with ~40 languages).
+-   Svelte + Markdown syntax highlighting (incl. fenced code blocks, though only with ~50 languages).
 -   Syntax highlighting for math expressions in `$...$`, `$$...$$`, `\(...\)`, and
     `\[...\]` delimiters.
 -   LaTeX syntax highlighting in "LaTeX tags" (configurable).
