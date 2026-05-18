@@ -1,4 +1,6 @@
-# Generated browser bundle of the SvelTeX preprocessor for the playground.
-# Produced by `scripts/build-playground.mjs` (runs via predev/prebuild).
+# Generated playground assets, produced by `scripts/build-playground.mjs`
+# (runs via predev/prebuild): the SvelTeX preprocessor browser bundle and the
+# editor's combined syntax-highlighting grammars.
 src/public/playground/sveltex-playground.mjs
 src/public/playground/sveltex-playground.mjs.map
+src/public/playground/editor-grammars.json

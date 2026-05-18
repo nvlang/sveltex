@@ -35,6 +35,7 @@
     "postcss-import": "^16.1.1",
     "postcss-load-config": "^6.0.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "shiki": "^3.23.0",
     "svelte": "^5.55.7",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",

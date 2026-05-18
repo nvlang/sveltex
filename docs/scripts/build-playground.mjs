@@ -4,7 +4,7 @@
 // SvelTeX cannot be naively bundled for the browser: `packages/sveltex/src/
 // deps.ts` is a barrel module that statically re-exports Node builtins and
 // Node-only npm packages (node-poppler has native bindings, plus svgo, glob,
-// rimraf, find-cache-directory, node-fetch, ora). This script:
+// rimraf, find-cache-directory, ora). This script:
 //
 //   1. Uses `scripts/playground/entry.ts` as the entry, which re-exports
 //      `sveltex` from the monorepo SOURCE (not the published v0.4.x package).
@@ -53,6 +53,11 @@
 // large (MathJax and shiki are sizable), which is fine for a lazily-loaded,
 // worker-only asset.
 //
+// This script also stages the playground editor's syntax-highlighting
+// grammars: it combines the `svelte`, `markdown` and `sveltex` TextMate
+// grammars into `src/public/playground/editor-grammars.json`, which
+// `Playground.vue` fetches to syntax-highlight the input editor with Shiki.
+//
 // Wired to run before `vitepress dev` / `vitepress build` via the `predev` /
 // `prebuild` scripts in `docs/package.json`.
 
@@ -60,7 +65,7 @@ import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const docsRoot = resolve(here, '..');
@@ -369,6 +374,47 @@ async function exists(path) {
     }
 }
 
+/**
+ * Stages the playground editor's syntax-highlighting grammars.
+ *
+ * `Playground.vue` highlights the input editor with Shiki, using the same
+ * three TextMate grammars the docs site itself loads (see `.vitepress/
+ * config.ts`): `svelte`, the SvelTeX-flavored `markdown`, and `sveltex`. They
+ * are combined -- in dependency-first load order -- into a single JSON array
+ * served from `public/playground/`, so the component fetches one asset rather
+ * than reaching across the monorepo at runtime.
+ */
+async function buildEditorGrammars() {
+    const read = async (path) => JSON.parse(await readFile(path, 'utf8'));
+    const [svelte, markdown, sveltex] = await Promise.all([
+        read(resolve(docsRoot, 'misc/svelte.tmLanguage.json')),
+        read(
+            resolve(
+                repoRoot,
+                'packages/vscode-sveltex/syntaxes/markdown.tmLanguage.json',
+            ),
+        ),
+        read(
+            resolve(
+                repoRoot,
+                'packages/vscode-sveltex/syntaxes/sveltex.tmLanguage.json',
+            ),
+        ),
+    ]);
+    // Shiki looks a language up by its `name`; the SvelTeX grammar ships under
+    // a different one, so normalize it to the `sveltex` id the component uses.
+    sveltex.name = 'sveltex';
+    const grammarsFile = resolve(
+        docsRoot,
+        'src/public/playground/editor-grammars.json',
+    );
+    await writeFile(grammarsFile, JSON.stringify([svelte, markdown, sveltex]));
+    // eslint-disable-next-line no-console
+    console.log(
+        `[build-playground] wrote ${grammarsFile.replace(repoRoot + '/', '')}`,
+    );
+}
+
 async function main() {
     if (!(await exists(resolve(sveltexPkg, 'node_modules')))) {
         throw new Error(
@@ -378,6 +424,8 @@ async function main() {
     }
 
     await mkdir(dirname(outfile), { recursive: true });
+
+    await buildEditorGrammars();
 
     const result = await build({
         entryPoints: [entry],

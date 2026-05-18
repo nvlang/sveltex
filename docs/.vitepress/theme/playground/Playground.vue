@@ -7,10 +7,23 @@
 // SAFETY: this component is 100% client-side and runs *only* `Sveltex.trace`
 // (pure text transformation) inside a Web Worker. The source document's code is
 // never executed. Every output tab renders inert, escaped text inside a `<pre>`
-// element -- the input and the generated output are never mounted, `eval`-ed,
-// rendered as Svelte, or bound via `v-html` into any executable context.
+// element, and the input editor's syntax-highlight layer renders each Shiki
+// token as inert, escaped text too (only a token's `color`/`font-style` come
+// from the theme) -- the input and the generated output are never mounted,
+// `eval`-ed, rendered as Svelte, or bound via `v-html` into any executable
+// context.
 
-import { ref, computed, shallowRef, onMounted, onBeforeUnmount, watch } from 'vue';
+import {
+    ref,
+    computed,
+    shallowRef,
+    onMounted,
+    onBeforeUnmount,
+    watch,
+    nextTick,
+} from 'vue';
+import { useData } from 'vitepress';
+import type { Highlighter } from 'shiki';
 
 interface TraceResult {
     code: string;
@@ -50,6 +63,111 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
 `;
 
 const input = ref(DEFAULT_INPUT);
+
+// --- Input editor syntax highlighting -----------------------------------
+// The input editor is a transparent <textarea> layered over a Shiki-
+// highlighted mirror of its text. Highlighting is a progressive enhancement:
+// until (or unless) the highlighter loads, the mirror shows plain, uncolored
+// text and the editor stays fully usable.
+
+interface EditorToken {
+    content: string;
+    color?: string;
+    fontStyle?: number;
+}
+
+const { isDark } = useData();
+
+/** The Shiki highlighter, created lazily on mount. */
+const highlighter = shallowRef<Highlighter | null>(null);
+/**
+ * Flat token stream for the highlight layer: every line's tokens, with the
+ * stripped newlines reinserted as `\n` tokens and a trailing zero-width space
+ * so the layer's last line always has the same height as the textarea's.
+ */
+const editorTokens = ref<EditorToken[]>([]);
+/** The editable <textarea> and the highlight layer beneath it. */
+const inputEl = ref<HTMLTextAreaElement | null>(null);
+const highlightEl = ref<HTMLElement | null>(null);
+
+/** Inline style for one token: theme color plus any bold/italic/underline. */
+function tokenStyle(token: EditorToken): Record<string, string> {
+    const style: Record<string, string> = {};
+    if (token.color) style.color = token.color;
+    // Shiki's `FontStyle` is a bit field: italic = 1, bold = 2, underline = 4.
+    const fontStyle = token.fontStyle ?? 0;
+    if (fontStyle & 1) style['font-style'] = 'italic';
+    if (fontStyle & 2) style['font-weight'] = '600';
+    if (fontStyle & 4) style['text-decoration'] = 'underline';
+    return style;
+}
+
+/**
+ * Re-tokenize the current input into `editorTokens`. With no highlighter yet
+ * (or if it failed to load), fall back to one plain token per line.
+ */
+function updateHighlight(): void {
+    const hl = highlighter.value;
+    const lines: EditorToken[][] = hl
+        ? hl.codeToTokensBase(input.value, {
+              lang: 'sveltex',
+              theme: isDark.value
+                  ? 'github-dark-default'
+                  : 'github-light-default',
+          })
+        : input.value.split('\n').map((line) => [{ content: line }]);
+    const flat: EditorToken[] = [];
+    lines.forEach((line, index) => {
+        flat.push(...line);
+        // `codeToTokensBase` splits on newlines and drops them; reinsert one
+        // between every pair of lines.
+        if (index < lines.length - 1) flat.push({ content: '\n' });
+    });
+    // Trailing zero-width space: see `editorTokens`.
+    flat.push({ content: '\u200b' });
+    editorTokens.value = flat;
+}
+
+/** Keep the highlight layer scrolled in lockstep with the textarea. */
+function syncScroll(): void {
+    const textarea = inputEl.value;
+    const layer = highlightEl.value;
+    if (textarea && layer) {
+        layer.scrollTop = textarea.scrollTop;
+        layer.scrollLeft = textarea.scrollLeft;
+    }
+}
+
+/**
+ * Lazily build the Shiki highlighter: in parallel, import Shiki and fetch the
+ * editor grammars staged into `public/playground/` by
+ * `scripts/build-playground.mjs`, then load the grammars (with both the light
+ * and dark themes) into a highlighter and re-highlight.
+ */
+async function loadHighlighter(): Promise<void> {
+    try {
+        const [{ createHighlighter }, grammarsResponse] = await Promise.all([
+            import('shiki'),
+            fetch('/playground/editor-grammars.json'),
+        ]);
+        const grammars = (await grammarsResponse.json()) as object[];
+        const hl = await createHighlighter({
+            themes: ['github-light-default', 'github-dark-default'],
+            langs: [],
+        });
+        await hl.loadLanguage(
+            ...(grammars as Parameters<typeof hl.loadLanguage>),
+        );
+        highlighter.value = hl;
+        updateHighlight();
+    } catch {
+        // Highlighting is optional; on failure the plain-text fallback stays.
+    }
+}
+
+// Initial render of the default input -- uncolored until the highlighter is
+// ready, so the editor is never visually blank.
+updateHighlight();
 
 /** All tab names, in display order. Populated once the first trace returns. */
 const stageNames = ref<string[]>([]);
@@ -123,7 +241,18 @@ watch(input, () => {
     debounceTimer = setTimeout(sendTrace, 250);
 });
 
+// Re-highlight the input on every edit, and whenever the site theme is
+// toggled (the light and dark themes assign different token colors).
+watch([input, isDark], () => {
+    updateHighlight();
+    void nextTick(syncScroll);
+});
+
 onMounted(() => {
+    // Build the syntax highlighter in the background; until it is ready the
+    // editor shows the plain-text fallback rendered during setup.
+    void loadHighlighter();
+
     // The worker is an ES module worker; it imports the pre-built SvelTeX
     // browser bundle from a runtime URL.
     const w = new Worker(new URL('./worker.ts', import.meta.url), {
@@ -143,6 +272,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
     worker.value?.terminate();
+    highlighter.value?.dispose();
 });
 
 function resetInput(): void {
@@ -167,15 +297,34 @@ function resetInput(): void {
                         Reset
                     </button>
                 </header>
-                <textarea
-                    v-model="input"
-                    class="stx-input"
-                    spellcheck="false"
-                    autocapitalize="off"
-                    autocomplete="off"
-                    autocorrect="off"
-                    aria-label="SvelTeX source input"
-                ></textarea>
+                <div class="stx-editor">
+                    <!--
+                        Highlight layer: a syntax-colored, non-interactive
+                        mirror of the textarea's text. Each token's text is a
+                        Vue-escaped interpolation; only its color and font
+                        style come from Shiki -- nothing is `v-html`-ed.
+                    -->
+                    <div
+                        ref="highlightEl"
+                        class="stx-editor__highlight"
+                        aria-hidden="true"
+                    ><span
+                            v-for="(token, i) in editorTokens"
+                            :key="i"
+                            :style="tokenStyle(token)"
+                        >{{ token.content }}</span></div>
+                    <textarea
+                        ref="inputEl"
+                        v-model="input"
+                        class="stx-input"
+                        spellcheck="false"
+                        autocapitalize="off"
+                        autocomplete="off"
+                        autocorrect="off"
+                        aria-label="SvelTeX source input"
+                        @scroll="syncScroll"
+                    ></textarea>
+                </div>
             </section>
 
             <!-- Output pane -->
@@ -402,20 +551,54 @@ function resetInput(): void {
     color: var(--vp-c-red-1, var(--vp-c-danger-1));
 }
 
-.stx-input {
+.stx-editor {
+    position: relative;
     flex: 1;
-    width: 100%;
     min-height: 22rem;
     resize: vertical;
+    overflow: hidden;
+}
+
+/*
+ * The highlight layer and the textarea are stacked, pixel-identical boxes:
+ * the user types into the transparent textarea on top, and the colored text
+ * of the layer beneath shows through. Every property that affects where a
+ * glyph lands -- font, size, line height, padding, wrapping, scrollbar
+ * gutter -- must match exactly, or the colors drift away from the text.
+ */
+.stx-editor__highlight,
+.stx-input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
     padding: 0.85rem 1rem;
     border: none;
-    outline: none;
-    background: transparent;
-    color: var(--vp-c-text-1);
     font-family: var(--vp-font-family-mono);
     font-size: 0.82rem;
     line-height: 1.6;
     tab-size: 2;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    scrollbar-gutter: stable;
+}
+
+.stx-editor__highlight {
+    overflow: hidden;
+    pointer-events: none;
+    color: var(--vp-c-text-1);
+    background: transparent;
+}
+
+.stx-input {
+    resize: none;
+    outline: none;
+    overflow: auto;
+    background: transparent;
+    /* Transparent glyphs -- the highlight layer beneath supplies the color --
+       but keep the caret and the text selection visible. */
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: var(--vp-c-text-1);
 }
 
 .stx-output {
