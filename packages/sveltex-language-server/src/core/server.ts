@@ -174,6 +174,11 @@ export function createServer(connection: Connection): void {
     const documents = new Map<string, OpenDocument>();
     /** Resolved SvelTeX config; replaced once `initialize` locates a config. */
     let config: SveltexConfigSnapshot = defaultConfigSnapshot();
+    /**
+     * Workspace root, captured at `initialize`. Kept so the watched-file
+     * handler can reload the config later without re-deriving it.
+     */
+    let workspaceRoot: string | undefined;
 
     /**
      * The embedded Svelte language server. Notifications it emits for a virtual
@@ -378,10 +383,11 @@ export function createServer(connection: Connection): void {
 
     connection.onInitialize(
         async (params: InitializeParams): Promise<InitializeResult> => {
-            // Locate and load `sveltex.config.*` from the workspace root.
-            const root = workspaceRootOf(params);
-            if (root) {
-                config = await loadConfigSnapshot(root);
+            // Locate and load the SvelTeX config (from `svelte.config.*` at
+            // the workspace root).
+            workspaceRoot = workspaceRootOf(params);
+            if (workspaceRoot) {
+                config = await loadConfigSnapshot(workspaceRoot);
             }
             // The forwarder needs the resolved config (math backend, LaTeX
             // tags) before any request can be routed.
@@ -481,6 +487,19 @@ export function createServer(connection: Connection): void {
             };
         },
     );
+
+    // A watched `svelte.config.*` changed: reload the SvelTeX config so
+    // region detection and TexLab forwarding pick the new settings up
+    // without an LSP restart. The handler is a notification handler, so it
+    // must return synchronously — the reload runs as a discarded promise.
+    connection.onDidChangeWatchedFiles((): void => {
+        const root = workspaceRoot;
+        if (!root) return;
+        void (async () => {
+            config = await loadConfigSnapshot(root);
+            regionForwarder.updateConfig(config);
+        })();
+    });
 
     connection.onShutdown(async () => {
         await Promise.all([proxy.stop(), regionForwarder.stop()]);
