@@ -401,8 +401,11 @@ async function buildEditorGrammars() {
             ),
         ),
     ]);
-    // Shiki looks a language up by its `name`; the SvelTeX grammar ships under
-    // a different one, so normalize it to the `sveltex` id the component uses.
+    // Shiki looks a language up by its `name`; these grammars ship under
+    // different ones, so normalize them to the ids the component requests
+    // (`Playground.vue` highlights its input as `sveltex`, its output as
+    // `svelte`).
+    svelte.name = 'svelte';
     sveltex.name = 'sveltex';
     const grammarsFile = resolve(
         docsRoot,

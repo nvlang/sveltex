@@ -103,26 +103,34 @@ function tokenStyle(token: EditorToken): Record<string, string> {
 }
 
 /**
- * Re-tokenize the current input into `editorTokens`. With no highlighter yet
- * (or if it failed to load), fall back to one plain token per line.
+ * Tokenize `text` with the given grammar. With no highlighter yet (or if it
+ * failed to load), fall back to one plain, uncolored token per line.
  */
-function updateHighlight(): void {
+function tokenize(text: string, lang: string): EditorToken[][] {
     const hl = highlighter.value;
-    const lines: EditorToken[][] = hl
-        ? hl.codeToTokensBase(input.value, {
-              lang: 'sveltex',
-              theme: isDark.value
-                  ? 'github-dark-default'
-                  : 'github-light-default',
-          })
-        : input.value.split('\n').map((line) => [{ content: line }]);
+    if (!hl) return text.split('\n').map((line) => [{ content: line }]);
+    return hl.codeToTokensBase(text, {
+        lang,
+        theme: isDark.value ? 'github-dark-default' : 'github-light-default',
+    });
+}
+
+/**
+ * Flatten tokenized lines into a single stream, reinserting the newlines that
+ * `codeToTokensBase` strips between lines as `\n` tokens.
+ */
+function flattenTokenLines(lines: EditorToken[][]): EditorToken[] {
     const flat: EditorToken[] = [];
     lines.forEach((line, index) => {
         flat.push(...line);
-        // `codeToTokensBase` splits on newlines and drops them; reinsert one
-        // between every pair of lines.
         if (index < lines.length - 1) flat.push({ content: '\n' });
     });
+    return flat;
+}
+
+/** Re-tokenize the current input into `editorTokens`. */
+function updateHighlight(): void {
+    const flat = flattenTokenLines(tokenize(input.value, 'sveltex'));
     // Trailing zero-width space: see `editorTokens`.
     flat.push({ content: '\u200b' });
     editorTokens.value = flat;
@@ -189,6 +197,14 @@ const tabs = computed(() => stageNames.value);
 
 /** Text of the currently selected tab. */
 const activeOutput = computed(() => outputs.value[activeTab.value] ?? '');
+
+/**
+ * The active tab's output, tokenized for syntax highlighting. Every pipeline
+ * stage is Svelte-flavored markup, so all tabs use the `svelte` grammar.
+ */
+const outputTokens = computed(() =>
+    flattenTokenLines(tokenize(activeOutput.value, 'svelte')),
+);
 
 function sendTrace(): void {
     const w = worker.value;
@@ -381,15 +397,20 @@ function resetInput(): void {
                         Loading the SvelTeX preprocessor…
                     </div>
                     <!--
-                        Inert output: `activeOutput` is bound as text content,
-                        never as HTML. Vue escapes it, so no markup in the
-                        generated output is ever interpreted or executed.
+                        Inert output: each token of `activeOutput` is rendered
+                        as a Vue-escaped text interpolation; only its color and
+                        font style come from Shiki. No markup in the generated
+                        output is ever interpreted, executed, or `v-html`-ed.
                     -->
                     <pre
                         v-else
                         class="stx-code"
                         role="tabpanel"
-                    ><code>{{ activeOutput }}</code></pre>
+                    ><code><span
+                            v-for="(token, i) in outputTokens"
+                            :key="i"
+                            :style="tokenStyle(token)"
+                        >{{ token.content }}</span></code></pre>
                 </div>
             </section>
         </div>
