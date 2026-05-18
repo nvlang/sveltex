@@ -13,7 +13,6 @@ on:
 permissions:
   contents: read
   packages: read
-  statuses: write
 
 # pnpm 11 hard-errors on dependency build scripts that aren't allow-listed.
 # Some CI installs run outside the workspace — the e2e `_template`, and the
@@ -27,11 +26,6 @@ jobs:
   build:
     name: Lint code base and run unit tests
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: read
-      statuses: write
 
     steps:
       - name: Checkout Code
