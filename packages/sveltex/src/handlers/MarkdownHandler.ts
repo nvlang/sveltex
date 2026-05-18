@@ -624,6 +624,17 @@ export function removeBadParagraphs(
         return match;
     });
 
+    // `removeBadParagraphs` rewrote the document's <p> nesting with the
+    // regexes above, which can leave the HTML malformed (unclosed or
+    // mis-nested tags). `sanitizeHtml` is used here purely as an HTML
+    // *well-former*: it parses the document and re-serializes it, repairing
+    // tag balancing and nesting. It is deliberately configured to sanitize
+    // *nothing* -- `allowedTags`/`allowedAttributes: false` permit every tag
+    // and attribute, and `allowVulnerableTags` keeps even `<script>` and
+    // `<style>`. SvelTeX preprocesses trusted, authored source; it is not a
+    // sanitizer for untrusted input. (The self-closing tags and empty
+    // attributes escaped above are the constructs `sanitizeHtml` rewrites
+    // even in this all-permissive mode.)
     content = sanitizeHtml(content, {
         allowedAttributes: false,
         allowedTags: false,
