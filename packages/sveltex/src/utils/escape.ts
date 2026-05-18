@@ -886,13 +886,12 @@ export function unescapeSnippets(
     const keys: string[] = processedSnippets.map((v) => v[0]);
     const processedSnippetsRecord = Object.fromEntries(processedSnippets);
     if (keys.length === 0) return document;
-    const unescaped = XRegExp.replace(
-        document,
+    const unescaped = document.replace(
         new RegExp(
             `(?:(<p>\\s*)(${keys.join('|')})(\\s*</p>))|(${keys.join('|')})`,
             'gu',
         ),
-        (...match) => {
+        (...match: (string | undefined)[]) => {
             typeAssert(is<(string | undefined)[]>(match));
             const key = match[2] ?? match[4];
             nodeAssert(key, "RegExp must've matched an UUIDv4 key.");

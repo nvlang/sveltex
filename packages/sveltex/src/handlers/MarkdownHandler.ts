@@ -27,7 +27,14 @@ import { copyTransformations } from '../utils/misc.js';
 import { isObject, isString } from '../typeGuards/utils.js';
 
 // External dependencies
-import { is, nodeAssert, sanitizeHtml, typeAssert, XRegExp } from '../deps.js';
+import {
+    is,
+    nodeAssert,
+    pattern,
+    regex,
+    sanitizeHtml,
+    typeAssert,
+} from '../deps.js';
 import {
     canBeOnlyThingInParagraph,
     componentCanBeInParagraph,
@@ -409,7 +416,7 @@ export function adjustHtmlSpacingAndEscape(
 
     // Escape the aforementioned tags, so that all tags are treated equally. For
     // example: `<p>...</p>` becomes `<p${id}>...</p${id}>`.
-    content = XRegExp.replace(content, regexSpecials, (match, tag) => {
+    content = content.replace(regexSpecials, (match, tag) => {
         nodeAssert(isString(tag));
         const res = match.replace(tag, tag + id);
         return res;
@@ -419,34 +426,36 @@ export function adjustHtmlSpacingAndEscape(
 
     const escaped: Record<string, string> = {};
 
-    const balancedBracesL = '(?:[^{}]|\\{';
+    const balancedBracesL = '(?:[^\\{\\}]|\\{';
     const balancedBracesR = '\\})*?';
     const maxDepth = 12;
 
     // Escape mustache tags in attributes. It's unlikely that any will be found,
     // since mustache tags have, in principle, been escaped at an earlier stage,
     // but still, just to be sure.
-    content = XRegExp.replace(
-        content,
-        XRegExp.build(
-            '< {{tag}} \\s (?: [^>{}]*? {{mustacheTag}} [^>{}]*? )+ /? >',
-            {
-                tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)',
-                mustacheTag:
+    content = content.replace(
+        regex('gims')`
+            <
+            ${pattern('(?:[a-zA-Z][\\-.:0-9_a-zA-Z]*)')}
+            \s
+            (?:
+                [^>\{\}]*?
+                ${pattern(
                     '\\{' +
-                    balancedBracesL.repeat(maxDepth) +
-                    balancedBracesR.repeat(maxDepth) +
-                    '\\}',
-            },
-            'gimsux',
-        ),
+                        balancedBracesL.repeat(maxDepth) +
+                        balancedBracesR.repeat(maxDepth) +
+                        '\\}',
+                )}
+                [^>\{\}]*?
+            )+
+            /? >
+        `,
         (match) => {
-            return XRegExp.replace(
-                match.toString(),
+            return match.replace(
                 /(?:(["'])\{.*\}\1)|(?:\{.*\})/gsu,
                 (m) => {
                     const id_ = generateId();
-                    escaped[id_] = m.toString();
+                    escaped[id_] = m;
                     return id_;
                 },
             );
@@ -467,22 +476,21 @@ export function adjustHtmlSpacingAndEscape(
         // Remove <p> tags surrounding non-phrasing HTML elements, or
         // surrounding Svelte components which are not allowed to be in
         // paragraphs, or at least not the only thing in a paragraph.
-        str = XRegExp.replace(
-            str,
-            XRegExp.build(
-                `<p>
-                \\s*
-                (
-                    < \\s*
-                    (
-                        {{tagThatCannotBeInParagraphs}}
-                      | {{componentThatCannotBeInParagraphs}}
-                      | [A-Z][-.:0-9_a-zA-Z]*
+        str = str.replace(
+            regex('gs')`
+                <p>
+                \s*
+                (?<inner>
+                    < \s*
+                    (?<tag>
+                        ${pattern(`(?:${tagsThatCannotBeInParagraphs.join('|')})`)}
+                      | ${pattern(`(?:${componentsThatCannotBeInParagraphs.join('|')})`)}
+                      | [A-Z][\-.:0-9_a-zA-Z]*
                     )
                     (?:
-                        \\s
+                        \s
                         [^>]*?
-                      | \\s*
+                      | \s*
                     )
                     (?:
                         />
@@ -490,25 +498,19 @@ export function adjustHtmlSpacingAndEscape(
                         .*?
 
                         </
-                        \\s*
-                        (?:\\2)
-                        \\s*
+                        \s*
+                        (?:\k<tag>)
+                        \s*
                         >
                     )
                 )
-                \\s*
+                \s*
                 </p>
-                `,
-                {
-                    tagThatCannotBeInParagraphs: `(?:${tagsThatCannotBeInParagraphs.join('|')})`,
-                    componentThatCannotBeInParagraphs: `(?:${componentsThatCannotBeInParagraphs.join('|')})`,
-                },
-                'gsux',
-            ),
+            `,
             (match, inner, tag) => {
                 nodeAssert(isString(inner) && isString(tag));
                 if (canBeOnlyThingInParagraph(tag, components)) {
-                    return match.toString();
+                    return match;
                 }
                 return inner;
             },
@@ -551,8 +553,7 @@ export function removeBadParagraphs(
     // escape self-closing tags, since they'd be converted into empty regular
     // tags by sanitizeHtml (unless they're any of HTML's standard void
     // elements)
-    content = XRegExp.replace(
-        content,
+    content = content.replace(
         /<\s*[a-zA-Z][-.:0-9_a-zA-Z]*(?:\s+[^>]*?)?\s*\/>/gu,
         (match) => {
             nodeAssert(isString(match));
@@ -567,8 +568,7 @@ export function removeBadParagraphs(
 
     // escape ...="" and ...='' attributes, since they'd be removed by
     // sanitizeHtml
-    content = XRegExp.replace(
-        content,
+    content = content.replace(
         /<\s*[a-zA-Z][-.:0-9_a-zA-Z]*(?:\s+[^>]*?(?:""|'')[^>]*?)\s*>/gu,
         (match) => {
             nodeAssert(isString(match));
@@ -581,32 +581,29 @@ export function removeBadParagraphs(
     const maxDepth = 4;
 
     // Regex to match elements that can't contain paragraphs
-    const cannotContainParagraphs = XRegExp.build(
-        `<
-        \\s*
-        ({{tag}})
-        (?:\\s+[^>]*?)?
-        \\s*
-        >
-        ({{inner}})
-        </
-        \\s*
-        \\1
-        \\s*
-        >`,
-        {
-            tag: `(?:${[
+    const cannotContainParagraphs = regex('gms')`
+        <
+        \s*
+        (?<tag>${pattern(
+            `(?:${[
                 ...tagsThatCannotContainParagraphs,
                 ...opts.componentsThatCannotContainParagraphs,
             ].join('|')})`,
-            inner: innerL.repeat(maxDepth) + innerR.repeat(maxDepth),
-        },
-        'gmsux',
-    );
+        )})
+        (?:\s+[^>]*?)?
+        \s*
+        >
+        (?<inner>${pattern(innerL.repeat(maxDepth) + innerR.repeat(maxDepth))})
+        </
+        \s*
+        \k<tag>
+        \s*
+        >
+    `;
 
     // Remove paragraph tags from within elements that can't contain paragraphs.
-    content = XRegExp.replace(content, cannotContainParagraphs, (match) => {
-        return match.toString().replace(/(?<!^)<p>|<\/p>(?!$)/gsu, '');
+    content = content.replace(cannotContainParagraphs, (match) => {
+        return match.replace(/(?<!^)<p>|<\/p>(?!$)/gsu, '');
     });
 
     // Remove paragraphs that contain elements that can't be in paragraphs
@@ -618,7 +615,7 @@ export function removeBadParagraphs(
         'u',
     );
 
-    content = XRegExp.replace(content, /<p>(.*?)<\/p>/gsu, (match, inner) => {
+    content = content.replace(/<p>(.*?)<\/p>/gsu, (match, inner) => {
         nodeAssert(isString(match) && isString(inner));
         if (cannotBeInParagraphs.test(inner)) return inner;
         return match;
@@ -711,38 +708,20 @@ export function countNewlines(s: string): number {
 //     )?
 // `;
 
-const htmlTag: string = `
+const regexSpecials: RegExp = regex('gims')`
     (?:                 # (html tag, with delims and possibly attributes)
         <
         /?              # (optional backslash)
-        \\s*            # (whitespace, ≥0, greedy)
-        (               # 1: tag name
-            {{tag}}
+        \s*             # (whitespace, ≥0, greedy)
+        (?<tag>         # tag name
+            ${pattern('(?:' + specials.join('|') + ')')}
         )
         (?:
-            \\s+
+            \s+
             [^>]*?      # (any character other than '>', ≥0, lazy)
         )?
-        \\s*            # (whitespace, ≥0, greedy)
+        \s*             # (whitespace, ≥0, greedy)
         /?              # (optional backslash)
         >
     )
 `;
-
-const space: string = '[ \\t]';
-// const newline: string = '(?:\\r\\n?|\\n)';
-
-// const regexAny: RegExp = XRegExp.build(
-//     shared,
-//     { tag: '(?:[a-zA-Z][-.:0-9_a-zA-Z]*)', space, newline },
-//     'gimsux',
-// );
-
-const regexSpecials: RegExp = XRegExp.build(
-    htmlTag,
-    {
-        space,
-        tag: '(?:' + specials.join('|') + ')',
-    },
-    'gimsux',
-);
