@@ -37,16 +37,9 @@ env:
 
 jobs:
   test:
-    name: Run Playwright Tests (shard ${{ matrix.shard }}/4)
+    name: Run Playwright Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
-
-    # Shard the ~1900 screenshot tests across parallel jobs — a single
-    # unsharded job runs past the 60-minute limit.
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -135,32 +128,28 @@ jobs:
 
       - name: Run Playwright tests
         # On a manual `update_snapshots` run, regenerate the golden images
-        # (`--update-snapshots`) instead of comparing against them; `--shard`
-        # restricts this job to its quarter of the suite. Invoke the
-        # Playwright binary directly with `pnpm exec`: routing through the
+        # (`--update-snapshots`) instead of comparing against them. Invoke
+        # the Playwright binary directly with `pnpm exec`; going through the
         # `pnpm playwright` script forwards a stray `--`, which Playwright
         # then reads as a (non-matching) test-file filter.
-        run: >-
-          pnpm exec playwright test
-          ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
-          --shard=${{ matrix.shard }}/4
+        run: pnpm exec playwright test ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: playwright-report-shard-${{ matrix.shard }}
+          name: playwright-report
           path: packages/sveltex/playwright-report/
           retention-days: 30
 
       - name: Upload regenerated golden snapshots for review
-        # Only on a manual `update_snapshots` run. Each shard regenerates its
-        # own slice of the snapshots — download all four artifacts and extract
-        # them into `tests/e2e/snapshots/` to assemble the full set.
+        # Only on a manual `update_snapshots` run. Upload regardless of
+        # outcome — `--update-snapshots` can still exit non-zero when
+        # snapshots changed.
         if: ${{ always() && inputs.update_snapshots }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: e2e-golden-snapshots-shard-${{ matrix.shard }}
+          name: e2e-golden-snapshots
           path: packages/sveltex/tests/e2e/snapshots/
           retention-days: 14
