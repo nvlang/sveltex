@@ -1,5 +1,5 @@
 ---
-'sveltex': minor
+'sveltex': major
 ---
 
 Add a SvelTeX language server. The VS Code extension now starts a full
