@@ -589,7 +589,17 @@ function resetInput(): void {
     margin: 0;
     padding: 0.85rem 1rem;
     background: transparent;
-    overflow: auto;
+    /*
+     * `.stx-output` is the single scroll container, so its scrollbars sit at
+     * the pane's edges. This <pre> must not scroll on its own -- otherwise a
+     * tab whose output is short but wide (e.g. "Rendered Markdown") gets a
+     * horizontal scrollbar partway down the pane instead of at its foot.
+     * `width: max-content` lets the <pre> grow to its widest line (so the
+     * right padding stays past the end of long lines); `min-width` keeps it
+     * filling the pane for short output.
+     */
+    width: max-content;
+    min-width: 100%;
 }
 
 .stx-code code {
