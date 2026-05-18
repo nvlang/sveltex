@@ -33,22 +33,19 @@ describe('utils/cdn', { concurrent: false }, () => {
     });
     afterAll(() => {
         vi.restoreAllMocks();
-        vi.unmock('node-fetch');
+        vi.unstubAllGlobals();
     });
     beforeAll(() => {
-        vi.mock(
-            'node-fetch',
-            async (orig: () => Promise<typeof import('node-fetch')>) => ({
-                ...(await orig()),
-                default: vi
-                    .fn()
-                    .mockRejectedValueOnce(
-                        new Error('6da12ed8-b5ff-447d-a16c-166e67cd0301'),
-                    )
-                    .mockRejectedValueOnce(
-                        new Error('968b000c-a8df-4595-beb3-0e2a8c5eb9e6'),
-                    ),
-            }),
+        vi.stubGlobal(
+            'fetch',
+            vi
+                .fn()
+                .mockRejectedValueOnce(
+                    new Error('6da12ed8-b5ff-447d-a16c-166e67cd0301'),
+                )
+                .mockRejectedValueOnce(
+                    new Error('968b000c-a8df-4595-beb3-0e2a8c5eb9e6'),
+                ),
         );
     });
     describe('fancyFetch', () => {

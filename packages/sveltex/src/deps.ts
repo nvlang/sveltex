@@ -140,7 +140,6 @@ export {
     type Extension as MicromarkExtension,
 } from 'micromark-extension-mdx-md';
 export type { TokenTypeMap as MicromarkTokenTypeMap } from 'micromark-util-types';
-export { AbortError, default as nodeFetch } from 'node-fetch';
 export { default as ora, type Ora } from 'ora';
 export { default as pc } from 'picocolors';
 export type { Colors } from 'picocolors/types.js';

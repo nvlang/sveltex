@@ -10,7 +10,6 @@ import {
 } from 'vitest';
 import { MathHandler } from '../../../../src/handlers/MathHandler.js';
 import { spy } from '../../fixtures.js';
-import fetch, { type Response } from 'node-fetch';
 import { v4 as uuid } from 'uuid';
 import { range } from '../../utils.js';
 
@@ -39,6 +38,7 @@ describe("MathHandler<'katex'>", () => {
     });
     afterAll(() => {
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
     describe('error handling', () => {
         it('should silently log error if there is a problem fetching KaTeX stylesheet', async () => {
@@ -50,8 +50,9 @@ describe("MathHandler<'katex'>", () => {
             expect(log).toHaveBeenCalled();
             expect(log).toHaveBeenCalledWith('error', expect.any(String));
             log.mockClear();
-            vi.mock('node-fetch');
-            vi.mocked(fetch).mockImplementation(() => {
+            const fetchMock = vi.fn();
+            vi.stubGlobal('fetch', fetchMock);
+            fetchMock.mockImplementation(() => {
                 throw new Error(id);
             });
             const th1 = await MathHandler.create('katex', {
@@ -67,10 +68,10 @@ describe("MathHandler<'katex'>", () => {
                 );
             });
             log.mockClear();
-            vi.mocked(fetch).mockResolvedValue({
+            fetchMock.mockResolvedValue({
                 ok: false,
                 status: 404,
-            } as Response);
+            });
             const th2 = await MathHandler.create('katex', {
                 css: { type: 'hybrid' },
             });

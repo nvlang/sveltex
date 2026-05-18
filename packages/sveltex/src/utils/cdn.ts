@@ -2,17 +2,14 @@
 
 // Types
 import type { SupportedCdn } from '../types/handlers/Css.js';
+import type { StringLiteralUnion } from '../types/utils/utility-types.js';
+import type { MathjaxFont } from '../types/handlers/Math.js';
 
 // Internal dependencies
 import { cdnPrefixes } from '../data/cdn.js';
 import { isArray } from '../typeGuards/utils.js';
 import { log, prettifyError, runWithSpinner } from './debug.js';
 import { fs } from './fs.js';
-
-// External dependencies
-import { AbortError, nodeFetch } from '../deps.js';
-import type { StringLiteralUnion } from '../types/utils/utility-types.js';
-import type { MathjaxFont } from '../types/handlers/Math.js';
 
 export function cdnLink(
     pkg: StringLiteralUnion<
@@ -79,23 +76,20 @@ export async function fancyFetch(
 }
 
 /**
- * @see
- * https://github.com/node-fetch/node-fetch?tab=readme-ov-file#request-cancellation-with-abortsignal
+ * Fetches `url`, returning its body as text — or `undefined` if the request
+ * fails or does not complete within `timeout` milliseconds.
  */
 export async function fetchWithTimeout(
     url: string,
     timeout: number = 5000,
 ): Promise<string | undefined> {
-    // AbortController was added in node v14.17.0 globally
-    const AbortController = globalThis.AbortController;
-
     const controller = new AbortController();
     const timeoutObj = setTimeout(() => {
         controller.abort();
     }, timeout);
 
     try {
-        const response = await nodeFetch(url, {
+        const response = await fetch(url, {
             signal: controller.signal,
         });
 
@@ -112,7 +106,7 @@ export async function fetchWithTimeout(
         // Return the CSS content
         return await response.text();
     } catch (error) {
-        if (error instanceof AbortError) {
+        if (error instanceof Error && error.name === 'AbortError') {
             log('warn', `Timed out (${String(timeout)}ms): ${url}`);
         } else {
             log('error', `Error fetching ${url}:\n${prettifyError(error)}\n`);
