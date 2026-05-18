@@ -70,6 +70,7 @@
     }
   },
   "devDependencies": {
+    "tree-sitter": "0.25.0",
     "tree-sitter-cli": "^0.26.8"
   }
 }

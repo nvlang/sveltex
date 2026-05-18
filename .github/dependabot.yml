@@ -26,10 +26,15 @@ updates:
     # `@types/node` must track the Node version the project runs on, not the
     # newest published release, so never auto-bump it across a major. This
     # affects routine version updates only; security updates still apply.
+    #
+    # `tree-sitter` carries a local patch (`patches/tree-sitter@*.patch`)
+    # written against one exact version; a routine bump would orphan that
+    # patch and break the update. Move it by hand instead, re-patching.
     ignore:
       - dependency-name: '@types/node'
         update-types:
           - 'version-update:semver-major'
+      - dependency-name: 'tree-sitter'
     # At most two PRs per cycle: one for production deps, one for dev deps.
     groups:
       production-dependencies:
