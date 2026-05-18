@@ -27,7 +27,7 @@ export const preprocessor = await sveltex(
             font: 'newcm',
         },
         code: {
-            shiki: { theme: 'github-dark-default' },
+            shiki: { theme: 'github-light-default' },
         },
         verbatim: {
             Verb: { type: 'escape', component: 'p' },

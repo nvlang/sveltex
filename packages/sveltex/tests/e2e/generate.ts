@@ -125,7 +125,7 @@ function writeSveltexConfig(projectDir: string, combo: BackendCombo, ext: string
         code === 'starry-night'
             ? `{ languages: 'all' }`
             : code === 'shiki'
-              ? `{ shiki: { theme: 'github-dark-default' } }`
+              ? `{ shiki: { theme: 'github-light-default' } }`
               : `{}`;
 
     writeFileSync(
