@@ -310,10 +310,11 @@ export class RegionForwarder {
         const target = await this.#proxyForRegion(source, region);
         if (!target) return null;
 
+        const latexScaffold = this.#latexScaffoldFor(source, region);
         const virtual = buildRegionVirtualDocument(
             source,
             region,
-            this.#latexScaffoldFor(source, region),
+            latexScaffold,
         );
         const generatedPosition =
             virtual.sourceMap.sourcePositionToGenerated(position);
@@ -349,8 +350,12 @@ export class RegionForwarder {
                 position: generatedPosition,
             });
             if (region.kind === 'verbatim') {
+                const preamble = latexScaffold
+                    ? "the project's preamble"
+                    : 'the built-in fallback preamble';
                 this.#log(
-                    `${method} forwarded to TexLab → ${describeResult(result)}`,
+                    `${method} forwarded to TexLab with ${preamble} → ` +
+                        describeResult(result),
                 );
             }
             const ctx: RemapContext = {

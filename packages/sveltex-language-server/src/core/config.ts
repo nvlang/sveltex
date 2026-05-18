@@ -431,6 +431,21 @@ writeSync(3, JSON.stringify(rendered));
 `;
 
 /**
+ * Extracts a one-line, human-readable summary from a child process's stderr:
+ * the line that names the error (`SyntaxError: …`, `Error [ERR_…]: …`) if
+ * there is one, else the first non-empty line. Capped so a stack trace cannot
+ * flood the log.
+ */
+function summarizeStderr(stderr: string): string {
+    const lines = stderr
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    const errorLine = lines.find((line) => /[A-Za-z]*Error\b/u.test(line));
+    return (errorLine ?? lines[0] ?? 'unknown error').slice(0, 300);
+}
+
+/**
  * Imports a `svelte.config.*` in a short-lived child process and returns a
  * JSON-safe rendering of its module namespace.
  *
@@ -465,9 +480,11 @@ async function loadConfigViaChild(
                     ELECTRON_RUN_AS_NODE: '1',
                     SVELTEX_CONFIG_PATH: configPath,
                 },
-                // fds 0-2 are dropped, so anything the config logs is
-                // discarded; the JSON rendering returns on the private fd 3.
-                stdio: ['ignore', 'ignore', 'ignore', 'pipe'],
+                // stdin/stdout are dropped (config logging to stdout is
+                // discarded); stderr is captured so a failed load can report
+                // its real reason; the JSON rendering returns on the private
+                // fd 3.
+                stdio: ['ignore', 'ignore', 'pipe', 'pipe'],
                 // A config that hangs on import must not wedge the reloader.
                 timeout: CONFIG_LOAD_TIMEOUT_MS,
             },
@@ -497,12 +514,25 @@ async function loadConfigViaChild(
             }
             chunks.push(chunk);
         });
+        // Collect the child's stderr so a failed import/eval can be reported
+        // with its real reason (`SyntaxError`, `Cannot find package`, …)
+        // rather than a bare exit code.
+        const errChunks: Buffer[] = [];
+        child.stderr?.on('data', (chunk: Buffer) => {
+            if (errChunks.length < 64) errChunks.push(chunk);
+        });
+
         child.on('error', fail);
         child.on('close', (code) => {
             if (settled) return;
             if (code !== 0) {
+                const stderr = Buffer.concat(errChunks).toString('utf8');
                 fail(
-                    new Error(`config loader exited with code ${String(code)}`),
+                    new Error(
+                        stderr.trim()
+                            ? summarizeStderr(stderr)
+                            : `exited with code ${String(code)}`,
+                    ),
                 );
                 return;
             }
@@ -535,6 +565,10 @@ async function loadConfigViaChild(
  * into `svelte.config.*`, so reading the latter captures it either way.
  *
  * @param workspaceRoot - Absolute path of the workspace folder to search.
+ * @param log - Optional sink for a one-line, human-readable account of the
+ * load outcome (config located and loaded, located but unloadable — with the
+ * reason —, or absent). Wired by the host to the editor's output channel so a
+ * misconfigured project is diagnosable rather than a silent fall-back.
  * @returns The resolved snapshot. Loading never throws: a missing,
  * syntactically broken, or otherwise unloadable config falls back to the
  * built-in {@link defaultConfigSnapshot} — the LSP must never fail to start
@@ -550,23 +584,33 @@ async function loadConfigViaChild(
  */
 export async function loadConfigSnapshot(
     workspaceRoot: string,
+    log?: (message: string) => void,
 ): Promise<SveltexConfigSnapshot> {
     const base = defaultConfigSnapshot();
     const configPath = findSvelteConfigFile(workspaceRoot);
-    if (!configPath) return base;
+    if (!configPath) {
+        log?.('No svelte.config.* found — using the built-in defaults.');
+        return base;
+    }
 
     let mod: Record<string, unknown>;
     try {
         mod = await loadConfigViaChild(configPath);
-    } catch {
+    } catch (error) {
         // Loading must never fail the server: a missing, broken, or
         // otherwise unloadable config falls back to the defaults (the
         // located config path is still reported).
+        const reason = error instanceof Error ? error.message : String(error);
+        log?.(
+            `Failed to load ${configPath}: ${reason}. ` +
+                'Using the built-in defaults.',
+        );
         return { ...base, configPath };
     }
 
-    const { candidate, mathBackend } = resolveConfigCandidate(mod);
-    return {
+    const { candidate, mathBackend, sveltexInstanceFound } =
+        resolveConfigCandidate(mod);
+    const snapshot: SveltexConfigSnapshot = {
         verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
         latexTags: readLatexTags(candidate) ?? base.latexTags,
         extensions: readExtensions(candidate, base.extensions),
@@ -576,6 +620,22 @@ export async function loadConfigSnapshot(
         texScaffolds: readTexScaffolds(candidate),
         configPath,
     };
+
+    if (!sveltexInstanceFound) {
+        log?.(
+            `Loaded ${configPath}, but found no SvelTeX preprocessor in ` +
+                'it — SvelTeX settings fall back to the built-in defaults.',
+        );
+    } else {
+        const scaffoldTags = Object.keys(snapshot.texScaffolds);
+        log?.(
+            `Loaded SvelTeX config from ${configPath} (math backend: ` +
+                `${snapshot.mathBackend}; LaTeX tags: ` +
+                `${snapshot.latexTags.join(', ') || 'none'}; TeX preamble ` +
+                `scaffolds: ${scaffoldTags.join(', ') || 'none'}).`,
+        );
+    }
+    return snapshot;
 }
 
 /**
@@ -628,12 +688,14 @@ function findSveltexInPreprocess(
  * a plain `default` / `config` object is used as a best effort.
  *
  * @param mod - The imported config module namespace.
- * @returns The object to read region settings from, and the math backend if
- * one could be determined.
+ * @returns The object to read region settings from, the math backend if one
+ * could be determined, and whether a resolved `Sveltex` preprocessor instance
+ * was actually found (as opposed to falling back to a plain config object).
  */
 function resolveConfigCandidate(mod: Record<string, unknown>): {
     candidate: Record<string, unknown>;
     mathBackend: MathBackend | undefined;
+    sveltexInstanceFound: boolean;
 } {
     // (a) A resolved `Sveltex` instance exported directly.
     for (const value of Object.values(mod)) {
@@ -641,6 +703,7 @@ function resolveConfigCandidate(mod: Record<string, unknown>): {
             return {
                 candidate: value.configuration,
                 mathBackend: readMathBackend(value),
+                sveltexInstanceFound: true,
             };
         }
     }
@@ -651,6 +714,7 @@ function resolveConfigCandidate(mod: Record<string, unknown>): {
             return {
                 candidate: instance.configuration,
                 mathBackend: readMathBackend(instance),
+                sveltexInstanceFound: true,
             };
         }
     }
@@ -660,5 +724,9 @@ function resolveConfigCandidate(mod: Record<string, unknown>): {
         : isObject(mod['config'])
           ? mod['config']
           : mod;
-    return { candidate, mathBackend: readMathBackend(candidate) };
+    return {
+        candidate,
+        mathBackend: readMathBackend(candidate),
+        sveltexInstanceFound: false,
+    };
 }
