@@ -17,6 +17,9 @@ on:
     # branch, so this must stay `main` even though work targets `develop`.
     branches:
       - main
+  # Allow running on demand — e.g. after changing repository settings that
+  # could affect the score.
+  workflow_dispatch:
 
 # Read-only by default; the analysis job elevates only what it needs.
 permissions: read-all
