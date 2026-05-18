@@ -403,9 +403,9 @@ async function buildEditorGrammars() {
     ]);
     // Shiki looks a language up by its `name`; these grammars ship under
     // different ones, so normalize them to the ids the component requests
-    // (`Playground.vue` highlights its input as `sveltex`, its output as
-    // `svelte`).
+    // (`Playground.vue` highlights with `sveltex`, `svelte` and `markdown`).
     svelte.name = 'svelte';
+    markdown.name = 'markdown';
     sveltex.name = 'sveltex';
     const grammarsFile = resolve(
         docsRoot,

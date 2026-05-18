@@ -199,11 +199,22 @@ const tabs = computed(() => stageNames.value);
 const activeOutput = computed(() => outputs.value[activeTab.value] ?? '');
 
 /**
- * The active tab's output, tokenized for syntax highlighting. Every pipeline
- * stage is Svelte-flavored markup, so all tabs use the `svelte` grammar.
+ * The grammar each output tab is highlighted with. The escaped document is
+ * still Markdown (the Markdown backend has not run yet); the later stages are
+ * Svelte-flavored markup. Tabs not listed here fall back to `svelte`.
  */
+const OUTPUT_TAB_LANGS: Record<string, string> = {
+    'Escaped document': 'markdown',
+};
+
+/** The active tab's output, tokenized for syntax highlighting. */
 const outputTokens = computed(() =>
-    flattenTokenLines(tokenize(activeOutput.value, 'svelte')),
+    flattenTokenLines(
+        tokenize(
+            activeOutput.value,
+            OUTPUT_TAB_LANGS[activeTab.value] ?? 'svelte',
+        ),
+    ),
 );
 
 function sendTrace(): void {
@@ -366,20 +377,6 @@ function resetInput(): void {
                         </button>
                     </div>
                     <span v-else class="stx-pane__title">Output</span>
-                    <span
-                        class="stx-status"
-                        :class="`stx-status--${status}`"
-                    >
-                        <template v-if="status === 'loading'"
-                            >Preprocessing…</template
-                        >
-                        <template v-else-if="status === 'ready'"
-                            >Up to date</template
-                        >
-                        <template v-else-if="status === 'error'"
-                            >Error</template
-                        >
-                    </span>
                 </header>
 
                 <div class="stx-output">
@@ -415,8 +412,9 @@ function resetInput(): void {
             </section>
         </div>
         <p class="stx-note">
-            Runs entirely in your browser via a Web Worker. The playground
-            only performs SvelTeX's text transformation
+            Runs entirely in your browser — no server is involved, and
+            nothing you type leaves your machine. The playground only
+            performs SvelTeX's text transformation
             (<code>Sveltex.trace</code>); your document's code is never
             executed.
         </p>
@@ -428,33 +426,13 @@ function resetInput(): void {
     margin: 1.5rem 0;
 }
 
-/*
- * On wide viewports the playground would otherwise be capped at the narrow
- * VitePress prose-column width, leaving each output pane too cramped for the
- * tab bar to fit on one row. Break the playground out of that column,
- * expanding it rightward (into the otherwise-empty right margin) so both panes
- * are roomy. The expansion grows with the viewport and is capped so the
- * playground never overflows the page content area; below 1280px it is 0, so
- * narrow layouts are unaffected.
- */
-@media (min-width: 1280px) {
-    .stx-playground {
-        --stx-expand: clamp(0px, 100vw - 1010px, 300px);
-        width: calc(100% + var(--stx-expand));
-        margin-right: calc(-1 * var(--stx-expand));
-    }
-}
-
+/* The two panes are always stacked vertically, at the page's content width
+   -- intentionally simple, and it keeps the playground clear of VitePress's
+   right-hand outline column. */
 .stx-playground__panes {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
-}
-
-@media (min-width: 960px) {
-    .stx-playground__panes {
-        grid-template-columns: 1fr 1fr;
-    }
 }
 
 .stx-pane {
@@ -479,6 +457,12 @@ function resetInput(): void {
 
 .stx-pane__head--tabs {
     padding: 0 0.75rem 0 0;
+}
+
+/* The tab row sits flush-left (each tab carries its own padding); the
+   fallback "Output" title, shown until the tabs load, needs that padding. */
+.stx-pane__head--tabs .stx-pane__title {
+    padding-left: 0.75rem;
 }
 
 .stx-pane__title {
@@ -518,12 +502,8 @@ function resetInput(): void {
 
 .stx-tabs {
     display: flex;
-    /*
-     * Keep the tab bar a single horizontal row. On wide viewports the widened
-     * output pane (see `.stx-playground` above) has ample room for every tab;
-     * on narrow ones the row scrolls horizontally rather than stacking the
-     * tabs vertically.
-     */
+    /* Keep the tab bar on one row; if it ever runs out of width it scrolls
+       horizontally rather than wrapping the tabs onto a second row. */
     flex-wrap: nowrap;
     overflow-x: auto;
 }
@@ -552,31 +532,9 @@ function resetInput(): void {
     border-bottom-color: var(--vp-c-brand-1);
 }
 
-.stx-status {
-    margin-left: auto;
-    padding-right: 0.75rem;
-    font-size: 0.7rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.stx-status--loading {
-    color: var(--vp-c-text-3);
-}
-
-.stx-status--ready {
-    color: var(--vp-c-green-1, var(--vp-c-brand-1));
-}
-
-.stx-status--error {
-    color: var(--vp-c-red-1, var(--vp-c-danger-1));
-}
-
 .stx-editor {
     position: relative;
-    flex: 1;
-    min-height: 22rem;
-    resize: vertical;
+    height: 22rem;
     overflow: hidden;
 }
 
@@ -623,8 +581,7 @@ function resetInput(): void {
 }
 
 .stx-output {
-    flex: 1;
-    min-height: 22rem;
+    height: 22rem;
     overflow: auto;
 }
 
