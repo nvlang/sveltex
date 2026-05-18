@@ -52,8 +52,10 @@ It then launches `node …/bin/server.js --stdio`.
 
 ## Installing as a dev extension
 
-1. Build once to fetch dependencies and produce `Cargo.lock`:
+1. From this directory (`editors/zed`), install the `wasm32-wasip1`
+   target and check that the extension compiles:
    ```sh
+   cd editors/zed
    rustup target add wasm32-wasip1
    cargo build --release --target wasm32-wasip1
    ```
