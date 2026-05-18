@@ -103,6 +103,15 @@ jobs:
           path: packages/sveltex/html/
           retention-days: 30
 
+      # Pre-publish sanity checks on `@nvl/sveltex` as it will be published:
+      # `publint` validates the manifest, `@arethetypeswrong/cli` checks that
+      # consumers can resolve the published types. `--profile esm-only`
+      # because the package intentionally ships no CommonJS build.
+      - name: Check @nvl/sveltex packaging
+        run: |
+          pnpm --filter @nvl/sveltex exec publint
+          pnpm --filter @nvl/sveltex exec attw --pack . --profile esm-only
+
       - name: Determine current branch
         run:
           echo "BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV

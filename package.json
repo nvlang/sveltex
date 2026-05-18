@@ -17,6 +17,7 @@
     "ci:publish": "pnpm --filter=\\!./packages/vscode-sveltex publish --provenance --access public --no-git-checks && pnpm --filter \"@nvl/sveltex\" exec deno publish --unstable-sloppy-imports --allow-dirty && changeset tag"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
     "@commitlint/config-conventional": "^21.0.1",
@@ -32,6 +33,7 @@
     "husky": "^9.1.7",
     "knip": "^6.14.1",
     "prettier": "^3.8.3",
+    "publint": "^0.3.21",
     "rimraf": "^6.1.3",
     "tsx": "^4.22.1",
     "typescript": "^5.9.3",
