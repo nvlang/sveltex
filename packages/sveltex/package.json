@@ -39,7 +39,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node dist/src/main.js",
