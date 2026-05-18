@@ -1,72 +1,54 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# Dependabot configuration.
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+#
+# Routine version updates are kept deliberately low-noise: grouped into one PR
+# per dependency type and checked monthly. Security updates are separate — they
+# are event-driven (enable "Dependabot security updates" in the repository
+# settings) and are not affected by the `schedule`/`ignore` rules here.
 
 version: 2
 updates:
-  # Package manager to use
+  # npm packages.
   - package-ecosystem: 'npm'
-
-    # Location of package manifests
     directories:
       - '/packages/*/'
-
-    # Branch to create pull requests against
     target-branch: 'dependencies'
-
-    # Commit message preferences
     commit-message:
-      # Specifies a prefix for all commit messages that update dependencies in
-      # the Production dependency group.
       prefix: 'build(deps)'
-
-      # Specifies a prefix for all commit messages that update dependencies in
-      # the Development dependency group.
       prefix-development: 'build(deps-dev)'
-
-      # Specifies that any prefix is followed by a list of the dependencies
-      # updated in the commit.
       include: 'scope'
-
-    # When to check for updates
     schedule:
-      # How often to check for updates
-      interval: 'yearly'
-
-      # Time of day to check for updates (hh:mm)
+      # `monthly` is the least-frequent interval available on github.com;
+      # `yearly` exists only on GitHub Enterprise Server.
+      interval: 'monthly'
       time: '09:00'
-
-      # Timezone for time of day (zone identifier)
       timezone: 'Europe/Paris'
+    # `@types/node` must track the Node version the project runs on, not the
+    # newest published release, so never auto-bump it across a major. This
+    # affects routine version updates only; security updates still apply.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types:
+          - 'version-update:semver-major'
+    # At most two PRs per cycle: one for production deps, one for dev deps.
+    groups:
+      production-dependencies:
+        dependency-type: 'production'
+      development-dependencies:
+        dependency-type: 'development'
 
-  # Package manager to use
+  # GitHub Actions workflow dependencies.
   - package-ecosystem: 'github-actions'
-
-    # Location of package manifests. NB: The directory must be set to "/" to
-    # check for workflow files in .github/workflows.
     directory: '/'
-
-    # Branch to create pull requests against
     target-branch: 'dependencies'
-
-    # Conventional-commit prefix, matching the npm entry above.
     commit-message:
       prefix: 'ci'
       include: 'scope'
-
-    # When to check for updates
     schedule:
-      # How often to check for updates
       interval: 'monthly'
-
-      # Time of day to check for updates (hh:mm)
       time: '09:00'
-
-      # Timezone for time of day (zone identifier)
       timezone: 'Europe/Paris'
-
-    # One grouped pull request per cycle, rather than one per action.
+    # One grouped PR per cycle, rather than one per action.
     groups:
       github-actions:
         patterns:
