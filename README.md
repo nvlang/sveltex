@@ -9,48 +9,36 @@
 <br>
 <div>
 
-[
-<picture>
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=a3acb7&label=&labelColor=21262d&color=21262d&filter=@nvl/sveltex@*">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2&filter=@nvl/sveltex@*">
     <img alt="GitHub version tag" src="https://img.shields.io/github/v/tag/nvlang/sveltex?style=flat-square&logo=GitHub&logoColor=24292f&label=&labelColor=eaeef2&color=eaeef2&filter=@nvl/sveltex@*">
-</picture>
-](https://github.com/nvlang/sveltex)
-[
-<picture>
+</picture>](https://github.com/nvlang/sveltex)
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=a3acb7&labelColor=21262d&color=21262d&logoSize=auto)">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=24292f&labelColor=eaeef2&color=eaeef2&logoSize=auto)">
     <img alt="NPM package name" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&logo=npm&logoColor=24292f&labelColor=eaeef2&color=eaeef2&logoSize=auto)">
-</picture>
-](https://npmjs.com/@nvl/sveltex)
-[
-<picture>
+</picture>](https://npmjs.com/@nvl/sveltex)
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=21262d&color=21262d&logo=jsr&logoColor=a3acb7&logoSize=auto">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=eaeef2&color=eaeef2&logo=jsr&logoColor=24292f&logoSize=auto">
     <img alt="JSR package name" src="https://img.shields.io/badge/@nvl/sveltex-_?style=flat-square&labelColor=eaeef2&color=eaeef2&logo=jsr&logoColor=24292f&logoSize=auto">
-</picture>
-](https://jsr.io/@nvl/sveltex)
-[
-<picture>
+</picture>](https://jsr.io/@nvl/sveltex)
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=21262d&color=21262d&logoColor=a3acb7">
     <source media="(prefers-color-scheme: light)" srcset="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=eaeef2&color=eaeef2&logoColor=24292f">
     <img alt="JSR score" src="https://jsr.io/badges/@nvl/sveltex/score?style=flat-square&labelColor=eaeef2&color=eaeef2&logoColor=24292f">
-</picture>
-](https://jsr.io/@nvl/sveltex)
-[
-<picture>
+</picture>](https://jsr.io/@nvl/sveltex)
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/codecov/c/github/nvlang/sveltex?flag=sveltex&style=flat-square&logo=codecov&label=&logoColor=a3acb7&labelColor=21262d&color=21262d">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/codecov/c/github/nvlang/sveltex?flag=sveltex&style=flat-square&logo=codecov&label=&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
     <img alt="CodeCov coverage" src="https://img.shields.io/codecov/c/github/nvlang/sveltex?flag=sveltex&style=flat-square&logo=codecov&label=&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
-</picture>
-](https://codecov.io/gh/nvlang/sveltex)
-[
-<picture>
+</picture>](https://codecov.io/gh/nvlang/sveltex)
+[<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=a3acb7&labelColor=21262d&color=21262d">
     <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
     <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/nvlang/sveltex?style=flat-square&label=Scorecard&logoColor=24292f&labelColor=eaeef2&color=eaeef2">
-</picture>
-](https://scorecard.dev/viewer/?uri=github.com/nvlang/sveltex)
+</picture>](https://scorecard.dev/viewer/?uri=github.com/nvlang/sveltex)
 
 </div>
 </div>
