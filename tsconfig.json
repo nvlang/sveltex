@@ -50,7 +50,11 @@
     // `scripts/` (notably the playground bundle's `deps.browser.ts`, which
     // resolves SvelTeX's deps via esbuild `nodePaths`) is not part of the
     // monorepo type-check and must not be swept in by the `**/scripts` glob.
-    "docs"
+    "docs",
+    // The Zed editor integration. Its `grammars/` is gitignored and holds a
+    // vendored, dependency-less copy of the packages; excluded so the
+    // `**/scripts` glob does not sweep that copy into the monorepo type-check.
+    "editors"
   ],
   "include": [
     "*.config.js",
