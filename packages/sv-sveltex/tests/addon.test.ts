@@ -42,42 +42,54 @@ const { test, testCases } = setupTest(
         // SvelTeX requires SvelteKit, so only the `kit-*` variants apply.
         filter: (testCase) => testCase.variant.includes('kit'),
         browser: false,
-        // The add-on pins `@nvl/sveltex` to `^0.5.0`, which is not yet
-        // published to npm. After the add-on has run, the `sv` test harness
-        // performs a real `pnpm install` of every scaffolded project from a
-        // shared workspace root. To keep that install resolvable (the
-        // assertions only inspect generated file contents, not a working
-        // SvelTeX install), an `overrides` entry redirecting `@nvl/sveltex`
-        // to the local monorepo package via a relative `file:` specifier is
-        // appended to that workspace root's `pnpm-workspace.yaml` — pnpm 11
-        // reads `overrides` from there, not from `package.json`.
+        // `preAdd` patches the shared workspace root's `pnpm-workspace.yaml`
+        // before the harness's real `pnpm install` of each scaffolded project
+        // (the assertions only inspect generated files, not a working
+        // install):
+        //
+        //   - `overrides`: the add-on pins `@nvl/sveltex` to `^0.5.0`, not yet
+        //     on npm — redirect it to the local monorepo package via a
+        //     relative `file:` specifier so the install resolves.
+        //
+        //   - `allowBuilds`: pnpm 11 runs a dependency's install script only
+        //     when it is allow-listed, and a fresh install hard-errors on an
+        //     undecided one. Decide the scaffolded SvelteKit projects' two
+        //     build-script dependencies so the install needs no
+        //     `dangerouslyAllowAllBuilds`.
         preAdd: ({ cwd }) => {
-            // The harness lays out each scaffolded project as a direct child
-            // of the shared workspace root, so the root is the project's
-            // parent — and it has already written a `pnpm-workspace.yaml`
-            // there. `preAdd` runs once per scaffolded project, so append the
-            // override only the first time.
+            // Each scaffolded project is a direct child of the shared
+            // workspace root, so the root is the project's parent. `preAdd`
+            // runs once per project; the edits below are idempotent.
             const workspaceRoot = path.dirname(cwd);
             const workspaceYamlPath = path.resolve(
                 workspaceRoot,
                 'pnpm-workspace.yaml',
             );
+            let workspaceYaml = fs.readFileSync(workspaceYamlPath, 'utf8');
+
             // `file:` overrides are resolved relative to the workspace root.
             // POSIX separators keep the specifier valid on every platform.
             const relativeSveltex = path
                 .relative(workspaceRoot, localSveltexPkgDir)
                 .split(path.sep)
                 .join('/');
-            const workspaceYaml = fs.readFileSync(workspaceYamlPath, 'utf8');
             if (!workspaceYaml.includes('overrides:')) {
-                fs.writeFileSync(
-                    workspaceYamlPath,
+                workspaceYaml =
                     `${workspaceYaml.trimEnd()}\n` +
-                        `overrides:\n` +
-                        `  '@nvl/sveltex': 'file:${relativeSveltex}'\n`,
-                    'utf8',
-                );
+                    `overrides:\n` +
+                    `  '@nvl/sveltex': 'file:${relativeSveltex}'\n`;
             }
+
+            // Replace whatever `allowBuilds` the scaffold left (it may carry
+            // pnpm's `set this to true or false` placeholders) with a decided
+            // list covering the scaffolded projects' build-script deps.
+            workspaceYaml =
+                workspaceYaml
+                    .replace(/^allowBuilds:\n(?: .*\n?)*/mu, '')
+                    .trimEnd() +
+                '\nallowBuilds:\n  core-js-pure: true\n  esbuild: true\n';
+
+            fs.writeFileSync(workspaceYamlPath, workspaceYaml, 'utf8');
         },
     },
 );

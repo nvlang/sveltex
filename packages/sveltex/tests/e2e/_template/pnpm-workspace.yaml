@@ -1,0 +1,9 @@
+# `tests/e2e/_template/` is a standalone SvelteKit project — the shared base
+# the per-combo E2E test projects are generated from — installed on its own,
+# not as part of the monorepo workspace. This file makes it its own pnpm
+# workspace root and carries the build-script allow-list the install needs:
+# pnpm 11 runs a dependency's install script only when it is listed here. This
+# is the scoped alternative to the `dangerouslyAllowAllBuilds` setting.
+allowBuilds:
+  core-js-pure: true
+  esbuild: true

@@ -20,13 +20,6 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
-# `docs/` is installed with `--ignore-workspace`, so pnpm 11 cannot see the
-# root `pnpm-workspace.yaml` build-script allow-list and would hard-error
-# (`ERR_PNPM_IGNORED_BUILDS`) on dependencies with install scripts. Allow all
-# build scripts here — the lockfile already pins every dependency.
-env:
-  pnpm_config_dangerously_allow_all_builds: 'true'
-
 jobs:
   build:
     name: Build the VitePress site
@@ -50,10 +43,12 @@ jobs:
             pnpm-lock.yaml
             docs/pnpm-lock.yaml
 
-      # `docs/` is a standalone project — not a pnpm-workspace member — and
-      # has its own lockfile, so install it in isolation.
+      # `docs/` is a standalone project — not a pnpm-workspace member. Its own
+      # `docs/pnpm-workspace.yaml` makes it a self-contained workspace root
+      # (carrying its build-script allow-list), so a plain `pnpm install` here
+      # resolves `docs/pnpm-lock.yaml` without climbing to the monorepo root.
       - name: Install dependencies
-        run: pnpm install --ignore-workspace
+        run: pnpm install
         working-directory: docs
 
       # `update-stats.mjs` recomputes the project-stat figures quoted in
