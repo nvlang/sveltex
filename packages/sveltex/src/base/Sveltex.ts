@@ -125,7 +125,7 @@ export class Sveltex<
     public readonly codeBackend: C;
 
     /**
-     * The TeX backend used by the Sveltex instance.
+     * The math backend used by the Sveltex instance.
      */
     public readonly mathBackend: T;
 
@@ -580,13 +580,9 @@ export class Sveltex<
         stages: { name: string; output: string }[];
     }> {
         const stages: { name: string; output: string }[] = [];
-        const result = await this._markup(
-            content,
-            filename,
-            (name, output) => {
-                stages.push({ name, output });
-            },
-        );
+        const result = await this._markup(content, filename, (name, output) => {
+            stages.push({ name, output });
+        });
         if (result === undefined) {
             return { code: '', stages };
         }
