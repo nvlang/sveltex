@@ -11,9 +11,12 @@ import {
 import {
     handleFrontmatter,
     interpretFrontmatter,
+    keyToIdentifier,
+    normalizeFrontmatterConfiguration,
     parseFrontmatter,
 } from '../../../src/utils/frontmatter.js';
 import type { Frontmatter } from '../../../src/types/utils/Frontmatter.js';
+import type { FullFrontmatterConfiguration } from '../../../src/types/SveltexConfiguration.js';
 import { spy } from '../fixtures.js';
 import { isString } from '../../../src/typeGuards/utils.js';
 import type { ProcessableSnippet } from '../../../src/types/utils/Escape.js';
@@ -206,7 +209,6 @@ describe('interpretFrontmatter()', () => {
                     { name: 'application-name', content: 'test' },
                     { name: 'generator', content: 'test' },
                     { name: 'viewport', content: 'test' },
-                    { name: 'charset', content: 'utf-8' },
                     {
                         'http-equiv': 'content-security-policy',
                         content: 'test',
@@ -230,6 +232,21 @@ describe('interpretFrontmatter()', () => {
                 description: '...',
                 meta: [{ name: 'description', content: '...' }],
             },
+        ],
+        // `charset` produces the dedicated `{ charset: … }` shape rather
+        // than `{ name: 'charset', content: … }` — see the comment on the
+        // top-level `charset` branch in `interpretFrontmatter`.
+        [
+            { charset: 'utf-8' },
+            { charset: 'utf-8', meta: [{ charset: 'utf-8' }] },
+        ],
+        [
+            { meta: [{ name: 'charset', content: 'utf-8' }] },
+            { meta: [{ charset: 'utf-8' }] },
+        ],
+        [
+            { meta: { charset: 'utf-8' } } as unknown as Frontmatter,
+            { meta: [{ charset: 'utf-8' }] },
         ],
         [
             {
@@ -665,17 +682,433 @@ describe('handleFrontmatter()', () => {
             scriptLines: [],
             scriptModuleLines: [],
         },
+        // The rows below cover non-identifier keys: the metadata-name keys
+        // SvelTeX accepts at the top level have hyphens (`color-scheme`,
+        // `theme-color`, …), and a user may write any string. Such keys
+        // become quoted object keys in the `metadata` export and camelCased
+        // variable names in the instance script; keys that can't form a
+        // valid identifier at all are dropped from the variables step
+        // (still present in `metadata`).
+        {
+            label: 'metadata-name key with hyphens (top level)',
+            snippet: {
+                innerContent: 'color-scheme: dark',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta name="color-scheme" content="dark">'],
+            scriptLines: [
+                'const colorScheme = "dark";',
+                'const meta = [{"name":"color-scheme","content":"dark"}];',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                '"color-scheme": "dark",',
+                'meta: [{"name":"color-scheme","content":"dark"}],',
+                '};',
+            ],
+        },
+        {
+            label: 'non-metadata-name key with hyphens',
+            snippet: {
+                innerContent: 'my-foo: bar',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [],
+            scriptLines: ['const myFoo = "bar";'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                '"my-foo": "bar",',
+                '};',
+            ],
+        },
+        {
+            // The key starts with a digit, so even after camelCasing it
+            // cannot be a valid identifier. The variable is silently
+            // dropped; the `metadata` export still carries the key, quoted.
+            label: 'key with no valid identifier form',
+            snippet: {
+                innerContent: '"123abc": ok',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [],
+            scriptLines: [],
+            scriptModuleLines: [
+                'export const metadata = {',
+                '"123abc": "ok",',
+                '};',
+            ],
+        },
+        // The rows below cover the `charset` key. `<meta charset="…">`
+        // carries its value in the `charset` attribute itself, not in a
+        // separate `content="…"` attribute, so SvelTeX emits a dedicated
+        // `{ charset: … }` entry rather than the regular `{ name: …,
+        // content: … }` shape. Every input form that can name `charset`
+        // — top level, `meta:` mapping, `meta:` array with `name:
+        // charset` — must end up with the same `<meta charset="…">` tag.
+        {
+            label: 'charset (top level)',
+            snippet: {
+                innerContent: 'charset: utf-8',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta charset="utf-8">'],
+            scriptLines: [
+                'const charset = "utf-8";',
+                'const meta = [{"charset":"utf-8"}];',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'charset: "utf-8",',
+                'meta: [{"charset":"utf-8"}],',
+                '};',
+            ],
+        },
+        {
+            label: 'charset (`meta:` mapping form)',
+            snippet: {
+                innerContent: 'meta:\n  charset: utf-8',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta charset="utf-8">'],
+            scriptLines: ['const meta = [{"charset":"utf-8"}];'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"utf-8"}],',
+                '};',
+            ],
+        },
+        {
+            label: 'charset (`meta:` array form, `name: charset`)',
+            snippet: {
+                innerContent: 'meta:\n- name: charset\n  content: utf-8',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta charset="utf-8">'],
+            scriptLines: ['const meta = [{"charset":"utf-8"}];'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"utf-8"}],',
+                '};',
+            ],
+        },
+        {
+            // An array value for `charset` is meaningless in HTML, but is
+            // syntactically a valid frontmatter input — `addCharset`
+            // joins it with `, ` for symmetry with `addMetaName`.
+            label: 'charset (array value, joined)',
+            snippet: {
+                innerContent: 'meta:\n  charset:\n  - utf-8\n  - ascii',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta charset="utf-8, ascii">'],
+            scriptLines: ['const meta = [{"charset":"utf-8, ascii"}];'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"utf-8, ascii"}],',
+                '};',
+            ],
+        },
+        {
+            // Two `charset` entries — the second replaces the first
+            // (with a warning) so there is exactly one `<meta charset>`.
+            label: 'charset (duplicate, last wins)',
+            snippet: {
+                innerContent:
+                    'meta:\n' +
+                    '- name: charset\n' +
+                    '  content: utf-8\n' +
+                    '- name: charset\n' +
+                    '  content: ascii',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: ['<meta charset="ascii">'],
+            scriptLines: ['const meta = [{"charset":"ascii"}];'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"ascii"}],',
+                '};',
+            ],
+        },
+        {
+            // Adding a meta name when `charset` is already present must
+            // preserve the charset entry (and vice versa for http-equiv).
+            label: 'charset preserved alongside a meta name',
+            snippet: {
+                innerContent: 'meta:\n  charset: utf-8\n  description: foo',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [
+                '<meta charset="utf-8">',
+                '<meta name="description" content="foo">',
+            ],
+            scriptLines: [
+                'const meta = [{"charset":"utf-8"},{"name":"description","content":"foo"}];',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"utf-8"},{"name":"description","content":"foo"}],',
+                '};',
+            ],
+        },
+        {
+            label: 'charset preserved alongside an http-equiv',
+            snippet: {
+                innerContent:
+                    'meta:\n  charset: utf-8\n  default-style: foo',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [
+                '<meta charset="utf-8">',
+                '<meta http-equiv="default-style" content="foo">',
+            ],
+            scriptLines: [
+                'const meta = [{"charset":"utf-8"},{"http-equiv":"default-style","content":"foo"}];',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"charset":"utf-8"},{"http-equiv":"default-style","content":"foo"}],',
+                '};',
+            ],
+        },
+        // The rows below exercise the `frontmatter` configuration: each
+        // disables one (or all) of the four processing steps. They use
+        // frontmatter that *would* produce output for the disabled step, so
+        // the empty result confirms the step really was skipped.
+        {
+            label: 'head disabled',
+            snippet: {
+                innerContent: 'title: My Title\nnoscript: enable JS',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: false,
+                metadata: true,
+                variables: true,
+                imports: true,
+            },
+            headLines: [],
+            scriptLines: [
+                'const title = "My Title";',
+                'const noscript = "enable JS";',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'title: "My Title",',
+                'noscript: "enable JS",',
+                '};',
+            ],
+        },
+        {
+            label: 'metadata disabled',
+            snippet: {
+                innerContent: 'title: My Title',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: true,
+                metadata: false,
+                variables: true,
+                imports: true,
+            },
+            headLines: ['<title>My Title</title>'],
+            scriptLines: ['const title = "My Title";'],
+            scriptModuleLines: [],
+        },
+        {
+            label: 'variables disabled',
+            snippet: {
+                innerContent: 'title: My Title',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: true,
+                metadata: true,
+                variables: false,
+                imports: true,
+            },
+            headLines: ['<title>My Title</title>'],
+            scriptLines: [],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'title: "My Title",',
+                '};',
+            ],
+        },
+        {
+            // With `variables` off but `imports` on, only the `import`
+            // statement is emitted — not the `const imports = ...` line.
+            label: 'variables disabled, imports kept',
+            snippet: {
+                innerContent: 'imports:\n  ./C.svelte: C',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: true,
+                metadata: true,
+                variables: false,
+                imports: true,
+            },
+            headLines: [],
+            scriptLines: ["import C from './C.svelte';"],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'imports: {"./C.svelte":"C"},',
+                '};',
+            ],
+        },
+        {
+            // With `imports` off, the `imports` key is still treated as an
+            // ordinary frontmatter value (hence the `const`/metadata entry),
+            // but no `import` statement is generated from it.
+            label: 'imports disabled',
+            snippet: {
+                innerContent: 'imports:\n  ./C.svelte: C',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: true,
+                metadata: true,
+                variables: true,
+                imports: false,
+            },
+            headLines: [],
+            scriptLines: ['const imports = {"./C.svelte":"C"};'],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'imports: {"./C.svelte":"C"},',
+                '};',
+            ],
+        },
+        {
+            label: 'all steps disabled (frontmatter: false)',
+            snippet: {
+                innerContent: 'title: My Title\nimports:\n  ./C.svelte: C',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            config: {
+                head: false,
+                metadata: false,
+                variables: false,
+                imports: false,
+            },
+            headLines: [],
+            scriptLines: [],
+            scriptModuleLines: [],
+        },
     ] as {
         label?: string;
         snippet: ProcessableSnippet<'frontmatter'>;
+        config?: FullFrontmatterConfiguration;
         headLines?: string[];
         scriptLines?: string[];
         scriptModuleLines?: string[];
-    }[])('$label', ({ snippet, headLines, scriptLines, scriptModuleLines }) => {
-        expect(handleFrontmatter(snippet)).toMatchObject({
-            headLines: headLines ?? [],
-            scriptLines: scriptLines ?? [],
-            scriptModuleLines: scriptModuleLines ?? [],
-        });
+    }[])(
+        '$label',
+        ({ snippet, config, headLines, scriptLines, scriptModuleLines }) => {
+            expect(
+                handleFrontmatter(
+                    snippet,
+                    config ?? {
+                        head: true,
+                        metadata: true,
+                        variables: true,
+                        imports: true,
+                    },
+                ),
+            ).toMatchObject({
+                headLines: headLines ?? [],
+                scriptLines: scriptLines ?? [],
+                scriptModuleLines: scriptModuleLines ?? [],
+            });
+        },
+    );
+});
+
+describe('normalizeFrontmatterConfiguration()', () => {
+    it.each([
+        {
+            label: 'true → every step enabled',
+            input: true,
+            expected: {
+                head: true,
+                metadata: true,
+                variables: true,
+                imports: true,
+            },
+        },
+        {
+            label: 'false → every step disabled',
+            input: false,
+            expected: {
+                head: false,
+                metadata: false,
+                variables: false,
+                imports: false,
+            },
+        },
+        {
+            label: 'object → returned unchanged',
+            input: {
+                head: false,
+                metadata: true,
+                variables: false,
+                imports: true,
+            },
+            expected: {
+                head: false,
+                metadata: true,
+                variables: false,
+                imports: true,
+            },
+        },
+    ] as {
+        label: string;
+        input: boolean | FullFrontmatterConfiguration;
+        expected: FullFrontmatterConfiguration;
+    }[])('$label', ({ input, expected }) => {
+        expect(normalizeFrontmatterConfiguration(input)).toEqual(expected);
     });
+});
+
+describe('keyToIdentifier()', () => {
+    it.each([
+        // Already a valid identifier — kept verbatim.
+        { label: 'plain identifier', input: 'foo', expected: 'foo' },
+        { label: 'with underscore', input: 'foo_bar', expected: 'foo_bar' },
+        { label: 'with $', input: '$foo', expected: '$foo' },
+        // Camel-cased on word boundaries — the metadata-name shape.
+        {
+            label: 'hyphenated',
+            input: 'color-scheme',
+            expected: 'colorScheme',
+        },
+        {
+            label: 'multi-hyphenated',
+            input: 'content-security-policy',
+            expected: 'contentSecurityPolicy',
+        },
+        { label: 'space-separated', input: 'my key', expected: 'myKey' },
+        { label: 'dot-separated', input: 'foo.bar', expected: 'fooBar' },
+        // No valid identifier can be formed.
+        { label: 'leading digit', input: '123abc', expected: undefined },
+        {
+            label: 'only non-identifier characters',
+            input: '---',
+            expected: undefined,
+        },
+        { label: 'empty string', input: '', expected: undefined },
+        // Reserved words are syntactically valid identifiers but can't be
+        // bound names in strict mode (which Svelte components run as).
+        { label: 'reserved word verbatim', input: 'class', expected: undefined },
+        {
+            label: 'camel-cased to a reserved word',
+            input: 'class-',
+            expected: undefined,
+        },
+    ] as { label: string; input: string; expected: string | undefined }[])(
+        '$label: $input',
+        ({ input, expected }) => {
+            expect(keyToIdentifier(input)).toBe(expected);
+        },
+    );
 });

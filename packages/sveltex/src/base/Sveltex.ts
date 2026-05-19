@@ -41,7 +41,10 @@ import {
     resolve,
     typeAssert,
 } from '../deps.js';
-import { handleFrontmatter } from '../utils/frontmatter.js';
+import {
+    handleFrontmatter,
+    normalizeFrontmatterConfiguration,
+} from '../utils/frontmatter.js';
 import type { Frontmatter } from '../types/utils/Frontmatter.js';
 import { applyTransformations } from '../utils/transformers.js';
 import { enquote } from '../utils/diagnosers/Diagnoser.js';
@@ -407,6 +410,7 @@ export class Sveltex<
                         typeAssert(is<Snippet<'frontmatter'>>(snippet));
                         const handledFrontmatter = handleFrontmatter(
                             snippet.processable,
+                            this._configuration.frontmatter,
                         );
                         headLines.push(...handledFrontmatter.headLines);
                         this.scriptLines[filename] =
@@ -645,6 +649,13 @@ export class Sveltex<
             mathBackend,
         );
         s._configuration = mergeConfigs(s._configuration, userConfig);
+
+        // `mergeConfigs` leaves `frontmatter` as whatever the user passed —
+        // possibly a boolean shorthand. Expand it to the full object form so
+        // the rest of the code can rely on a normalized configuration.
+        s._configuration.frontmatter = normalizeFrontmatterConfiguration(
+            s._configuration.frontmatter,
+        );
 
         const errors = [];
 

@@ -506,6 +506,12 @@ export function getDefaultSveltexConfig<
         markdown: getDefaultMarkdownConfig(markdownBackend),
         tex: getDefaultTexConfig(),
         verbatim: {},
+        frontmatter: {
+            head: true,
+            metadata: true,
+            variables: true,
+            imports: true,
+        },
     };
 }
 

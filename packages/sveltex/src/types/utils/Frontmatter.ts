@@ -14,14 +14,29 @@ export type MetaName =
     | 'theme-color'
     | 'color-scheme';
 export type MetaHttpEquiv = 'content-security-policy' | 'default-style';
-// export type Meta =
-//     | { name: MetaName; content: string }
-//     | { 'http-equiv': MetaHttpEquiv; content: string };
+/**
+ * A single `<meta>` element SvelTeX emits from the frontmatter — one of
+ * the three HTML shapes:
+ *
+ *   - `<meta name="…" content="…">` — {@link NameMeta},
+ *   - `<meta http-equiv="…" content="…">` — {@link HttpEquivMeta},
+ *   - `<meta charset="…">` — {@link CharsetMeta}; carries the value in
+ *     the `charset` attribute itself, with no `content`.
+ */
+export type Meta = NameMeta | HttpEquivMeta | CharsetMeta;
 
-export interface Meta<T extends 'http-equiv' | 'name' = 'http-equiv' | 'name'> {
-    name?: T extends 'name' ? MetaName : never;
-    'http-equiv'?: T extends 'http-equiv' ? MetaHttpEquiv : never;
+export interface NameMeta {
+    name: MetaName;
     content: string | number | boolean | null;
+}
+
+export interface HttpEquivMeta {
+    'http-equiv': MetaHttpEquiv;
+    content: string | number | boolean | null;
+}
+
+export interface CharsetMeta {
+    charset: string | number | boolean | null;
 }
 
 // export type LinkAs =
