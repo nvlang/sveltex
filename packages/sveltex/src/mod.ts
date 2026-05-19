@@ -12,7 +12,10 @@ export type {
     MarkdownConfiguration,
 } from './types/handlers/Markdown.js';
 export type { MathBackend, MathConfiguration } from './types/handlers/Math.js';
-export type { SveltexConfiguration } from './types/SveltexConfiguration.js';
+export type {
+    FrontmatterConfiguration,
+    SveltexConfiguration,
+} from './types/SveltexConfiguration.js';
 
 export { sveltex } from './base/Sveltex.js';
 
@@ -28,3 +31,5 @@ export {
     getTexPresetDefaults,
     getDefaultCacheDirectory,
 } from './base/defaults.js';
+
+export { keyToIdentifier } from './utils/frontmatter.js';

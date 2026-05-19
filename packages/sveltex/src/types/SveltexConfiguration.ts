@@ -142,6 +142,80 @@ export interface BackendChoices<
 }
 
 /**
+ * Controls which parts of the frontmatter block SvelTeX turns into generated
+ * code.
+ *
+ * Every `.sveltex` file may begin with a _frontmatter_ block — metadata
+ * delimited by `---` (YAML), `+++` (TOML), or a `---`-delimited block whose
+ * opening fence reads `---json`. By default, SvelTeX uses that metadata in
+ * four independent ways; each can be switched off here.
+ *
+ * Switching a step off never stops the frontmatter block from being parsed
+ * and removed from the rendered output, and never stops the parsed values
+ * from being handed to your markdown and math transformers — it only
+ * suppresses the corresponding _generated code_.
+ *
+ * @see The {@link SveltexConfiguration.frontmatter | `frontmatter`} option,
+ * which accepts this object (or a plain boolean).
+ */
+export interface FrontmatterConfiguration {
+    /**
+     * Whether to add a `<svelte:head>` block built from the frontmatter,
+     * containing — wherever the corresponding keys are present — a `<title>`,
+     * `<meta>`, `<link>`, `<base>`, and/or `<noscript>` element.
+     *
+     * Set this to `false` to keep full control over your document's `<head>`.
+     * The frontmatter values remain available through the other frontmatter
+     * steps — so you can, for instance, read `title` from the `metadata`
+     * export and build a `<title>` that appends your site's name to it.
+     *
+     * @defaultValue `true`
+     */
+    head?: boolean | undefined;
+
+    /**
+     * Whether to add an `export const metadata = { ... }` statement to the
+     * module script (`<script module>`), exposing the whole frontmatter as a
+     * single object. This is what lets a SvelteKit `load` function — or any
+     * module that imports the page — read the page's frontmatter.
+     *
+     * @defaultValue `true`
+     */
+    metadata?: boolean | undefined;
+
+    /**
+     * Whether to add, for each top-level frontmatter key, a
+     * `const <key> = <value>;` declaration to the instance script
+     * (`<script>`), so the value can be referenced directly in the document's
+     * markup (e.g. `{title}`).
+     *
+     * @defaultValue `true`
+     */
+    variables?: boolean | undefined;
+
+    /**
+     * Whether to honor the special `imports` frontmatter key, which lets a
+     * document declare `import` statements from within its frontmatter. When
+     * enabled, those `import` statements are added to the instance script
+     * (`<script>`).
+     *
+     * @defaultValue `true`
+     */
+    imports?: boolean | undefined;
+}
+
+/**
+ * {@link FrontmatterConfiguration | `FrontmatterConfiguration`}, with all
+ * properties required.
+ */
+export interface FullFrontmatterConfiguration {
+    head: boolean;
+    metadata: boolean;
+    variables: boolean;
+    imports: boolean;
+}
+
+/**
  * Sveltex configuration options.
  */
 export interface SveltexConfiguration<
@@ -251,6 +325,33 @@ export interface SveltexConfiguration<
      * @defaultValue `['.sveltex']`
      */
     extensions?: undefined | `.${string}`[];
+
+    /**
+     * Controls how SvelTeX processes the _frontmatter_ block at the top of a
+     * `.sveltex` file.
+     *
+     * - `true` _(default)_: perform every frontmatter-processing step.
+     * - `false`: disable frontmatter processing entirely. The block is still
+     *   parsed and stripped from the output, and still handed to your
+     *   transformers — but no code is generated from it.
+     * - an object: enable or disable each step individually. See
+     *   {@link FrontmatterConfiguration | `FrontmatterConfiguration`}.
+     *
+     * @example
+     * Keep the frontmatter usable from your markup and `load` functions, but
+     * stop SvelTeX from injecting a `<svelte:head>` — so you can build the
+     * document's `<head>` yourself:
+     *
+     * ```ts
+     * { frontmatter: { head: false } }
+     * ```
+     *
+     * @defaultValue
+     * ```ts
+     * true
+     * ```
+     */
+    frontmatter?: boolean | FrontmatterConfiguration | undefined;
 }
 
 /**
@@ -267,4 +368,5 @@ export interface FullSveltexConfiguration<
     math: FullMathConfiguration<T>;
     tex: FullTexConfiguration;
     verbatim: FullVerbatimConfiguration;
+    frontmatter: FullFrontmatterConfiguration;
 }

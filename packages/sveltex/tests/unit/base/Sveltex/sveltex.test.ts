@@ -652,6 +652,45 @@ describe('Sveltex.markup()', () => {
                 '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n</svelte:head>\n<script module>\n</script>\n<script>\n</script>\n\n<p><em>text</em></p>',
             );
         });
+        it('frontmatter: false suppresses <svelte:head> injection', async () => {
+            const preprocessor_ = await sveltex(
+                { markdownBackend: 'micromark' },
+                { frontmatter: false },
+            );
+            const preprocess_ = preprocessFn(preprocessor_);
+            const output = await preprocess_(
+                ['---', 'title: Example', 'author: Jane Doe', '---', '*text*'].join(
+                    '\n',
+                ),
+            );
+            expect(output).not.toContain('<svelte:head>');
+            expect(output).not.toContain('<title>');
+            expect(output).toContain('<p><em>text</em></p>');
+        });
+        it('frontmatter: { head: false } suppresses only <svelte:head> injection', async () => {
+            const preprocessor_ = await sveltex(
+                { markdownBackend: 'micromark' },
+                { frontmatter: { head: false } },
+            );
+            const preprocess_ = preprocessFn(preprocessor_);
+            const output = await preprocess_(
+                ['---', 'title: Example', '---', '*text*'].join('\n'),
+            );
+            expect(output).not.toContain('<svelte:head>');
+            expect(output).not.toContain('<title>');
+        });
+        it('frontmatter: true keeps <svelte:head> injection', async () => {
+            const preprocessor_ = await sveltex(
+                { markdownBackend: 'micromark' },
+                { frontmatter: true },
+            );
+            const preprocess_ = preprocessFn(preprocessor_);
+            const output = await preprocess_(
+                ['---', 'title: Example', '---', '*text*'].join('\n'),
+            );
+            expect(output).toContain('<svelte:head>');
+            expect(output).toContain('<title>Example</title>');
+        });
     });
 
     describe('script tags', () => {
