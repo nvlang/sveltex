@@ -438,8 +438,8 @@ importers:
         specifier: ^24.10.15
         version: 24.12.4
       katex:
-        specifier: ^0.16.46
-        version: 0.16.46
+        specifier: ^0.16.47
+        version: 0.16.47
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -2827,10 +2827,6 @@ packages:
 
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
-
-  katex@0.16.46:
-    resolution: {integrity: sha512-WHy4Coo+bGZyH7NwJKHkS04YFsFcarWbAEOAC3EMndzdN6VSZqklLLIgfxzyaW9jDoeGYJX9SWbJPKpecox0Uw==}
-    hasBin: true
 
   katex@0.16.47:
     resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
@@ -6451,10 +6447,6 @@ snapshots:
   jsonfile@4.0.0:
     optionalDependencies:
       graceful-fs: 4.2.11
-
-  katex@0.16.46:
-    dependencies:
-      commander: 8.3.0
 
   katex@0.16.47:
     dependencies:
