@@ -620,8 +620,6 @@ export type FullTexConfiguration = DeepRequiredDefined<
 
 /**
  * Type of the function that processes a TeX string.
- *
- * @typeParam B - TeX backend.
  */
 export type TexProcessFn = ProcessFn<TexProcessOptions, TexHandler>;
 
