@@ -47,6 +47,15 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
+          # `changesets/action` force-pushes the "Version Packages" branch
+          # (`changeset-release/main`); creating it carries the repository's
+          # `.github/workflows/*` files. GitHub refuses any push that touches
+          # workflow files when it is authenticated with the default
+          # `GITHUB_TOKEN` — the backing GitHub App has no `workflows`
+          # permission, and there is no way to grant it one. Authenticate git
+          # as a PAT with `contents`, `workflows` and `pull-requests` write
+          # access instead.
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Set up TeX Live
         uses: TeX-Live/setup-texlive-action@5ead3060cb9c2d6bf985c23b38a30669a13a3f3c # v3
@@ -158,7 +167,9 @@ jobs:
           publish: pnpm ci:publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The same PAT as the checkout step above — `changesets/action`
+          # needs it for both the git push and the release-PR API calls.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
 
       - name: Push git tags
         # Don't run this step if the changesets action merely created a PR,
