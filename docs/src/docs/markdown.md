@@ -365,7 +365,7 @@ imports:
 ---
 ```
 
-```svelte [Generated `<script>`]
+```svelte [Generated instance script]
 <script>
 import Example from '$lib/components/Example.svelte';
 import { a, b } from '$lib/utils.js';
@@ -397,7 +397,7 @@ color-scheme: dark
 ---
 ```
 
-```svelte [Generated `<script module>`]
+```svelte [Generated module script]
 <script module>
 export const metadata = {
     title: "Example",
