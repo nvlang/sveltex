@@ -50,6 +50,14 @@ import { copyTransformations } from '../utils/misc.js';
 import { detectAndImportComponents } from '../utils/markdown.js';
 
 /**
+ * Matches the opening tag of a module-level `<script>` — both Svelte 4's
+ * `<script context="module">` and Svelte 5's `<script module>`. Used to detect
+ * whether a document already declares a module script.
+ */
+const moduleScriptTagRegExp =
+    /^<script\s(?:[^>]*\s)?(?:context=\s*(["'])module\1|module)(?:\s[^>]*)?>/u;
+
+/**
  * Returns a promise that resolves to a new instance of `Sveltex`.
  *
  * **Important**: You must `await` the result of this function before using the
@@ -180,7 +188,7 @@ export class Sveltex<
         // append CoffeeScript code, which would (presumably) throw an error.
         const lang = attributes['lang']?.toString().toLowerCase() ?? 'js';
 
-        if (attributes['context'] === 'module') {
+        if (attributes['context'] === 'module' || 'module' in attributes) {
             // From frontmatter
             script.push(
                 ...(this.scriptModuleLines[filename] ?? [
@@ -270,7 +278,7 @@ export class Sveltex<
     private scriptLines: Record<string, string[]> = {};
 
     /**
-     * Lines to add to the `<script context="module">` tag in the Svelte file,
+     * Lines to add to the `<script module>` tag in the Svelte file,
      * e.g. `export const` statements for the metadata defined in the
      * frontmatter.
      */
@@ -424,17 +432,13 @@ export class Sveltex<
                             } else if (
                                 !scriptModulePresent &&
                                 processed.startsWith('<script') &&
-                                /^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/u.test(
-                                    processed,
-                                )
+                                moduleScriptTagRegExp.test(processed)
                             ) {
                                 scriptModulePresent = true;
                             } else if (
                                 !scriptPresent &&
                                 processed.startsWith('<script') &&
-                                !/^<script\s(?:[^>]*\s)?context=\s*(["'])module\1(?:\s[^>]*)?>/u.test(
-                                    processed,
-                                )
+                                !moduleScriptTagRegExp.test(processed)
                             ) {
                                 scriptPresent = true;
                             }
@@ -486,12 +490,9 @@ export class Sveltex<
                 }
             }
 
-            // Add <script context="module"> tag if not present
+            // Add <script module> tag if not present
             if (!scriptModulePresent) {
-                prependToProcessed.push(
-                    '<script context="module">',
-                    '</script>',
-                );
+                prependToProcessed.push('<script module>', '</script>');
             }
 
             // Add <script> tag if not present

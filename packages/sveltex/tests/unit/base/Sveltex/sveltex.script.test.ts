@@ -94,7 +94,7 @@ describe('Sveltex', () => {
                 filename: '90ed9f9c-b8b8-4a8a-aeee-1dc3cb412cc4.sveltex',
             });
             expect((markupOut as Processed).code).toMatch(
-                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script context="module">\n<\/script>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this=\{Sveltex__tex__something\} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/su,
+                /<svelte:head>\n.{0,100}<link rel="stylesheet" href=".{0,100}\.css">\n.{0,100}<\/svelte:head>\n<script module>\n<\/script>\n<script>\n<\/script>\n.{0,100}<figure>\n<svelte:component this=\{Sveltex__tex__something\} \/>\n<\/figure>\n.{0,100}<p><code>code<\/code>.{0,100}\n<span class="katex">/su,
             );
             const scriptOut = await sp.script({
                 content: '',
@@ -155,7 +155,10 @@ describe('Sveltex', () => {
             );
             const scriptModuleOut = await sp.script({
                 content: '',
-                attributes: { context: 'module' },
+                // SvelTeX emits `<script module>`; Svelte 5 passes the
+                // `module` marker as a boolean attribute. (The legacy
+                // `context="module"` form is exercised further below.)
+                attributes: { module: true },
                 markup: markupOut?.code ?? '',
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });

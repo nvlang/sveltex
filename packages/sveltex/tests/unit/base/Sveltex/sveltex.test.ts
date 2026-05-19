@@ -494,13 +494,13 @@ describe('Sveltex.markup()', () => {
                 label: 'code block (plain)',
                 input: '```\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script context="module">\n</script>\n<script>\n</script>\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script module>\n</script>\n<script>\n</script>\n<pre><code>() =&gt; &lbrace;let a&rbrace;\n</code></pre>',
             },
             {
                 label: 'code block (ts)',
                 input: '```typescript\n() => {let a}\n```',
                 expected:
-                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script context="module">\n</script>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
+                    '<svelte:head>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@wooorm/starry-night@latest/style/both.css">\n</svelte:head>\n<script module>\n</script>\n<script>\n</script>\n<pre><code class="language-typescript">() <span class="pl-k">=&gt;</span> &lbrace;<span class="pl-k">let</span> <span class="pl-smi">a</span>&rbrace;\n</code></pre>',
             },
         ])('$label', async (test) => {
             const preprocessor_ = await sveltex(
@@ -649,25 +649,29 @@ describe('Sveltex.markup()', () => {
                     ].join('\n'),
                 ),
             ).toEqual(
-                '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n</svelte:head>\n<script context="module">\n</script>\n<script>\n</script>\n\n<p><em>text</em></p>',
+                '<svelte:head>\n<title>Example</title>\n<meta name="author" content="Jane Doe">\n</svelte:head>\n<script module>\n</script>\n<script>\n</script>\n\n<p><em>text</em></p>',
             );
         });
     });
 
     describe('script tags', () => {
-        describe('doesn\'t add <script> or <script context="module"> tags if already present', () => {
+        describe('doesn\'t add <script> or module-script tags if already present', () => {
             it.each([
                 [
                     '<script>\n</script>',
-                    /^\n*<script context="module">\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
+                    /^\n*<script module>\n+<\/script>\n+<script>\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script lang="ts">\n</script>',
-                    /^\n*<script context="module">\n+<\/script>\n+<script lang="ts">\n+<\/script>\n*$/u,
+                    /^\n*<script module>\n+<\/script>\n+<script lang="ts">\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script context="module">\n</script>',
                     /^\n*<script>\n+<\/script>\n+<script context="module">\n+<\/script>\n*$/u,
+                ],
+                [
+                    '<script module>\n</script>',
+                    /^\n*<script>\n+<\/script>\n+<script module>\n+<\/script>\n*$/u,
                 ],
                 [
                     '<script context="module">\n</script>\n<script>\n</script>',

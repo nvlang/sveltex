@@ -101,7 +101,7 @@ describe('CommonMark compliance', () => {
                         nodeAssert(actual !== undefined);
                         actual = actual.replace('<script>\n</script>\n', '');
                         actual = actual.replace(
-                            '<script context="module">\n</script>\n',
+                            '<script module>\n</script>\n',
                             '',
                         );
                         actual = normalizeHtml(actual, s.markdownBackend);
@@ -249,7 +249,7 @@ describe('CommonMark non-compliance', () => {
                         nodeAssert(actual !== undefined);
                         actual = actual.replace('<script>\n</script>\n', '');
                         actual = actual.replace(
-                            '<script context="module">\n</script>\n',
+                            '<script module>\n</script>\n',
                             '',
                         );
                         actual = normalizeHtml(actual, s.markdownBackend);
