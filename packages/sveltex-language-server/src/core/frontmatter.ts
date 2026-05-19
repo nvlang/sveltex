@@ -27,6 +27,7 @@ import {
     type Hover,
     type Position,
 } from 'vscode-languageserver-protocol';
+import { keyToIdentifier } from '@nvl/sveltex';
 
 /** Documentation for one recognised frontmatter key or `<meta>` value. */
 interface FrontmatterEntryDoc {
@@ -36,6 +37,16 @@ interface FrontmatterEntryDoc {
     readonly element?: string;
     /** A documentation URL — MDN for HTML entries, the SvelTeX site else. */
     readonly docUrl: string;
+    /**
+     * The sentence shown in a top-level key's hover describing what SvelTeX
+     * inserts into `<svelte:head>` for this key. Omitted for keys that
+     * produce no `<svelte:head>` output (e.g. `imports`). For `<meta>` /
+     * `<meta http-equiv>` entries the sentence is derived from `element`
+     * (see {@link metaHeadEffect}); for structural keys it is given here
+     * explicitly because the head insertion is structure-, not value-,
+     * shaped.
+     */
+    readonly headEffect?: string;
 }
 
 /** Base URL of the MDN HTML element reference. */
@@ -50,6 +61,10 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'and bookmarks.',
         element: '<title>',
         docUrl: `${MDN}/title`,
+        headEffect:
+            "Inserts `<title>〈value〉</title>` into the page's " +
+            '`<svelte:head>`, where `〈value〉` is the value you set this ' +
+            'property to.',
     },
     noscript: {
         summary:
@@ -57,6 +72,10 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'only to browsers that have scripting disabled.',
         element: '<noscript>',
         docUrl: `${MDN}/noscript`,
+        headEffect:
+            "Inserts `<noscript>〈value〉</noscript>` into the page's " +
+            '`<svelte:head>`, where `〈value〉` is the value you set this ' +
+            'property to.',
     },
     base: {
         summary:
@@ -65,6 +84,10 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'page are resolved.',
         element: '<base>',
         docUrl: `${MDN}/base`,
+        headEffect:
+            "Inserts a `<base>` element into the page's `<svelte:head>`, " +
+            'with `href` and (optionally) `target` attributes taken from ' +
+            'this object.',
     },
     meta: {
         summary:
@@ -73,6 +96,10 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'tags.',
         element: '<meta>',
         docUrl: `${MDN}/meta`,
+        headEffect:
+            "Inserts a `<meta>` element into the page's `<svelte:head>` " +
+            'for each entry — both the array form (`- name: …`) and the ' +
+            'mapping form (`description: …`) are supported.',
     },
     link: {
         summary:
@@ -80,6 +107,9 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'resources such as stylesheets, icons and preloaded assets.',
         element: '<link>',
         docUrl: `${MDN}/link`,
+        headEffect:
+            "Inserts a `<link>` element into the page's `<svelte:head>` " +
+            'for each entry in the array.',
     },
     imports: {
         summary:
@@ -434,40 +464,186 @@ function frontmatterContext(
     return undefined;
 }
 
+/** Top-level keys whose value SvelTeX expects to be an object or array. */
+const STRUCTURED_VALUE_KEYS: ReadonlySet<string> = new Set([
+    'base',
+    'meta',
+    'link',
+    'imports',
+]);
+
+/**
+ * The shape of a JavaScript identifier — used to decide whether a key
+ * needs quoting when written as an object-literal key in the rendered
+ * `metadata` example.
+ */
+const identifierRegExp = /^[A-Za-z_$][\w$]*$/u;
+
+/**
+ * Build the head-section sentence for a `<meta>` entry from its `element`
+ * string — the metadata-name and pragma-directive keys all follow one of
+ * two templates:
+ *
+ *   - `<meta name="…">` / `<meta http-equiv="…">` — slot a
+ *     `content="〈value〉"` attribute in before the closing `>`;
+ *   - `<meta charset>` — the value sits in the `charset` attribute itself.
+ *
+ * @returns The sentence, or `undefined` when `element` doesn't fit either
+ * template — structural keys (`<title>`, `<base>`, …) supply their own.
+ */
+function metaHeadEffect(element: string): string | undefined {
+    if (/^<meta (?:name|http-equiv)="[^"]+">$/u.test(element)) {
+        const tag = element.replace(/>$/u, ' content="〈value〉">');
+        return (
+            `Inserts \`${tag}\` into the page's \`<svelte:head>\`, ` +
+            'where `〈value〉` is the value you set this property to.'
+        );
+    }
+    if (element === '<meta charset>') {
+        return (
+            "Inserts `<meta charset=\"〈value〉\">` into the page's " +
+            '`<svelte:head>`, where `〈value〉` is the value you set this ' +
+            'property to.'
+        );
+    }
+    return undefined;
+}
+
+/**
+ * Build the per-effect sections appended to the hover of a top-level
+ * frontmatter key — one per frontmatter-processing step the key takes
+ * part in. Each section names the step's `frontmatter: { … }` toggle so
+ * the reader learns how to switch it off.
+ *
+ * @param key - The bare key text — used to derive the variable name
+ * (via `keyToIdentifier`) and the `metadata` object key.
+ * @param doc - The key's entry doc; `headEffect` / `element` decide the
+ * head section's sentence.
+ */
+function effectSections(
+    key: string,
+    doc: FrontmatterEntryDoc,
+): readonly string[] {
+    const sections: string[] = [];
+    const placeholder = STRUCTURED_VALUE_KEYS.has(key)
+        ? '〈value〉'
+        : '"〈value〉"';
+    const disableHint = (
+        toggle: 'head' | 'variables' | 'metadata' | 'imports',
+    ): string =>
+        `To turn this off, set \`frontmatter: { ${toggle}: false }\` in ` +
+        'your SvelTeX configuration.';
+
+    // <svelte:head> — structural keys supply `headEffect` explicitly,
+    // `<meta>` / `<meta http-equiv>` / `<meta charset>` keys derive it.
+    const head =
+        doc.headEffect ??
+        (doc.element !== undefined ? metaHeadEffect(doc.element) : undefined);
+    if (head !== undefined) {
+        sections.push('---', '', head, '', disableHint('head'), '');
+    }
+
+    // `import` statements — only for the special `imports` key.
+    if (key === 'imports') {
+        sections.push(
+            '---',
+            '',
+            "Adds an `import` statement to the page's `<script>` for " +
+                'each entry — each key is the module path, each value ' +
+                'the binding(s) to import.',
+            '',
+            disableHint('imports'),
+            '',
+        );
+    }
+
+    // Instance-`<script>` `const` — the variable name is derived from
+    // the key (e.g. `color-scheme` → `colorScheme`); keys that can't form
+    // a valid identifier are dropped from the variables step entirely.
+    const id = keyToIdentifier(key);
+    if (id !== undefined) {
+        sections.push(
+            '---',
+            '',
+            `Inserts \`const ${id} = ${placeholder};\` into the page's ` +
+                "`<script>`, where `〈value〉` is the value you set this " +
+                'property to.',
+            '',
+            disableHint('variables'),
+            '',
+        );
+    }
+
+    // `export const metadata` module-script export — the original key is
+    // preserved, quoted when it isn't a valid identifier.
+    const metaKey = identifierRegExp.test(key) ? key : JSON.stringify(key);
+    sections.push(
+        '---',
+        '',
+        `Adds \`${metaKey}: ${placeholder}\` to the page's \`metadata\` ` +
+            'export.',
+        '',
+        disableHint('metadata'),
+        '',
+    );
+
+    return sections;
+}
+
 /**
  * Builds the Markdown body shown when hovering a frontmatter key or value.
  *
  * @param name - The bare token text.
  * @param doc - The token's {@link FrontmatterEntryDoc}.
+ * @param topLevelKey - The bare key text when the hover is over a top-level
+ * frontmatter key (not a nested-block key, not a value). When supplied,
+ * per-effect sections are appended describing what the key inserts into
+ * the page's `<svelte:head>` / `<script>` / `metadata` export, each with
+ * the `frontmatter: { … }` toggle that switches that step off.
  */
-function entryHoverMarkdown(name: string, doc: FrontmatterEntryDoc): string {
+function entryHoverMarkdown(
+    name: string,
+    doc: FrontmatterEntryDoc,
+    topLevelKey?: string,
+): string {
     const heading = doc.element
         ? `**\`${name}\`** — renders \`${doc.element}\``
         : `**\`${name}\`**`;
     const linkLabel = doc.element
         ? `\`${doc.element}\` on MDN`
         : 'SvelTeX documentation';
-    return [
+    const parts: string[] = [
         heading,
         '',
         doc.summary,
         '',
         `[${linkLabel}](${doc.docUrl})`,
         '',
-        '_SvelTeX frontmatter_',
-    ].join('\n');
+    ];
+    if (topLevelKey !== undefined) {
+        parts.push(...effectSections(topLevelKey, doc));
+    }
+    parts.push('_SvelTeX frontmatter_');
+    return parts.join('\n');
 }
 
-/** Wraps an entry doc and its token into an LSP {@link Hover}. */
+/**
+ * Wraps an entry doc and its token into an LSP {@link Hover}.
+ *
+ * @param topLevelKey - Forwarded to {@link entryHoverMarkdown}; supplied
+ * for hovers over a top-level frontmatter key so the markdown body is
+ * followed by per-effect sections.
+ */
 function entryHover(
     token: Token,
     doc: FrontmatterEntryDoc,
     line: number,
+    topLevelKey?: string,
 ): Hover {
     return {
         contents: {
             kind: MarkupKind.Markdown,
-            value: entryHoverMarkdown(token.name, doc),
+            value: entryHoverMarkdown(token.name, doc, topLevelKey),
         },
         range: {
             start: { line, character: token.start },
@@ -498,12 +674,17 @@ export function computeFrontmatterHover(
     const caret = position.character;
 
     // Caret on the key — describe it, but only if the key is valid in the
-    // block the caret sits in. `title` inside `meta`, say, is left undocumented
-    // because SvelTeX would not render it as the page title there.
+    // block the caret sits in. `title` inside `meta`, say, is left
+    // undocumented because SvelTeX would not render it as the page title
+    // there. For top-level keys the body is followed by per-effect
+    // sections naming each frontmatter-processing step the key takes part
+    // in and the `frontmatter: { … }` toggle that switches it off.
     if (key && caretOn(caret, key)) {
-        const keys = keysForContext(frontmatterContext(lines, position.line));
-        const doc = keys[key.name];
-        return doc ? entryHover(key, doc, position.line) : null;
+        const context = frontmatterContext(lines, position.line);
+        const doc = keysForContext(context)[key.name];
+        if (doc === undefined) return null;
+        const topLevelKey = context === undefined ? key.name : undefined;
+        return entryHover(key, doc, position.line, topLevelKey);
     }
 
     // Caret on the value of a `name:` / `http-equiv:` entry — describe the
