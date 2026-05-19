@@ -86,12 +86,13 @@ test.concurrent.for(testCases)(
     'sveltex $kind.type $variant',
     (testCase, ctx) => {
         const cwd = ctx.cwd(testCase);
-        const language = testCase.variant.includes('ts') ? 'ts' : 'js';
         const isDefaultKind = testCase.kind.type === 'default';
 
-        // `sveltex.config.{js,ts}` was created with the expected backends.
+        // `sveltex.config.js` was created with the expected backends — always
+        // `.js`, even for TypeScript projects, so the generated
+        // `svelte.config.js` can import it on every supported Node version.
         const sveltexConfig = fs.readFileSync(
-            path.resolve(cwd, `sveltex.config.${language}`),
+            path.resolve(cwd, 'sveltex.config.js'),
             'utf8',
         );
         expect(sveltexConfig).toContain(
