@@ -14,6 +14,13 @@ allowBuilds:
 patchedDependencies:
   tree-sitter@0.25.0: patches/tree-sitter@0.25.0.patch
 
+# `svelte-language-server` (a dependency of `@nvl/sveltex-language-server`)
+# pulls in an outdated, vulnerable `svelte` transitively — six moderate SSR/XSS
+# advisories. Force every `svelte` in the tree to a patched release; this is
+# the hand-written equivalent of `pnpm audit --fix override`.
+overrides:
+  svelte: ^5.55.8
+
 # pnpm 11 restricts `.npmrc` to auth/registry settings; everything else
 # (such as the publish-branch guard) now lives here.
 publishBranch: main
