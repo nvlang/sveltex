@@ -17,7 +17,7 @@ const markdownDependencies = {
     },
     'markdown-it': { 'markdown-it': '^14.1.0' },
     micromark: { micromark: '^4.0.0' },
-    marked: { marked: '^17.0.0' },
+    marked: { marked: '^18.0.0' },
     none: {},
 } as const;
 
@@ -26,7 +26,6 @@ const codeDependencies = {
     'starry-night': {
         '@wooorm/starry-night': '^3.3.0',
         'hast-util-find-and-replace': '^5.0.1',
-        'hast-util-to-html': '^9.0.1',
     },
     'highlight.js': { 'highlight.js': '^11.9.0' },
     escape: {},
@@ -187,7 +186,7 @@ export default defineAddon({
         if (!isKit) unsupported('Requires SvelteKit');
     },
 
-    run: ({ sv, options, file, language, directory }) => {
+    run: ({ sv, options, file, directory }) => {
         const { markdownBackend, codeBackend, mathBackend, demoRoute } =
             options;
 
@@ -204,8 +203,11 @@ export default defineAddon({
             sv.devDependency(name, range);
         }
 
-        // --- sveltex.config.{js,ts} ------------------------------------------
-        const sveltexConfigPath = `sveltex.config.${language}`;
+        // --- sveltex.config.js -----------------------------------------------
+        // Always a `.js` config — even for TypeScript projects. `svelte.config
+        // .js` imports this file, and a plain Node `import()` of a `.ts` file
+        // only works on Node >=22.18; the generated config has no TS syntax.
+        const sveltexConfigPath = 'sveltex.config.js';
         sv.file(
             sveltexConfigPath,
             transforms.text(({ content }) => {
@@ -291,9 +293,9 @@ export default defineAddon({
         }
     },
 
-    nextSteps: ({ options, language }) => {
+    nextSteps: ({ options }) => {
         const steps = [
-            `Review your SvelTeX backends in \`sveltex.config.${language}\`.`,
+            'Review your SvelTeX backends in `sveltex.config.js`.',
         ];
         if (options.demoRoute) {
             steps.push(
