@@ -73,7 +73,7 @@ preprocessor can take over.
 -   <PhBooks :size="28" weight="duotone"/>
 
     **Extensive documentation:** With these docs and the extensive IntelliSense
-    and hints that 8,000+ lines of comments provides, you'll find that almost
+    and hints that 9,000+ lines of comments provides, you'll find that almost
     every function or type in SvelTeX is documented, be it user-facing or
     internal.
 
