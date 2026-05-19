@@ -292,8 +292,10 @@ export default defineConfig(
         },
     },
     {
-        // JavaScript files
-        files: ['**/*.js'],
+        // JavaScript files. `.cjs`/`.mjs` are JavaScript too — and, like
+        // `.js`, belong to no `tsconfig.json`, so type-checked linting (which
+        // needs the TypeScript project service) cannot apply to them.
+        files: ['**/*.{js,cjs,mjs}'],
         ...tseslint.configs.disableTypeChecked,
     },
     // {

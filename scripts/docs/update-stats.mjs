@@ -27,7 +27,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import { fileURLToPath, URL } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const indexPath = join(repoRoot, 'docs/src/docs/index.md');
@@ -132,7 +133,7 @@ if (linesOfCode > SMALL_CODEBASE_MAX_LOC) {
     // No longer a "small codebase" — drop that feature card, its footnote
     // (which held `%LINES_OF_CODE%`) and its now-unused icon import.
     deleteBlock(
-        /^-   <PhFeather\b[\s\S]*?\n\n(?=-   <Ph|<\/div>)/mu,
+        /^- {3}<PhFeather\b[\s\S]*?\n\n(?=- {3}<Ph|<\/div>)/mu,
         'small-codebase feature card',
     );
     deleteBlock(/^\[\^1\]:\n[\s\S]*?\n\n/mu, 'small-codebase footnote');
@@ -149,18 +150,18 @@ writeFileSync(indexPath, markdown);
 // --- Report --------------------------------------------------------------
 
 // stdout: one machine-readable line, consumed by the `docs-stats` workflow.
-console.log(
+process.stdout.write(
     `figures=${rounded.linesOfCode}-${rounded.linesOfComments}-` +
-        `${rounded.unitTests}-${rounded.e2eSnapshots}`,
+        `${rounded.unitTests}-${rounded.e2eSnapshots}\n`,
 );
 // stderr: the human-readable summary.
 const codebaseNote =
     linesOfCode > SMALL_CODEBASE_MAX_LOC
         ? ` (over ${format(SMALL_CODEBASE_MAX_LOC)} — "small codebase" card dropped)`
         : '';
-console.error(
+process.stderr.write(
     `lines of code:     ${linesOfCode} -> just under ${format(rounded.linesOfCode)}${codebaseNote}\n` +
         `lines of comments: ${linesOfComments} -> ${format(rounded.linesOfComments)}+\n` +
         `unit tests:        ${unitTests} -> ${format(rounded.unitTests)}+\n` +
-        `E2E snapshots:     ${e2eSnapshots} -> ${format(rounded.e2eSnapshots)}+`,
+        `E2E snapshots:     ${e2eSnapshots} -> ${format(rounded.e2eSnapshots)}+\n`,
 );
