@@ -1,0 +1,77 @@
+---
+name: Refresh docs statistics
+
+# Recompute the project-stat figures quoted in `docs/src/docs/index.md` — the
+# line-of-code count, the Vitest unit-test count and the Playwright E2E
+# snapshot count — and commit the result.
+#
+# The figures depend only on the `@nvl/sveltex` package, so the trigger is
+# scoped to it; pushes that touch nothing else needn't spend CI here.
+#
+# The commit is made only when a *rounded* figure actually moved. That commit
+# touches `docs/**`, so it triggers the "Deploy docs to GitHub Pages" workflow
+# — the site is redeployed exactly when a quoted number changes, and not
+# otherwise. The commit touches only `docs/`, so it does not re-trigger this
+# workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/sveltex/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One refresh at a time, so two quick pushes can't race on the commit/push.
+concurrency:
+  group: docs-stats
+  cancel-in-progress: false
+
+jobs:
+  update-stats:
+    name: Recompute and commit the project-stat figures
+    runs-on: ubuntu-latest
+    steps:
+      # A PAT, not the default `GITHUB_TOKEN`: a commit pushed with
+      # `GITHUB_TOKEN` does not trigger other workflows, so the docs deploy
+      # would never run. `RELEASE_PAT` (shared with the release workflow)
+      # only needs `contents` write access here.
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        name: Install pnpm
+
+      - name: Install Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      # `update-stats.mjs` runs `vitest list` to count unit tests.
+      - name: Install dependencies
+        run: pnpm install
+
+      # `update-stats.mjs` shells out to `cloc` for the line-of-code count.
+      - name: Install cloc
+        run: sudo apt-get update && sudo apt-get install --yes cloc
+
+      - name: Recompute the project-stat figures
+        run: node scripts/docs/update-stats.mjs
+
+      - name: Commit the figures if they changed
+        run: |
+          if git diff --quiet -- docs/src/docs/index.md; then
+            echo 'Project-stat figures unchanged — nothing to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/src/docs/index.md
+          git commit -m 'docs: update project statistics'
+          git pull --rebase origin main
+          git push
