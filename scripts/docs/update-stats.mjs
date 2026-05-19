@@ -1,16 +1,16 @@
 // scripts/docs/update-stats.mjs
 //
-// Recomputes the project-stat figures quoted in `docs/src/docs/index.md` —
-// lines of code, lines of comments, the Vitest unit-test count and the
-// Playwright E2E snapshot count — and rewrites them in place.
+// Substitutes the current project-stat figures into the placeholders in
+// `docs/src/docs/index.md`:
 //
-// The `Deploy docs` workflow runs this at build time, so the published site
-// always quotes current figures. Nothing is committed back to the repository;
-// the `docs-stats` workflow runs this only to decide whether a figure moved
-// (and a redeploy is therefore due).
+//   %LINES_OF_CODE%  %LINES_OF_COMMENTS%  %UNIT_TESTS%  %E2E_SNAPSHOTS%
 //
-//   - stdout: a single `figures=<loc>-<comments>-<tests>-<snapshots>` line,
-//     consumed by the `docs-stats` workflow via `$GITHUB_OUTPUT`.
+// The committed `index.md` keeps the placeholders — it never holds a number
+// that can go stale. The "Deploy docs to GitHub Pages" workflow runs this at
+// build time so the published site shows current figures; the `docs-stats`
+// workflow runs it to detect when a figure moved.
+//
+//   - stdout: a single `figures=<loc>-<comments>-<tests>-<snapshots>` line.
 //   - stderr: a human-readable summary.
 //
 // Rounding keeps the prose honest as the real numbers drift:
@@ -18,6 +18,11 @@
 //   - lines of comments      -> rounded DOWN to the nearest 1000 ("N+")
 //   - lines of code          -> rounded UP to the nearest 1000   ("just
 //                               under N")
+//
+// Once SvelTeX's core grows past SMALL_CODEBASE_MAX_LOC lines of code it is
+// no longer a "small codebase", so that feature card and its footnote are
+// dropped from the page entirely. The threshold may be overridden with the
+// `SMALL_CODEBASE_MAX_LOC` environment variable.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -25,11 +30,15 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+const indexPath = join(repoRoot, 'docs/src/docs/index.md');
+const SMALL_CODEBASE_MAX_LOC = Number(
+    process.env.SMALL_CODEBASE_MAX_LOC ?? 20000,
+);
 
 /**
  * Run a command from the repository root and return its stdout. The child's
- * own stdout is captured (never leaked to ours, which must carry only the
- * `figures=` line); its stderr is passed through for visibility.
+ * stdout is captured (never leaked to ours, which carries only the `figures=`
+ * line); its stderr is passed through for visibility.
  */
 function run(command, args) {
     return execFileSync(command, args, {
@@ -61,8 +70,7 @@ const sumExceptMarkdown = (field) =>
 const linesOfCode = sumExceptMarkdown('code');
 const linesOfComments = sumExceptMarkdown('comment');
 
-// Every Vitest test case in `@nvl/sveltex`, collected (`vitest list`) rather
-// than run, so this stays fast.
+// Every Vitest test case in `@nvl/sveltex`, collected rather than run.
 const unitTests = parseJson(
     run('pnpm', [
         '--filter',
@@ -88,68 +96,70 @@ const e2eSnapshots = run('git', [
 
 const roundDown = (n, step) => Math.floor(n / step) * step;
 const roundUp = (n, step) => Math.ceil(n / step) * step;
-
 const rounded = {
     linesOfCode: roundUp(linesOfCode, 1000),
     linesOfComments: roundDown(linesOfComments, 1000),
     unitTests: roundDown(unitTests, 100),
     e2eSnapshots: roundDown(e2eSnapshots, 100),
 };
+const format = (n) => n.toLocaleString('en-US');
 
 // --- Rewrite `index.md` --------------------------------------------------
 
-const format = (n) => n.toLocaleString('en-US');
-const indexPath = join(repoRoot, 'docs/src/docs/index.md');
+let markdown = readFileSync(indexPath, 'utf8');
 
-/** Apply one replacement, failing loudly if the pattern is no longer there. */
-function rewrite(source, pattern, replacement, label) {
-    if (!pattern.test(source)) {
+/** Replace every occurrence of a placeholder, failing loudly if it is gone. */
+function substitute(placeholder, value) {
+    if (!markdown.includes(placeholder)) {
         throw new Error(
-            `Could not find the ${label} figure in docs/src/docs/index.md — ` +
-                `the wording probably changed; update this script's pattern.`,
+            `Placeholder ${placeholder} is missing from docs/src/docs/index.md.`,
         );
     }
-    return source.replace(pattern, replacement);
+    markdown = markdown.replaceAll(placeholder, value);
 }
 
-let markdown = readFileSync(indexPath, 'utf8');
-markdown = rewrite(
-    markdown,
-    /At just (?:north of|under) [\d,]+ lines of code/u,
-    `At just under ${format(rounded.linesOfCode)} lines of code`,
-    'lines-of-code',
-);
-markdown = rewrite(
-    markdown,
-    /[\d,]+\+ lines of comments/u,
-    `${format(rounded.linesOfComments)}+ lines of comments`,
-    'lines-of-comments',
-);
-markdown = rewrite(
-    markdown,
-    /[\d,]+\+ unit tests/u,
-    `${format(rounded.unitTests)}+ unit tests`,
-    'unit-test',
-);
-markdown = rewrite(
-    markdown,
-    /\([\d,]+\+ snapshots\)/u,
-    `(${format(rounded.e2eSnapshots)}+ snapshots)`,
-    'snapshot',
-);
+/** Delete a block matched by `pattern`, failing loudly if it is not found. */
+function deleteBlock(pattern, label) {
+    if (!pattern.test(markdown)) {
+        throw new Error(
+            `Could not find the ${label} in docs/src/docs/index.md.`,
+        );
+    }
+    markdown = markdown.replace(pattern, '');
+}
+
+if (linesOfCode > SMALL_CODEBASE_MAX_LOC) {
+    // No longer a "small codebase" — drop that feature card, its footnote
+    // (which held `%LINES_OF_CODE%`) and its now-unused icon import.
+    deleteBlock(
+        /^-   <PhFeather\b[\s\S]*?\n\n(?=-   <Ph|<\/div>)/mu,
+        'small-codebase feature card',
+    );
+    deleteBlock(/^\[\^1\]:\n[\s\S]*?\n\n/mu, 'small-codebase footnote');
+    deleteBlock(/, PhFeather|PhFeather, /u, 'PhFeather icon import');
+} else {
+    substitute('%LINES_OF_CODE%', format(rounded.linesOfCode));
+}
+substitute('%LINES_OF_COMMENTS%', format(rounded.linesOfComments));
+substitute('%UNIT_TESTS%', format(rounded.unitTests));
+substitute('%E2E_SNAPSHOTS%', format(rounded.e2eSnapshots));
+
 writeFileSync(indexPath, markdown);
 
 // --- Report --------------------------------------------------------------
 
-// stdout: one machine-readable line for `$GITHUB_OUTPUT`. It must be the only
-// thing this script writes to stdout.
+// stdout: one machine-readable line, consumed by the `docs-stats` workflow.
 console.log(
     `figures=${rounded.linesOfCode}-${rounded.linesOfComments}-` +
         `${rounded.unitTests}-${rounded.e2eSnapshots}`,
 );
 // stderr: the human-readable summary.
+const codebaseNote =
+    linesOfCode > SMALL_CODEBASE_MAX_LOC
+        ? ` (over ${format(SMALL_CODEBASE_MAX_LOC)} — "small codebase" card dropped)`
+        : '';
 console.error(
-    `lines of code:     ${linesOfCode} -> just under ${format(rounded.linesOfCode)}\n` +
+    `lines of code:     ${linesOfCode} -> just under ${format(rounded.linesOfCode)}${codebaseNote}\n` +
         `lines of comments: ${linesOfComments} -> ${format(rounded.linesOfComments)}+\n` +
         `unit tests:        ${unitTests} -> ${format(rounded.unitTests)}+\n` +
         `E2E snapshots:     ${e2eSnapshots} -> ${format(rounded.e2eSnapshots)}+`,

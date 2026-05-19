@@ -8,12 +8,11 @@ name: Redeploy docs on stat change
 # changes. This workflow covers the other case: a change to `@nvl/sveltex`
 # that moves a *rounded* figure.
 #
-# It compares the figures the site *should* show against the figures the live
-# site *does* show (scraped from the deployed page), and triggers a docs
-# redeploy only when they differ. Nothing is stored in the repository, so this
-# needs no PAT and never writes to a (protected) branch — the redeploy is a
-# `workflow_dispatch` of `docs.yml`, which `GITHUB_TOKEN` is allowed to
-# trigger.
+# It recomputes the figures and compares them against the figures from the
+# previous run, kept in the Actions cache. Nothing is stored in the
+# repository, so this needs no PAT and never writes to a (protected) branch.
+# When a figure moved it triggers a redeploy by dispatching `docs.yml` —
+# `GITHUB_TOKEN` is allowed to trigger a `workflow_dispatch`.
 
 on:
   push:
@@ -26,7 +25,7 @@ permissions:
   contents: read
   actions: write # to dispatch the "Deploy docs to GitHub Pages" workflow
 
-# One check at a time; a burst of pushes needn't each dispatch a deploy.
+# One check at a time, so a burst of pushes can't race on the cached figures.
 concurrency:
   group: docs-stats
   cancel-in-progress: false
@@ -55,23 +54,29 @@ jobs:
       - name: Install cloc
         run: sudo apt-get update && sudo apt-get install --yes cloc
 
+      # Brings back `.stat-figures` from the most recent previous run: the
+      # `run_id` key never hits exactly, so `restore-keys` restores the latest
+      # entry, and a fresh entry is saved at job end.
+      - name: Restore the previous figures
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .stat-figures
+          key: docs-stat-figures-${{ github.run_id }}
+          restore-keys: docs-stat-figures-
+
       - name: Redeploy the docs if a rounded figure moved
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          # Figures the site *should* show: `<loc>-<comments>-<tests>-<snapshots>`.
           current="$(node scripts/docs/update-stats.mjs | sed 's/^figures=//')"
+          previous="$(cat .stat-figures 2>/dev/null || true)"
+          printf '%s' "$current" > .stat-figures
 
-          # Figures the live site *does* show, scraped from the rendered page.
-          html="$(curl -fsSL https://sveltex.dev/ || true)"
-          figure() { printf '%s' "$html" | tr '\n' ' ' | grep -oE "$1" | grep -oE '[0-9,]+' | head -n1 | tr -d ',' || true; }
-          live="$(figure 'under [0-9,]+ lines of code')-$(figure '[0-9,]+\+ lines of comments')-$(figure '[0-9,]+\+ unit tests')-$(figure '[0-9,]+\+ snapshots')"
-
-          if [ "$current" = "$live" ]; then
+          if [ "$current" = "$previous" ]; then
             echo "Rounded figures unchanged ($current) — no redeploy."
           else
-            echo "Rounded figures moved (live: $live, current: $current) — redeploying docs."
+            echo "Rounded figures moved (${previous:-none} -> $current) — redeploying docs."
             gh workflow run docs.yml --ref main
           fi
