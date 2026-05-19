@@ -8,6 +8,7 @@ on:
       - .github/workflows/docs.yml
       - docs/**
       - packages/vscode-sveltex/syntaxes/**
+      - scripts/docs/**
   workflow_dispatch:
 
 permissions:
@@ -45,13 +46,29 @@ jobs:
         with:
           node-version-file: docs/.node-version
           cache: pnpm
-          cache-dependency-path: docs/pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            docs/pnpm-lock.yaml
 
       # `docs/` is a standalone project — not a pnpm-workspace member — and
       # has its own lockfile, so install it in isolation.
       - name: Install dependencies
         run: pnpm install --ignore-workspace
         working-directory: docs
+
+      # `update-stats.mjs` recomputes the project-stat figures quoted in
+      # `index.md` (via `cloc` and `vitest list` — hence the workspace install
+      # and `cloc` here) so the published site always shows current numbers.
+      # Nothing is committed back; a stats glitch must not block the deploy.
+      - name: Install workspace dependencies
+        run: pnpm install
+
+      - name: Install cloc
+        run: sudo apt-get update && sudo apt-get install --yes cloc
+
+      - name: Refresh the project-stat figures
+        run: node scripts/docs/update-stats.mjs
+        continue-on-error: true
 
       # `pnpm build` runs `build:playground`, then `vitepress build`. The
       # VitePress config reads grammars from `../packages/vscode-sveltex`,

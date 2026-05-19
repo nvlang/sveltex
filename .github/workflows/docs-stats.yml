@@ -1,18 +1,19 @@
 ---
-name: Refresh docs statistics
+name: Redeploy docs on stat change
 
-# Recompute the project-stat figures quoted in `docs/src/docs/index.md` — the
-# line-of-code count, the Vitest unit-test count and the Playwright E2E
-# snapshot count — and commit the result.
+# The docs homepage quotes a few project-stat figures (lines of code, lines
+# of comments, unit-test count, E2E snapshot count). The "Deploy docs to
+# GitHub Pages" workflow recomputes and bakes them in on every run, so the
+# published site is always current — but that workflow only runs on `docs/**`
+# changes. This workflow covers the other case: a change to `@nvl/sveltex`
+# that moves a *rounded* figure.
 #
-# The figures depend only on the `@nvl/sveltex` package, so the trigger is
-# scoped to it; pushes that touch nothing else needn't spend CI here.
-#
-# The commit is made only when a *rounded* figure actually moved. That commit
-# touches `docs/**`, so it triggers the "Deploy docs to GitHub Pages" workflow
-# — the site is redeployed exactly when a quoted number changes, and not
-# otherwise. The commit touches only `docs/`, so it does not re-trigger this
-# workflow.
+# It compares the figures the site *should* show against the figures the live
+# site *does* show (scraped from the deployed page), and triggers a docs
+# redeploy only when they differ. Nothing is stored in the repository, so this
+# needs no PAT and never writes to a (protected) branch — the redeploy is a
+# `workflow_dispatch` of `docs.yml`, which `GITHUB_TOKEN` is allowed to
+# trigger.
 
 on:
   push:
@@ -23,24 +24,19 @@ on:
 
 permissions:
   contents: read
+  actions: write # to dispatch the "Deploy docs to GitHub Pages" workflow
 
-# One refresh at a time, so two quick pushes can't race on the commit/push.
+# One check at a time; a burst of pushes needn't each dispatch a deploy.
 concurrency:
   group: docs-stats
   cancel-in-progress: false
 
 jobs:
-  update-stats:
-    name: Recompute and commit the project-stat figures
+  redeploy-if-changed:
+    name: Redeploy the docs if a rounded figure moved
     runs-on: ubuntu-latest
     steps:
-      # A PAT, not the default `GITHUB_TOKEN`: a commit pushed with
-      # `GITHUB_TOKEN` does not trigger other workflows, so the docs deploy
-      # would never run. `RELEASE_PAT` (shared with the release workflow)
-      # only needs `contents` write access here.
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          token: ${{ secrets.RELEASE_PAT }}
 
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         name: Install pnpm
@@ -52,26 +48,30 @@ jobs:
           cache: pnpm
           cache-dependency-path: ./pnpm-lock.yaml
 
-      # `update-stats.mjs` runs `vitest list` to count unit tests.
+      # `update-stats.mjs` shells out to `vitest list` and `cloc`.
       - name: Install dependencies
         run: pnpm install
 
-      # `update-stats.mjs` shells out to `cloc` for the line-of-code count.
       - name: Install cloc
         run: sudo apt-get update && sudo apt-get install --yes cloc
 
-      - name: Recompute the project-stat figures
-        run: node scripts/docs/update-stats.mjs
-
-      - name: Commit the figures if they changed
+      - name: Redeploy the docs if a rounded figure moved
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- docs/src/docs/index.md; then
-            echo 'Project-stat figures unchanged — nothing to commit.'
-            exit 0
+          set -euo pipefail
+
+          # Figures the site *should* show: `<loc>-<comments>-<tests>-<snapshots>`.
+          current="$(node scripts/docs/update-stats.mjs | sed 's/^figures=//')"
+
+          # Figures the live site *does* show, scraped from the rendered page.
+          html="$(curl -fsSL https://sveltex.dev/ || true)"
+          figure() { printf '%s' "$html" | tr '\n' ' ' | grep -oE "$1" | grep -oE '[0-9,]+' | head -n1 | tr -d ',' || true; }
+          live="$(figure 'under [0-9,]+ lines of code')-$(figure '[0-9,]+\+ lines of comments')-$(figure '[0-9,]+\+ unit tests')-$(figure '[0-9,]+\+ snapshots')"
+
+          if [ "$current" = "$live" ]; then
+            echo "Rounded figures unchanged ($current) — no redeploy."
+          else
+            echo "Rounded figures moved (live: $live, current: $current) — redeploying docs."
+            gh workflow run docs.yml --ref main
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/src/docs/index.md
-          git commit -m 'docs: update project statistics'
-          git pull --rebase origin main
-          git push
