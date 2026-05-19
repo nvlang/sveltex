@@ -57,7 +57,7 @@
     "test:e2e:golden": "pnpm test:e2e:prepare && playwright test --update-snapshots",
     "test:e2e:prepare": "pnpm build && pnpm exec playwright install && pnpm generate-projects && pnpm test:e2e:install && pnpm test:e2e:build && pnpm test:e2e:build:showcase",
     "generate-projects": "node --import tsx/esm tests/e2e/generate.ts",
-    "test:e2e:install": "cd tests/e2e/_template && pnpm --ignore-workspace install && cd ../../..",
+    "test:e2e:install": "cd tests/e2e/_template && pnpm install && cd ../../..",
     "test:e2e:build": "node --import tsx/esm tests/e2e/build-projects.ts",
     "test:e2e:build:showcase": "node --import tsx/esm tests/e2e/build-showcase.ts",
     "playwright": "playwright test",

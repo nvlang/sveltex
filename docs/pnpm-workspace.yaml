@@ -1,0 +1,11 @@
+# `docs/` is a standalone project with its own lockfile — not a member of the
+# repository's pnpm workspace. This file makes `docs/` its own workspace root,
+# so `pnpm install` here resolves against `docs/pnpm-lock.yaml` rather than
+# climbing to the monorepo root.
+#
+# It also carries the build-script allow-list the install needs: pnpm 11 runs
+# a dependency's install script only when the dependency is listed here. This
+# is the scoped alternative to the `dangerouslyAllowAllBuilds` setting.
+allowBuilds:
+  core-js-pure: true
+  esbuild: true
