@@ -184,8 +184,27 @@ export function customEscapeSequencesToHtml(escapedContent: string): string {
 //       check if it's a mustache tag, and, if not, remove surrounding
 //       <p>...</p> tag, if present, after unescaping)
 
+/**
+ * Escape every character in `str` that carries special meaning in regex
+ * source, producing a string that matches the original input literally when
+ * embedded in a pattern.
+ *
+ * The set covers the 14 regex syntax characters
+ * (`.`, `*`, `+`, `?`, `^`, `$`, `{`, `}`, `(`, `)`, `|`, `[`, `]`, `\`) and
+ * also `/` — defensively, so the output is safe to drop into a `/…/` literal
+ * as well as into `new RegExp(…)` and template-tag-built patterns.
+ *
+ * This is a narrower subset than the spec'd
+ * [`RegExp.escape`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape):
+ * it doesn't hex-escape hyphens, the leading character, or whitespace, so the
+ * output remains human-readable. The narrower set is sound for the call sites
+ * here (alternations of tag/language identifiers in a non-character-class
+ * position) and produces the same matches; `RegExp.escape` is the right
+ * upgrade once SvelTeX's Node floor moves to 24+, where it becomes
+ * available.
+ */
 export function escapeStringForRegExp(str: string): string {
-    return str.replace(/([.*+?^${}()|[\]\\])/gu, '\\$1');
+    return str.replace(/([.*+?^${}()|[\]\\/])/gu, '\\$1');
 }
 
 function normalComponentsRegExp(rawTags: string[]): RegExp {
