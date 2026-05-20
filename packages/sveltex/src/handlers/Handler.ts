@@ -125,16 +125,9 @@ export class Handler<
     }
 
     /**
-     * The configuration object for this handler. This object should be
-     * initialized with a deep copy of the configuration object passed to the
-     * constructor, and be mutable only by the
-     * {@link configure | `configure`} method.
-     *
-     * @remarks The type of this property should usually be more stringent than
-     * the type of the parameter passed to `configure`. The idea here is that,
-     * even if multiple settings must always be defined, the user should still
-     * generally be able to set them one at a time, with separate calls to
-     * `configure`.
+     * The configuration object for this handler. Initialised once from the
+     * configuration object passed to the constructor; never reassigned after
+     * construction.
      */
     protected _configuration: FullConfiguration;
 
@@ -153,32 +146,18 @@ export class Handler<
     /**
      * Create a new instance of {@link Handler | `Handler`}.
      *
-     * ⚠ **Warning**: The `processor` parameter is passed by reference.
+     * @param backend - The name of the handler backend. Used to initialise
+     * the readonly property {@link backend | `backend`}.
      *
-     * @param backend - The name of the handler backend. Used to initialize the
-     * readonly property {@link backend | `backend`}.
+     * @param process - The function to process content. Used to initialise
+     * the readonly property {@link _process | `_process`}.
      *
-     * @param process - The function to process content. Used to initialize the
-     * readonly property {@link _process | `_process`}.
+     * @param configuration - The resolved configuration for the handler.
+     * Used to initialise {@link _configuration | `_configuration`}. The
+     * original reference is stored — not a copy — so the caller must
+     * either own the object or treat it as immutable after construction.
      *
-     * @param configure - Function which will be called whenever
-     * {@link configure | `configure`} is called, right after
-     * the configuration is updated. Used to initialize the readonly property
-     * {@link _configure | `_configure`}. (In other words, this
-     * function is responsible for updating the handler's internal state based
-     * on the new configuration, except for the configuration itself, which will
-     * be updated automatically *before* this function is run.)
-     *
-     * @param configuration - This object is used to initialize the readonly
-     * property {@link _configuration | `_configuration`}.
-     * Careful: the original is used, not a copy.
-     *
-     * @param processor - The processor object, *passed by reference*. Used to
-     * initialize {@link processor | `processor`}. If no
-     * processor is used, set this to `{}`. Otherwise, this object should be
-     * used by the `process` function to process content.
-     *
-     * @returns A new instance of {@link Handler | `Handler`}
+     * @returns A new instance of {@link Handler | `Handler`}.
      */
     public constructor({
         backend,

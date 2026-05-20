@@ -304,12 +304,6 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
          */
         const verbEnvs = verbatimHandler._verbEnvs;
 
-        /**
-         * - Key: Alias of a verbatim environment
-         * - Value: "Main" name of the verbatim environment
-         */
-        const aliasMap = verbatimHandler._aliasMap;
-
         // Filter out invalid verbatim environment configurations
         const validVerbEnvConfigs: [string, FullVerbEnvConfig][] =
             Object.entries(userConfig)
@@ -344,7 +338,6 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
                         duplicates.push(alias);
                     }
                     verbEnvs.set(alias, verbEnvConfig);
-                    aliasMap.set(alias, env);
                 }
             }
         }
@@ -386,15 +379,6 @@ export class VerbatimHandler<C extends CodeBackend> extends Handler<
         string,
         FullVerbEnvConfig
     >();
-
-    /**
-     * Map from aliases to verbatim environment config name (i.e., map from
-     * aliases to the key of the verbatim environment config within the
-     * `verbatim` prop of the Sveltex config wherein the alias was defined in
-     * the first place). If aliases conflict, the last one defined will take
-     * precedence.
-     */
-    private readonly _aliasMap: Map<string, string> = new Map<string, string>();
 
     /**
      * Verbatim environments.

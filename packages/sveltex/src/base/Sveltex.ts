@@ -67,8 +67,7 @@ const moduleScriptTagRegExp =
  * `Sveltex` instance.
  *
  * @param backendChoices - The backend choices to use for the Sveltex instance.
- * @param configuration - The configuration to use for the Sveltex instance. The
- * instance can also be configured later using the `configure` method.
+ * @param configuration - The configuration to use for the Sveltex instance.
  *
  * @throws Error if the backend choices are invalid.
  */

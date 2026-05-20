@@ -156,8 +156,9 @@ interface CommonCodeConfiguration {
  * - `custom`: `Record<string, unknown>`.
  * - `none`: `Record<string, unknown>`.
  *
- * @remarks This is the type of the argument passed to the code handler's
- * `configure` function, together with {@link CommonCodeConfiguration | `GeneralCodeConfiguration`}.
+ * @remarks Together with {@link CommonCodeConfiguration |
+ * `CommonCodeConfiguration`}, this makes up the resolved configuration the
+ * code handler is constructed with.
  */
 type SpecificCodeConfiguration<B extends CodeBackend> = B extends 'highlight.js'
     ? HighlightJsConfig
@@ -367,8 +368,8 @@ interface ShikiConfig {
 export type CodeBackendWithCss = 'highlight.js' | 'starry-night';
 
 /**
- * Type of the input passed to the {@link CodeHandler | `CodeHandler`}'s
- * {@link CodeHandler.configure | `configure`} method.
+ * Resolved configuration the {@link CodeHandler | `CodeHandler`} is
+ * constructed with.
  *
  * @typeParam B - Code backend.
  */
