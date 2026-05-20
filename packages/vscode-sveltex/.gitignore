@@ -2,3 +2,7 @@ syntaxes/*.json_default
 out
 node_modules
 external
+
+# Locally-packaged extension artifacts (the release flow builds and publishes
+# in CI; any local `vsce package` output is for ad-hoc testing only).
+*.vsix
