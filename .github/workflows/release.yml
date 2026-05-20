@@ -161,11 +161,21 @@ jobs:
       # changes instead of creating a PR.
       - name: Publish to NPM and JSR or create release PR
         id: changesets
-        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1
+        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
         with:
           branch: main
           version: pnpm ci:version
           publish: pnpm ci:publish
+          # `github-api` (changesets/action v1.5+) pushes the "Version
+          # Packages" branch commits and the release tags through the
+          # GitHub REST API rather than the git CLI; the upshot is that
+          # both are GPG-signed with GitHub's built-in key and show up as
+          # "Verified" in the GitHub UI. Attribution is to whoever owns
+          # the token below -- in our case the PAT's user (since the
+          # default `GITHUB_TOKEN` can't push to `.github/workflows/`,
+          # which the changesets branch carries). See
+          # https://github.com/changesets/action/pull/391.
+          commitMode: github-api
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           # The same PAT as the checkout step above — `changesets/action`
