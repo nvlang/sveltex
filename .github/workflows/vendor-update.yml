@@ -1,0 +1,67 @@
+---
+name: Vendor — weekly refresh
+
+# Runs `pnpm vendor:update` on a weekly schedule (and on demand). If any
+# vendored upstream file differs from the local copy, opens a PR; otherwise
+# the job exits without side effects (`peter-evans/create-pull-request` is a
+# no-op when there is nothing to commit).
+#
+# The asset list lives in `scripts/vendor.ts`. Updates show as a diff in the
+# PR so they get human review before landing on `main`.
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC. Cheap, predictable, and lands before the working
+    # week so any breakage shows up promptly.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  vendor-update:
+    name: Refresh vendored upstream files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Refresh vendored files
+        run: pnpm vendor:update
+
+      - name: Open PR if anything changed
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: chore/vendor-update
+          commit-message: 'chore(vendor): refresh upstream files'
+          title: 'chore(vendor): refresh vendored upstream files'
+          body: |
+            Weekly vendored-upstream refresh. The diff below is the result
+            of `pnpm vendor:update`, which re-fetches every entry in
+            `scripts/vendor.ts`'s `VENDORED` manifest from its upstream
+            source and writes it to the local target.
+
+            Please review for unexpected upstream changes (a renamed key,
+            a structural reshape, etc.) before merging.
+
+            <sub>Opened by the `vendor-update` workflow. To run the same
+            update locally: `pnpm vendor:update`.</sub>
+          labels: |
+            dependencies
+          delete-branch: true

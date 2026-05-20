@@ -1,3 +1,14 @@
+# SvelTeX-flavored Markdown TextMate grammar.
+#
+# Forked from VS Code's built-in Markdown grammar
+# (`microsoft/vscode` → `extensions/markdown-basics/syntaxes/markdown.tmLanguage.json`,
+# MIT-licensed) with SvelTeX-specific extensions: math regions, LaTeX
+# verbatim environments, and tweaks that interoperate with the sibling
+# `sveltex.tmLanguage.yaml` injections.
+#
+# This is *not* auto-vendored — upstream evolves and our modifications would
+# conflict on most refreshes. Eyeball upstream periodically and lift any
+# improvements that are worth carrying.
 ---
 fileTypes:
   - md
