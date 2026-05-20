@@ -57,6 +57,13 @@ Similar works to SvelTeX, which also inspired it:
 
 -   **[Shiki]:** A beautiful, fast, and feature-rich syntax highlighter.
 -   **[`twoslash`]:** Powers the IntelliSense in the code blocks, together with [`floating-vue`].
+-   **[Svelte TextMate grammar]** by [`sveltejs/language-tools`] (MIT) —
+    vendored from upstream and refreshed weekly by the repo's
+    `vendor-update` workflow. Used to highlight the Svelte snippets in code
+    blocks across the docs site and in the playground editor.
+
+[Svelte TextMate grammar]: https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
+[`sveltejs/language-tools`]: https://github.com/sveltejs/language-tools
 
 ### Graphics
 
