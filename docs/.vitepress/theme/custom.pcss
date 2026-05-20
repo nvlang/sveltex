@@ -454,7 +454,12 @@ hr.footnotes-sep {
         .content {
             display: flex;
             gap: 12px;
-            align-items: flex-start;
+            /* `stretch` (the default) so block-level children like code
+               blocks and code-groups fill the full callout width.
+               `flex-start` would keep them at their intrinsic width,
+               which leaves a code block visibly narrower than the
+               surrounding paragraph text. */
+            align-items: stretch;
             flex-direction: column;
             p {
                 line-height: 22px;
