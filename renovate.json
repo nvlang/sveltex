@@ -1,0 +1,39 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", ":dependencyDashboard"],
+    "description": [
+        "Dependabot (see .github/dependabot.yml) handles routine npm and",
+        "GitHub Actions version bumps. Renovate is enabled solely to widen",
+        "peer-dependency ranges as new majors are released: a new shiki@N",
+        "ships → Renovate opens a PR widening `peerDependencies.shiki` from",
+        "`^N-1` to `^N-1 || ^N` for review and verification. Without this,",
+        "peer ranges silently drift (today: `shiki: ^4`, but shiki@5/6 will",
+        "come; today: `marked: ^18`, and major bumps happen often)."
+    ],
+    "enabledManagers": ["npm"],
+    "baseBranches": ["dependencies"],
+    "labels": ["dependencies"],
+    "commitMessagePrefix": "build(deps):",
+    "packageRules": [
+        {
+            "description": "Hand everything that isn't a peer dep back to Dependabot.",
+            "matchDepTypes": [
+                "dependencies",
+                "devDependencies",
+                "optionalDependencies",
+                "engines"
+            ],
+            "enabled": false
+        },
+        {
+            "description": "Widen peer ranges to include each new major as upstream ships it.",
+            "matchDepTypes": ["peerDependencies"],
+            "rangeStrategy": "widen",
+            "commitMessageTopic": "widen peer range for {{depName}}",
+            "prBodyNotes": [
+                "Widens a peer range to admit a newly-published upstream major. **Verify compatibility before merging** — Renovate cannot test that SvelTeX still works with the new major, only that the range now nominally allows it."
+            ]
+        }
+    ],
+    "schedule": ["before 9am on Monday"]
+}
