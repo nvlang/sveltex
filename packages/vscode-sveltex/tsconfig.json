@@ -4,13 +4,11 @@
   // is produced entirely by esbuild.
   "compilerOptions": {
     "module": "CommonJS",
-    "moduleResolution": "Node",
-    // `moduleResolution: "Node"` (alias of `node10`) is deprecated in TS 6
-    // and will be removed in TS 7. The VS Code extension API is a CJS
-    // package, and `Node10`/`Node` resolution is what tsserver inside VS
-    // Code itself uses to type-check extension source -- so keep matching
-    // it for now and revisit when VS Code's API tooling moves on.
-    "ignoreDeprecations": "6.0",
+    // TS 6 deprecates the `Node`/`node10` resolution and explicitly
+    // recommends `bundler` as the upgrade path for CJS projects that have
+    // an external bundler. esbuild (see `scripts/build.ts`) is the bundler
+    // here -- this tsconfig only type-checks.
+    "moduleResolution": "Bundler",
     "target": "ES2022",
     "lib": ["ES2022"],
     "strict": true,
