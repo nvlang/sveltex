@@ -7,9 +7,12 @@
 // bare specifier -- deliberately sidesteps the docs Vite config, which
 // externalizes `@nvl/sveltex`.
 //
-// The preprocessor is constructed once and reused for every request. The
-// worker only ever calls `Sveltex.trace` (pure text transformation); it never
-// executes, mounts, or evaluates the user's source.
+// The user-supplied SvelTeX source is never executed: the worker only calls
+// `Sveltex.trace`, a pure text transformation. The user-supplied SvelTeX
+// *configuration*, however, IS executed -- the worker evaluates the config
+// source via `new Function` to construct the preprocessor. That code runs
+// locally, in the user's browser, inside this worker; it never leaves the
+// machine.
 
 /// <reference lib="webworker" />
 
@@ -20,6 +23,11 @@ interface TraceResult {
 
 interface SveltexPreprocessor {
     trace: (content: string, filename?: string) => Promise<TraceResult>;
+}
+
+interface SveltexConfigBundle {
+    backends: Record<string, string>;
+    configuration: Record<string, unknown>;
 }
 
 interface SveltexModule {
@@ -40,20 +48,30 @@ interface SveltexModule {
 interface RequestMessage {
     id: number;
     input: string;
+    /**
+     * The SvelTeX configuration as a JavaScript function body. It runs with
+     * `mathjaxRequire` in scope and must `return { backends, configuration }`,
+     * the two arguments to {@link SveltexModule.sveltex}.
+     */
+    config: string;
 }
 
 /** Response message sent back from this worker to the component. */
 type ResponseMessage =
     | { id: number; ok: true; result: TraceResult }
-    | { id: number; ok: false; error: string };
+    | {
+          id: number;
+          ok: false;
+          /**
+           * `'config'` -- the configuration source failed to evaluate or
+           * `sveltex()` rejected. `'trace'` -- the preprocessor was built
+           * successfully but transforming the input threw.
+           */
+          where: 'config' | 'trace';
+          error: string;
+      };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
-
-/**
- * Lazily-constructed preprocessor instance. Built once, on the first request,
- * then reused -- constructing it is the expensive part.
- */
-let preprocessorPromise: Promise<SveltexPreprocessor> | undefined;
 
 /**
  * Absolute URL of the pre-built SvelTeX browser bundle.
@@ -69,56 +87,103 @@ let preprocessorPromise: Promise<SveltexPreprocessor> | undefined;
 const bundleUrl =
     self.location.origin + '/' + ['playground', 'sveltex-playground.mjs'].join('/');
 
-function getPreprocessor(): Promise<SveltexPreprocessor> {
-    if (!preprocessorPromise) {
-        preprocessorPromise = (async () => {
-            // Runtime URL import: served from `src/public/` at the site root.
-            const mod = (await import(
-                /* @vite-ignore */ bundleUrl
-            )) as SveltexModule;
-            // SvelTeX's fuller, recommended backends: `unified` (Markdown via
-            // remark/rehype), `shiki` (syntax-highlighted code) and `mathjax`
-            // (math). They best showcase what SvelTeX can do.
-            return mod.sveltex(
-                {
-                    markdownBackend: 'unified',
-                    codeBackend: 'shiki',
-                    mathBackend: 'mathjax',
-                },
-                {
-                    code: {
-                        // shiki applies syntax colors only when a theme is
-                        // configured (its default config sets none). Pick a
-                        // bundled theme so highlighted code in the output
-                        // actually showcases the `shiki` backend.
-                        shiki: { theme: 'github-dark-default' },
-                    },
-                    math: {
-                        // MathJax's `css.type` accepts only `'hybrid'` or
-                        // `'none'` (unlike KaTeX, which also accepts `'cdn'`).
-                        // `'none'` means SvelTeX manages no MathJax CSS and so
-                        // never writes a stylesheet to disk -- the equivalent,
-                        // for MathJax, of the old KaTeX `'cdn'` setting.
-                        css: { type: 'none' },
-                        // MathJax v4 loads its components and font data lazily
-                        // through `loader.require`. The bundle's
-                        // `mathjaxRequire` hook resolves those to modules
-                        // bundled at build time, so MathJax works inside this
-                        // Web Worker (which cannot resolve bare specifiers).
-                        mathjax: { loader: { require: mod.mathjaxRequire } },
-                    },
-                },
-            );
-        })();
+/**
+ * Lazily-loaded SvelTeX bundle. Built once on the first request and reused;
+ * the bundle is large and the dynamic `import()` is the slowest single step.
+ */
+let modulePromise: Promise<SveltexModule> | undefined;
+
+function getModule(): Promise<SveltexModule> {
+    if (!modulePromise) {
+        // Runtime URL import: served from `src/public/` at the site root.
+        modulePromise = import(/* @vite-ignore */ bundleUrl) as Promise<SveltexModule>;
     }
-    return preprocessorPromise;
+    return modulePromise;
+}
+
+/**
+ * Lazily-constructed preprocessor instance, scoped to the most recent
+ * configuration source. Rebuilding the preprocessor is expensive
+ * (each rebuild reloads MathJax's components and re-instantiates Shiki),
+ * so we hold onto the previous one as long as the config hasn't changed.
+ */
+let preprocessorPromise: Promise<SveltexPreprocessor> | undefined;
+let cachedConfigSource: string | undefined;
+
+/**
+ * Evaluate the user-supplied configuration source. The source is the body of
+ * a JavaScript function that has `mathjaxRequire` in scope and returns
+ * `{ backends, configuration }`. Throws if evaluation fails or if the return
+ * value is not shaped as expected; the caller surfaces the message to the UI.
+ */
+function evaluateConfigSource(
+    configSource: string,
+    mathjaxRequire: SveltexModule['mathjaxRequire'],
+): SveltexConfigBundle {
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const factory = new Function('mathjaxRequire', configSource) as (
+        mathjaxRequire: SveltexModule['mathjaxRequire'],
+    ) => unknown;
+    const value = factory(mathjaxRequire);
+    if (
+        value === null ||
+        typeof value !== 'object' ||
+        !('backends' in value) ||
+        !('configuration' in value) ||
+        typeof (value as SveltexConfigBundle).backends !== 'object' ||
+        typeof (value as SveltexConfigBundle).configuration !== 'object'
+    ) {
+        throw new Error(
+            'Configuration must `return { backends, configuration }` -- ' +
+                'two objects passed verbatim to `sveltex()`.',
+        );
+    }
+    return value as SveltexConfigBundle;
+}
+
+function getPreprocessor(configSource: string): Promise<SveltexPreprocessor> {
+    if (preprocessorPromise && cachedConfigSource === configSource) {
+        return preprocessorPromise;
+    }
+    const next = (async () => {
+        const mod = await getModule();
+        const { backends, configuration } = evaluateConfigSource(
+            configSource,
+            mod.mathjaxRequire,
+        );
+        return mod.sveltex(backends, configuration);
+    })();
+    // If this build fails, clear the cache so the next request retries
+    // (e.g. after the user fixes the config). Without this, every subsequent
+    // request would re-await the same rejected promise.
+    next.catch(() => {
+        if (preprocessorPromise === next) {
+            preprocessorPromise = undefined;
+            cachedConfigSource = undefined;
+        }
+    });
+    preprocessorPromise = next;
+    cachedConfigSource = configSource;
+    return next;
 }
 
 ctx.addEventListener('message', (event: MessageEvent<RequestMessage>) => {
-    const { id, input } = event.data;
+    const { id, input, config } = event.data;
     void (async () => {
+        let pp: SveltexPreprocessor;
         try {
-            const pp = await getPreprocessor();
+            pp = await getPreprocessor(config);
+        } catch (err) {
+            const response: ResponseMessage = {
+                id,
+                ok: false,
+                where: 'config',
+                error: err instanceof Error ? err.message : String(err),
+            };
+            ctx.postMessage(response);
+            return;
+        }
+        try {
             const result = await pp.trace(input);
             const response: ResponseMessage = { id, ok: true, result };
             ctx.postMessage(response);
@@ -126,6 +191,7 @@ ctx.addEventListener('message', (event: MessageEvent<RequestMessage>) => {
             const response: ResponseMessage = {
                 id,
                 ok: false,
+                where: 'trace',
                 error: err instanceof Error ? err.message : String(err),
             };
             ctx.postMessage(response);
