@@ -87,9 +87,6 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
-      vite:
-        specifier: ^6.4.2
-        version: 6.4.2(jiti@2.7.0)(lightningcss@1.32.0)
       vitepress:
         specifier: ^1.6.4
         version: 1.6.4(@algolia/client-search@5.23.3)(lightningcss@1.32.0)(markdown-it-mathjax3@4.3.2)(postcss@8.5.14)(search-insights@2.14.0)(typescript@6.0.3)
