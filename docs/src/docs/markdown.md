@@ -47,9 +47,9 @@ and render it at build-time with the Markdown processor of your choice.
 
 -   <PhListDashes color="var(--hig-pink)" class="opacity-80" :size="28" weight="duotone"/>
 
-    **Frontmatter:** Set page metadata for SEO, import resources with `<link>`s,
-    define JS variables, and more, all from within frontmatter written in YAML,
-    TOML, or JSON.
+    **Frontmatter:** Set page metadata for SEO, import resources with
+    `<link>`s, import Svelte components, and more, all from within
+    frontmatter written in YAML, TOML, or JSON.
 
 -   <PhGear color="var(--hig-pink)" class="opacity-80" :size="28" weight="duotone"/>
 
@@ -244,7 +244,7 @@ export default await sveltex(
 title: Example
 ---
 
-# {title}
+# {metadata.title}
 
 Lorem ipsum dolor.
 ```
@@ -254,7 +254,7 @@ Lorem ipsum dolor.
 title = "Example"
 ---
 
-# {title}
+# {metadata.title}
 
 Lorem ipsum dolor.
 ```
@@ -266,82 +266,10 @@ Lorem ipsum dolor.
 }
 ---
 
-# {title}
+# {metadata.title}
 
 Lorem ipsum dolor.
 ```
-
-:::
-
-### Variables
-
-All properties defined in the frontmatter are exposed as variables in the
-page's instance `<script>` block:
-
--   Top-level properties become `const` declarations. Keys that are valid
-    JavaScript identifiers (`foo`, `title`) keep their name; keys that
-    aren't — including all hyphenated [metadata names](#meta) like
-    `color-scheme` — are camelCased on word boundaries (`colorScheme`,
-    `themeColor`, `myKey`). Keys that can't form a valid identifier even
-    after camelCasing (e.g. `123abc`, which still starts with a digit) are
-    dropped: they remain accessible through the [`metadata`
-    export](#metadata-export) under their original name.
--   Nested properties are accessible on those `const`s as nested objects
-    (e.g. `obj.a`, `arr[1].b`).
-
-::: details Example
-
-```sveltex
----
-prop: Example
-arr:
-  - a
-  - b: text
-    c: 299792458
-  - - d
-    - e
-obj:
-  a: foo
-  b:
-    b1: bar
-    b2: baz
-  c:
-    - c1
-    - 2
----
-
-Use the frontmatter variables like you would any other variable:
-- As-is: {prop}
-- In markdown: _{arr[1].b}_
-- In HTML: <span>{arr[1].c}</spa.n>
-- In attributes: <img src={objb.b2} alt={obj.c[0]}>
-- In Svelte components: <Example>{obj.b.b1}</Example>
-- In Svelte component attributes: <Example {prop} x={obj.a}/>
-```
-
-In effect, the frontmatter above will result in the following lines being added to the Svelte file's `<script>` block:
-
-```svelte
-<script>
-// ...
-const prop = 'Example';
-const arr = ['a', { b: 'text', c: 299792458 }, ['d', 'e']];
-const obj = { a: 'foo', b: { b1: 'bar', b2: 'baz' }, c: ['c1', 2] };
-</script>
-```
-
-:::
-
-**NB**: You can't use the variables in math expressions, code spans, code
-blocks, or verbatim environments.
-
-::: tip
-
-JavaScript reserved keywords (`class`, `default`, `if`, …) can't be
-variable names, so a top-level frontmatter key whose camelCase form is a
-reserved word is dropped from the variables step. The value remains
-accessible through the [`metadata` export](#metadata-export) under its
-original name.
 
 :::
 
@@ -355,7 +283,7 @@ imports).
 
 ::: code-group
 
-```sveltex [Frontmatter]
+```sveltex [sveltex]
 ---
 imports:
   $lib/components/Example.svelte: Example
@@ -365,31 +293,39 @@ imports:
 ---
 ```
 
-```svelte [Generated instance script]
+```svelte [svelte]
+<script module>
+
+export const metadata = {
+imports: {"$lib/components/Example.svelte":"Example","$lib/utils.js":["a","b"]},
+};
+</script>
 <script>
+
 import Example from '$lib/components/Example.svelte';
 import { a, b } from '$lib/utils.js';
 </script>
+
 ```
 
 :::
 
-`imports` is also an ordinary top-level property: its value is additionally
-available as the `imports` [variable](#variables) and as the `imports`
-field of the [`metadata` export](#metadata-export). The three steps can be
+`imports` is also an ordinary top-level frontmatter key, so it shows up
+in the [`metadata` export](#metadata-export) too. The two steps can be
 toggled independently — see [Disabling frontmatter
 processing](#disabling-frontmatter-processing).
 
 ### Metadata export
 
-The whole parsed frontmatter is also exported from the page's _module_
-script as `export const metadata = { … }`. This is what lets a SvelteKit
-`load` function — or any other module that imports the page — read the
-page's metadata.
+The whole parsed frontmatter is exported from the page's _module_ script
+as `export const metadata = { … }`. The same `metadata` binding is
+available from inside the page itself (as `metadata.title` in the markup
+or in the instance script) and from outside as a named export
+(`import { metadata } from './page.sveltex'`).
 
 ::: code-group
 
-```sveltex [Frontmatter]
+```sveltex [sveltex]
 ---
 title: Example
 author: Jane Doe
@@ -397,14 +333,24 @@ color-scheme: dark
 ---
 ```
 
-```svelte [Generated module script]
+```svelte [svelte]
+<svelte:head>
+<title>Example</title>
+<meta name="author" content="Jane Doe">
+<meta name="color-scheme" content="dark">
+</svelte:head>
 <script module>
+
 export const metadata = {
-    title: "Example",
-    author: "Jane Doe",
-    "color-scheme": "dark",
+author: "Jane Doe",
+"color-scheme": "dark",
+title: "Example",
+meta: [{"name":"author","content":"Jane Doe"},{"name":"color-scheme","content":"dark"}],
 };
 </script>
+<script>
+</script>
+
 ```
 
 :::
@@ -414,21 +360,41 @@ quoted in the object literal where JavaScript syntax requires it. A page
 without any frontmatter still emits `export const metadata = undefined;`,
 so consumers can always import `metadata` without a guard.
 
-A typical use is reading the page's metadata from another module — for
-instance, a SvelteKit `+page.ts` that surfaces a post's title and tags to
-the page-level data, or a build script that walks a content folder to
-assemble an index:
+Using a frontmatter value in the page's markup is just an object access:
 
-```ts
-import { metadata } from './posts/2026-05-19-hello.sveltex';
+::: code-group
 
-console.log(metadata?.title); // "Hello, World!"
+```sveltex [sveltex]
+---
+title: Welcome
+---
+
+# {metadata.title}
+
+Posted by {metadata.author ?? 'anonymous'}.
 ```
 
-The same values are also reachable from inside the page itself through
-the [`<script>` variables](#variables) — `{title}` in the markup, say —
-so the choice between the variable and the `metadata` export comes down
-to where the value is consumed from.
+```svelte [svelte]
+<svelte:head>
+<title>Welcome</title>
+</svelte:head>
+<script module>
+
+export const metadata = {
+title: "Welcome",
+};
+</script>
+<script>
+</script>
+
+<h1>{metadata.title}</h1>
+<p>Posted by {metadata.author ?? 'anonymous'}.</p>
+```
+
+:::
+
+For keys that aren't valid JavaScript identifiers, use bracket access:
+`{metadata['color-scheme']}`.
 
 ### Head elements
 
@@ -509,10 +475,9 @@ You can also set the meta tags with a `meta` object or array. Meta tags defined
 in a `meta` object or array have precedence over those defined as top-level
 properties.
 
-Note that, while these forms are equivalent to the shorter form
-above in terms of the `meta` tags they generate, the variables that will be
-defined in the `script` tag will be different, as these always follow the
-structure of the frontmatter one-to-one.
+Note that, while these forms are equivalent to the shorter form above in
+terms of the `<meta>` tags they generate, the shape of the `metadata`
+export differs — `metadata` always mirrors the frontmatter one-to-one.
 
 ::: code-group
 
@@ -630,21 +595,20 @@ base:
 
 ### Disabling frontmatter processing
 
-By default, SvelTeX puts the frontmatter to use in four independent ways:
+By default, SvelTeX puts the frontmatter to use in three independent ways:
 
 -   **`head`** — generates a `<svelte:head>` block with the `<title>`,
     `<meta>`, `<link>`, `<base>`, and `<noscript>` elements described above;
--   **`metadata`** — adds an `export const metadata` statement to the module
-    script (`<script module>`);
--   **`variables`** — adds a `const` declaration to the instance script
-    (`<script>`) for each top-level key, as shown under
-    [Variables](#variables);
+-   **`metadata`** — adds an `export const metadata` statement to the
+    module script (`<script module>`) — see
+    [Metadata export](#metadata-export);
 -   **`imports`** — honors the special `imports` key, letting a document
-    declare `import` statements from within its frontmatter.
+    declare `import` statements from within its frontmatter — see
+    [Imports](#imports).
 
-Each can be switched off through the `frontmatter` configuration option: pass
-an object to toggle steps individually, or `false` to disable all four at
-once.
+Each can be switched off through the `frontmatter` configuration option:
+pass an object to toggle steps individually, or `false` to disable all
+three at once.
 
 ```js twoslash
 // sveltex.config.js
@@ -662,20 +626,40 @@ export default await sveltex(
 
 The most common reason to do this is to keep full control over the page's
 `<head>` — for example, to append your site's name to every page title.
-Because the other steps are left on, the frontmatter values are still
-available as variables, so you can write the `<svelte:head>` yourself:
+Because `metadata` is left on, the frontmatter values are still
+available, so you can write the `<svelte:head>` yourself:
 
-```sveltex
+::: code-group
+
+```sveltex [sveltex]
 ---
-title: Example
+title: Welcome
 ---
 
 <svelte:head>
-<title>{title} — My Site</title>
+<title>{metadata.title} — My Site</title>
 </svelte:head>
 
-# {title}
+# {metadata.title}
 ```
+
+```svelte [svelte]
+<script module>
+
+export const metadata = {
+title: "Welcome",
+};
+</script>
+<script>
+</script>
+
+<svelte:head>
+<title>{metadata.title} — My Site</title>
+</svelte:head>
+<h1>{metadata.title}</h1>
+```
+
+:::
 
 ::: tip
 
