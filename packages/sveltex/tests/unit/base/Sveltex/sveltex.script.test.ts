@@ -163,7 +163,7 @@ describe('Sveltex', () => {
                 filename: '9ae17b43-d19c-4ca3-9772-36e506ffb4a5.sveltex',
             });
             expect((scriptModuleOut as Processed).code).toContain(
-                'export const metadata = {\nfoo: "bar",\nauthor: "Jane Doe",\ntitle: "Example",\nmeta: [{"name":"author","content":"Jane Doe"}],\n};',
+                'export const metadata = {\nfoo: "bar",\nauthor: "Jane Doe",\ntitle: "Example",\n};',
             );
 
             existsSync.mockReset();

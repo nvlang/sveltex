@@ -218,27 +218,16 @@ describe('interpretFrontmatter()', () => {
                 baz: 'qux',
             },
         ],
-        [
-            { author: 'Jane Doe' },
-            {
-                author: 'Jane Doe',
-                meta: [{ name: 'author', content: 'Jane Doe' }],
-            },
-        ],
-        [
-            { description: '...' },
-            {
-                description: '...',
-                meta: [{ name: 'description', content: '...' }],
-            },
-        ],
-        // `charset` produces the dedicated `{ charset: … }` shape rather
-        // than `{ name: 'charset', content: … }` — see the comment on the
-        // top-level `charset` branch in `interpretFrontmatter`.
-        [
-            { charset: 'utf-8' },
-            { charset: 'utf-8', meta: [{ charset: 'utf-8' }] },
-        ],
+        // Top-level metadata-name keys ARE used to synthesize `<meta>`
+        // tags for `<svelte:head>`, but that synthesised list is kept
+        // separate from `frontmatter.meta` — so the returned frontmatter
+        // here is just `{ author }`, with the `<meta>` rendering covered
+        // by the `handleFrontmatter()` tests below.
+        [{ author: 'Jane Doe' }],
+        [{ description: '...' }],
+        // `charset` would also produce a `<meta charset>` tag, but it
+        // doesn't leak into `frontmatter.meta` either.
+        [{ charset: 'utf-8' }],
         [
             { meta: [{ name: 'charset', content: 'utf-8' }] },
             { meta: [{ charset: 'utf-8' }] },
@@ -247,17 +236,12 @@ describe('interpretFrontmatter()', () => {
             { meta: { charset: 'utf-8' } } as unknown as Frontmatter,
             { meta: [{ charset: 'utf-8' }] },
         ],
+        // The top-level `description` synthesises a `<meta name="description">`
+        // tag, but `frontmatter.meta` only carries the user's `meta:` block.
         [
             {
                 description: '...',
                 meta: [{ name: 'keywords', content: 'a, b, c' }],
-            },
-            {
-                description: '...',
-                meta: [
-                    { name: 'description', content: '...' },
-                    { name: 'keywords', content: 'a, b, c' },
-                ],
             },
         ],
         [
@@ -355,7 +339,9 @@ describe('interpretFrontmatter()', () => {
     ] as [Frontmatter, object?, ([string, string] | [string, string][])?][])(
         '%o → %o',
         (input, expected, logs) => {
-            expect(interpretFrontmatter(input)).toEqual(expected ?? input);
+            expect(interpretFrontmatter(input)?.frontmatter).toEqual(
+                expected ?? input,
+            );
             if (logs) {
                 if (isString(logs[0])) {
                     expect(log).toHaveBeenCalledWith(...logs);
@@ -660,7 +646,6 @@ describe('handleFrontmatter()', () => {
             scriptModuleLines: [
                 'export const metadata = {',
                 '"color-scheme": "dark",',
-                'meta: [{"name":"color-scheme","content":"dark"}],',
                 '};',
             ],
         },
@@ -709,7 +694,6 @@ describe('handleFrontmatter()', () => {
             scriptModuleLines: [
                 'export const metadata = {',
                 'charset: "utf-8",',
-                'meta: [{"charset":"utf-8"}],',
                 '};',
             ],
         },
@@ -772,6 +756,32 @@ describe('handleFrontmatter()', () => {
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"ascii"}],',
+                '};',
+            ],
+        },
+        {
+            // Duplicate http-equiv inside the user's `meta:` block. The
+            // user-only `frontmatter.meta` build deduplicates silently;
+            // the rendered build then warns once (covered by the
+            // "Duplicate meta http-equiv" expected log already exercised
+            // by other rows). Exists to keep the `silent` branch of
+            // `addMetaHttpEquiv` covered.
+            label: 'http-equiv (duplicate in meta block, last wins)',
+            snippet: {
+                innerContent:
+                    'meta:\n' +
+                    '- http-equiv: default-style\n' +
+                    '  content: alpha\n' +
+                    '- http-equiv: default-style\n' +
+                    '  content: beta',
+                optionsForProcessor: { type: 'yaml' },
+            },
+            headLines: [
+                '<meta http-equiv="default-style" content="beta">',
+            ],
+            scriptModuleLines: [
+                'export const metadata = {',
+                'meta: [{"http-equiv":"default-style","content":"beta"}],',
                 '};',
             ],
         },

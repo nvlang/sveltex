@@ -40,11 +40,27 @@ export function parseFrontmatter(
     }
 }
 
+/**
+ * Interpret a raw parsed frontmatter object into:
+ *
+ *   - a `frontmatter` object that mirrors the user's input verbatim,
+ *     with `base` / `link` / `meta` normalized into the structural
+ *     shapes the consumer is best served by (string `base` → `{href}`,
+ *     invalid `link` items dropped, `meta:` block deduplicated). The
+ *     `metadata` export SvelTeX emits is built from this object — so it
+ *     reflects what the user wrote, no more.
+ *   - a separate `meta` array of `<meta>` entries to render in
+ *     `<svelte:head>`. This combines the synthesized entries derived
+ *     from top-level metadata-name keys (`color-scheme: dark` →
+ *     `<meta name="color-scheme" content="dark">`) with the user's
+ *     `meta:` block; the synthesized entries do _not_ leak into
+ *     `frontmatter.meta`.
+ */
 export function interpretFrontmatter(
     obj: object | undefined,
-): Frontmatter | undefined {
+): { frontmatter: Frontmatter; meta: Meta[] } | undefined {
     if (obj === undefined) return undefined;
-    const { title, noscript, base, link, meta, ...rest } = obj as {
+    const { title, noscript, base, link, meta: rawMeta, ...rest } = obj as {
         title: unknown;
         noscript: unknown;
         base: unknown;
@@ -53,8 +69,6 @@ export function interpretFrontmatter(
     };
 
     const frontmatter: Frontmatter = { ...rest };
-
-    let interpretedMeta: Meta[] = [];
     const interpretedLink: Frontmatter['link'] = [];
 
     // Title
@@ -63,6 +77,10 @@ export function interpretFrontmatter(
     // NoScript
     if (noscript && isString(noscript)) frontmatter.noscript = noscript;
 
+    // Synthesized `<meta>` list from top-level metadata-name keys.
+    // Kept SEPARATE from `frontmatter` so the `metadata` export reflects
+    // only what the user wrote.
+    const synthesizedMeta: Meta[] = [];
     Object.entries(rest).forEach(([k, v]) => {
         if (isString(k) && isString(v)) {
             if (k === 'charset') {
@@ -70,11 +88,11 @@ export function interpretFrontmatter(
                 // not `<meta name="charset" content="…">`. Push the
                 // dedicated `CharsetMeta` shape so the `<meta>`-rendering
                 // loop in `handleFrontmatter` emits the right tag.
-                interpretedMeta.push({ charset: v });
+                synthesizedMeta.push({ charset: v });
             } else if (isMetaName(k)) {
-                interpretedMeta.push({ name: k, content: v });
+                synthesizedMeta.push({ name: k, content: v });
             } else if (isMetaHttpEquiv(k)) {
-                interpretedMeta.push({ 'http-equiv': k, content: v });
+                synthesizedMeta.push({ 'http-equiv': k, content: v });
             }
         }
     });
@@ -119,86 +137,30 @@ export function interpretFrontmatter(
             });
         }
     }
-
-    // Meta
-    if (meta) {
-        if (isArray(meta)) {
-            meta.filter(isNonNullObject).forEach((item) => {
-                const name =
-                    isPresentAndDefined(item, 'name') &&
-                    isString(item.name) &&
-                    isMetaName(item.name)
-                        ? item.name
-                        : undefined;
-                const httpEquiv =
-                    isPresentAndDefined(item, 'http-equiv') &&
-                    isString(item['http-equiv']) &&
-                    isMetaHttpEquiv(item['http-equiv'])
-                        ? item['http-equiv']
-                        : undefined;
-                const content = isPresentAndDefined(item, 'content')
-                    ? (item.content as
-                          | (string | number | boolean | null)
-                          | (string | number | boolean | null)[])
-                    : undefined;
-                if (content) {
-                    if (name === 'charset') {
-                        // See the top-level `charset` branch above.
-                        interpretedMeta = addCharset(
-                            interpretedMeta,
-                            content,
-                        );
-                    } else if (name) {
-                        interpretedMeta = addMetaName(interpretedMeta, {
-                            name,
-                            content,
-                        });
-                    } else if (httpEquiv) {
-                        interpretedMeta = addMetaHttpEquiv(interpretedMeta, {
-                            'http-equiv': httpEquiv,
-                            content,
-                        });
-                    }
-                }
-            });
-        } else if (isNonNullObject(meta)) {
-            Object.entries(meta).forEach(([name, content]) => {
-                // Unreachable falsy branch: keys returned by `Object.entries`
-                // are always strings, so `isString(name)` is always `true`.
-                /* v8 ignore start */
-                if (isString(name)) {
-                    /* v8 ignore stop */
-                    if (name === 'charset') {
-                        // See the top-level `charset` branch above.
-                        interpretedMeta = addCharset(
-                            interpretedMeta,
-                            content as
-                                | (string | number | boolean | null)
-                                | (string | number | boolean | null)[],
-                        );
-                    } else if (isMetaName(name)) {
-                        interpretedMeta = addMetaName(interpretedMeta, {
-                            name,
-                            content: content as
-                                | (string | number | boolean | null)
-                                | (string | number | boolean | null)[],
-                        });
-                    } else if (isMetaHttpEquiv(name)) {
-                        interpretedMeta = addMetaHttpEquiv(interpretedMeta, {
-                            'http-equiv': name,
-                            content: content as
-                                | (string | number | boolean | null)
-                                | (string | number | boolean | null)[],
-                        });
-                    }
-                }
-            });
-        }
-    }
-    if (interpretedMeta.length > 0) frontmatter.meta = interpretedMeta;
     if (interpretedLink.length > 0) frontmatter.link = interpretedLink;
-    return frontmatter;
+
+    // Process the user's `meta:` block twice:
+    //   - silently into an empty list — that's `frontmatter.meta`, used
+    //     for the `metadata` export, so it reflects only what the user
+    //     wrote;
+    //   - loudly into a copy of the synthesized list — that's the
+    //     `<meta>` list rendered into `<svelte:head>`.
+    // Both passes deduplicate; the `silent` flag stops the user-only
+    // pass from logging duplicate-name warnings the rendered pass will
+    // log too.
+    const userMeta = applyMetaBlock([], rawMeta, true);
+    const renderedMeta = applyMetaBlock([...synthesizedMeta], rawMeta, false);
+
+    if (userMeta.length > 0) frontmatter.meta = userMeta;
+
+    return { frontmatter, meta: renderedMeta };
 }
+
+// The three `addX` helpers below accept a `silent` flag because
+// `interpretFrontmatter` calls them twice: once silently to build the
+// user-only `frontmatter.meta`, and once loudly to build the rendered
+// `<meta>` list (synthesized + user). Without the flag, dedup warnings
+// inside the user's `meta:` block would fire twice.
 
 function addMetaName(
     interpretedMeta: Meta[],
@@ -208,6 +170,7 @@ function addMetaName(
             | (string | number | boolean | null)
             | (string | number | boolean | null)[];
     },
+    silent: boolean = false,
 ) {
     const item = {
         ...rawItem,
@@ -222,7 +185,12 @@ function addMetaName(
             isPresentAndDefined(m, 'charset'),
     );
     if (others.length !== interpretedMeta.length) {
-        log('warn', `Duplicate meta name "${item.name}" found in frontmatter.`);
+        if (!silent) {
+            log(
+                'warn',
+                `Duplicate meta name "${item.name}" found in frontmatter.`,
+            );
+        }
         return [...others, item];
     } else {
         interpretedMeta.push(item);
@@ -238,6 +206,7 @@ function addMetaHttpEquiv(
             | (string | number | boolean | null)
             | (string | number | boolean | null)[];
     },
+    silent: boolean = false,
 ): Meta[] {
     const item = {
         ...rawItem,
@@ -253,10 +222,12 @@ function addMetaHttpEquiv(
             isPresentAndDefined(m, 'charset'),
     );
     if (others.length !== interpretedMeta.length) {
-        log(
-            'warn',
-            `Duplicate meta http-equiv "${item['http-equiv']}" found in frontmatter.`,
-        );
+        if (!silent) {
+            log(
+                'warn',
+                `Duplicate meta http-equiv "${item['http-equiv']}" found in frontmatter.`,
+            );
+        }
         return [...others, item];
     } else {
         interpretedMeta.push(item);
@@ -272,12 +243,15 @@ function addMetaHttpEquiv(
  * @param content - The raw value of the `charset` key; an array is joined
  * with `, ` for symmetry with {@link addMetaName} / {@link addMetaHttpEquiv},
  * even though a multi-valued `<meta charset>` is meaningless.
+ * @param silent - When `true`, dedup warnings are suppressed. See the note
+ * on the {@link addMetaName} helper above.
  */
 function addCharset(
     interpretedMeta: Meta[],
     content:
         | (string | number | boolean | null)
         | (string | number | boolean | null)[],
+    silent: boolean = false,
 ): Meta[] {
     const item: Meta = {
         charset: isArray(content) ? content.join(', ') : content,
@@ -288,12 +262,109 @@ function addCharset(
             isPresentAndDefined(m, 'http-equiv'),
     );
     if (others.length !== interpretedMeta.length) {
-        log('warn', `Duplicate meta charset found in frontmatter.`);
+        if (!silent) {
+            log('warn', `Duplicate meta charset found in frontmatter.`);
+        }
         return [...others, item];
     } else {
         interpretedMeta.push(item);
         return interpretedMeta;
     }
+}
+
+/**
+ * Apply the entries of a user-written `meta:` frontmatter block on top of
+ * an initial `<meta>` list, deduplicating with the existing helpers. Used
+ * for both the user-only `frontmatter.meta` (initial = `[]`) and the
+ * rendered `<meta>` list (initial = the synthesized top-level entries).
+ *
+ * @param silent - Forwarded to the dedup helpers; see their note.
+ */
+function applyMetaBlock(
+    initial: Meta[],
+    rawMeta: unknown,
+    silent: boolean,
+): Meta[] {
+    let result = initial;
+    if (isArray(rawMeta)) {
+        rawMeta.filter(isNonNullObject).forEach((item) => {
+            const name =
+                isPresentAndDefined(item, 'name') &&
+                isString(item.name) &&
+                isMetaName(item.name)
+                    ? item.name
+                    : undefined;
+            const httpEquiv =
+                isPresentAndDefined(item, 'http-equiv') &&
+                isString(item['http-equiv']) &&
+                isMetaHttpEquiv(item['http-equiv'])
+                    ? item['http-equiv']
+                    : undefined;
+            const content = isPresentAndDefined(item, 'content')
+                ? (item.content as
+                      | (string | number | boolean | null)
+                      | (string | number | boolean | null)[])
+                : undefined;
+            if (content) {
+                if (name === 'charset') {
+                    result = addCharset(result, content, silent);
+                } else if (name) {
+                    result = addMetaName(
+                        result,
+                        { name, content },
+                        silent,
+                    );
+                } else if (httpEquiv) {
+                    result = addMetaHttpEquiv(
+                        result,
+                        { 'http-equiv': httpEquiv, content },
+                        silent,
+                    );
+                }
+            }
+        });
+    } else if (isNonNullObject(rawMeta)) {
+        Object.entries(rawMeta).forEach(([name, content]) => {
+            // Unreachable falsy branch: keys returned by `Object.entries`
+            // are always strings, so `isString(name)` is always `true`.
+            /* v8 ignore start */
+            if (isString(name)) {
+                /* v8 ignore stop */
+                if (name === 'charset') {
+                    result = addCharset(
+                        result,
+                        content as
+                            | (string | number | boolean | null)
+                            | (string | number | boolean | null)[],
+                        silent,
+                    );
+                } else if (isMetaName(name)) {
+                    result = addMetaName(
+                        result,
+                        {
+                            name,
+                            content: content as
+                                | (string | number | boolean | null)
+                                | (string | number | boolean | null)[],
+                        },
+                        silent,
+                    );
+                } else if (isMetaHttpEquiv(name)) {
+                    result = addMetaHttpEquiv(
+                        result,
+                        {
+                            'http-equiv': name,
+                            content: content as
+                                | (string | number | boolean | null)
+                                | (string | number | boolean | null)[],
+                        },
+                        silent,
+                    );
+                }
+            }
+        });
+    }
+    return result;
 }
 
 /**
@@ -351,13 +422,20 @@ export function handleFrontmatter(
     scriptModuleLines: string[];
     frontmatter: Frontmatter | undefined;
 } {
-    const frontmatter = interpretFrontmatter(parseFrontmatter(snippet));
+    const interpreted = interpretFrontmatter(parseFrontmatter(snippet));
     const headLines: string[] = [];
     const scriptLines: string[] = [];
     const scriptModuleLines: string[] = [];
-    if (frontmatter === undefined)
-        return { headLines, scriptLines, scriptModuleLines, frontmatter };
-    const { title, base, noscript, link, meta, imports } = frontmatter;
+    if (interpreted === undefined) {
+        return {
+            headLines,
+            scriptLines,
+            scriptModuleLines,
+            frontmatter: undefined,
+        };
+    }
+    const { frontmatter, meta: renderedMeta } = interpreted;
+    const { title, base, noscript, link, imports } = frontmatter;
 
     // The `metadata` module-script export collects every top-level
     // frontmatter key. Frontmatter keys are unconstrained YAML / TOML /
@@ -456,17 +534,17 @@ export function handleFrontmatter(
             });
         }
 
-        // Meta
-        if (meta && isArray(meta)) {
-            meta.forEach((metaEntry) => {
-                let metaString = '<meta';
-                Object.entries(metaEntry).forEach(([key, value]) => {
-                    metaString += ` ${key}="${String(value)}"`;
-                });
-                metaString += '>';
-                headLines.push(metaString);
+        // Meta — use the rendered list (synthesized top-level entries
+        // combined with the user's `meta:` block), NOT `frontmatter.meta`
+        // (which carries only the user's input).
+        renderedMeta.forEach((metaEntry) => {
+            let metaString = '<meta';
+            Object.entries(metaEntry).forEach(([key, value]) => {
+                metaString += ` ${key}="${String(value)}"`;
             });
-        }
+            metaString += '>';
+            headLines.push(metaString);
+        });
     }
 
     return { headLines, scriptLines, scriptModuleLines, frontmatter };
