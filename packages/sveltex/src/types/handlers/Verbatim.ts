@@ -36,7 +36,7 @@ export type VerbatimConfiguration = Record<string, VerbEnvConfig>; // {
  *
  * @example
  * ```ts
- * { Verbatim: { escapeBraces: true, escapeHtml: true } }
+ * { Verbatim: { type: 'escape', escape: { braces: true, html: true } } }
  * ```
  *
  * This environment would then be used as follows:
@@ -1164,7 +1164,7 @@ export interface VerbEnvConfigTex extends VerbEnvConfigBase {
      *
      * ```html
      * <figure>
-     * <svelte:component this={Sveltex_tikz_myfig} />
+     * <svelte:component this={Sveltex__tikz__myfig} />
      * </figure>
      * ```
      */

@@ -78,7 +78,7 @@ export class TexComponent {
      * @example
      * ```ts
      * TexComponent.id({ name: 'tikz', ref: 'myfig' })
-     *     === 'Sveltex_tikz_myfig' // true
+     *     === 'Sveltex__tikz__myfig' // true
      * ```
      *
      */
@@ -95,7 +95,7 @@ export class TexComponent {
      * JavaScript identifier for the component.
      *
      * @example
-     * 'Sveltex_tikz_myfig'
+     * 'Sveltex__tikz__myfig'
      *
      */
     public get id(): string {

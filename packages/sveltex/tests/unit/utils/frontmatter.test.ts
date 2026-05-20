@@ -821,7 +821,7 @@ describe('handleFrontmatter()', () => {
             ],
         },
         // The rows below exercise the `frontmatter` configuration: each
-        // disables one (or all) of the four processing steps. They use
+        // disables one (or all) of the three processing steps. They use
         // frontmatter that *would* produce output for the disabled step, so
         // the empty result confirms the step really was skipped.
         {
