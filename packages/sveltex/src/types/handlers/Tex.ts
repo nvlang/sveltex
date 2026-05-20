@@ -29,7 +29,11 @@ import type { TexLogSeverity as _TexLogSeverity } from '../../data/tex.js';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
- * Supported TeX backend.
+ * The backend that runs the TeX → SVG pipeline. Currently only
+ * `'local'` is supported, which shells out to a TeX installation on
+ * the build machine (`pdflatex` / `lualatex` / `xelatex`, plus the
+ * configured converter — `dvisvgm` or Poppler — and finally
+ * [SVGO](https://github.com/svg/svgo)).
  */
 export type TexBackend = 'local';
 

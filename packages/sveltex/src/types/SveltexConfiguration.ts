@@ -265,7 +265,20 @@ export interface SveltexConfiguration<
     math?: MathConfiguration<T> | undefined;
 
     /**
-     * Configuration options for the TeX processor.
+     * Configuration options for the **TeX-to-SVG pipeline** — the full
+     * TeX toolchain SvelTeX uses to render `tex`-type
+     * [verbatim environments](verbatim) (TikZ diagrams, commutative
+     * diagrams, anything you would put inside a `standalone` document) to
+     * static SVGs at build time. Distinct from the
+     * {@link math | `math`} backend, which renders inline / display math
+     * inside markdown with KaTeX or MathJax.
+     *
+     * Covers the TeX engine (`pdflatex`, `lualatex`, `xelatex`, …) and
+     * its arguments; the SVG conversion step (`dvisvgm` or Poppler);
+     * the output and cache directories; SVG optimisation (via
+     * [SVGO](https://github.com/svg/svgo)); and console output
+     * verbosity. See the
+     * [TeX page](https://sveltex.dev/docs/tex) for the full reference.
      */
     tex?: TexConfiguration | undefined;
 

@@ -265,6 +265,15 @@ interface MarkdownCommonConfiguration {
     strict?: boolean | undefined;
 
     /**
+     * Given the tag name of a containing block-level element (e.g.
+     * `'div'`, `'section'`, a verbatim environment's tag), decide
+     * whether SvelTeX should parse the element's content as a single
+     * inline run (`true`) or as a block sequence (`false`). The default
+     * — `() => true` — keeps short prose inside common wrappers from
+     * being wrapped in a stray `<p>`.
+     *
+     * Voided when {@link strict | `strict`} is `true`.
+     *
      * @see https://sveltex.dev/docs/implementation/markdown
      *
      * @defaultValue

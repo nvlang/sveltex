@@ -146,7 +146,18 @@ export class Sveltex<
     private _configuration: FullSveltexConfiguration<M, C, T>;
 
     /**
+     * Svelte preprocessor for `<script>` blocks.
      *
+     * Svelte invokes this for every `<script>` element of a `.sveltex` file
+     * after {@link markup} has run. SvelTeX uses it to append the script
+     * lines that `markup` queued up for the file: TeX-component imports and
+     * math / code stylesheet hooks for the instance script (`<script>`),
+     * and the `export const metadata = { … }` statement derived from the
+     * file's frontmatter for the module script (`<script module>`).
+     *
+     * No-op for files whose extension isn't configured for SvelTeX, and
+     * for `<script>` blocks the file has nothing to append to (in which
+     * case Svelte leaves the original block unchanged).
      */
     public readonly script: Preprocessor = ({
         content,
