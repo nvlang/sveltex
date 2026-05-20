@@ -148,7 +148,7 @@ export interface BackendChoices<
  * Every `.sveltex` file may begin with a _frontmatter_ block — metadata
  * delimited by `---` (YAML), `+++` (TOML), or a `---`-delimited block whose
  * opening fence reads `---json`. By default, SvelTeX uses that metadata in
- * four independent ways; each can be switched off here.
+ * three independent ways; each can be switched off here.
  *
  * Switching a step off never stops the frontmatter block from being parsed
  * and removed from the rendered output, and never stops the parsed values
