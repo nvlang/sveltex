@@ -78,12 +78,12 @@ package gives each region the treatment it deserves.
 Install the official extension from the Marketplace:
 
 ```sh
-code --install-extension nvlang.sveltex
+code --install-extension sveltex-preprocessor.sveltex
 ```
 
-(or search **"SvelTeX"** under nvlang in the Extensions sidebar — the
-extension bundles the language server, so there's no separate setup
-step.)
+(or search **"SvelTeX"** in the Extensions sidebar — the extension is
+published as `sveltex-preprocessor.sveltex` and bundles the language
+server, so there's no separate setup step.)
 
 The extension activates for any `.sveltex` file. The first activation
 spawns the language server in the background; output goes to the
