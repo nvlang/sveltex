@@ -184,16 +184,6 @@ export interface FrontmatterConfiguration {
     metadata?: boolean | undefined;
 
     /**
-     * Whether to add, for each top-level frontmatter key, a
-     * `const <key> = <value>;` declaration to the instance script
-     * (`<script>`), so the value can be referenced directly in the document's
-     * markup (e.g. `{title}`).
-     *
-     * @defaultValue `true`
-     */
-    variables?: boolean | undefined;
-
-    /**
      * Whether to honor the special `imports` frontmatter key, which lets a
      * document declare `import` statements from within its frontmatter. When
      * enabled, those `import` statements are added to the instance script
@@ -211,7 +201,6 @@ export interface FrontmatterConfiguration {
 export interface FullFrontmatterConfiguration {
     head: boolean;
     metadata: boolean;
-    variables: boolean;
     imports: boolean;
 }
 

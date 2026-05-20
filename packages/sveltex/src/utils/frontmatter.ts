@@ -312,7 +312,6 @@ export function normalizeFrontmatterConfiguration(
         return {
             head: frontmatter,
             metadata: frontmatter,
-            variables: frontmatter,
             imports: frontmatter,
         };
     }
@@ -321,109 +320,11 @@ export function normalizeFrontmatterConfiguration(
 
 /**
  * The shape of a JavaScript identifier — a leading letter / `_` / `$`,
- * followed by letters, digits, `_`, or `$`. The check is purely
- * syntactic; reserved words like `class` or `default` also pass it and
- * are filtered separately (see {@link reservedWords}).
+ * followed by letters, digits, `_`, or `$`. Used to decide whether a
+ * key needs quoting when written as an object-literal key in the
+ * generated `metadata` export.
  */
 const identifierRegExp = /^[A-Za-z_$][\w$]*$/u;
-
-/**
- * Strict-mode ECMAScript reserved words and the two identifiers
- * (`arguments`, `eval`) that can't be used as binding names in strict
- * mode. SvelTeX emits its `<script>` blocks into Svelte components, which
- * are modules and therefore strict-mode, so every entry here would cause
- * a parse error if used as a `const` binding name.
- */
-const reservedWords: ReadonlySet<string> = new Set([
-    'arguments',
-    'await',
-    'break',
-    'case',
-    'catch',
-    'class',
-    'const',
-    'continue',
-    'debugger',
-    'default',
-    'delete',
-    'do',
-    'else',
-    'enum',
-    'eval',
-    'export',
-    'extends',
-    'false',
-    'finally',
-    'for',
-    'function',
-    'if',
-    'implements',
-    'import',
-    'in',
-    'instanceof',
-    'interface',
-    'let',
-    'new',
-    'null',
-    'package',
-    'private',
-    'protected',
-    'public',
-    'return',
-    'static',
-    'super',
-    'switch',
-    'this',
-    'throw',
-    'true',
-    'try',
-    'typeof',
-    'var',
-    'void',
-    'while',
-    'with',
-    'yield',
-]);
-
-/**
- * Derive a JavaScript identifier from a frontmatter key, for use as a
- * `const` variable name in the page's instance `<script>`. Keys that are
- * already valid identifiers are kept verbatim; others are converted to
- * camelCase by splitting on runs of non-identifier characters (e.g.
- * `color-scheme` → `colorScheme`, `my key` → `myKey`). Returns `undefined`
- * when no valid identifier can be formed — for instance when the key
- * starts with a digit (`123abc`), its non-identifier characters leave
- * nothing behind (`---`), or the resulting name is a reserved word
- * (`class`, `default`, …); those keys remain accessible through the
- * `metadata` export under their original name.
- *
- * @example
- * ```ts
- * keyToIdentifier('color-scheme'); // → 'colorScheme'
- * keyToIdentifier('foo');          // → 'foo'
- * keyToIdentifier('123abc');       // → undefined
- * keyToIdentifier('class');        // → undefined  (reserved word)
- * ```
- */
-export function keyToIdentifier(key: string): string | undefined {
-    if (identifierRegExp.test(key)) {
-        return reservedWords.has(key) ? undefined : key;
-    }
-    // Split on runs of non-identifier characters and discard the empty
-    // pieces a leading/trailing/repeated separator leaves behind, then
-    // camelCase: keep the first word as-is and title-case the rest.
-    const [first, ...rest] = key
-        .split(/[^A-Za-z0-9_$]+/u)
-        .filter((w) => w.length > 0);
-    if (first === undefined) return undefined;
-    const candidate =
-        first +
-        rest
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join('');
-    if (!identifierRegExp.test(candidate)) return undefined;
-    return reservedWords.has(candidate) ? undefined : candidate;
-}
 
 /**
  * Turn a parsed frontmatter snippet into the code SvelTeX injects into the
@@ -435,11 +336,10 @@ export function keyToIdentifier(key: string): string | undefined {
  * suppresses its generated code.
  * @returns
  * - `headLines` — `<svelte:head>` content (gated by `config.head`);
- * - `scriptLines` — instance-`<script>` content: per-key `const`s (gated by
- *   `config.variables`) followed by `import` statements (gated by
- *   `config.imports`);
- * - `scriptModuleLines` — the `export const metadata` module-script statement
- *   (gated by `config.metadata`);
+ * - `scriptLines` — instance-`<script>` content: `import` statements
+ *   derived from the special `imports` key (gated by `config.imports`);
+ * - `scriptModuleLines` — the `export const metadata` module-script
+ *   statement (gated by `config.metadata`);
  * - `frontmatter` — the parsed frontmatter itself, regardless of `config`.
  */
 export function handleFrontmatter(
@@ -459,40 +359,26 @@ export function handleFrontmatter(
         return { headLines, scriptLines, scriptModuleLines, frontmatter };
     const { title, base, noscript, link, meta, imports } = frontmatter;
 
-    // The `metadata` module-script export and the per-key instance-script
-    // `const`s are both derived from every top-level frontmatter key; either
-    // can be switched off independently via the `frontmatter` configuration.
-    //
-    // Frontmatter keys are unconstrained YAML / TOML / JSON strings, so they
-    // can perfectly well not be valid JavaScript identifiers (e.g. the W3C
-    // metadata names `color-scheme` and `theme-color`, or any user-chosen
-    // key with hyphens or spaces). For each step we handle that differently:
-    //
-    //   - object-literal keys are quoted when not valid identifiers, so the
-    //     emitted `metadata` object is always syntactically valid;
-    //   - `const` binding names must be valid identifiers, so the key is
-    //     run through `keyToIdentifier` to derive a camelCase name. When no
-    //     identifier can be formed, the variable is silently dropped — the
-    //     key remains accessible through the `metadata` export.
-    Object.entries(frontmatter).forEach(([key, value]) => {
-        const serializedValue = JSON.stringify(value);
-        if (config.metadata) {
+    // The `metadata` module-script export collects every top-level
+    // frontmatter key. Frontmatter keys are unconstrained YAML / TOML /
+    // JSON strings — e.g. the W3C metadata names `color-scheme` and
+    // `theme-color`, which contain hyphens — so object-literal keys are
+    // quoted whenever they aren't a valid JavaScript identifier, keeping
+    // the emitted object syntactically valid.
+    if (config.metadata) {
+        Object.entries(frontmatter).forEach(([key, value]) => {
             const objectKey = identifierRegExp.test(key)
                 ? key
                 : JSON.stringify(key);
-            scriptModuleLines.push(`${objectKey}: ${serializedValue},`);
-        }
-        if (config.variables) {
-            const id = keyToIdentifier(key);
-            if (id !== undefined) {
-                scriptLines.push(`const ${id} = ${serializedValue};`);
-            }
-        }
-    });
+            scriptModuleLines.push(
+                `${objectKey}: ${JSON.stringify(value)},`,
+            );
+        });
 
-    if (scriptModuleLines.length > 0) {
-        scriptModuleLines.unshift('export const metadata = {');
-        scriptModuleLines.push('};');
+        if (scriptModuleLines.length > 0) {
+            scriptModuleLines.unshift('export const metadata = {');
+            scriptModuleLines.push('};');
+        }
     }
 
     // Imports

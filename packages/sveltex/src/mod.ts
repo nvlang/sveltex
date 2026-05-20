@@ -32,4 +32,3 @@ export {
     getDefaultCacheDirectory,
 } from './base/defaults.js';
 
-export { keyToIdentifier } from './utils/frontmatter.js';

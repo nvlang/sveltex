@@ -288,7 +288,7 @@ describe('Sveltex', () => {
                 filename: 'a0dcf7dd-cabd-4816-a963-c30fc654ff34.sveltex',
             });
             expect((scriptOut as Processed).code).toMatch(
-                /^\s*const imports = \[\{"\$lib\/components\/Example.svelte":"Example;"\}\];\n+import Example from '\$lib\/components\/Example.svelte';\s*$/u,
+                /^\s*import Example from '\$lib\/components\/Example.svelte';\s*$/u,
             );
 
             const scriptModuleOut = await sp.script({

@@ -509,7 +509,6 @@ export function getDefaultSveltexConfig<
         frontmatter: {
             head: true,
             metadata: true,
-            variables: true,
             imports: true,
         },
     };

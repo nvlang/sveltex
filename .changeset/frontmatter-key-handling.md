@@ -2,20 +2,19 @@
 '@nvl/sveltex': minor
 ---
 
-Fix invalid JavaScript emitted for frontmatter keys that aren't valid
-JavaScript identifiers. The W3C metadata names SvelTeX accepts at the top
-level (`color-scheme`, `theme-color`, `content-security-policy`, …) all
-contain hyphens, and used to produce `const color-scheme = "…";` and
-unquoted `color-scheme:` object keys — both syntax errors that broke any
-page that used them.
+Remove the per-key instance-script `const` declarations that SvelTeX
+previously emitted for every top-level frontmatter key (`const title =
+…;` etc.). Frontmatter values are now reached exclusively through the
+`metadata` export, which is reachable from inside the page itself (as
+`metadata.title` in the markup or instance script) and from outside as
+a named export — `import { metadata } from './page.sveltex'`.
 
-The `metadata` export now quotes non-identifier object keys
-(`"color-scheme": "…"`); the per-key `<script>` variables are derived from
-the key via camelCasing (`color-scheme` → `colorScheme`, `my key` →
-`myKey`). Keys that still can't form a valid identifier (`123abc`, `---`,
-…), as well as keys whose camelCase form is a JavaScript reserved word
-(`class`, `default`, `if`, …), are dropped from the variables step; they
-remain accessible through the `metadata` export under their original
-name.
+The `metadata` object's keys are quoted when not valid JavaScript
+identifiers, so `color-scheme: dark` produces a valid
+`{ "color-scheme": "dark" }` rather than the previously invalid
+`{ color-scheme: "dark" }`.
 
-The derivation helper is exported as `keyToIdentifier`.
+This is a breaking change for documents that referenced frontmatter
+values as bare variables (`{title}` etc.); replace those with
+`{metadata.title}`, or `{metadata['color-scheme']}` for keys that
+aren't valid JavaScript identifiers.
