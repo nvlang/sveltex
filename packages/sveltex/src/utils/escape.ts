@@ -379,7 +379,7 @@ export function getMathInSpecialDelimsES(
  * @returns An array of escapable snippets of Svelte syntax.
  * @example
  * ```ts
- * console.log(getSvelteEscapableSnippets('a<script>...</script>b'))
+ * console.log(getSvelteES('a<script>...</script>b'))
  * // [
  * //     {
  * //         escapeOptions: { pad: 2 },
@@ -858,7 +858,7 @@ export function escape(
                 ...verbatimTags,
                 'script',
                 'style',
-                // `svelte${colonUuid}head`,
+                // `svelte${colonId}head`,
                 `svelte${colonId}window`,
                 `svelte${colonId}document`,
                 `svelte${colonId}body`,

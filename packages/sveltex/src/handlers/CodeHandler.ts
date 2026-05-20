@@ -277,25 +277,6 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
      * @param backend - The type of the code processor to create.
      * @returns A promise that resolves to a code handler of the specified type.
      */
-    // static async create<B extends Exclude<CodeBackend, 'custom'>>(
-    //     backend: B,
-    //     cfg?: CodeConfiguration<B>,
-    // ): Promise<CodeHandler<B>>;
-
-    // static async create<B extends 'custom'>(
-    //     backend: B,
-    //     {
-    //         processor,
-    //         process,
-    //         configure,
-    //         configuration,
-    //     }: {
-    //         processor?: CodeProcessor<'custom'>;
-    //         process: CodeProcessFn<'custom'>;
-    //         configure?: CodeConfigureFn<'custom'> | undefined;
-    //         configuration?: CodeConfiguration<'custom'> | undefined;
-    //     },
-    // ): Promise<CodeHandler<B>>;
 
     /**
      * Creates a code handler of the specified type.

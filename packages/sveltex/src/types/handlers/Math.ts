@@ -37,8 +37,8 @@ export type MathBackend = 'katex' | 'mathjax' | 'custom' | 'none';
  * -   `custom`: `Record<string, unknown>`.
  * -   `none`: `Record<string, unknown>`.
  *
- * @remarks This is the type of the argument passed to the math handler's
- * `configure` function.
+ * @remarks This is the resolved configuration the math handler is
+ * constructed with.
  */
 export type MathConfiguration<B extends MathBackend> = B extends 'katex'
     ? WithDelims & WithTransformers<B> & SveltexKatexConfig

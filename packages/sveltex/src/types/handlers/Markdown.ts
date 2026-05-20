@@ -57,8 +57,8 @@ export type MarkdownProcessor<B> = B extends 'markdown-it'
  *
  * @typeParam B - The type of the markdown processor.
  *
- * @remarks This is the type of the argument passed to the markdown handler's
- * `configure` function.
+ * @remarks This is the resolved configuration the markdown handler is
+ * constructed with.
  */
 export type MarkdownConfiguration<B extends MarkdownBackend> =
     B extends 'markdown-it'

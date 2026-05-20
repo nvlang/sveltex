@@ -119,8 +119,8 @@ export function diagnoseVerbEnvConfig(
     );
     if (type === 'escape') {
         d.ifPresent(
-            'escapeInstructions',
-            'an object of type { escapeBraces?: boolean; escapeHtml?: boolean }',
+            'escape',
+            'an object of type { braces?: boolean; html?: boolean }',
             isSimpleEscapeInstruction,
             'object',
         );
