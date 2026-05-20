@@ -6,8 +6,6 @@
     "allowUnusedLabels": false,
     // Performance
     // "skipLibCheck": true, // recommended
-    // Aliases
-    "baseUrl": ".",
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
@@ -25,10 +23,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "./dist",
-    "paths": {
-      "$*": ["../../src/*"],
-      "$tests/*": ["../*"]
-    },
     "resolveJsonModule": true,
     // Basic settings
     "rootDir": "../../",

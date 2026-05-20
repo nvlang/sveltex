@@ -1,7 +1,6 @@
 import eslint from '@eslint/js';
 // import prettierConfig from 'eslint-config-prettier/flat';
 import { defineConfig } from 'eslint/config';
-import tsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 import playwright from 'eslint-plugin-playwright';
 
@@ -266,11 +265,6 @@ export default defineConfig(
             '@typescript-eslint/no-unnecessary-parameter-property-assignment':
                 'warn',
         },
-    },
-    {
-        files: ['**/*.ts'],
-        plugins: { tsdoc },
-        rules: { 'tsdoc/syntax': 'off' },
     },
     {
         languageOptions: {
