@@ -72,7 +72,7 @@ In order of recommendation:
 
     Note that unified is not a markdown parser in and of itself, but rather an
     umbrella term for an ecosystem of parsers and processors working with
-    abstract syntax trees (ASTs). In this case, the SvelTeX uses `remark` to
+    abstract syntax trees (ASTs). In this case, SvelTeX uses `remark` to
     parse the markdown into a [MDAST](https://github.com/syntax-tree/mdast)
     (Markdown AST), [`remark-rehype`](https://github.com/remarkjs/remark-rehype)
     to convert the MDAST to a [HAST](https://github.com/syntax-tree/hast)

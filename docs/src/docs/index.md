@@ -66,9 +66,11 @@ preprocessor can take over.
 
 -   <PhTextAlignLeft :size="28" weight="duotone"/>
 
-    **SvelTeX language support:** A TextMate grammar for SvelTeX, and a [VS Code
-    extension] shipping the same, enables most IDEs to properly highlight
-    SvelTeX code.
+    **SvelTeX language support:** A TextMate grammar, a tree-sitter grammar,
+    and a dedicated [language server](docs/language-server) — bundled with
+    the [VS Code extension] and shipped as a Zed extension too — give
+    `.sveltex` files first-class syntax highlighting, hover, completion,
+    diagnostics, and frontmatter intellisense in any LSP-aware editor.
 
 -   <PhBooks :size="28" weight="duotone"/>
 

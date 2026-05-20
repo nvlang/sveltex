@@ -2,10 +2,10 @@ import { defineAddon, defineAddonOptions } from 'sv';
 import { transforms, type AstTypes } from '@sveltejs/sv-utils';
 
 /**
- * Peer dependencies pulled in by each backend choice, mirrored from
- * `packages/create-sveltex/src/plopfile.ts`. Versions are taken from the
- * `peerDependencies` field of `@nvl/sveltex`'s `package.json` so that a project
- * scaffolded by this add-on satisfies SvelTeX's peer-dependency ranges.
+ * Peer dependencies pulled in by each backend choice. Versions are taken from
+ * the `peerDependencies` field of `@nvl/sveltex`'s `package.json` so that a
+ * project scaffolded by this add-on satisfies SvelTeX's peer-dependency
+ * ranges.
  */
 const markdownDependencies = {
     unified: {
@@ -211,8 +211,24 @@ export default defineAddon({
         sv.file(
             sveltexConfigPath,
             transforms.text(({ content }) => {
-                // Don't overwrite an existing config.
-                if (content) return false;
+                // Don't overwrite an existing config -- but tell the user we
+                // saw it, so they know to reconcile their backend choices
+                // (and any custom configuration) with what the add-on is
+                // about to wire into `svelte.config.{js,ts}`.
+                if (content) {
+                    // The sv API has no first-class log helper at v0.15;
+                    // fall through to stderr so the user at least sees the
+                    // notice next to the rest of `sv add`'s output. The
+                    // backend selection from the prompts and the existing
+                    // config file may diverge -- worth saying out loud.
+                    process.stderr.write(
+                        'sveltex.config.js already exists; keeping your ' +
+                            'version. Check that its backend selection ' +
+                            'matches the choices you picked here, and that ' +
+                            'the chosen backends are installed.\n',
+                    );
+                    return false;
+                }
                 return sveltexConfig(markdownBackend, codeBackend, mathBackend);
             }),
         );
@@ -266,15 +282,31 @@ export default defineAddon({
 
                 // `extensions` — make sure `.svelte` and `.sveltex` are
                 // present. `js.array.append` is idempotent for string
-                // literals, so this is safe to run more than once.
+                // literals, so this is safe to run more than once. Mirror
+                // the `preprocess` branch's coercion: if the existing value
+                // isn't an array literal (e.g. a spread / identifier /
+                // `[...x, '.svelte']`), wrap it in a fresh array and append
+                // there, rather than silently doing nothing and leaving the
+                // project without `.sveltex` registered.
                 const extensionsProp = js.object.propertyNode(exportDefault, {
                     name: 'extensions',
                     fallback: js.array.create(),
                 });
+                let extensionsArray: AstTypes.ArrayExpression;
                 if (extensionsProp.value.type === 'ArrayExpression') {
-                    js.array.append(extensionsProp.value, '.svelte');
-                    js.array.append(extensionsProp.value, '.sveltex');
+                    extensionsArray = extensionsProp.value;
+                } else {
+                    extensionsArray = js.array.create();
+                    js.array.append(
+                        extensionsArray,
+                        extensionsProp.value as AstTypes.Expression,
+                    );
+                    js.object.overrideProperties(exportDefault, {
+                        extensions: extensionsArray,
+                    });
                 }
+                js.array.append(extensionsArray, '.svelte');
+                js.array.append(extensionsArray, '.sveltex');
             }),
         );
 

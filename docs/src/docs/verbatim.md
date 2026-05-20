@@ -27,7 +27,7 @@ verbatim covers four processing modes in total.
 ## Configuration
 
 Verbatim environments are registered under the top-level
-[`verbatim`](getting-started) key of your SvelTeX configuration. Each
+[`verbatim`](getting-started#setup) key of your SvelTeX configuration. Each
 entry's key is the tag name SvelTeX will recognise; the value is the
 environment's configuration, with `type` selecting the processing mode.
 

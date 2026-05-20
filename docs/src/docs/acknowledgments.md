@@ -35,8 +35,9 @@ Similar works to SvelTeX, which also inspired it:
 -   **[`dvisvgm`]:** A fantastic tool for converting DVI, PDF, and XDV files to SVG.
     Bundled with [texlive].
 
-    **Note:** SvelTeX doesn't bundle it `dvisvgm`, but rather spawns child processes
-    that invokes `dvisvgm` on the user's system, if it is available. As such,
+    **Note:** SvelTeX doesn't bundle `dvisvgm`; it instead spawns child
+    processes that invoke `dvisvgm` on the user's system if it is available.
+    As such,
     SvelTeX can be licensed under MIT, despite `dvisvgm` being GPL. This is my
     understanding, anyhow.
 

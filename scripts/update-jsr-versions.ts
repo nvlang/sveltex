@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { globSync } from 'glob';
 
@@ -42,6 +42,11 @@ function syncVersions(): void {
         const packageDir = dirname(packageJsonPath);
         const jsrJsonPath = join(packageDir, 'jsr.json');
 
+        // Most workspace packages are npm-only; only a few are also
+        // mirrored to JSR. Skip the rest silently rather than spamming
+        // "Error processing …" for every missing `jsr.json`.
+        if (!existsSync(jsrJsonPath)) continue;
+
         try {
             const npmVersion = getVersion(packageJsonPath);
             const jsrVersion = getVersion(jsrJsonPath);
@@ -50,7 +55,6 @@ function syncVersions(): void {
                 console.info(
                     `Updating version in ${jsrJsonPath}: ${jsrVersion} → ${npmVersion}`,
                 );
-                // Uncomment the next line to perform the update:
                 updateVersion(jsrJsonPath, npmVersion);
             }
         } catch (error) {
