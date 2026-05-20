@@ -129,8 +129,12 @@ takes two arguments:
     -   [`markdown`]: Configuration options for the markdown backend.
     -   [`math`]: Configuration options for the math backend.
     -   [`tex`]: Configuration options for the TeX to SVG pipeline.
-    -   `verbatim`: Map of verbatim environments to their respective
+    -   [`verbatim`]: Map of verbatim environments to their respective
         configuration options.
+    -   [`frontmatter`]: Which of SvelTeX's frontmatter-processing steps
+        (head injection, `metadata` export, `import` statements) to
+        perform. Pass `false` to disable frontmatter handling entirely,
+        or an object to toggle individual steps.
 
 In turn, it returns a promise which resolves to a Svelte preprocessor.
 
@@ -183,4 +187,37 @@ If you prefer, you can also just use the `sveltex` function directly in your
 [`markdown`]: markdown
 [`math`]: math
 [`tex`]: tex
+[`verbatim`]: verbatim
+[`frontmatter`]: markdown#disabling-frontmatter-processing
+
+### Inspecting defaults programmatically
+
+If you're building tooling around SvelTeX — a config wizard, a custom
+preprocessor that extends SvelTeX, or anything that needs to know what
+the implicit defaults actually are — you can ask for them directly:
+
+```ts twoslash
+import {
+    getDefaultSveltexConfig,
+    getDefaultCodeConfig,
+    getDefaultMarkdownConfig,
+    getDefaultMathConfig,
+    getDefaultTexConfig,
+    getDefaultVerbEnvConfig,
+    getTexPresetDefaults,
+    getDefaultCacheDirectory,
+} from '@nvl/sveltex';
+
+// The full default config for a `unified` / `shiki` / `katex` combo.
+const defaults = getDefaultSveltexConfig('unified', 'shiki', 'katex');
+
+// Just the math slice, with the `'hybrid'` CSS approach.
+const mathDefaults = getDefaultMathConfig('mathjax', 'hybrid');
+
+// The bundled `tikz` preset's defaults.
+const tikz = getTexPresetDefaults('tikz');
+```
+
+Each helper returns a freshly-cloned object — mutating it has no effect
+on subsequent calls.
 
