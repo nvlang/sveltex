@@ -23,6 +23,7 @@ tests/e2e/
 │   │   ├── app.css
 │   │   └── favicon.png
 │   ├── package.json        # Shared deps (symlinked into every project)
+│   ├── pnpm-workspace.yaml # Pins the build-script allow-list for `pnpm install`
 │   ├── tsconfig.json       # Shared TS config (symlinked)
 │   └── .npmrc
 │
@@ -53,6 +54,7 @@ tests/e2e/
 ├── generate.ts             # Generator: writes per-combo project directories
 ├── build-projects.ts       # Builder: `vite build` across all combo projects
 ├── build-showcase.ts       # Builder: `deno task build` for the showcase site
+├── serve-projects.ts       # Spawns one preview server per combo project
 ├── combo.spec.ts           # Backend-matrix spec (parameterised by combo)
 └── showcase.spec.ts        # Showcase-site spec
 ```

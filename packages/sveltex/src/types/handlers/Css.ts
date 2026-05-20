@@ -1,5 +1,5 @@
-// File description: Types related to CSS handling by the `MathHandler` and
-// `CssHandler` classes.
+// File description: Types for the CSS-handling slice of the `MathHandler`
+// configuration.
 
 import type { SupportedCdn } from '../../data/cdn.js';
 import type { RequiredDefinedNotNull } from '../utils/utility-types.js';

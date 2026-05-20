@@ -3,7 +3,7 @@
 | Location | Description |
 |:---|:---|
 | [`Code.ts`](Code.ts) | Types related to the `CodeHandler` class. |
-| [`Css.ts`](Css.ts) | Types related to CSS handling by the `MathHandler` and `CssHandler` classes. |
+| [`Css.ts`](Css.ts) | Types for the CSS-handling slice of the `MathHandler` configuration. |
 | [`Handler.ts`](Handler.ts) | Types related to the `Handler` class. |
 | [`Markdown.ts`](Markdown.ts) | Types related to the `MarkdownHandler` class. |
 | [`Math.ts`](Math.ts) | Types related to the `MathHandler` class. |
