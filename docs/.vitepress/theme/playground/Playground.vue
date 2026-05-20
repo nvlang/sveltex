@@ -2,16 +2,21 @@
 // File description: Compiler-Explorer-style playground for the SvelTeX
 // preprocessing pipeline. The user edits SvelTeX source on the left; the right
 // side shows each significant pipeline stage in a tabbed view, with the final
-// emitted Svelte code as the default tab.
+// emitted Svelte code as the default tab. The input pane is itself tabbed --
+// the user can switch between the document and a live `sveltex.config.js`
+// that is fed to the worker to rebuild the preprocessor.
 //
-// SAFETY: this component is 100% client-side and runs *only* `Sveltex.trace`
-// (pure text transformation) inside a Web Worker. The source document's code is
-// never executed. Every output tab renders inert, escaped text inside a `<pre>`
+// SAFETY: this component is 100% client-side; everything runs in the user's
+// browser, inside a Web Worker. The user's SvelTeX *document* is only ever
+// passed to `Sveltex.trace` (pure text transformation) -- it is never mounted,
+// `eval`-ed, rendered as Svelte, or bound via `v-html`. The user's SvelTeX
+// *configuration*, on the other hand, IS evaluated by the worker via
+// `new Function` to construct the preprocessor; that is the whole point of the
+// config tab. Config code never leaves the worker and never leaves the
+// machine. Every output tab renders inert, escaped text inside a `<pre>`
 // element, and the input editor's syntax-highlight layer renders each Shiki
 // token as inert, escaped text too (only a token's `color`/`font-style` come
-// from the theme) -- the input and the generated output are never mounted,
-// `eval`-ed, rendered as Svelte, or bound via `v-html` into any executable
-// context.
+// from the theme).
 
 import {
     ref,
@@ -32,7 +37,12 @@ interface TraceResult {
 
 type ResponseMessage =
     | { id: number; ok: true; result: TraceResult }
-    | { id: number; ok: false; error: string };
+    | {
+          id: number;
+          ok: false;
+          where: 'config' | 'trace';
+          error: string;
+      };
 
 /** Tab shown when the final Svelte output is selected. */
 const SVELTE_OUTPUT_TAB = 'Svelte output';
@@ -62,7 +72,48 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
 \`\`\`
 `;
 
+/**
+ * Default contents of the `sveltex.config.js` tab: a JavaScript function body
+ * the worker evaluates with `mathjaxRequire` in scope to construct the
+ * preprocessor. Mirrors what the worker used to hard-code.
+ */
+const DEFAULT_CONFIG = `// Edit me -- the playground rebuilds the preprocessor on every change.
+// This source is the body of a function that runs in the playground's Web
+// Worker with \`mathjaxRequire\` injected (so MathJax v4 can lazy-load its
+// components and font data, which a browser can't resolve on its own).
+// It must \`return { backends, configuration }\` -- the two arguments to
+// SvelTeX's \`sveltex()\` factory.
+
+return {
+    backends: {
+        markdownBackend: 'unified',
+        codeBackend: 'shiki',
+        mathBackend: 'mathjax',
+    },
+    configuration: {
+        code: {
+            // Shiki applies no theme by default; pick a bundled theme so the
+            // highlighted code in the output shows colors.
+            shiki: { theme: 'github-dark-default' },
+        },
+        math: {
+            // MathJax's css.type accepts only 'hybrid' or 'none' (unlike
+            // KaTeX, which also accepts 'cdn'). 'none' tells SvelTeX to
+            // manage no MathJax CSS at all.
+            css: { type: 'none' },
+            // MathJax v4 loads its components and fonts lazily through this
+            // hook; the playground's bundle resolves them to modules baked
+            // in at build time.
+            mathjax: { loader: { require: mathjaxRequire } },
+        },
+    },
+};
+`;
+
 const input = ref(DEFAULT_INPUT);
+const configText = ref(DEFAULT_CONFIG);
+/** Which tab of the input pane is currently shown. */
+const inputTab = ref<'document' | 'config'>('document');
 
 // --- Input editor syntax highlighting -----------------------------------
 // The input editor is a transparent <textarea> layered over a Shiki-
@@ -128,9 +179,29 @@ function flattenTokenLines(lines: EditorToken[][]): EditorToken[] {
     return flat;
 }
 
-/** Re-tokenize the current input into `editorTokens`. */
+/**
+ * The text of the editor for the currently active input tab. Reading returns
+ * the document or the config; writing forwards back into the right ref so
+ * `v-model` on the single underlying textarea Just Works.
+ */
+const currentEditorText = computed<string>({
+    get: () => (inputTab.value === 'document' ? input.value : configText.value),
+    set: (val) => {
+        if (inputTab.value === 'document') input.value = val;
+        else configText.value = val;
+    },
+});
+
+/** Grammar id used to syntax-highlight the active editor. */
+const currentEditorLang = computed(() =>
+    inputTab.value === 'document' ? 'sveltex' : 'javascript',
+);
+
+/** Re-tokenize the current editor's text into `editorTokens`. */
 function updateHighlight(): void {
-    const flat = flattenTokenLines(tokenize(input.value, 'sveltex'));
+    const flat = flattenTokenLines(
+        tokenize(currentEditorText.value, currentEditorLang.value),
+    );
     // Trailing zero-width space: see `editorTokens`.
     flat.push({ content: '\u200b' });
     editorTokens.value = flat;
@@ -147,17 +218,20 @@ function syncScroll(): void {
 }
 
 /**
- * Lazily build the Shiki highlighter: in parallel, import Shiki and fetch the
+ * Lazily build the Shiki highlighter: in parallel, import Shiki, fetch the
  * editor grammars staged into `public/playground/` by
- * `scripts/build-playground.mjs`, then load the grammars (with both the light
- * and dark themes) into a highlighter and re-highlight.
+ * `scripts/build-playground.mjs`, and load Shiki's bundled JavaScript grammar
+ * (for the `sveltex.config.js` tab). Then load all of them, with both the
+ * light and dark themes, into a highlighter and re-highlight.
  */
 async function loadHighlighter(): Promise<void> {
     try {
-        const [{ createHighlighter }, grammarsResponse] = await Promise.all([
-            import('shiki'),
-            fetch('/playground/editor-grammars.json'),
-        ]);
+        const [{ createHighlighter }, grammarsResponse, jsGrammarModule] =
+            await Promise.all([
+                import('shiki'),
+                fetch('/playground/editor-grammars.json'),
+                import('shiki/langs/javascript.mjs'),
+            ]);
         const grammars = (await grammarsResponse.json()) as object[];
         const hl = await createHighlighter({
             themes: ['github-light-default', 'github-dark-default'],
@@ -165,6 +239,7 @@ async function loadHighlighter(): Promise<void> {
         });
         await hl.loadLanguage(
             ...(grammars as Parameters<typeof hl.loadLanguage>),
+            ...(jsGrammarModule.default as Parameters<typeof hl.loadLanguage>),
         );
         highlighter.value = hl;
         updateHighlight();
@@ -186,6 +261,12 @@ const activeTab = ref<string>(SVELTE_OUTPUT_TAB);
 
 const status = ref<'idle' | 'loading' | 'ready' | 'error'>('loading');
 const errorMessage = ref<string>('');
+/**
+ * `'config'` when the most recent failure was building the preprocessor from
+ * `configText`; `'trace'` when it was the input itself. Used to give the
+ * error panel a more accurate headline.
+ */
+const errorWhere = ref<'config' | 'trace'>('trace');
 
 const worker = shallowRef<Worker | null>(null);
 let requestId = 0;
@@ -223,7 +304,11 @@ function sendTrace(): void {
     status.value = status.value === 'error' ? 'loading' : status.value;
     const id = ++requestId;
     latestRequestId = id;
-    w.postMessage({ id, input: input.value });
+    w.postMessage({
+        id,
+        input: input.value,
+        config: configText.value,
+    });
 }
 
 function handleResponse(event: MessageEvent<ResponseMessage>): void {
@@ -237,6 +322,7 @@ function handleResponse(event: MessageEvent<ResponseMessage>): void {
             // `trace` returns `{ code: '', stages: [] }` when preprocessing
             // throws (e.g. malformed input).
             status.value = 'error';
+            errorWhere.value = 'trace';
             errorMessage.value =
                 'SvelTeX could not preprocess this input. ' +
                 'Check the document for syntax errors and try again.';
@@ -259,18 +345,24 @@ function handleResponse(event: MessageEvent<ResponseMessage>): void {
         errorMessage.value = '';
     } else {
         status.value = 'error';
+        errorWhere.value = data.where;
         errorMessage.value = data.error;
     }
 }
 
-watch(input, () => {
+// A change to either the document or the config retraces. The config edit
+// triggers a worker-side rebuild of the preprocessor (slow); the document
+// edit just re-traces with the cached preprocessor (fast). Both paths funnel
+// through the same debounce.
+watch([input, configText], () => {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(sendTrace, 250);
 });
 
-// Re-highlight the input on every edit, and whenever the site theme is
-// toggled (the light and dark themes assign different token colors).
-watch([input, isDark], () => {
+// Re-highlight the active editor whenever its content changes, when the user
+// switches tabs (the grammar changes), or when the site theme is toggled
+// (the two themes assign different token colors).
+watch([currentEditorText, inputTab, isDark], () => {
     updateHighlight();
     void nextTick(syncScroll);
 });
@@ -302,9 +394,18 @@ onBeforeUnmount(() => {
     highlighter.value?.dispose();
 });
 
-function resetInput(): void {
-    input.value = DEFAULT_INPUT;
+/** Reset the active editor's contents to its default. */
+function resetActiveInput(): void {
+    if (inputTab.value === 'document') input.value = DEFAULT_INPUT;
+    else configText.value = DEFAULT_CONFIG;
 }
+
+/** Headline used by the error panel; depends on what failed most recently. */
+const errorHeadline = computed(() =>
+    errorWhere.value === 'config'
+        ? 'Configuration error.'
+        : 'Preprocessing failed.',
+);
 </script>
 
 <template>
@@ -312,14 +413,40 @@ function resetInput(): void {
         <div class="stx-playground__panes">
             <!-- Input pane -->
             <section class="stx-pane">
-                <header class="stx-pane__head">
-                    <span class="stx-pane__title">Input</span>
-                    <code class="stx-pane__file">+page.sveltex</code>
+                <header class="stx-pane__head stx-pane__head--tabs">
+                    <div
+                        class="stx-tabs"
+                        role="tablist"
+                        aria-label="Input source"
+                    >
+                        <button
+                            type="button"
+                            role="tab"
+                            class="stx-tab"
+                            :class="{ 'stx-tab--active': inputTab === 'document' }"
+                            :aria-selected="inputTab === 'document'"
+                            @click="inputTab = 'document'"
+                        >
+                            +page.sveltex
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            class="stx-tab"
+                            :class="{ 'stx-tab--active': inputTab === 'config' }"
+                            :aria-selected="inputTab === 'config'"
+                            @click="inputTab = 'config'"
+                        >
+                            sveltex.config.js
+                        </button>
+                    </div>
                     <button
                         type="button"
                         class="stx-reset"
-                        title="Reset the input to the example document"
-                        @click="resetInput"
+                        :title="inputTab === 'document'
+                            ? 'Reset the document to the example'
+                            : 'Reset the configuration to the defaults'"
+                        @click="resetActiveInput"
                     >
                         Reset
                     </button>
@@ -342,13 +469,15 @@ function resetInput(): void {
                         >{{ token.content }}</span></div>
                     <textarea
                         ref="inputEl"
-                        v-model="input"
+                        v-model="currentEditorText"
                         class="stx-input"
                         spellcheck="false"
                         autocapitalize="off"
                         autocomplete="off"
                         autocorrect="off"
-                        aria-label="SvelTeX source input"
+                        :aria-label="inputTab === 'document'
+                            ? 'SvelTeX document source'
+                            : 'SvelTeX configuration source'"
                         @scroll="syncScroll"
                     ></textarea>
                 </div>
@@ -384,7 +513,7 @@ function resetInput(): void {
                         v-if="status === 'error'"
                         class="stx-message stx-message--error"
                     >
-                        <strong>Preprocessing failed.</strong>
+                        <strong>{{ errorHeadline }}</strong>
                         <p>{{ errorMessage }}</p>
                     </div>
                     <div
@@ -413,10 +542,12 @@ function resetInput(): void {
         </div>
         <p class="stx-note">
             Runs entirely in your browser — no server is involved, and
-            nothing you type leaves your machine. The playground only
-            performs SvelTeX's text transformation
-            (<code>Sveltex.trace</code>); your document's code is never
-            executed.
+            nothing you type leaves your machine. The
+            <code>+page.sveltex</code> document is only ever fed to
+            SvelTeX's text-only <code>trace</code> step; its code is never
+            executed. The <code>sveltex.config.js</code> tab
+            <em>is</em> evaluated (that's the point — it constructs the
+            preprocessor), in this worker, never elsewhere.
         </p>
     </div>
 </template>
