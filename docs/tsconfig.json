@@ -5,14 +5,25 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     // Performance
-    // "skipLibCheck": true, // recommended
+    // The docs site is checked by IDE intellisense only -- VitePress
+    // builds with its own internal vue-tsc pipeline -- so libchecking
+    // node_modules `.d.ts` files just surfaces noise from Vue/VueUse's
+    // DOM-extension declarations that aren't relevant here.
+    "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true, // default: true iff module is "Node16" or "NodeNext"
     "exactOptionalPropertyTypes": true, // recommended
     "forceConsistentCasingInFileNames": true, // recommended
     "importHelpers": true,
-    "lib": ["ESNext"],
+    // The docs site is a Vue/VitePress project: Vue and VueUse type
+    // declarations reference DOM globals (`Node`, `HTMLElement`,
+    // `MediaStream`, ...). TS 6 stopped silently widening `lib` based on
+    // transitive `<reference lib="dom"/>` directives in dependencies'
+    // `.d.ts` files, so DOM has to be in `lib` explicitly. `dom.iterable`
+    // and `dom.asynciterable` were folded into `dom` in TS 6 and no longer
+    // need to be listed separately.
+    "lib": ["ESNext", "DOM"],
     "module": "Node16",
     "moduleResolution": "Node16",
     "noFallthroughCasesInSwitch": true,
@@ -44,6 +55,7 @@
     "package.json",
     ".vitepress/config.ts",
     ".vitepress/theme",
+    ".vitepress/vue-shims.d.ts",
     "src"
   ]
 }
