@@ -70,6 +70,12 @@ export default defineConfig({
                 grammarSvelte,
                 grammarMarkdownForSveltex,
                 grammarSveltex,
+                // The sveltex grammar references `text.tex.latex` for the
+                // body of `<tex>` / `<latex>` / `<tikz>` verbatim
+                // environments; load Shiki's bundled LaTeX grammar so
+                // that embedded scope resolves and `{A}` inside LaTeX
+                // isn't mis-highlighted as a Svelte mustache tag.
+                async () => (await import('shiki/langs/latex.mjs')).default,
             );
         },
         theme: {
