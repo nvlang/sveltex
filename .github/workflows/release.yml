@@ -39,24 +39,37 @@ jobs:
       # Audit (don't block) outbound network calls during the run so any
       # unexpected egress -- a sign of a supply-chain compromise -- shows up
       # in the workflow's StepSecurity Insights report. This is the highest-
-      # value workflow to harden: it holds `RELEASE_PAT`, npm credentials
-      # via OIDC, and vsce publish credentials.
+      # value workflow to harden: it mints an app-installation token, holds
+      # npm credentials via OIDC, and holds vsce publish credentials.
       - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
+      # `changesets/action` force-pushes the "Version Packages" branch
+      # (`changeset-release/main`); creating it carries the repository's
+      # `.github/workflows/*` files. GitHub refuses any such push when it's
+      # authenticated with the default `GITHUB_TOKEN` (the backing GitHub
+      # App lacks the `workflows` permission, and there's no way to grant
+      # it one). Instead, this job authenticates as a *dedicated GitHub
+      # App* installed on the repo with `contents: write`,
+      # `pull-requests: write` and `workflows: write` permissions, and
+      # mints a short-lived installation token per run. App credentials
+      # are stored as repository secrets:
+      #   - `RELEASE_APP_ID`          -- the App's numeric ID
+      #   - `RELEASE_APP_PRIVATE_KEY` -- the App's .pem private key
+      # Replaces the previous `secrets.RELEASE_PAT` flow, which required
+      # rotating the PAT every time it expired.
+      - name: Mint a GitHub-App installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
-          # `changesets/action` force-pushes the "Version Packages" branch
-          # (`changeset-release/main`); creating it carries the repository's
-          # `.github/workflows/*` files. GitHub refuses any push that touches
-          # workflow files when it is authenticated with the default
-          # `GITHUB_TOKEN` — the backing GitHub App has no `workflows`
-          # permission, and there is no way to grant it one. Authenticate git
-          # as a PAT with `contents`, `workflows` and `pull-requests` write
-          # access instead.
-          token: ${{ secrets.RELEASE_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up TeX Live
         uses: TeX-Live/setup-texlive-action@5ead3060cb9c2d6bf985c23b38a30669a13a3f3c # v3
@@ -170,17 +183,17 @@ jobs:
           # Packages" branch commits and the release tags through the
           # GitHub REST API rather than the git CLI; the upshot is that
           # both are GPG-signed with GitHub's built-in key and show up as
-          # "Verified" in the GitHub UI. Attribution is to whoever owns
-          # the token below -- in our case the PAT's user (since the
-          # default `GITHUB_TOKEN` can't push to `.github/workflows/`,
-          # which the changesets branch carries). See
+          # "Verified" in the GitHub UI. Attribution is to the GitHub App
+          # whose installation token is used below (e.g.
+          # `<app-name>[bot]`). See
           # https://github.com/changesets/action/pull/391.
           commitMode: github-api
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # The same PAT as the checkout step above — `changesets/action`
-          # needs it for both the git push and the release-PR API calls.
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          # Same app-installation token as the checkout above --
+          # `changesets/action` needs it for both the git push and the
+          # release-PR API calls.
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Push git tags
         # Don't run this step if the changesets action merely created a PR,
