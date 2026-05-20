@@ -108,8 +108,10 @@ interface OpenDocument {
     virtual: VirtualSvelteDocument;
 }
 
-/** File extension that identifies a SvelTeX document. */
-const SVELTEX_EXTENSION = '.sveltex';
+/** Default file extension for a SvelTeX document. The full set is read
+ *  from the live config (`SveltexConfigSnapshot.extensions`); this fallback
+ *  is only used before the first config snapshot resolves. */
+const DEFAULT_SVELTEX_EXTENSION = '.sveltex';
 
 /**
  * Returns a fresh object with the listed keys of `source` whose value is
@@ -274,9 +276,18 @@ export function createServer(connection: Connection): void {
      */
     const regionForwarder = new RegionForwarder(config, logInfo);
 
-    /** Returns whether a URI denotes a SvelTeX document. */
+    /**
+     * Returns whether a URI denotes a SvelTeX document, based on the live
+     * config's `extensions` list (defaults to `['.sveltex']`). A user who
+     * sets `extensions: ['.svtx']` in their SvelTeX config has the LSP open
+     * `.svtx` files; the default still applies if the config hasn't
+     * resolved yet.
+     */
     function isSveltexUri(uri: string): boolean {
-        return uri.endsWith(SVELTEX_EXTENSION);
+        const exts = config.extensions.length
+            ? config.extensions
+            : [DEFAULT_SVELTEX_EXTENSION];
+        return exts.some((ext) => uri.endsWith(ext));
     }
 
     /** Builds a {@link RemapContext} for an open document. */
