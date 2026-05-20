@@ -200,9 +200,12 @@ own small virtual document; positions and results are mapped back):
 translated into sync of the virtual `.svelte` document. Each change triggers a
 synchronous full re-parse (full-document sync).
 
-**Configuration:** `sveltex.config.{js,cjs,mjs}` is loaded on `initialize` to
-pick up verbatim-environment names, math delimiters, the math backend, and
-directive settings.
+**Configuration:** `svelte.config.{js,mjs,cjs,ts,mts,cts}` is loaded on
+`initialize` and live-reloaded on save to pick up verbatim-environment names,
+math delimiters, the math backend, and directive settings. (The user's
+`sveltex.config.*` is loaded indirectly when the Svelte config imports it.)
+The config is evaluated in a child Node process via `--input-type=module
+--eval`, so `.ts` / `.mts` / `.cts` configs run natively on Node 22.6+.
 
 ## Known limitations / stubbed for later
 
@@ -215,8 +218,6 @@ directive settings.
   (length-changing) mappings this needs.
 - **Incremental virtual-file updates.** Each edit rebuilds the whole virtual
   document. A future phase can patch incrementally.
-- **`.ts` config files** are detected but not executed (running them needs a
-  TypeScript loader). `.js` / `.cjs` / `.mjs` configs are fully loaded.
 - **Formatting** is not yet proxied.
 - The region detectors are imported via a deep path
   (`@nvl/sveltex/dist/utils/escape.js`) because `@nvl/sveltex` does not yet

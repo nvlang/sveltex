@@ -137,7 +137,7 @@ export default await sveltex({ codeBackend: 'starry-night' }, {
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
-export default await sveltex({ codeBackend: 'higlight.js' }, {
+export default await sveltex({ codeBackend: 'highlight.js' }, {
     code: {
         addLanguageClass: 'language-',
         appendNewline: true,

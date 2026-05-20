@@ -73,7 +73,7 @@ SvelTeX's pipeline for LaTeX is essentially split into three steps:
 The configuration for SvelTeX's LaTeX functionality mirrors this divide. Hover
 on any of the properties below to see a tooltip with more information.
 
-```ts twoslash [sveltex.config.ts]
+```ts twoslash [sveltex.config.js]
 // sveltex.config.js
 import { sveltex } from '@nvl/sveltex';
 
