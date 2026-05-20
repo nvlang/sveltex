@@ -38,7 +38,7 @@
     "shiki": "^3.23.0",
     "svelte": "^5.55.7",
     "tailwindcss": "^4.3.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vite": "^6.4.2",
     "vitepress": "^1.6.4",
     "vue": "^3.5.34"
