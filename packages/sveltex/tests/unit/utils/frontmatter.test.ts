@@ -11,7 +11,6 @@ import {
 import {
     handleFrontmatter,
     interpretFrontmatter,
-    keyToIdentifier,
     normalizeFrontmatterConfiguration,
     parseFrontmatter,
 } from '../../../src/utils/frontmatter.js';
@@ -379,7 +378,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: [],
             scriptModuleLines: [],
         },
         {
@@ -389,7 +387,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: ['const foo = "bar";'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'foo: "bar",',
@@ -404,9 +401,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com" target="_blank">'],
-            scriptLines: [
-                'const base = {"href":"https://example.com","target":"_blank"};',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'base: {"href":"https://example.com","target":"_blank"},',
@@ -420,7 +414,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
-            scriptLines: ['const base = {"href":"https://example.com"};'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'base: {"href":"https://example.com"},',
@@ -435,7 +428,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base href="https://example.com">'],
-            scriptLines: ['const base = {"href":"https://example.com"};'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'base: {"href":"https://example.com"},',
@@ -449,7 +441,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<base target="_blank">'],
-            scriptLines: ['const base = {"target":"_blank"};'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'base: {"target":"_blank"},',
@@ -472,10 +463,6 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="...">',
                 '<meta http-equiv="default-style" content="styles.css">',
             ],
-            scriptLines: [
-                'const author = "...";',
-                'const meta = [{"name":"author","content":"Jane Doe"},{"name":"description","content":"..."},{"http-equiv":"default-style","content":"styles.css"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'author: "...",',
@@ -491,10 +478,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta name="author" content="Jane Doe">'],
-            scriptLines: [
-                'const author = "...";',
-                'const meta = [{"name":"author","content":"Jane Doe"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'author: "...",',
@@ -509,7 +492,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: [],
             scriptModuleLines: [],
         },
         {
@@ -522,9 +504,6 @@ describe('handleFrontmatter()', () => {
             headLines: [
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
-            ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
             ],
             scriptModuleLines: [
                 'export const metadata = {',
@@ -548,9 +527,6 @@ describe('handleFrontmatter()', () => {
             headLines: [
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="a, b">',
-            ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"a, b"}];',
             ],
             scriptModuleLines: [
                 'export const metadata = {',
@@ -579,9 +555,6 @@ describe('handleFrontmatter()', () => {
                 '<meta name="description" content="This is a test page.">',
                 '<meta name="keywords" content="c, d">',
             ],
-            scriptLines: [
-                'const meta = [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"name":"description","content":"This is a test page."},{"name":"keywords","content":"c, d"}],',
@@ -605,10 +578,6 @@ describe('handleFrontmatter()', () => {
                 '<link rel="stylesheet" href="styles.css">',
                 '<link rel="stylesheet" href="styles2.css">',
             ],
-            scriptLines: [
-                'const title = "...";',
-                'const link = [{"rel":"stylesheet","href":"styles.css"},{"rel":"stylesheet","href":"styles2.css"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'title: "...",',
@@ -623,7 +592,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<noscript>...</noscript>'],
-            scriptLines: ['const noscript = "...";'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'noscript: "...",',
@@ -637,9 +605,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta http-equiv="default-style" content="a, b">'],
-            scriptLines: [
-                'const meta = [{"http-equiv":"default-style","content":"a, b"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"http-equiv":"default-style","content":"a, b"}],',
@@ -659,7 +624,6 @@ describe('handleFrontmatter()', () => {
             },
             headLines: [],
             scriptLines: [
-                'const imports = {"$lib/utils.js":["b","c"],"./Something.svelte":"Something"};',
                 "import { b, c } from '$lib/utils.js';",
                 "import Something from './Something.svelte';",
             ],
@@ -679,16 +643,13 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: [],
             scriptModuleLines: [],
         },
         // The rows below cover non-identifier keys: the metadata-name keys
         // SvelTeX accepts at the top level have hyphens (`color-scheme`,
         // `theme-color`, …), and a user may write any string. Such keys
-        // become quoted object keys in the `metadata` export and camelCased
-        // variable names in the instance script; keys that can't form a
-        // valid identifier at all are dropped from the variables step
-        // (still present in `metadata`).
+        // become quoted object keys in the `metadata` export so the
+        // emitted JavaScript stays syntactically valid.
         {
             label: 'metadata-name key with hyphens (top level)',
             snippet: {
@@ -696,10 +657,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta name="color-scheme" content="dark">'],
-            scriptLines: [
-                'const colorScheme = "dark";',
-                'const meta = [{"name":"color-scheme","content":"dark"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 '"color-scheme": "dark",',
@@ -714,7 +671,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: ['const myFoo = "bar";'],
             scriptModuleLines: [
                 'export const metadata = {',
                 '"my-foo": "bar",',
@@ -722,16 +678,14 @@ describe('handleFrontmatter()', () => {
             ],
         },
         {
-            // The key starts with a digit, so even after camelCasing it
-            // cannot be a valid identifier. The variable is silently
-            // dropped; the `metadata` export still carries the key, quoted.
+            // The key starts with a digit — not a valid JS identifier — so
+            // the `metadata` export quotes it.
             label: 'key with no valid identifier form',
             snippet: {
                 innerContent: '"123abc": ok',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [],
-            scriptLines: [],
             scriptModuleLines: [
                 'export const metadata = {',
                 '"123abc": "ok",',
@@ -752,10 +706,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta charset="utf-8">'],
-            scriptLines: [
-                'const charset = "utf-8";',
-                'const meta = [{"charset":"utf-8"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'charset: "utf-8",',
@@ -770,7 +720,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta charset="utf-8">'],
-            scriptLines: ['const meta = [{"charset":"utf-8"}];'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"utf-8"}],',
@@ -784,7 +733,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta charset="utf-8">'],
-            scriptLines: ['const meta = [{"charset":"utf-8"}];'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"utf-8"}],',
@@ -801,7 +749,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta charset="utf-8, ascii">'],
-            scriptLines: ['const meta = [{"charset":"utf-8, ascii"}];'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"utf-8, ascii"}],',
@@ -822,7 +769,6 @@ describe('handleFrontmatter()', () => {
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: ['<meta charset="ascii">'],
-            scriptLines: ['const meta = [{"charset":"ascii"}];'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"ascii"}],',
@@ -841,9 +787,6 @@ describe('handleFrontmatter()', () => {
                 '<meta charset="utf-8">',
                 '<meta name="description" content="foo">',
             ],
-            scriptLines: [
-                'const meta = [{"charset":"utf-8"},{"name":"description","content":"foo"}];',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"charset":"utf-8"},{"name":"description","content":"foo"}],',
@@ -860,9 +803,6 @@ describe('handleFrontmatter()', () => {
             headLines: [
                 '<meta charset="utf-8">',
                 '<meta http-equiv="default-style" content="foo">',
-            ],
-            scriptLines: [
-                'const meta = [{"charset":"utf-8"},{"http-equiv":"default-style","content":"foo"}];',
             ],
             scriptModuleLines: [
                 'export const metadata = {',
@@ -883,14 +823,9 @@ describe('handleFrontmatter()', () => {
             config: {
                 head: false,
                 metadata: true,
-                variables: true,
                 imports: true,
             },
             headLines: [],
-            scriptLines: [
-                'const title = "My Title";',
-                'const noscript = "enable JS";',
-            ],
             scriptModuleLines: [
                 'export const metadata = {',
                 'title: "My Title",',
@@ -907,59 +842,15 @@ describe('handleFrontmatter()', () => {
             config: {
                 head: true,
                 metadata: false,
-                variables: true,
                 imports: true,
             },
             headLines: ['<title>My Title</title>'],
-            scriptLines: ['const title = "My Title";'],
             scriptModuleLines: [],
         },
         {
-            label: 'variables disabled',
-            snippet: {
-                innerContent: 'title: My Title',
-                optionsForProcessor: { type: 'yaml' },
-            },
-            config: {
-                head: true,
-                metadata: true,
-                variables: false,
-                imports: true,
-            },
-            headLines: ['<title>My Title</title>'],
-            scriptLines: [],
-            scriptModuleLines: [
-                'export const metadata = {',
-                'title: "My Title",',
-                '};',
-            ],
-        },
-        {
-            // With `variables` off but `imports` on, only the `import`
-            // statement is emitted — not the `const imports = ...` line.
-            label: 'variables disabled, imports kept',
-            snippet: {
-                innerContent: 'imports:\n  ./C.svelte: C',
-                optionsForProcessor: { type: 'yaml' },
-            },
-            config: {
-                head: true,
-                metadata: true,
-                variables: false,
-                imports: true,
-            },
-            headLines: [],
-            scriptLines: ["import C from './C.svelte';"],
-            scriptModuleLines: [
-                'export const metadata = {',
-                'imports: {"./C.svelte":"C"},',
-                '};',
-            ],
-        },
-        {
-            // With `imports` off, the `imports` key is still treated as an
-            // ordinary frontmatter value (hence the `const`/metadata entry),
-            // but no `import` statement is generated from it.
+            // With `imports` off, the `imports` key is still included in
+            // the `metadata` export, but no `import` statement is generated
+            // from it.
             label: 'imports disabled',
             snippet: {
                 innerContent: 'imports:\n  ./C.svelte: C',
@@ -968,11 +859,9 @@ describe('handleFrontmatter()', () => {
             config: {
                 head: true,
                 metadata: true,
-                variables: true,
                 imports: false,
             },
             headLines: [],
-            scriptLines: ['const imports = {"./C.svelte":"C"};'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'imports: {"./C.svelte":"C"},',
@@ -988,11 +877,9 @@ describe('handleFrontmatter()', () => {
             config: {
                 head: false,
                 metadata: false,
-                variables: false,
                 imports: false,
             },
             headLines: [],
-            scriptLines: [],
             scriptModuleLines: [],
         },
     ] as {
@@ -1011,8 +898,7 @@ describe('handleFrontmatter()', () => {
                     config ?? {
                         head: true,
                         metadata: true,
-                        variables: true,
-                        imports: true,
+                                imports: true,
                     },
                 ),
             ).toMatchObject({
@@ -1032,7 +918,6 @@ describe('normalizeFrontmatterConfiguration()', () => {
             expected: {
                 head: true,
                 metadata: true,
-                variables: true,
                 imports: true,
             },
         },
@@ -1042,7 +927,6 @@ describe('normalizeFrontmatterConfiguration()', () => {
             expected: {
                 head: false,
                 metadata: false,
-                variables: false,
                 imports: false,
             },
         },
@@ -1051,13 +935,11 @@ describe('normalizeFrontmatterConfiguration()', () => {
             input: {
                 head: false,
                 metadata: true,
-                variables: false,
                 imports: true,
             },
             expected: {
                 head: false,
                 metadata: true,
-                variables: false,
                 imports: true,
             },
         },
@@ -1070,45 +952,3 @@ describe('normalizeFrontmatterConfiguration()', () => {
     });
 });
 
-describe('keyToIdentifier()', () => {
-    it.each([
-        // Already a valid identifier — kept verbatim.
-        { label: 'plain identifier', input: 'foo', expected: 'foo' },
-        { label: 'with underscore', input: 'foo_bar', expected: 'foo_bar' },
-        { label: 'with $', input: '$foo', expected: '$foo' },
-        // Camel-cased on word boundaries — the metadata-name shape.
-        {
-            label: 'hyphenated',
-            input: 'color-scheme',
-            expected: 'colorScheme',
-        },
-        {
-            label: 'multi-hyphenated',
-            input: 'content-security-policy',
-            expected: 'contentSecurityPolicy',
-        },
-        { label: 'space-separated', input: 'my key', expected: 'myKey' },
-        { label: 'dot-separated', input: 'foo.bar', expected: 'fooBar' },
-        // No valid identifier can be formed.
-        { label: 'leading digit', input: '123abc', expected: undefined },
-        {
-            label: 'only non-identifier characters',
-            input: '---',
-            expected: undefined,
-        },
-        { label: 'empty string', input: '', expected: undefined },
-        // Reserved words are syntactically valid identifiers but can't be
-        // bound names in strict mode (which Svelte components run as).
-        { label: 'reserved word verbatim', input: 'class', expected: undefined },
-        {
-            label: 'camel-cased to a reserved word',
-            input: 'class-',
-            expected: undefined,
-        },
-    ] as { label: string; input: string; expected: string | undefined }[])(
-        '$label: $input',
-        ({ input, expected }) => {
-            expect(keyToIdentifier(input)).toBe(expected);
-        },
-    );
-});
