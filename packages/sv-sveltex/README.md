@@ -24,11 +24,10 @@ wires the SvelTeX preprocessor and the `.sveltex` extension into your
 
 ## Usage
 
-In an existing SvelteKit project, run (`@nvl` is the org-handle shorthand
-the `sv` CLI resolves to this `@nvl/sv` package):
+In an existing SvelteKit project, run:
 
 ```shell
-npx sv add @nvl
+npx sv add @nvl/sv
 ```
 
 ...and follow the prompts.

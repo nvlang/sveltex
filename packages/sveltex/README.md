@@ -30,20 +30,19 @@ The quickest way is the [`@nvl/sv`] community add-on for the [Svelte CLI]
 (`sv`). In a SvelteKit project, run:
 
 ```sh
-npx sv add @nvl
+npx sv add @nvl/sv
 ```
 
 …and follow the prompts. It installs `@nvl/sveltex` and the peer dependencies
 for the backends you pick, creates a `sveltex.config.{js,ts}`, and wires the
 SvelTeX preprocessor and the `.sveltex` extension into your
 `svelte.config.{js,ts}`. Starting from scratch? Run `npx sv create` first,
-then `npx sv add @nvl` inside the new project.
+then `npx sv add @nvl/sv` inside the new project.
 
 > [!NOTE]
-> `sv add @nvl` resolves the [`@nvl/sv`] add-on from npm — `@nvl` is the
-> org-handle shorthand `sv` expands to the `@nvl/sv` package. Svelte's
-> community-add-on support is still experimental, and `@nvl/sv` itself is in
-> alpha; community add-ons are not vetted by the Svelte maintainers.
+> Svelte's community-add-on support is still experimental, and [`@nvl/sv`]
+> itself is in alpha; community add-ons are not vetted by the Svelte
+> maintainers.
 
 ### Manual setup
 
