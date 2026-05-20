@@ -227,7 +227,7 @@ describe('computeFrontmatterHover', () => {
     // one per frontmatter-processing step the key takes part in — each
     // naming the `frontmatter: { … }` toggle that switches it off.
     describe('per-effect sections (top-level keys)', () => {
-        it('hyphenated meta name shows derived identifier and quoted key', () => {
+        it('hyphenated meta name shows quoted key in metadata example', () => {
             const source = ['---', 'color-scheme: dark', '---'].join('\n');
             const body = bodyOf(
                 computeFrontmatterHover(source, {
@@ -240,9 +240,7 @@ describe('computeFrontmatterHover', () => {
                 'Inserts `<meta name="color-scheme" content="〈value〉">`',
             );
             expect(body).toContain('`frontmatter: { head: false }`');
-            // Variable name is camelCased; quoted in the `metadata` example.
-            expect(body).toContain('Inserts `const colorScheme = "〈value〉";`');
-            expect(body).toContain('`frontmatter: { variables: false }`');
+            // The metadata example quotes the non-identifier key.
             expect(body).toContain('Adds `"color-scheme": "〈value〉"`');
             expect(body).toContain('`frontmatter: { metadata: false }`');
         });
@@ -256,7 +254,6 @@ describe('computeFrontmatterHover', () => {
                 }),
             );
             expect(body).toContain('Inserts `<title>〈value〉</title>`');
-            expect(body).toContain('Inserts `const title = "〈value〉";`');
             expect(body).toContain('Adds `title: "〈value〉"`');
         });
 
@@ -269,7 +266,9 @@ describe('computeFrontmatterHover', () => {
                 }),
             );
             expect(body).toContain('`frontmatter: { imports: false }`');
-            expect(body).toContain('Inserts `const imports = 〈value〉;`');
+            expect(body).toContain(
+                "Adds an `import` statement to the page's `<script>`",
+            );
             expect(body).not.toContain('`frontmatter: { head: false }`');
         });
 
@@ -282,7 +281,6 @@ describe('computeFrontmatterHover', () => {
                     character: 1,
                 }),
             );
-            expect(body).toContain('Inserts `const base = 〈value〉;`');
             expect(body).toContain('Adds `base: 〈value〉`');
         });
 
@@ -297,7 +295,7 @@ describe('computeFrontmatterHover', () => {
                 computeFrontmatterHover(source, { line: 2, character: 6 }),
             );
             expect(body).not.toContain('frontmatter: {');
-            expect(body).not.toContain('Inserts `const');
+            expect(body).not.toContain('Adds `');
         });
 
         it('value hovers get no per-effect sections', () => {

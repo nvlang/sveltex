@@ -27,7 +27,6 @@ import {
     type Hover,
     type Position,
 } from 'vscode-languageserver-protocol';
-import { keyToIdentifier } from '@nvl/sveltex';
 
 /** Documentation for one recognised frontmatter key or `<meta>` value. */
 interface FrontmatterEntryDoc {
@@ -515,8 +514,8 @@ function metaHeadEffect(element: string): string | undefined {
  * part in. Each section names the step's `frontmatter: { … }` toggle so
  * the reader learns how to switch it off.
  *
- * @param key - The bare key text — used to derive the variable name
- * (via `keyToIdentifier`) and the `metadata` object key.
+ * @param key - The bare key text — used to format the `metadata` object
+ * key in the rendered example.
  * @param doc - The key's entry doc; `headEffect` / `element` decide the
  * head section's sentence.
  */
@@ -528,9 +527,7 @@ function effectSections(
     const placeholder = STRUCTURED_VALUE_KEYS.has(key)
         ? '〈value〉'
         : '"〈value〉"';
-    const disableHint = (
-        toggle: 'head' | 'variables' | 'metadata' | 'imports',
-    ): string =>
+    const disableHint = (toggle: 'head' | 'metadata' | 'imports'): string =>
         `To turn this off, set \`frontmatter: { ${toggle}: false }\` in ` +
         'your SvelTeX configuration.';
 
@@ -553,23 +550,6 @@ function effectSections(
                 'the binding(s) to import.',
             '',
             disableHint('imports'),
-            '',
-        );
-    }
-
-    // Instance-`<script>` `const` — the variable name is derived from
-    // the key (e.g. `color-scheme` → `colorScheme`); keys that can't form
-    // a valid identifier are dropped from the variables step entirely.
-    const id = keyToIdentifier(key);
-    if (id !== undefined) {
-        sections.push(
-            '---',
-            '',
-            `Inserts \`const ${id} = ${placeholder};\` into the page's ` +
-                "`<script>`, where `〈value〉` is the value you set this " +
-                'property to.',
-            '',
-            disableHint('variables'),
             '',
         );
     }
