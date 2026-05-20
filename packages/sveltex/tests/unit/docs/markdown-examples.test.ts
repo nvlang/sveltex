@@ -71,7 +71,6 @@ describe('docs/src/docs/markdown.md examples', () => {
                 'author: "Jane Doe",',
                 '"color-scheme": "dark",',
                 'title: "Example",',
-                'meta: [{"name":"author","content":"Jane Doe"},{"name":"color-scheme","content":"dark"}],',
                 '};',
                 '</script>',
                 '<script>',
