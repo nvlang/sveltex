@@ -623,7 +623,12 @@ hr.footnotes-sep {
     --vp-code-tab-active-bar-color: var(--264-400);
 }
 
-.vp-doc .vp-code-group.vp-adaptive-theme {
+/* VitePress 2 retired the `.vp-adaptive-theme` marker class on code
+   groups / language blocks (replaced by `.shiki-themes` on the `<pre>`
+   when more than one theme is configured). We always configure both a
+   light and a dark theme, so the qualifier was redundant -- drop it
+   and target the bare classes. */
+.vp-doc .vp-code-group {
     div.blocks {
         @apply sm:rounded-xl;
         background: none;
@@ -643,7 +648,7 @@ hr.footnotes-sep {
     @apply sm:rounded-xl;
 }
 
-.vp-doc .vp-code-group div[class*='language-'].vp-adaptive-theme {
+.vp-doc .vp-code-group div[class*='language-'] {
     border: none;
 }
 
