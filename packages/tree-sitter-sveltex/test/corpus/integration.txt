@@ -5,7 +5,7 @@ A full document: frontmatter, prose, math, verbatim
 title: Demo
 ---
 
-# {title}
+# {metadata.title}
 
 Prose with inline $E=mc^2$ math.
 

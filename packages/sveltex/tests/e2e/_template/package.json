@@ -11,9 +11,9 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@mathjax/mathjax-fira-font": "^4.0.0",
-    "@mathjax/mathjax-newcm-font": "^4.1.1",
-    "@mathjax/src": "^4.0.0",
+    "@mathjax/mathjax-fira-font": "^4.1.2",
+    "@mathjax/mathjax-newcm-font": "^4.1.2",
+    "@mathjax/src": "^4.1.2",
     "@nvl/sveltex": "file:../../..",
     "@sveltejs/adapter-static": "^3.0.8",
     "@sveltejs/kit": "^2.49.2",
