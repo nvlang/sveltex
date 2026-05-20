@@ -26,21 +26,21 @@
 
 ### Adding SvelTeX to a project
 
-The quickest way is the [`@nvl/sveltex-sv`] community add-on for the [Svelte CLI]
+The quickest way is the [`@nvl/sv-sveltex`] community add-on for the [Svelte CLI]
 (`sv`). In a SvelteKit project, run:
 
 ```sh
-npx sv add @nvl/sveltex-sv
+npx sv add @nvl/sv-sveltex
 ```
 
 …and follow the prompts. It installs `@nvl/sveltex` and the peer dependencies
 for the backends you pick, creates a `sveltex.config.{js,ts}`, and wires the
 SvelTeX preprocessor and the `.sveltex` extension into your
 `svelte.config.{js,ts}`. Starting from scratch? Run `npx sv create` first,
-then `npx sv add @nvl/sveltex-sv` inside the new project.
+then `npx sv add @nvl/sv-sveltex` inside the new project.
 
 > [!NOTE]
-> Svelte's community-add-on support is still experimental, and [`@nvl/sveltex-sv`]
+> Svelte's community-add-on support is still experimental, and [`@nvl/sv-sveltex`]
 > itself is in alpha; community add-ons are not vetted by the Svelte
 > maintainers.
 
@@ -134,7 +134,7 @@ libraries. Some notable examples are MathJax and TikZ.
 [docs]: https://sveltex.dev/docs
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 [Svelte CLI]: https://svelte.dev/docs/cli/overview
-[`@nvl/sveltex-sv`]: https://www.npmjs.com/package/@nvl/sveltex-sv
+[`@nvl/sv-sveltex`]: https://www.npmjs.com/package/@nvl/sv-sveltex
 [`@nvl/sveltex-language-server`]: https://www.npmjs.com/package/@nvl/sveltex-language-server
 [`@nvl/tree-sitter-sveltex`]: https://www.npmjs.com/package/@nvl/tree-sitter-sveltex
 [SvelTeX extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex
