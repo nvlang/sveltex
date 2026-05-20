@@ -200,9 +200,15 @@ export function getDefaultCacheDirectory(): string {
 let defaultCacheDirectory: string | undefined = undefined;
 
 /**
- * Get the default TeX configuration.
+ * The defaults SvelTeX uses for the `tex` slice of its configuration
+ * when the user supplies none — TeX engine and arguments, the `dvisvgm`
+ * / Poppler conversion settings, output and cache directories, SVGO
+ * pipeline, and verbosity. Useful for callers that need to inspect or
+ * extend the defaults programmatically; most users can rely on the
+ * implicit defaults and never call this directly.
  *
- * @returns The default TeX configuration.
+ * @returns A fresh, deeply-mutable copy of the defaults — mutating it
+ * does not affect subsequent calls.
  */
 export function getDefaultTexConfig(): FullTexConfiguration {
     return {
@@ -515,10 +521,16 @@ export function getDefaultSveltexConfig<
 }
 
 /**
- * Get the default configuration for a given Markdown backend.
+ * The defaults SvelTeX uses for the `markdown` slice of its
+ * configuration when the user supplies none. The returned object's
+ * shape varies with the backend: `unified` gets remark/rehype/retext
+ * plugin slots, `marked` gets `extensions`, `markdown-it` gets a bare
+ * `options`, and so on. Useful for callers that need to inspect or
+ * extend the defaults programmatically.
  *
- * @param m - Markdown backend.
- * @returns The default configuration for the given Markdown backend.
+ * @param m - The markdown backend whose defaults to fetch.
+ * @returns A fresh, deeply-mutable copy of the defaults — mutating it
+ * does not affect subsequent calls.
  */
 export function getDefaultMarkdownConfig<M extends MarkdownBackend>(
     m: M,
@@ -837,10 +849,15 @@ export function sanitizePopplerSvgOptions(
 }
 
 /**
- * Get the default configuration for a given TeX preset.
+ * The defaults for a SvelTeX TeX preset — the bundled, named libraries
+ * + options sets a `tex`-type verbatim environment can opt into via its
+ * `preset` configuration. The only preset shipped today is `'tikz'`,
+ * which loads a sensible TikZ baseline (e.g. the `babel`, `calc`, and
+ * `arrows.meta` libraries).
  *
- * @param presetName - The name of a TeX preset.
- * @returns The default configuration for the given TeX preset.
+ * @param presetName - The name of the preset to fetch defaults for.
+ * @returns A fresh, deeply-mutable preset object — mutating it does not
+ * affect subsequent calls.
  */
 export function getTexPresetDefaults(presetName: PresetName): Preset {
     switch (presetName) {

@@ -185,7 +185,12 @@ export type MathJaxFullCssConfiguration<
 
 export interface WithDelims {
     /**
-     * Enable or disable delimiters for math.
+     * Which math-delimiter shapes SvelTeX should recognise and forward to
+     * the math backend. Toggles per-shape detection of `$…$`, `$$…$$`,
+     * `\(…\)`, `\[…\]`, and the dollar-delimited inline-vs-display
+     * disambiguation; anything you switch off here is left as ordinary
+     * markdown text. See the child fields below for the individual
+     * delimiter shapes.
      */
     delims?:
         | {
