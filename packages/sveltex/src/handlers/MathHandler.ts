@@ -525,13 +525,40 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 combineConfig = _combineConfig;
             } catch (err) {
                 // If the import fails, add `@mathjax/src` to the list of
-                // missing dependencies and rethrow the error.
+                // missing dependencies and rethrow the error. `speech-rule-
+                // engine` is a transitive dependency of `@mathjax/src` and the
+                // default `newcm` font ships as `@mathjax/mathjax-newcm-font`,
+                // which is also a regular dependency of `@mathjax/src`; both
+                // come along with it. The only font that needs explicit
+                // mention is a *non-default* one, which the user has to
+                // install themselves.
                 missingDeps.push('@mathjax/src');
                 missingDeps.push('speech-rule-engine');
                 if (config.font !== 'newcm') {
                     missingDeps.push(`@mathjax/mathjax-${config.font}-font`);
                 }
                 throw err;
+            }
+
+            // For non-default fonts, probe the font package separately: if
+            // `@nvl/sveltex`'s own dependency on `@mathjax/src` resolved (so
+            // the above catch didn't fire) but the user picked a font whose
+            // npm package isn't installed, MathJax's lazy font loader would
+            // otherwise throw an opaque "Can't find module" error deep inside
+            // the typesetting pipeline. Probe via `import.meta.resolve`
+            // (sync, no side effects) and surface a friendly missing-deps
+            // entry instead.
+            if (config.font !== 'newcm') {
+                const fontPkg = `@mathjax/mathjax-${config.font}-font`;
+                try {
+                    // Resolve `<pkg>/chtml.js` rather than the package root:
+                    // the package has no `main` field, so a bare-name resolve
+                    // wouldn't find anything regardless of installation.
+                    import.meta.resolve(`${fontPkg}/chtml.js`);
+                } catch (err) {
+                    missingDeps.push(fontPkg);
+                    throw err;
+                }
             }
 
             type MathDocument<N, D, T> =
