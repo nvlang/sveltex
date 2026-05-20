@@ -93,14 +93,27 @@ a build.
 
 If you pick `mathjax` as your math backend, you need the
 [`@mathjax/src`](https://www.npmjs.com/package/@mathjax/src) package at version
-4 or later. MathJax v4 also ships each math font as a separate npm package, so
-you additionally need the `@mathjax/mathjax-<font>-font` package matching your
-[`math.font`](math#fonts) setting — with the default font (`newcm`), that's
-[`@mathjax/mathjax-newcm-font`](https://www.npmjs.com/package/@mathjax/mathjax-newcm-font):
+4 or later:
 
 ```sh
-pnpm add -D @mathjax/src @mathjax/mathjax-newcm-font
+pnpm add -D @mathjax/src
 ```
+
+MathJax v4 ships each math font as a separate npm package, but `@mathjax/src`
+already declares
+[`@mathjax/mathjax-newcm-font`](https://www.npmjs.com/package/@mathjax/mathjax-newcm-font)
+as a dependency — so the default font is pulled in automatically. If you
+override [`math.font`](math#fonts), also install the matching
+`@mathjax/mathjax-<font>-font` package — e.g. for `fira`:
+
+```sh
+pnpm add -D @mathjax/mathjax-fira-font
+```
+
+`devDependencies` is the right scope for both: the CHTML output's font files
+are served from a CDN at runtime by default (via MathJax's `fontURL`), and the
+SVG output bakes glyph paths into the rendered HTML at build time. Either way,
+the npm packages themselves only need to be present while SvelTeX runs.
 
 See the [Math](math#installation) page for details.
 
