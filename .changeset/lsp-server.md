@@ -1,8 +1,9 @@
 ---
 'sveltex': major
+'@nvl/sveltex-language-server': minor
 ---
 
-Add a SvelTeX language server. The VS Code extension now starts a full
+Initial release of `@nvl/sveltex-language-server`. The VS Code extension now starts a full
 language server (the new `@nvl/sveltex-language-server` package). For the
 delegated regions of a `.sveltex` file it proxies the Svelte language
 server — diagnostics, hover, completion, go-to-definition, references,
