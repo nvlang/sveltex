@@ -33,6 +33,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.0(vite@6.4.2(jiti@2.7.0)(lightningcss@1.32.0))
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@types/markdown-it-container':
         specifier: ^4.0.0
         version: 4.0.0
@@ -45,6 +48,9 @@ importers:
       esbuild:
         specifier: ^0.25.2
         version: 0.25.2
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
       markdown-it-container:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1676,6 +1682,10 @@ packages:
 
   js-yaml@4.1.0:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+    hasBin: true
+
+  js-yaml@4.1.1:
+    resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
   juice@8.1.0:
@@ -4160,6 +4170,10 @@ snapshots:
   jiti@2.7.0: {}
 
   js-yaml@4.1.0:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
 

@@ -1,4 +1,3 @@
-syntaxes/*.json_default
 out
 node_modules
 external
@@ -7,6 +6,15 @@ external
 # runs that via the `vscode:prepublish` hook before packaging the `.vsix`);
 # never commit a stale build.
 dist
+
+# TextMate grammars: the YAML files (`syntaxes/*.tmLanguage.yaml`) are the
+# hand-authored source of truth; the JSON files VS Code actually loads are a
+# pure `JSON.stringify(jsYaml.load(yaml))` of those YAMLs, written by
+# `scripts/build.ts` at build time. The `*.json_default` copy is the
+# pristine template the extension rewrites from at runtime (see
+# `src/extension.ts`).
+syntaxes/*.tmLanguage.json
+syntaxes/*.tmLanguage.json_default
 
 # Locally-packaged extension artifacts (the release flow builds and publishes
 # in CI; any local `vsce package` output is for ad-hoc testing only).

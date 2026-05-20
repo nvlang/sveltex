@@ -66,6 +66,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import jsYaml from 'js-yaml';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const docsRoot = resolve(here, '..');
@@ -385,19 +386,24 @@ async function exists(path) {
  * than reaching across the monorepo at runtime.
  */
 async function buildEditorGrammars() {
-    const read = async (path) => JSON.parse(await readFile(path, 'utf8'));
+    const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
+    // The hand-authored YAML is the source of truth for the SvelTeX-flavored
+    // markdown and sveltex grammars; reading the YAML directly here keeps
+    // this script independent of `packages/vscode-sveltex` having been
+    // built (the JSON copies VS Code loads are pure build artifacts).
+    const readYaml = async (path) => jsYaml.load(await readFile(path, 'utf8'));
     const [svelte, markdown, sveltex] = await Promise.all([
-        read(resolve(docsRoot, 'misc/svelte.tmLanguage.json')),
-        read(
+        readJson(resolve(docsRoot, 'misc/svelte.tmLanguage.json')),
+        readYaml(
             resolve(
                 repoRoot,
-                'packages/vscode-sveltex/syntaxes/markdown.tmLanguage.json',
+                'packages/vscode-sveltex/syntaxes/markdown.tmLanguage.yaml',
             ),
         ),
-        read(
+        readYaml(
             resolve(
                 repoRoot,
-                'packages/vscode-sveltex/syntaxes/sveltex.tmLanguage.json',
+                'packages/vscode-sveltex/syntaxes/sveltex.tmLanguage.yaml',
             ),
         ),
     ]);
