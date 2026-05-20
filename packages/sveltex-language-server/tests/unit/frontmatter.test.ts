@@ -166,7 +166,9 @@ describe('computeFrontmatterHover', () => {
             line: 2,
             character: 5,
         });
-        expect(bodyOf(hover)).toContain('renders `<meta name>`');
+        expect(bodyOf(hover)).toContain(
+            'renders `<meta name="〈value〉" content="…">`',
+        );
     });
 
     it('returns null for an unrecognised `<meta name>` value', () => {
