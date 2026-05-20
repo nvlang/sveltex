@@ -1,0 +1,30 @@
+---
+name: Dependency review
+
+# Scans dependency-manifest changes in incoming PRs against the GitHub
+# Advisory Database. Blocks any PR that adds a known-vulnerable version of
+# a package. Lightweight (~30 s per run) and PR-scoped, so it only fires
+# when there's actually a manifest diff to evaluate. See
+# https://github.com/actions/dependency-review-action.
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Review PR dependency changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # Treat moderate-and-above as a fail; let the PR opener address it
+          # before merging rather than discovering it post-merge.
+          fail-on-severity: moderate

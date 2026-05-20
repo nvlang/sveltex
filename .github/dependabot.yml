@@ -58,3 +58,17 @@ updates:
       github-actions:
         patterns:
           - '*'
+
+  # Zed extension's Rust crate. Only one direct dependency
+  # (`zed_extension_api`), so a monthly cadence is plenty -- StepSecurity
+  # bot suggested daily, which would be noise.
+  - package-ecosystem: 'cargo'
+    directory: '/editors/zed'
+    target-branch: 'dependencies'
+    commit-message:
+      prefix: 'build(deps)'
+      include: 'scope'
+    schedule:
+      interval: 'monthly'
+      time: '09:00'
+      timezone: 'Europe/Paris'
