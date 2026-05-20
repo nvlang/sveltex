@@ -61,7 +61,8 @@ docs/.vitepress/cache/**/*
 #——————————————————————————————————————————————————————————#
 
 .idea
-.vscode
+# (`.vscode/` is handled below: ignore everything inside it by default,
+# unignore the shared-config files we want to track.)
 
 node_modules
 

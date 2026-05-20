@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-sveltex"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/vscode-sveltex/dist/**/*.js"
+            ],
+            // Always run a full workspace build before launching. The extension
+            // bundles `@nvl/sveltex-language-server/bin/server.js` and the math
+            // LSP via esbuild, so a code change in either of those packages
+            // needs them rebuilt *before* the extension bundle picks the
+            // change up. `pnpm --recursive build` from the repo root does both
+            // in dependency order.
+            "preLaunchTask": "build extension"
+        }
+    ]
+}

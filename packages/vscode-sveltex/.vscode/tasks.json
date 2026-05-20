@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build extension",
+            "type": "shell",
+            // Build everything in dependency order. The extension's esbuild
+            // bundle reads from `@nvl/sveltex-language-server/dist/bin/server.js`
+            // and `@nvl/sveltex-math-language-server/dist/bin/server.js`, so
+            // those packages must be rebuilt before the extension to pick up
+            // any source change in either.
+            "command": "pnpm",
+            "args": ["--recursive", "build"],
+            "options": {
+                "cwd": "${workspaceFolder}/../.."
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$tsc"
+        }
+    ]
+}
