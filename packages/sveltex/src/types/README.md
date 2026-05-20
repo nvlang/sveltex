@@ -12,7 +12,7 @@ particular, it doesn't contain type guards, either — those can be found in
 
 | Location | Description |
 |:---|:---|
-| [`handlers/`](handlers/) |  |
-| [`utils/`](utils/) |  |
-| [`Sveltex.ts`](Sveltex.ts) |  |
-| [`SveltexConfiguration.ts`](SveltexConfiguration.ts) | contains type definitions for the,`SveltexConfig` interface, which is used to configure the SvelTeX,preprocessor. |
+| [`handlers/`](handlers/) | Types for each handler (`CodeHandler`, `MathHandler`, …): backend identifiers, resolved configuration shapes, processor/process function types. |
+| [`utils/`](utils/) | Type definitions for the various utility modules (CDN handling, escape regions, frontmatter parsing, …). |
+| [`Sveltex.ts`](Sveltex.ts) | Re-declares the Svelte compiler's `Processed` type so it's not pulled in transitively. |
+| [`SveltexConfiguration.ts`](SveltexConfiguration.ts) | Type definitions for the `SveltexConfiguration` interface (the second argument to the `sveltex()` factory) and its backend-choices counterpart. |
