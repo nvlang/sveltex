@@ -1,4 +1,4 @@
-# `@nvl/sv`
+# `@nvl/sveltex-sv`
 
 > [!WARNING]
 > **This package is in alpha.** It is brand new and under active development.
@@ -27,7 +27,7 @@ wires the SvelTeX preprocessor and the `.sveltex` extension into your
 In an existing SvelteKit project, run:
 
 ```shell
-npx sv add @nvl/sv
+npx sv add @nvl/sveltex-sv
 ```
 
 ...and follow the prompts.
@@ -37,7 +37,7 @@ npx sv add @nvl/sv
 All options can be set non-interactively via the `sv` CLI:
 
 ```shell
-npx sv add @nvl/sv="markdownBackend:unified+codeBackend:shiki+mathBackend:mathjax+demoRoute:yes"
+npx sv add @nvl/sveltex-sv="markdownBackend:unified+codeBackend:shiki+mathBackend:mathjax+demoRoute:yes"
 ```
 
 ### `markdownBackend`

@@ -11,10 +11,10 @@
 ### Add SvelTeX to an existing SvelteKit project
 
 ```bash
-npx sv add @nvl/sv
+npx sv add @nvl/sveltex-sv
 ```
 
-This applies the [`@nvl/sv`](https://www.npmjs.com/package/@nvl/sv)
+This applies the [`@nvl/sveltex-sv`](https://www.npmjs.com/package/@nvl/sveltex-sv)
 community add-on: it installs [SvelTeX] and the backends you pick, creates a
 `sveltex.config.{js,ts}`, and wires the preprocessor into your
 `svelte.config.{js,ts}`.
@@ -25,7 +25,7 @@ community add-on: it installs [SvelTeX] and the backends you pick, creates a
 npx sv create
 ```
 
-...then run `npx sv add @nvl/sv` inside the new project.
+...then run `npx sv add @nvl/sveltex-sv` inside the new project.
 
 ## Why the change?
 

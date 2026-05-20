@@ -1,5 +1,5 @@
 {
-  "name": "@nvl/sv",
+  "name": "@nvl/sveltex-sv",
   "version": "0.1.0",
   "description": "Community sv add-on for SvelTeX (Svelte + Markdown + LaTeX)",
   "type": "module",

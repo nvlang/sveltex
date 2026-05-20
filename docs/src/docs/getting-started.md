@@ -44,16 +44,16 @@ pick, creates a `sveltex.config.js`, and wires the preprocessor into your
 
 ::: code-group
 ```sh [pnpm]
-pnpm dlx sv add @nvl/sv
+pnpm dlx sv add @nvl/sveltex-sv
 ```
 ```sh [bun]
-bunx sv add @nvl/sv
+bunx sv add @nvl/sveltex-sv
 ```
 ```sh [npm]
-npx sv add @nvl/sv
+npx sv add @nvl/sveltex-sv
 ```
 ```sh [yarn]
-yarn dlx sv add @nvl/sv
+yarn dlx sv add @nvl/sveltex-sv
 ```
 :::
 
