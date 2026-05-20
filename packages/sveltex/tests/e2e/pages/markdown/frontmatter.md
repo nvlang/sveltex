@@ -8,11 +8,11 @@ imports:
   '$lib/Example.svelte': 'Example'
 ---
 
-# {title}
+# {metadata.title}
 
-_By {author}, last updated on {date}._
+_By {metadata.author}, last updated on {metadata.date}._
 
-> {description}
+> {metadata.description}
 
 <Example>
 _Italic_, **bold**, `code`.
