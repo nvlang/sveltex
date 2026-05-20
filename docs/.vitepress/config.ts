@@ -76,6 +76,11 @@ export default defineConfig({
                 await readFile('misc/svelte.tmLanguage.json', 'utf8'),
             );
             grammarSveltex.name = 'sveltex';
+            // Make our SvelTeX-flavored markdown grammar also answer to the
+            // `md` shorthand used by `[md]` fences and by twoslash's hover-
+            // popup renderer (Shiki v3 no longer auto-resolves common
+            // aliases — VitePress 1 used to mask that).
+            grammarMarkdownForSveltex.aliases = ['md'];
             await shiki.loadLanguage(
                 grammarSvelte,
                 grammarMarkdownForSveltex,
@@ -86,6 +91,30 @@ export default defineConfig({
                 // that embedded scope resolves and `{A}` inside LaTeX
                 // isn't mis-highlighted as a Svelte mustache tag.
                 async () => (await import('shiki/langs/latex.mjs')).default,
+                // VitePress 2 / shiki v3 dropped the implicit preload of
+                // common languages — every grammar a code fence (or a
+                // twoslash hover popup, or one of the SvelTeX grammar's
+                // injections) refers to has to be loaded explicitly.
+                //
+                // - `html` / `ts` / `js` — used by
+                //   `@shikijs/vitepress-twoslash`'s hover popups (and
+                //   `html` is also the target of the sveltex grammar's
+                //   `meta.embedded.block.html` injection).
+                // - `sh` / `xml` — used by `[sh]` / `[xml]` fences on
+                //   the docs pages.
+                // - `css` / `scss` / `sass` / `postcss` / `stylus` —
+                //   the sveltex grammar injects `<style lang="...">`
+                //   blocks into these scopes.
+                async () => (await import('shiki/langs/html.mjs')).default,
+                async () => (await import('shiki/langs/ts.mjs')).default,
+                async () => (await import('shiki/langs/js.mjs')).default,
+                async () => (await import('shiki/langs/shellscript.mjs')).default,
+                async () => (await import('shiki/langs/xml.mjs')).default,
+                async () => (await import('shiki/langs/css.mjs')).default,
+                async () => (await import('shiki/langs/scss.mjs')).default,
+                async () => (await import('shiki/langs/sass.mjs')).default,
+                async () => (await import('shiki/langs/postcss.mjs')).default,
+                async () => (await import('shiki/langs/stylus.mjs')).default,
             );
         },
         theme: {
