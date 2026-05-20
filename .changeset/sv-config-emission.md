@@ -1,5 +1,5 @@
 ---
-'@nvl/sveltex-sv': minor
+'@nvl/sv-sveltex': minor
 ---
 
 The add-on now always emits `sveltex.config.js` (never `.ts`),

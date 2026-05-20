@@ -115,7 +115,7 @@ jobs:
       #
       # `publint` runs on every npm-published package. `attw` runs only on the
       # three that expose a typed, importable library surface — it's skipped
-      # for `@nvl/sveltex-sv` and `@nvl/tree-sitter-sveltex` (which ship no types) and
+      # for `@nvl/sv-sveltex` and `@nvl/tree-sitter-sveltex` (which ship no types) and
       # for the deprecated `create-sveltex` CLI. `vscode-sveltex` is excluded
       # from both: it's published to the extension marketplaces via `vsce`,
       # not to npm. `--profile esm-only` because these packages intentionally
@@ -123,7 +123,7 @@ jobs:
       # the language servers' CLI shim, which is launched, not imported.
       - name: Check package manifests and type resolution
         run: |
-          for pkg in @nvl/sveltex @nvl/sveltex-sv @nvl/sveltex-language-server \
+          for pkg in @nvl/sveltex @nvl/sv-sveltex @nvl/sveltex-language-server \
                      @nvl/sveltex-math-language-server create-sveltex \
                      @nvl/tree-sitter-sveltex; do
             pnpm --filter "$pkg" exec publint

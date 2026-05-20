@@ -16,7 +16,7 @@ export default defineConfig(
             '**/tmp/**',
             '**/tests/e2e/**',
             // Throwaway SvelteKit projects scaffolded by the `sv` add-on test
-            // harness (`@nvl/sveltex-sv`); regenerated on every test run.
+            // harness (`@nvl/sv-sveltex`); regenerated on every test run.
             '**/.test-output/**',
             'docs/**',
             // The tree-sitter grammar package: `grammar.js` is written in the
