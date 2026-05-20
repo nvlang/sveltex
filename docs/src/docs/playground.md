@@ -5,8 +5,8 @@ title: Playground
 # Playground
 
 This is a live, interactive playground for the SvelTeX preprocessor. Edit the
-SvelTeX source on the left, and watch each stage of the preprocessing pipeline
-update on the right.
+SvelTeX source (or the configuration) in the input pane, and watch each stage
+of the preprocessing pipeline update in the tabs below.
 
 SvelTeX preprocesses a document in a few significant stages:
 

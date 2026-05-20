@@ -135,8 +135,14 @@ export interface BackendChoices<
      * -   `'mathjax'`: Install:
      *
      *     ```sh
-     *     <pnpm|bun|npm|yarn> add -D mathjax-full
+     *     <pnpm|bun|npm|yarn> add -D @mathjax/src
      *     ```
+     *
+     *     Plus a `@mathjax/mathjax-<font>-font` package matching your
+     *     [`math.font`](math#fonts) setting *only* if you override the
+     *     default — `@mathjax/src` declares `@mathjax/mathjax-newcm-font`
+     *     as a regular dependency, so the default font (`'newcm'`) is
+     *     pulled in automatically.
      */
     mathBackend?: T | undefined;
 }

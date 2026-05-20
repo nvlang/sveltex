@@ -50,7 +50,7 @@ export function diagnoseVerbEnvConfig(
     const d = new Diagnoser(x);
     d.ifPresent(
         'type',
-        `one of: "tex", "code", "escape", "custom", "noop"`,
+        `one of: "tex", "code", "escape", "noop"`,
         isVerbatimType,
         'string',
     );

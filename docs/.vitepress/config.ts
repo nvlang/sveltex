@@ -232,7 +232,7 @@ export default defineConfig({
                         items: [
                             { text: 'Overview', link: '/' },
                             {
-                                text: 'Compilation: TeX → DVI',
+                                text: 'Compilation: TeX → DVI/PDF/XDV',
                                 link: '/compilation',
                             },
                             {
