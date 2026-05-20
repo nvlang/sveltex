@@ -3,6 +3,11 @@ out
 node_modules
 external
 
+# Build output. `dist/` is produced fresh by `pnpm build` (`vsce package`
+# runs that via the `vscode:prepublish` hook before packaging the `.vsix`);
+# never commit a stale build.
+dist
+
 # Locally-packaged extension artifacts (the release flow builds and publishes
 # in CI; any local `vsce package` output is for ad-hoc testing only).
 *.vsix
