@@ -10,3 +10,15 @@ declare module '*.vue' {
     const component: DefineComponent<object, object, unknown>;
     export default component;
 }
+
+/**
+ * Style-asset shims. Vite handles `*.css` / `*.pcss` / `*.scss` /
+ * `*.sass` imports natively, but TS 6's `noUncheckedSideEffectImports`
+ * (on by default) rejects `import './style.css'` without a declaration.
+ * Declare them as opaque modules so the side-effect imports type-check
+ * while the bundler does the real work at build time.
+ */
+declare module '*.css';
+declare module '*.pcss';
+declare module '*.scss';
+declare module '*.sass';
