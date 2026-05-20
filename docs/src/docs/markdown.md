@@ -319,9 +319,9 @@ processing](#disabling-frontmatter-processing).
 
 The whole parsed frontmatter is exported from the page's _module_ script
 as `export const metadata = { … }`. The same `metadata` binding is
-available from inside the page itself (as `metadata.title` in the
-markup or in the page's `<script>`), and from outside the page as a
-named export (`import { metadata } from './page.sveltex'`).
+available from inside the page itself (as in, e.g., `metadata.title`
+in the markup or in the page's `<script>`), and from outside the page
+as a named export (e.g., `import { metadata } from './page.sveltex'`).
 
 ::: code-group
 
