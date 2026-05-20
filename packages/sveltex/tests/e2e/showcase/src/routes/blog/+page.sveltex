@@ -8,14 +8,16 @@ imports:
   '$lib/Callout.svelte': 'Callout'
 ---
 
-# {title}
+# {metadata.title}
 
-_By {author} — {date}_
+_By {metadata.author} — {metadata.date}_
 
-> {description}
+> {metadata.description}
 
-This post is a `.sveltex` file with **YAML frontmatter**. SvelTeX exposes the
-frontmatter fields as variables, so the heading above is literally `{title}`.
+This post is a `.sveltex` file with **YAML frontmatter**. SvelTeX exports
+the frontmatter as `metadata` on the module script, which is accessible
+inside the page too — the heading above is literally
+`{metadata.title}`.
 
 ## Why Deno
 
