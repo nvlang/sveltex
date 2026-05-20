@@ -180,11 +180,6 @@ editors that want math features in plain `.tex` / `.md` files).
     but no diagnostics. The full Svelte / TypeScript / CSS
     diagnostic stream still works in delegated regions.
 
--   **The server doesn't pick up my new `svelte.config.ts`.** The
-    `.ts` extension is _detected_ but not yet _executed_ (running
-    it would require a TypeScript loader). Use `.js`, `.cjs`, or
-    `.mjs` for now.
-
 For implementation details — region detection, the virtual-document
 strategy, position mapping — see the
 [`@nvl/sveltex-language-server` README](https://github.com/nvlang/sveltex/blob/main/packages/sveltex-language-server/README.md).

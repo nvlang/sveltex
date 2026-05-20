@@ -134,7 +134,7 @@ export interface SveltexMathjaxConfig {
      *
      * Pick a font to use for MathJax.
      *
-     * - [`'newcm'`](https://www.npmjs.com/package/@mathjax/mathjax-ncm-font):
+     * - [`'newcm'`](https://www.npmjs.com/package/@mathjax/mathjax-newcm-font):
      *   "Based on New Computer Modern (now the default font)".
      * - [`'asana'`](https://www.npmjs.com/package/@mathjax/mathjax-asana-font):
      *   "A version of the Asana-Math font".

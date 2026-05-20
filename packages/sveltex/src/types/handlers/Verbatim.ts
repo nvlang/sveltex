@@ -1193,9 +1193,6 @@ export interface VerbEnvConfigBase {
      * - `'noop'`: Leave inner content as-is.
      * - `'escape'`: Escape the inner content according to the given
      *   instructions.
-     * - `'custom'`: Use the `customProcess` prop to provide a function which
-     *   takes the inner content and the attributes of the component and returns
-     *   the processed content.
      */
     type: VerbatimType;
 

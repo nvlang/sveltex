@@ -95,9 +95,10 @@ These apply to every verbatim type:
 -   `respectSelfClosing` — when `true` (default), `<Tag />` is treated as
     self-closing; when `false`, SvelTeX expects an opening + closing
     pair.
--   `selfCloseOutputWith` — `'auto'` | `'slash'` | `''`: controls
-    whether the rendered output uses `<tag />` or `<tag>` for empty
-    instances.
+-   `selfCloseOutputWith` — `'auto'` | `' />'` | `'/>'`: controls
+    whether the rendered output emits a self-closing tag (` />` or
+    `/>`) or omits the slash; `'auto'` mirrors whatever the source
+    used.
 -   `component` — `'this'` | `'none'` | `string`: pick the Svelte
     component the rendered output is mounted as. `'this'` keeps the
     original tag; `'none'` strips the wrapper entirely; a string names a
