@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
-import { ensureEndsWith } from 'packages/sveltex/src/utils/misc.js';
+import { ensureEndsWith } from '../../../packages/sveltex/src/utils/misc.js';
 import { glob } from 'glob';
 
 const readmes = await glob('packages/sveltex/src/**/README.md', {
