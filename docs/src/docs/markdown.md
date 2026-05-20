@@ -319,9 +319,9 @@ processing](#disabling-frontmatter-processing).
 
 The whole parsed frontmatter is exported from the page's _module_ script
 as `export const metadata = { … }`. The same `metadata` binding is
-available from inside the page itself (as `metadata.title` in the markup
-or in the instance script) and from outside as a named export
-(`import { metadata } from './page.sveltex'`).
+available from inside the page itself (as `metadata.title` in the
+markup or in the page's `<script>`), and from outside the page as a
+named export (`import { metadata } from './page.sveltex'`).
 
 ::: code-group
 
@@ -432,7 +432,7 @@ noscript: JS disabled.
 
 #### Meta
 
-All [standard metadata names] are supported.
+All [standard `<meta>` names] are supported.
 
 ::: code-group
 
@@ -671,4 +671,4 @@ corresponding generated code.
 
 <!-- [^1]: (Note: the processing of the directives is the markdown backend's responsibility.) -->
 
-[standard metadata names]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta/name
+[standard `<meta>` names]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta/name
