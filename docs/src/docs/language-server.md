@@ -116,9 +116,9 @@ process that speaks LSP over stdio:
     `PATH`, the `bin/server.js` it ships) for files matching
     `**/*.sveltex`.
 
-A reference Neovim configuration is in the works; until then, copy the
-launch incantation from the Zed extension's manifest as a starting
-point.
+For a worked example of how a third-party editor launches the server,
+see the [Zed extension's manifest](https://github.com/nvlang/sveltex/blob/main/editors/zed/extension.toml)
+and `editors/zed/src/lib.rs` — both spawn `bin/server.js` over stdio.
 
 ## Configuration
 
