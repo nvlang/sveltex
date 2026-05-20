@@ -1,8 +1,13 @@
 ---
 'sveltex': minor
+'@nvl/sveltex-language-server': minor
+'@nvl/sveltex-math-language-server': minor
 ---
 
-The SvelTeX language server now offers TeX-math and LaTeX assistance. A new
+Initial release of `@nvl/sveltex-math-language-server`, plus the wiring in
+`@nvl/sveltex-language-server` that forwards math and LaTeX regions to it.
+
+The SvelTeX language server now offers TeX-math and LaTeX assistance. The new
 `@nvl/sveltex-math-language-server` package provides command/macro completion
 (triggered on `\`) and hover for the math inside `$…$` / `$$…$$` regions,
 accurately scoped to the project's math backend (KaTeX or MathJax — their

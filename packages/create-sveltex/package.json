@@ -10,7 +10,7 @@
   "private": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prepublish": "pnpm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "sveltex",
