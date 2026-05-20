@@ -32,7 +32,11 @@ import {
 interface FrontmatterEntryDoc {
     /** A one-line description of what the key or value does. */
     readonly summary: string;
-    /** The HTML head element/attribute it renders to, if any. */
+    /**
+     * The bare HTML element this key relates to, used only for the
+     * "[`<X>`] on MDN" link label. Set to the element type (e.g.
+     * `<title>`, `<base>`) or an attribute reference (e.g. `<base href>`).
+     */
     readonly element?: string;
     /** A documentation URL — MDN for HTML entries, the SvelTeX site else. */
     readonly docUrl: string;
@@ -46,6 +50,18 @@ interface FrontmatterEntryDoc {
      * shaped.
      */
     readonly headEffect?: string;
+    /**
+     * The HTML SvelTeX renders for this key, with `〈value〉` /
+     * `〈href〉` / `…` placeholders for the parts that come from the
+     * user's frontmatter. Shown in the hover heading
+     * ("renders `<title>〈value〉</title>`"). For `<meta name>` /
+     * `<meta http-equiv>` / `<meta charset>` keys the value is derived
+     * from `element` when omitted (see {@link metaRenderedHtml}). When
+     * no `rendersAs` resolves — e.g. for structural list keys
+     * (`meta` / `link`), or for `imports` — the heading is the bare
+     * key name with no "renders" suffix.
+     */
+    readonly rendersAs?: string;
 }
 
 /** Base URL of the MDN HTML element reference. */
@@ -59,6 +75,7 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'element, shown in the browser tab and used by search engines ' +
             'and bookmarks.',
         element: '<title>',
+        rendersAs: '<title>〈value〉</title>',
         docUrl: `${MDN}/title`,
         headEffect:
             "Inserts `<title>〈value〉</title>` into the page's " +
@@ -70,6 +87,7 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'Fallback content rendered inside a `<noscript>` element, shown ' +
             'only to browsers that have scripting disabled.',
         element: '<noscript>',
+        rendersAs: '<noscript>〈value〉</noscript>',
         docUrl: `${MDN}/noscript`,
         headEffect:
             "Inserts `<noscript>〈value〉</noscript>` into the page's " +
@@ -80,8 +98,11 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
         summary:
             "Configures the document's `<base>` element: the base URL and " +
             'default browsing context against which relative URLs on the ' +
-            'page are resolved.',
+            'page are resolved. Set this to the URL as a shorthand for ' +
+            '`{ href: <url> }`, or to an object with `href` and/or ' +
+            '`target`; at least one of the two must be present.',
         element: '<base>',
+        rendersAs: '<base href="〈href〉" target="〈target〉">',
         docUrl: `${MDN}/base`,
         headEffect:
             "Inserts a `<base>` element into the page's `<svelte:head>`, " +
@@ -92,7 +113,11 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
         summary:
             'A list of `<meta>` elements — document-level metadata such as ' +
             'the description, viewport, character set and social/Open Graph ' +
-            'tags.',
+            'tags. Use the mapping form (`description: …`) where each key ' +
+            'is a metadata name, or the array form (`- name: …` / ' +
+            '`- http-equiv: …`) where each item must include `content` ' +
+            'plus either `name` or `http-equiv` (items without that pair ' +
+            'are dropped).',
         element: '<meta>',
         docUrl: `${MDN}/meta`,
         headEffect:
@@ -103,7 +128,9 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
     link: {
         summary:
             'A list of `<link>` elements — relationships to external ' +
-            'resources such as stylesheets, icons and preloaded assets.',
+            'resources such as stylesheets, icons and preloaded assets. ' +
+            'Each item must include a `rel` attribute (items without ' +
+            'one are dropped).',
         element: '<link>',
         docUrl: `${MDN}/link`,
         headEffect:
@@ -114,7 +141,9 @@ const TOP_LEVEL_STRUCTURAL: Readonly<Record<string, FrontmatterEntryDoc>> = {
         summary:
             'Svelte components and modules to import into the document — a ' +
             'SvelTeX convenience equivalent to writing the imports in a ' +
-            '`<script>` block.',
+            "`<script>` block. Each entry's key is the module path; its " +
+            'value is either the binding name (default import) or an array ' +
+            'of binding names (named imports).',
         docUrl: 'https://sveltex.dev',
     },
 };
@@ -219,15 +248,18 @@ const META_ITEM_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
         summary:
             'The kind of metadata a `<meta>` element carries ' +
             '(`<meta name>`) — e.g. `description`, `viewport`, `keywords`, ' +
-            '`author`, `theme-color`.',
+            '`author`, `theme-color`. Must be paired with a `content`.',
         element: '<meta name>',
+        rendersAs: '<meta name="〈value〉" content="…">',
         docUrl: `${MDN}/meta#name`,
     },
     'http-equiv': {
         summary:
             'A pragma directive — a `<meta http-equiv>` element that acts ' +
-            'like the equivalent HTTP response header.',
+            'like the equivalent HTTP response header. Must be paired ' +
+            'with a `content`.',
         element: '<meta http-equiv>',
+        rendersAs: '<meta http-equiv="〈value〉" content="…">',
         docUrl: `${MDN}/meta#http-equiv`,
     },
     content: {
@@ -235,6 +267,7 @@ const META_ITEM_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The value of a `<meta>` element, paired with its `name` or ' +
             '`http-equiv`.',
         element: '<meta content>',
+        rendersAs: '<meta name="…" content="〈value〉">',
         docUrl: `${MDN}/meta#content`,
     },
 };
@@ -246,6 +279,7 @@ const BASE_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The base URL for the document (`<base href>`). Every relative ' +
             'URL on the page is resolved against it.',
         element: '<base href>',
+        rendersAs: '<base href="〈value〉">',
         docUrl: `${MDN}/base#href`,
     },
     target: {
@@ -253,6 +287,7 @@ const BASE_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The default browsing context for links and forms ' +
             '(`<base target>`) — e.g. `_blank`, `_self`, `_parent`, `_top`.',
         element: '<base target>',
+        rendersAs: '<base target="〈value〉">',
         docUrl: `${MDN}/base#target`,
     },
 };
@@ -263,8 +298,9 @@ const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
         summary:
             'The relationship between the document and a linked resource ' +
             '(`<link rel>`) — e.g. `stylesheet`, `icon`, `preload`, ' +
-            '`canonical`.',
+            '`canonical`. Required — items without it are dropped.',
         element: '<link rel>',
+        rendersAs: '<link rel="〈value〉">',
         docUrl: `${MDN}/link#rel`,
     },
     href: {
@@ -272,6 +308,7 @@ const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The URL of the linked resource (`<link href>`) — the ' +
             'stylesheet, icon or asset the `<link>` points to.',
         element: '<link href>',
+        rendersAs: '<link href="〈value〉">',
         docUrl: `${MDN}/link#href`,
     },
     as: {
@@ -280,6 +317,7 @@ const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'content being fetched (`<link as>`) — e.g. `script`, `style`, ' +
             '`font`, `image`.',
         element: '<link as>',
+        rendersAs: '<link as="〈value〉">',
         docUrl: `${MDN}/link#as`,
     },
     type: {
@@ -287,6 +325,7 @@ const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The MIME type of the linked resource (`<link type>`) — e.g. ' +
             '`text/css` for a stylesheet.',
         element: '<link type>',
+        rendersAs: '<link type="〈value〉">',
         docUrl: `${MDN}/link#type`,
     },
     crossorigin: {
@@ -294,6 +333,7 @@ const LINK_KEYS: Readonly<Record<string, FrontmatterEntryDoc>> = {
             'The CORS policy used when fetching the linked resource ' +
             '(`<link crossorigin>`) — `anonymous` or `use-credentials`.',
         element: '<link crossorigin>',
+        rendersAs: '<link crossorigin="〈value〉">',
         docUrl: `${MDN}/link#crossorigin`,
     },
 };
@@ -479,7 +519,7 @@ const STRUCTURED_VALUE_KEYS: ReadonlySet<string> = new Set([
 const identifierRegExp = /^[A-Za-z_$][\w$]*$/u;
 
 /**
- * Build the head-section sentence for a `<meta>` entry from its `element`
+ * Derive the HTML SvelTeX renders for a `<meta>` entry from its `element`
  * string — the metadata-name and pragma-directive keys all follow one of
  * two templates:
  *
@@ -487,25 +527,32 @@ const identifierRegExp = /^[A-Za-z_$][\w$]*$/u;
  *     `content="〈value〉"` attribute in before the closing `>`;
  *   - `<meta charset>` — the value sits in the `charset` attribute itself.
  *
- * @returns The sentence, or `undefined` when `element` doesn't fit either
- * template — structural keys (`<title>`, `<base>`, …) supply their own.
+ * @returns The rendered HTML, or `undefined` when `element` doesn't fit
+ * either template — structural keys (`<title>`, `<base>`, …) supply their
+ * own `rendersAs`.
  */
-function metaHeadEffect(element: string): string | undefined {
+function metaRenderedHtml(element: string): string | undefined {
     if (/^<meta (?:name|http-equiv)="[^"]+">$/u.test(element)) {
-        const tag = element.replace(/>$/u, ' content="〈value〉">');
-        return (
-            `Inserts \`${tag}\` into the page's \`<svelte:head>\`, ` +
-            'where `〈value〉` is the value you set this property to.'
-        );
+        return element.replace(/>$/u, ' content="〈value〉">');
     }
     if (element === '<meta charset>') {
-        return (
-            "Inserts `<meta charset=\"〈value〉\">` into the page's " +
-            '`<svelte:head>`, where `〈value〉` is the value you set this ' +
-            'property to.'
-        );
+        return '<meta charset="〈value〉">';
     }
     return undefined;
+}
+
+/**
+ * Build the head-section sentence for a `<meta>` entry; wraps
+ * {@link metaRenderedHtml} in a "Inserts `…` into `<svelte:head>`"
+ * sentence used in the per-effect sections of a top-level key's hover.
+ */
+function metaHeadEffect(element: string): string | undefined {
+    const rendered = metaRenderedHtml(element);
+    if (rendered === undefined) return undefined;
+    return (
+        `Inserts \`${rendered}\` into the page's \`<svelte:head>\`, ` +
+        'where `〈value〉` is the value you set this property to.'
+    );
 }
 
 /**
@@ -586,8 +633,11 @@ function entryHoverMarkdown(
     doc: FrontmatterEntryDoc,
     topLevelKey?: string,
 ): string {
-    const heading = doc.element
-        ? `**\`${name}\`** — renders \`${doc.element}\``
+    const rendered =
+        doc.rendersAs ??
+        (doc.element !== undefined ? metaRenderedHtml(doc.element) : undefined);
+    const heading = rendered
+        ? `**\`${name}\`** — renders \`${rendered}\``
         : `**\`${name}\`**`;
     const linkLabel = doc.element
         ? `\`${doc.element}\` on MDN`
