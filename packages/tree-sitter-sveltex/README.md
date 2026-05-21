@@ -5,6 +5,23 @@
 > Its API, behaviour, and configuration may change at any time, and breaking
 > changes should be expected before version `1.0.0`.
 
+> [!IMPORTANT]
+> **Node 22+ build note.** This grammar's `peerDependencies` lists
+> [`tree-sitter`](https://www.npmjs.com/package/tree-sitter)`@^0.25.0`. On
+> Node ≥ 22 the upstream `tree-sitter@0.25.0` package fails to compile from
+> source because its `binding.gyp` pins `c++17` but Node 22's V8 headers
+> require `c++20`. The fix lives on upstream master but has not been
+> published. As a workaround, copy the one-line patch in
+> [`patches/tree-sitter@0.25.0.patch`](https://github.com/nvlang/sveltex/blob/main/patches/tree-sitter@0.25.0.patch)
+> into your own project's `patches/` directory and apply it via your package
+> manager's patch mechanism (`pnpm` reads `patchedDependencies` in
+> `pnpm-workspace.yaml`; `npm` uses [`patch-package`](https://www.npmjs.com/package/patch-package);
+> `yarn` reads `resolutions` + `yarn patch`).
+>
+> A pre-built node binding for our own grammar **is** built from source on
+> install via `node-gyp-build`, so once `tree-sitter` itself is installed
+> (with the patch applied) everything else works.
+
 A [tree-sitter] grammar for **SvelTeX** (`.sveltex`) documents.
 
 A `.sveltex` file is a [Svelte](https://svelte.dev) component whose markup is
