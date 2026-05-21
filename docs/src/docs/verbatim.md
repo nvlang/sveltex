@@ -106,6 +106,39 @@ These apply to every verbatim type:
 -   `transformers` — a `pre` and `post` array of regex/string-replace
     pairs or callback functions, run before and after the handler.
 
+## Editor syntax highlighting
+
+SvelTeX processes verbatim environments **at build time** — the body is
+turned into HTML and handed to Svelte's compiler regardless of editor
+support. The SvelTeX editor extensions additionally try to colour the
+body of a verbatim block _as you type_, but only for a fixed set of tag
+names:
+
+-   `sveltex.latexTags` (default `["tex", "latex", "tikz"]`) — the body
+    is highlighted as LaTeX.
+-   `sveltex.escapeTags` (default `["verb", "verbatim"]`) — the body is
+    highlighted as a plain fenced-code block.
+
+A custom tag like `<Code>` or `<Highlight>` falls outside both lists, so
+its contents look unstyled in the editor (the build output is unaffected
+— Shiki / starry-night / highlight.js still run as configured). You can
+add custom tags to either setting to opt them in, but they'll all share
+the same coarse highlighting (LaTeX, or plain fenced-code) — there is
+no per-tag language hint.
+
+::: tip Prefer fenced backticks for code
+
+For code blocks specifically, **fenced backticks** — ` ```ts … ``` ` —
+give you language-aware editor highlighting as you type, on top of the
+same build-time syntax highlighting a `<Code>…</Code>` environment would
+produce. If you want every code block wrapped in a custom Svelte
+component, do it after the fact with
+[`code.transformers.post`](code#configuration) — the post-transformer
+can replace the rendered `<pre>` with `<MyCode>` (or whatever) without
+forcing you off the standard fenced syntax.
+
+:::
+
 ## Examples
 
 ### A TikZ environment
