@@ -55,6 +55,11 @@ const PALETTE = {
 function classifyTsNode(type) {
     if (type === 'frontmatter_content') return 'frontmatter';
     if (type.startsWith('math_content_')) return 'math';
+    // TM nests `punctuation.definition.string.{begin,end}.tex` *inside*
+    // `meta.math.{block,inline}.tex`, so the delimiters carry the math scope
+    // too. Mirror that here — otherwise the delimiters always show as
+    // tm-only.
+    if (type === 'math_delimiter') return 'math';
     if (type === 'tex_verbatim_body') return 'verbatim-tex-body';
     if (type === 'plain_verbatim_body') return 'verbatim-plain-body';
     if (type === 'svelte_expression_body') return 'mustache-body';
@@ -262,9 +267,9 @@ function divergenceWhy(d) {
     }
     if (d.tm && !d.ts) {
         const reasons = {
-            math: 'TextMate scopes the `$` / `$$` delimiters as `math` too; tree-sitter excludes the delimiters from `math_content_*`.',
-            'verbatim-tex-body': 'TextMate scopes the `<tex>` / `</tex>` tags inside the latex meta scope; tree-sitter scopes the body only.',
-            frontmatter: 'TextMate scopes the `---` fence under the frontmatter meta scope; tree-sitter scopes just the content.',
+            math: 'TextMate carries the `meta.math.*` scope across a leading/trailing newline that tree-sitter excludes from `math_content_*`; both grammars colour the delimiters as math.',
+            'verbatim-tex-body': 'TextMate scopes the `<tex>` / `</tex>` tags inside the latex meta scope; tree-sitter scopes only the body.',
+            frontmatter: 'Boundary mismatch: tree-sitter excludes the `\\n` between fence and body from `frontmatter_content`, TextMate includes it (or vice-versa). The `---` fences are *not* scoped under frontmatter by either grammar.',
         };
         return reasons[d.tm] ?? '';
     }

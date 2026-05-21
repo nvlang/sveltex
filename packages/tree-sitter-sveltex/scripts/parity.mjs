@@ -72,6 +72,13 @@ const KINDS = /** @type {const} */ ([
 function classifyTsNode(type) {
     if (type === 'frontmatter_content') return 'frontmatter';
     if (type.startsWith('math_content_')) return 'math';
+    // The TM convention nests `punctuation.definition.string.{begin,end}.tex`
+    // *inside* `meta.math.{block,inline}.tex`, so a delimiter's full scope
+    // chain includes `meta.math` — TM's `classifyTmScopes` reports it as
+    // `math`. Mirror that here: count the tree-sitter `math_delimiter`
+    // alias as `math` too, otherwise the parity report shows the delimiters
+    // as TM-only every time.
+    if (type === 'math_delimiter') return 'math';
     if (type === 'tex_verbatim_body') return 'verbatim-tex-body';
     if (type === 'plain_verbatim_body') return 'verbatim-plain-body';
     if (type === 'svelte_expression_body') return 'mustache-body';
