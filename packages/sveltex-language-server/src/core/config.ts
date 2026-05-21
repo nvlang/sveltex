@@ -670,12 +670,14 @@ export async function loadConfigSnapshot(
                 'it — SvelTeX settings fall back to the built-in defaults.',
         );
     } else {
-        const scaffoldTags = Object.keys(snapshot.texScaffolds);
+        const fmt = (tags: string[]): string => tags.join(', ') || 'none';
         log?.(
             `Loaded SvelTeX config from ${configPath} (math backend: ` +
-                `${snapshot.mathBackend}; LaTeX tags: ` +
-                `${snapshot.latexTags.join(', ') || 'none'}; TeX preamble ` +
-                `scaffolds: ${scaffoldTags.join(', ') || 'none'}).`,
+                `${snapshot.mathBackend}; verbatim tags by type — ` +
+                `tex: ${fmt(snapshot.latexTags)}; ` +
+                `escape: ${fmt(snapshot.escapeTags)}; ` +
+                `code: ${fmt(snapshot.codeTags)}; ` +
+                `noop: ${fmt(snapshot.noopTags)}).`,
         );
     }
     return snapshot;
