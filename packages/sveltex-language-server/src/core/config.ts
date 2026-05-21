@@ -75,6 +75,25 @@ export interface SveltexConfigSnapshot {
      * inside one of these are forwarded to TexLab when it is available.
      */
     latexTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'escape'`. Their
+     * bodies are escaped (HTML and braces) and emitted as literal text — the
+     * editor should colour them as plain content.
+     */
+    escapeTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'code'`. Their
+     * bodies are handed to the configured code highlighter at build time;
+     * in the editor they're plain literal text (the syntax of the embedded
+     * language is decided at build time by the user's `lang` attribute).
+     */
+    codeTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'noop'`. Their
+     * bodies pass through unchanged to the Svelte compiler, so the editor
+     * should treat them as plain Svelte markup.
+     */
+    noopTags: string[];
     /** File extensions handled by SvelTeX (e.g. `['.sveltex']`). */
     extensions: string[];
     /** Math-delimiter settings. */
@@ -108,9 +127,13 @@ export interface SveltexConfigSnapshot {
 export function defaultConfigSnapshot(): SveltexConfigSnapshot {
     return {
         verbatimTags: ['tex', 'latex', 'tikz', 'verb', 'verbatim'],
-        // The VS Code extension's `sveltex.latexTags` setting defaults to the
-        // same three; keep them in step.
+        // The TextMate grammar template hard-codes these as the LaTeX-
+        // injection and plain-fenced-code buckets respectively; keep them
+        // in step.
         latexTags: ['tex', 'latex', 'tikz'],
+        escapeTags: ['verb', 'verbatim'],
+        codeTags: [],
+        noopTags: [],
         extensions: ['.sveltex'],
         mathDelims: getDefaultMathConfig('mathjax').delims,
         mathBackend: 'mathjax',
@@ -174,19 +197,21 @@ function readVerbatimTags(
 }
 
 /**
- * Extracts the LaTeX / TeX verbatim environment names from a user config
- * object: the names (and aliases) of every `verbatim` entry whose `type` is
- * `'tex'`.
+ * Extracts the names (and aliases) of every `verbatim` entry whose `type`
+ * is `type` from a user config object.
  *
- * @returns The deduplicated tag list, or `undefined` if the config declares no
- * `tex`-typed verbatim environment.
+ * @returns The deduplicated tag list, or `undefined` if the config declares
+ * no verbatim environment of that type.
  */
-function readLatexTags(config: Record<string, unknown>): string[] | undefined {
+function readTagsOfType(
+    config: Record<string, unknown>,
+    type: 'tex' | 'escape' | 'code' | 'noop',
+): string[] | undefined {
     const verbatim = config['verbatim'];
     if (!isObject(verbatim)) return undefined;
     const tags = new Set<string>();
     for (const [name, entry] of Object.entries(verbatim)) {
-        if (!isObject(entry) || entry['type'] !== 'tex') continue;
+        if (!isObject(entry) || entry['type'] !== type) continue;
         tags.add(name);
         const aliases = entry['aliases'];
         if (Array.isArray(aliases)) {
@@ -608,9 +633,29 @@ export async function loadConfigSnapshot(
 
     const { candidate, mathBackend, sveltexInstanceFound } =
         resolveConfigCandidate(mod);
+    // When the user declares ANY verbatim entries, we trust their config
+    // for each type independently — an explicit `verbatim: {}` (or just
+    // entries of one type) shouldn't silently inherit our defaults for
+    // the other types. Hence the `readTagsOfType` calls below fall back
+    // to `[]`, not to `base.<type>Tags`, when the user's config has no
+    // entries of that type. `verbatimTags` keeps its fallback because
+    // SvelTeX's Markdown parser uses it as a "what to treat as opaque"
+    // list and an empty list there would over-process raw HTML.
+    const hasVerbatim = readVerbatimTags(candidate) !== undefined;
     const snapshot: SveltexConfigSnapshot = {
         verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
-        latexTags: readLatexTags(candidate) ?? base.latexTags,
+        latexTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'tex') ?? [])
+            : base.latexTags,
+        escapeTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'escape') ?? [])
+            : base.escapeTags,
+        codeTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'code') ?? [])
+            : base.codeTags,
+        noopTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'noop') ?? [])
+            : base.noopTags,
         extensions: readExtensions(candidate, base.extensions),
         mathDelims: readMathDelims(candidate, base.mathDelims),
         mathBackend: mathBackend ?? base.mathBackend,

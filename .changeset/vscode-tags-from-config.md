@@ -1,25 +1,34 @@
 ---
 'sveltex': minor
+'@nvl/sveltex-language-server': minor
 ---
 
-The VS Code extension now derives its TextMate grammar's verbatim tag
-list from the user's `sveltex.config.js` / `svelte.config.js` by default,
-so editor highlighting stays in step with the build and the LSP without
-the user having to mirror tag names in two places.
+The VS Code extension's TextMate grammar is now driven entirely by the
+user's `sveltex.config.js` / `svelte.config.js` — the
+`sveltex.latexTags` / `sveltex.escapeTags` extension settings are gone.
+The language server reports the live verbatim tag list to the client
+via a new `sveltex/resolvedTags` notification (sent on `initialized`
+and after every config reload), keyed by type:
 
-How it picks tags now (in priority order):
+-   `latexTags` (`type: 'tex'`) — body highlighted as LaTeX via
+    `text.tex.latex`.
+-   `escapeTags` (`type: 'escape'`) — body highlighted as plain
+    literal text via `markup.fenced_code.block.markdown`.
+-   `codeTags` (`type: 'code'`) — body highlighted the same as
+    `escape` (both look like literal text in the editor; the
+    build-time backend decides what to actually do with it).
+-   `noopTags` (`type: 'noop'`) — body handed to `source.svelte`
+    (noop bodies pass through unchanged to the Svelte compiler, so
+    they should look like ordinary Svelte markup in the editor).
 
-1. An explicit `sveltex.latexTags` / `sveltex.escapeTags` user setting,
-   if you've ever set one — respected verbatim. Existing configurations
-   that wrote the lists by hand keep working unchanged.
-2. The LSP-resolved list, pushed via the new `sveltex/resolvedTags`
-   notification immediately after the language server starts and after
-   every config reload — driven entirely by your `sveltex.config.js`.
-3. The hard-coded defaults (`['tex', 'latex', 'tikz']` and
-   `['verb', 'verbatim']`) — until the LSP connects, and when no user
-   setting exists.
+A user who adds `MyTex: { type: 'tex' }` / `MyEscape: { type:
+'escape' }` / `MyCode: { type: 'code' }` / `MyNoop: { type: 'noop' }`
+to their config now gets the appropriate editor highlighting for each
+— no other configuration step needed. A window reload may be required
+once after first declaring a new tag for VS Code to pick up the
+regenerated grammar.
 
-A user who adds `MyVerb: { type: 'escape', ... }` to their config now
-gets `<MyVerb>` body highlighting in the editor without also touching
-`sveltex.escapeTags`. Removing that env from the config quietly removes
-the corresponding highlight too.
+Bug fix in passing: the existing single-line `<verb>…</verb>` /
+`<verbatim>…</verbatim>` TextMate match incorrectly used the LaTeX
+tag-name alternation; same-line plain verbatim envs weren't
+highlighted as fenced code. Fixed.

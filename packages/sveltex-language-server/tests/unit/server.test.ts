@@ -27,7 +27,6 @@ import type {
     DocumentSymbol,
     Hover,
     InitializeResult,
-    SemanticTokens,
 } from 'vscode-languageserver-protocol';
 
 /** Absolute path of the compiled `bin/server.js`. */
@@ -43,6 +42,9 @@ const SERVER_BIN = join(
 interface ResolvedTags {
     verbatimTags: string[];
     latexTags: string[];
+    escapeTags: string[];
+    codeTags: string[];
+    noopTags: string[];
 }
 
 /** A spawned SvelTeX language server and its stdio LSP connection. */
@@ -270,42 +272,6 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         }
     });
 
-    it('advertises a semantic-tokens provider with a non-empty legend', () => {
-        const provider =
-            server.initializeResult.capabilities.semanticTokensProvider;
-        expect(provider).toBeDefined();
-        // `SemanticTokensProvider` is `{ legend, full?, range? }` in the
-        // protocol types; narrow it before reading the legend.
-        if (!provider || !('legend' in provider)) {
-            throw new Error('semantic-tokens provider missing legend');
-        }
-        expect(provider.legend.tokenTypes.length).toBeGreaterThan(0);
-        expect(provider.legend.tokenTypes).toContain('string');
-        // `full: true` (not just an options object) is what the
-        // `vscode-languageclient` reference impl requires for end-to-end
-        // requests to fire.
-        expect(provider.full).toBeTruthy();
-    });
-
-    it('returns an empty token stream for the built-in `<tex>` tag', async () => {
-        // The five standard verbatim tags (`tex`/`latex`/`tikz`/`verb`/
-        // `verbatim`) are intentionally skipped by the encoder: the editor
-        // grammar already paints their bodies (LaTeX or fenced-code), and
-        // a uniform `string` semantic token would replace that with a flat
-        // colour. This test pins that contract — the request still succeeds
-        // (returns an empty data array, not `null`) so the wire path is
-        // alive; the unit tests in `semantic-tokens.test.ts` cover the
-        // emitting path against custom tags.
-        const uri = 'file:///tmp/semtok-tex.sveltex';
-        await open(server, uri, '<tex>\n\\node {x};\n</tex>\n');
-        const result = await server.connection.sendRequest<SemanticTokens>(
-            'textDocument/semanticTokens/full',
-            { textDocument: { uri } },
-        );
-        expect(result).not.toBeNull();
-        expect(result.data).toEqual([]);
-    });
-
     it('pushes `sveltex/resolvedTags` after `initialized`', async () => {
         // Race the notification against a timeout: receiving it proves the
         // server pushes its tag list to the client. The values match the
@@ -319,6 +285,15 @@ describe('SvelTeX language server (spawned over stdio)', () => {
             expect.arrayContaining(['tex', 'verbatim']),
         );
         expect(tags?.latexTags).toEqual(expect.arrayContaining(['tex']));
+        // The other three type-keyed lists arrive even with no config —
+        // populated from `defaultConfigSnapshot()`. `escapeTags` has the
+        // standard plain-bucket defaults; `codeTags` / `noopTags` are
+        // empty until the user opts in via `sveltex.config.js`.
+        expect(tags?.escapeTags).toEqual(
+            expect.arrayContaining(['verb', 'verbatim']),
+        );
+        expect(tags?.codeTags).toEqual([]);
+        expect(tags?.noopTags).toEqual([]);
     });
 });
 

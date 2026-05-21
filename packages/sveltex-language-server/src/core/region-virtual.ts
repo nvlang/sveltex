@@ -137,39 +137,6 @@ function verbatimWrapper(slice: string): Wrapper {
 }
 
 /**
- * Returns the inner-body offsets of a verbatim region — the `[start, end)`
- * range between the opening `<tag …>` and the closing `</tag …>`. For a
- * self-closing `<tag … />` element or an unrecognised wrapper, returns
- * `null`.
- *
- * Shared by {@link buildRegionVirtualDocument} (which strips the wrapper
- * before handing the body to TexLab) and the semantic-tokens provider (which
- * needs the body extent to colour user-configured verbatim tags). Keep both
- * in step by going through this helper.
- *
- * @param source - Full text of the `.sveltex` document.
- * @param region - A region. Only `kind === 'verbatim'` ever yields a non-null
- * result.
- */
-export function verbatimBodyOffsets(
-    source: string,
-    region: Region,
-): readonly [number, number] | null {
-    if (region.kind !== 'verbatim') return null;
-    const slice = source.slice(region.sourceStart, region.sourceEnd);
-    const [prefix, suffix] = verbatimWrapper(slice);
-    // `verbatimWrapper` returns `[0, 0]` when it can't recognise either tag,
-    // and `[length, 0]` for a self-closing element. Either way the region
-    // has no body to expose.
-    if (prefix === 0 && suffix === 0) return null;
-    if (prefix === slice.length && suffix === 0) return null;
-    const innerStart = region.sourceStart + prefix;
-    const innerEnd = region.sourceEnd - suffix;
-    if (innerEnd <= innerStart) return null;
-    return [innerStart, innerEnd] as const;
-}
-
-/**
  * Builds a {@link RegionVirtualDocument} for a math or verbatim region.
  *
  * @param source - Full text of the `.sveltex` document.

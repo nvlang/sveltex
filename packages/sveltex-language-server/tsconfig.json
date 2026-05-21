@@ -6,13 +6,6 @@
     "noEmit": false,
     "lib": ["ESNext"],
     "target": "ES2022",
-    // `Node18` allows `import x from './file.json' with { type: 'json' }`
-    // — modern Node ESM requires the attribute to import JSON modules,
-    // which we do for the vendored LaTeX TextMate grammars in
-    // `core/semantic-tokens.ts`. The root tsconfig sets `Node16`, which
-    // pre-dates the attribute syntax.
-    "module": "Node18",
-    "moduleResolution": "Node16",
     // `tslib` is not a dependency of this package; emit any TS helpers inline.
     "importHelpers": false
   },

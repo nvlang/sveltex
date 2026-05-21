@@ -196,7 +196,7 @@ repository:
           (.*)                  # 1: text before
           (                     # 2: opening tag
             <                   # (opening bracket)
-              (tex|latex|tikz)  # 3: tag name
+              (verb|verbatim)   # 3: tag name
               (?:\s[^>]*?)?     # -: attributes, optional
             >                   # (closing bracket)
           )
@@ -236,6 +236,26 @@ repository:
         endCaptures:
           '1':
             name: meta.tag
+            patterns:
+              - include: source.svelte
+      # `noop`-typed verbatim envs: the body passes through to Svelte
+      # unchanged, so we hand it to the Svelte grammar to colour. The
+      # `sveltexNoopTag` token is a sentinel — the VS Code extension's
+      # `updateGrammarFile` rewrites it at install/config-reload time to
+      # the alternation of the user's `noop` tag names (or a UUID, if
+      # none are configured, so the pattern matches nothing). Without a
+      # user-side noop env this whole rule is harmless.
+      - name: meta.embedded.block.svelte
+        begin: (?i)(<(sveltexNoopTag)(\s[^>]*?)?>)
+        end: (?i)(</(sveltexNoopTag)>)
+        patterns:
+          - include: source.svelte
+        beginCaptures:
+          '1':
+            patterns:
+              - include: source.svelte
+        endCaptures:
+          '1':
             patterns:
               - include: source.svelte
   math:

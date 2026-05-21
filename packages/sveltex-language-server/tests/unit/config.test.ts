@@ -26,12 +26,27 @@ describe('defaultConfigSnapshot', () => {
     });
 
     it('defaults latexTags to the LaTeX verbatim tag trio', () => {
-        // Matches the VS Code extension's `sveltex.latexTags` default.
+        // The TextMate grammar's LaTeX-injection bucket is keyed on these.
         expect(defaultConfigSnapshot().latexTags).toEqual([
             'tex',
             'latex',
             'tikz',
         ]);
+    });
+
+    it('defaults escapeTags to the plain-fenced-code pair', () => {
+        // Drives the TextMate grammar's plain-fenced-code bucket.
+        expect(defaultConfigSnapshot().escapeTags).toEqual([
+            'verb',
+            'verbatim',
+        ]);
+    });
+
+    it('leaves codeTags and noopTags empty by default', () => {
+        // No built-in tag names; the user opts in via `sveltex.config.js`.
+        const snapshot = defaultConfigSnapshot();
+        expect(snapshot.codeTags).toEqual([]);
+        expect(snapshot.noopTags).toEqual([]);
     });
 });
 
@@ -114,6 +129,32 @@ describe('config file location and loading', () => {
         const snapshot = await loadConfigSnapshot(dir);
         expect(snapshot.mathBackend).toBe('katex');
         expect(snapshot.latexTags).toEqual(['latex']);
+    });
+
+    it('partitions verbatim entries by type into latex/escape/code/noop', async () => {
+        // The TextMate grammar regenerator needs each entry placed in the
+        // right type-keyed bucket so its body renders with the right
+        // injection (LaTeX / fenced-code / Svelte).
+        writeFileSync(
+            join(dir, 'svelte.config.mjs'),
+            [
+                'export default { preprocess: [{',
+                "  mathBackend: 'mathjax',",
+                '  configuration: { verbatim: {',
+                "    MyTex:    { type: 'tex' },",
+                "    MyEscape: { type: 'escape' },",
+                "    MyCode:   { type: 'code' },",
+                "    MyNoop:   { type: 'noop' },",
+                '  } },',
+                '}] };',
+                '',
+            ].join('\n'),
+        );
+        const snapshot = await loadConfigSnapshot(dir);
+        expect(snapshot.latexTags).toEqual(['MyTex']);
+        expect(snapshot.escapeTags).toEqual(['MyEscape']);
+        expect(snapshot.codeTags).toEqual(['MyCode']);
+        expect(snapshot.noopTags).toEqual(['MyNoop']);
     });
 
     it("reads documentClass and preamble of a `type: 'tex'` environment", async () => {

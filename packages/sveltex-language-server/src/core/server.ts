@@ -68,11 +68,6 @@ import {
     computeFrontmatterCompletion,
     computeFrontmatterHover,
 } from './frontmatter.js';
-import {
-    SEMANTIC_TOKEN_MODIFIERS,
-    SEMANTIC_TOKEN_TYPES,
-    computeSemanticTokens,
-} from './semantic-tokens.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -160,18 +155,26 @@ export function createServer(connection: Connection): void {
 
     /**
      * Pushes the live verbatim tag list to the client over the custom
-     * `sveltex/resolvedTags` notification.
+     * `sveltex/resolvedTags` notification, keyed by verbatim type.
      *
      * The VS Code extension uses this to rebuild its TextMate grammar from
      * the same source of truth the LSP uses — the user's
      * `sveltex.config.js` — instead of from a separate VS Code user setting
      * that has to be kept in sync manually. Other clients (Zed, …) can
      * ignore the notification harmlessly.
+     *
+     * The four type-keyed lists let the client place each tag in the right
+     * grammar bucket: `latexTags` → LaTeX injection; `escapeTags` /
+     * `codeTags` → plain literal-text styling; `noopTags` → Svelte
+     * injection.
      */
     function notifyResolvedTags(): void {
         void connection.sendNotification('sveltex/resolvedTags', {
             verbatimTags: config.verbatimTags,
             latexTags: config.latexTags,
+            escapeTags: config.escapeTags,
+            codeTags: config.codeTags,
+            noopTags: config.noopTags,
         });
     }
 
@@ -457,19 +460,6 @@ export function createServer(connection: Connection): void {
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
-                    // Native semantic tokens, computed locally from the
-                    // already-resolved verbatim tag list. Lets editors
-                    // (notably Zed, whose compiled tree-sitter grammar
-                    // can't be parameterised) colour user-configured
-                    // verbatim envs without touching the editor side.
-                    semanticTokensProvider: {
-                        legend: {
-                            tokenTypes: [...SEMANTIC_TOKEN_TYPES],
-                            tokenModifiers: [...SEMANTIC_TOKEN_MODIFIERS],
-                        },
-                        full: true,
-                        range: false,
-                    },
                     // Proxied — forwarded to `svelte-language-server`; each is
                     // advertised only if that child advertises it.
                     ...pickDefined(childCapabilities, [
@@ -802,18 +792,4 @@ export function createServer(connection: Connection): void {
         return computeSelectionRanges(doc.text, params.positions, config);
     });
 
-    // Semantic tokens — computed natively from the document's regions, which
-    // were resolved using the live SvelTeX config (so user-configured
-    // verbatim tags like `<MyTex>` are recognised). The provider returns
-    // an empty token set for unknown documents rather than `null`: a
-    // `null`-returning provider is treated as "no support" by some clients
-    // and they stop asking. `computeSemanticTokens` is async because it
-    // lazily loads the bundled LaTeX TextMate grammar on first use — the
-    // load is amortised across requests and never blocks the document
-    // sync path.
-    connection.languages.semanticTokens.on(async ({ textDocument }) => {
-        const doc = documents.get(textDocument.uri);
-        if (!doc) return { data: [] };
-        return computeSemanticTokens(doc.text, doc.regions, config.latexTags);
-    });
 }
