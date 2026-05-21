@@ -1,0 +1,45 @@
+---
+name: Documentation issue
+description: A typo, error, gap, or unclear passage in the docs or TSDoc comments.
+title: 'docs: '
+labels: ['documentation']
+
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Where
+      description: >-
+        URL on sveltex.dev, or a path in the repo (e.g.
+        `docs/src/content/...`, `packages/sveltex/src/.../foo.ts`).
+      placeholder: 'https://sveltex.dev/docs/...  or  docs/src/content/...'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of issue
+      options:
+        - Typo or grammar
+        - Incorrect or out-of-date information
+        - Unclear or confusing
+        - Missing — something that should be documented isn't
+        - Broken link or formatting
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Quote or screenshot the relevant passage and describe the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change
+      description: Optional — a concrete rewrite or sketch of the fix.
