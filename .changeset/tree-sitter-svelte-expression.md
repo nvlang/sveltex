@@ -13,11 +13,14 @@ backslash-escaped braces (`\{` / `\}`) remain plain Markdown.
 
 Block tags get their own grammar rules with named fields:
 
-- `{@const}`, `{@html}`, `{@render}`, `{@debug}` — the `@`-commands.
+- `{@const}`, `{@html}`, `{@render}`, `{@debug}`, `{@attach}` — the
+  `@`-commands (the last is Svelte 5.29+).
 - `{#if condition} … {:else if c2} … {:else} … {/if}` — conditional
   branches via `svelte_branch_else_if` and `svelte_branch_else`.
 - `{#each items as item, i (key)} … {:else} … {/each}` — iteration; the
-  head is kept as one opaque expression body for the JS injection.
+  head is kept as one opaque expression body for the JS injection. Also
+  supports the bindingless `{#each expr}` / `{#each expr, index}` forms
+  (chess-board / N-times iteration per the upstream docs).
 - `{#await promise} … {:then value} … {:catch err} … {/await}` — async
   via `svelte_branch_then` and `svelte_branch_catch` (both supporting an
   empty binding).

@@ -118,6 +118,7 @@ module.exports = grammar({
                 $.svelte_at_html,
                 $.svelte_at_render,
                 $.svelte_at_debug,
+                $.svelte_at_attach,
                 $.svelte_block_if,
                 $.svelte_block_each,
                 $.svelte_block_await,
@@ -181,6 +182,16 @@ module.exports = grammar({
                 ),
                 alias($._at_debug_empty, $.svelte_block_tag),
             ),
+        // `{@attach myAttachment}` (Svelte 5.29+) attaches an effect to an
+        // element when it mounts. Used inline on element attributes:
+        // `<div {@attach myAttachment}>`. The body is a JS expression
+        // (often a function reference or call returning an attachment).
+        svelte_at_attach: ($) =>
+            seq(
+                alias($._at_attach_open, $.svelte_block_tag),
+                field('body', $.svelte_expression_body),
+                '}',
+            ),
 
         // ── Svelte logic blocks ──────────────────────────────────────────
         //
@@ -222,20 +233,45 @@ module.exports = grammar({
         // JS injection in `injections.scm`); `binding` and `index` are
         // Svelte-side identifiers (no JS injection — the JS grammar would
         // otherwise flag `as` and the binding-list comma as syntax errors).
+        // Four valid Svelte forms (per the upstream docs):
+        //   {#each expr as binding}                 — with binding
+        //   {#each expr as binding, index}          — with binding + index
+        //   {#each expr as binding, index (key)}    — full
+        //   {#each expr as binding (key)}           — binding + key (no index)
+        //   {#each expr}                            — no binding (N-times)
+        //   {#each expr, index}                     — no binding + index
+        // The choice between the two top-level shapes is on whether ` as `
+        // is present after the iterable.
         svelte_block_each: ($) =>
             seq(
                 alias($._block_each_open, $.svelte_block_tag),
                 field('iterable', $.svelte_each_iterable),
-                alias($._each_as, $.svelte_each_as),
-                field('binding', $.svelte_each_binding),
-                optional(
-                    seq($._each_comma, field('index', $.svelte_each_index)),
-                ),
-                optional(
+                choice(
+                    // `{#each iterable as binding[, index][ (key)]}` form.
                     seq(
-                        $._each_open_paren,
-                        field('key', $.svelte_each_key),
-                        ')',
+                        alias($._each_as, $.svelte_each_as),
+                        field('binding', $.svelte_each_binding),
+                        optional(
+                            seq(
+                                $._each_comma,
+                                field('index', $.svelte_each_index),
+                            ),
+                        ),
+                        optional(
+                            seq(
+                                $._each_open_paren,
+                                field('key', $.svelte_each_key),
+                                ')',
+                            ),
+                        ),
+                    ),
+                    // `{#each iterable[, index]}` — no `as`, no binding,
+                    // no key. Optional index only.
+                    optional(
+                        seq(
+                            $._each_comma,
+                            field('index', $.svelte_each_index),
+                        ),
                     ),
                 ),
                 $._each_close_brace,
@@ -368,6 +404,7 @@ module.exports = grammar({
         _at_render_open: () => token(seq('{@render', /\s/)),
         _at_debug_open: () => token(seq('{@debug', /\s/)),
         _at_debug_empty: () => token(seq('{@debug', /\s*}/)),
+        _at_attach_open: () => token(seq('{@attach', /\s/)),
 
         // `{#…` heads.
         _block_if_open: () => token(seq('{#if', /\s/)),

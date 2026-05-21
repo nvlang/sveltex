@@ -581,9 +581,17 @@ static bool starts_as_keyword(TSLexer *lexer) {
     return true;
 }
 
-// `_each_iterable`: scan a JS expression that ends at the ` as ` boundary
-// at brace/paren/bracket-depth 0. Cursor stops just before the leading
-// whitespace of ` as `.
+// `_each_iterable`: scan a JS expression up to whichever of the three
+// boundaries comes first at outer brace/paren/bracket-depth 0:
+//
+//   * ` as ` — `{#each iterable as binding}` form;
+//   * `,`    — `{#each iterable, index}` bindingless form with an index;
+//   * `}`    — `{#each iterable}` bindingless N-times form.
+//
+// Cursor stops just before the boundary character. Inner `,` / `}` etc.
+// inside an `[]` / `()` / `{}` literal don't trigger because of the depth
+// tracking, and inner `as` inside a TS-style `[items as Type]` is
+// likewise skipped.
 static bool scan_each_iterable(TSLexer *lexer) {
     lexer->result_symbol = EACH_ITERABLE;
     bool consumed = false;
@@ -596,20 +604,23 @@ static bool scan_each_iterable(TSLexer *lexer) {
             lexer->mark_end(lexer);
             return consumed;
         }
-        // Only check for the ` as ` boundary at outer depth — inside an
-        // embedded `[items as Type]` (TS-style assertion) we want the
-        // outer `as`, not the inner one.
-        if (brace_depth == 0 && paren_depth == 0 && bracket_depth == 0) {
+        // Only check for the boundary keywords/punct at outer depth — an
+        // inner `as` / `,` is part of the expression.
+        bool at_outer = brace_depth == 0 && paren_depth == 0 && bracket_depth == 0;
+        if (at_outer) {
             lexer->mark_end(lexer);
             if (starts_as_keyword(lexer)) return consumed;
         }
         int32_t c = lexer->lookahead;
+        if (at_outer && c == ',') {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
         if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
         if (c == '}') {
             if (brace_depth == 0) {
-                // Hit the enclosing `}` without finding ` as ` — malformed
-                // each head, but produce what we have so the partial parse
-                // is still useful.
+                // `{#each iterable}` (N-times) — the iterable ends at the
+                // enclosing `}`. Leave the `}` for the LR grammar.
                 lexer->mark_end(lexer);
                 return consumed;
             }

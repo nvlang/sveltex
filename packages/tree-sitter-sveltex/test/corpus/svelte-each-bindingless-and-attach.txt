@@ -1,0 +1,108 @@
+================================================================================
+{#each} without a binding — plain N-times iteration
+================================================================================
+{#each items}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} without a binding — with index only
+================================================================================
+{#each items, i}{i}{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_index)
+    (svelte_block_content
+      (svelte_expression
+        (svelte_expression_body)))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} without a binding — chess-board pattern from the Svelte docs
+================================================================================
+{#each { length: 8 }, rank}
+  {#each { length: 8 }, file}
+    cell
+  {/each}
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_index)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_block_each
+        (svelte_block_tag)
+        (svelte_each_iterable)
+        (svelte_each_index)
+        (svelte_block_content
+          (markdown_chunk))
+        (svelte_block_tag))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{@attach} — simple identifier reference
+================================================================================
+<div {@attach myAttachment}>foo</div>
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_at_attach
+    (svelte_block_tag)
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+{@attach} — factory call
+================================================================================
+<button {@attach tooltip(content)}>Hover me</button>
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_at_attach
+    (svelte_block_tag)
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+{@attach} — inline arrow function
+================================================================================
+<canvas {@attach (canvas) => { ctx.fillRect(0,0,1,1); }}></canvas>
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_at_attach
+    (svelte_block_tag)
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+{@attach} — conditional `enabled && attachment` form
+================================================================================
+<div {@attach enabled && myAttachment}>x</div>
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_at_attach
+    (svelte_block_tag)
+    (svelte_expression_body))
+  (markdown_chunk))

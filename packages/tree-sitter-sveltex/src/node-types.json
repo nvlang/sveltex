@@ -55,6 +55,10 @@
           "named": true
         },
         {
+          "type": "svelte_at_attach",
+          "named": true
+        },
+        {
           "type": "svelte_at_const",
           "named": true
         },
@@ -206,6 +210,32 @@
     "type": "plain_verbatim_body",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "svelte_at_attach",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "svelte_at_const",
@@ -412,6 +442,10 @@
           "named": true
         },
         {
+          "type": "svelte_at_attach",
+          "named": true
+        },
+        {
           "type": "svelte_at_const",
           "named": true
         },
@@ -464,7 +498,7 @@
     "fields": {
       "binding": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "svelte_each_binding",
