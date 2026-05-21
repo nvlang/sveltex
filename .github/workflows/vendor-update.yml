@@ -16,14 +16,19 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+# Top-level token is read-only; the job that actually opens the PR grants
+# itself the writes it needs. Scorecard's Token-Permissions check prefers
+# per-job grants over top-level writes.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   vendor-update:
     name: Refresh vendored upstream files
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # for the chore/vendor-update branch the PR opens against
+      pull-requests: write # for `peter-evans/create-pull-request` to open the PR
     steps:
       # Audit outbound traffic — this workflow opens PRs against the repo
       # and fetches arbitrary upstream URLs (one per `VENDORED` entry in
