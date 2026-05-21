@@ -68,6 +68,11 @@ import {
     computeFrontmatterCompletion,
     computeFrontmatterHover,
 } from './frontmatter.js';
+import {
+    SEMANTIC_TOKEN_MODIFIERS,
+    SEMANTIC_TOKEN_TYPES,
+    computeSemanticTokens,
+} from './semantic-tokens.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -88,6 +93,7 @@ import {
     isNativeCompletionItem,
     markNativeCompletion,
     pickDefined,
+    readClientName,
     readServerPaths,
     withoutPullDiagnostics,
     workspaceRootOf,
@@ -394,6 +400,16 @@ export function createServer(connection: Connection): void {
             proxy.setServerPath(serverPaths.svelteLanguageServer);
             regionForwarder.setMathServerPath(serverPaths.mathLanguageServer);
 
+            // VS Code regenerates its TextMate grammar from
+            // `sveltex/resolvedTags` so it already paints custom escape /
+            // code verbatim bodies via `markup.fenced_code`. Emitting a
+            // `string` semantic token over those would just override the
+            // TM colouring with a different one. Other editors (Zed,
+            // Helix, Neovim, …) can't dynamically extend their static
+            // grammar, so semantic tokens are the only path there.
+            const clientName = readClientName(params.initializationOptions);
+            const shouldAdvertiseSemanticTokens = clientName !== 'vscode';
+
             // Start the embedded Svelte server with the host's own initialize
             // params (so its TypeScript service resolves the real project) —
             // but with the pull-diagnostics capability stripped. With it,
@@ -460,6 +476,24 @@ export function createServer(connection: Connection): void {
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
+                    // Native semantic tokens — flat `string` for custom
+                    // escape / code verbatim bodies. Advertised only
+                    // when the client *can't* extend its static grammar
+                    // (anything that isn't VS Code).
+                    ...(shouldAdvertiseSemanticTokens
+                        ? {
+                              semanticTokensProvider: {
+                                  legend: {
+                                      tokenTypes: [...SEMANTIC_TOKEN_TYPES],
+                                      tokenModifiers: [
+                                          ...SEMANTIC_TOKEN_MODIFIERS,
+                                      ],
+                                  },
+                                  full: true,
+                                  range: false,
+                              },
+                          }
+                        : {}),
                     // Proxied — forwarded to `svelte-language-server`; each is
                     // advertised only if that child advertises it.
                     ...pickDefined(childCapabilities, [
@@ -792,4 +826,20 @@ export function createServer(connection: Connection): void {
         return computeSelectionRanges(doc.text, params.positions, config);
     });
 
+    // Semantic tokens — flat `string` for custom escape/code verbatim
+    // bodies, nothing else. Registered unconditionally because the
+    // capability is only advertised to non-VS-Code clients (see
+    // `shouldAdvertiseSemanticTokens` above); VS Code therefore never
+    // sends this request. An unknown-document case returns an empty
+    // token set rather than `null` so the wire path stays alive.
+    connection.languages.semanticTokens.on(({ textDocument }) => {
+        const doc = documents.get(textDocument.uri);
+        if (!doc) return { data: [] };
+        return computeSemanticTokens(
+            doc.text,
+            doc.regions,
+            config.escapeTags,
+            config.codeTags,
+        );
+    });
 }

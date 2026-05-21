@@ -239,9 +239,30 @@ export function computeRegions(
         // document would anchor on a `<tex>` that is really inside an
         // inline-code span and pair it with a *later*, unrelated `</tex>` —
         // swallowing the genuine verbatim block in between.
-        tagged.push(
-            ...detectVerbatimRanges(maskRanges(document, tagged), verbatimTags),
+        const verbatimRanges = detectVerbatimRanges(
+            maskRanges(document, tagged),
+            verbatimTags,
         );
+        // `noop`-typed envs pass their body to Svelte unchanged — so the
+        // body should travel INTO the virtual `.svelte` document handed
+        // to `svelte-language-server`, not be blanked out of it like
+        // `verbatim` regions are. Relabelling to `svelte` puts them in
+        // `DELEGATED_KINDS` and so leaves them visible to the proxy.
+        const noopTagsLower = new Set(
+            config.noopTags.map((t) => t.toLowerCase()),
+        );
+        if (noopTagsLower.size > 0) {
+            for (const range of verbatimRanges) {
+                const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(
+                    document.slice(range.start, range.end),
+                );
+                const tag = (tagMatch?.[1] ?? '').toLowerCase();
+                if (noopTagsLower.has(tag)) {
+                    range.kind = 'svelte';
+                }
+            }
+        }
+        tagged.push(...verbatimRanges);
     } catch {
         // If SvelTeX's parser throws (malformed input mid-edit is common), fall
         // back to treating the whole document as delegated Markdown. The Svelte

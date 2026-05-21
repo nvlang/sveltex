@@ -135,4 +135,49 @@ describe('computeRegions — resilience', () => {
         const regions = computeRegions(source, custom);
         expect(regions.some((r) => r.kind === 'verbatim')).toBe(true);
     });
+
+    it('relabels noop verbatim ranges as `svelte` (delegated to svelte-LSP)', () => {
+        // `type: 'noop'` envs pass their body to Svelte unchanged. The
+        // LSP must hand that body to `svelte-language-server`, so the
+        // region's kind must be one of `DELEGATED_KINDS` (here:
+        // `svelte`) — not `verbatim`, which is blanked out of the
+        // virtual `.svelte` document.
+        const custom = {
+            ...config,
+            verbatimTags: [...config.verbatimTags, 'MyNoop'],
+            noopTags: ['MyNoop'],
+        };
+        const source = 'before <MyNoop><MyComponent /></MyNoop> after';
+        const regions = computeRegions(source, custom);
+        const matched = regions.find(
+            (r) =>
+                source
+                    .slice(r.sourceStart, r.sourceEnd)
+                    .includes('<MyComponent />'),
+        );
+        expect(matched).toBeDefined();
+        expect(matched?.kind).toBe('svelte');
+        expect(isDelegated(matched?.kind ?? 'verbatim')).toBe(true);
+    });
+
+    it('keeps escape verbatim ranges as `verbatim` (NOT delegated)', () => {
+        // The complement of the test above: `escape` envs must stay
+        // `verbatim`-kinded so their body IS blanked from the virtual
+        // .svelte doc (Svelte would otherwise try to parse literal
+        // text as markup).
+        const custom = {
+            ...config,
+            verbatimTags: [...config.verbatimTags, 'MyEscape'],
+            escapeTags: [...config.escapeTags, 'MyEscape'],
+        };
+        const source = '<MyEscape>{not a mustache}</MyEscape>';
+        const regions = computeRegions(source, custom);
+        const matched = regions.find(
+            (r) =>
+                source
+                    .slice(r.sourceStart, r.sourceEnd)
+                    .includes('not a mustache'),
+        );
+        expect(matched?.kind).toBe('verbatim');
+    });
 });

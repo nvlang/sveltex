@@ -295,6 +295,21 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         expect(tags?.codeTags).toEqual([]);
         expect(tags?.noopTags).toEqual([]);
     });
+
+    it('advertises a semantic-tokens provider for non-VS-Code clients', () => {
+        // The spawn helper does not pass `initializationOptions.client`, so
+        // the server defaults to non-VS-Code mode and advertises the
+        // provider. VS Code (covered by the IPC describe below, with a
+        // separate spawn that sets `client: 'vscode'`) does not get it.
+        const provider =
+            server.initializeResult.capabilities.semanticTokensProvider;
+        expect(provider).toBeDefined();
+        if (!provider || !('legend' in provider)) {
+            throw new Error('semantic-tokens provider missing legend');
+        }
+        expect(provider.legend.tokenTypes).toContain('string');
+        expect(provider.full).toBeTruthy();
+    });
 });
 
 describe('SvelTeX language server — Node IPC transport', () => {
@@ -333,6 +348,11 @@ describe('SvelTeX language server — Node IPC transport', () => {
                 rootUri: null,
                 workspaceFolders: null,
                 capabilities: {},
+                // Mirror the VS Code extension's actual initialize payload —
+                // `client: 'vscode'` opts out of features that would step on
+                // its TextMate regeneration (e.g. semantic tokens for custom
+                // escape/code verbatim bodies).
+                initializationOptions: { client: 'vscode' },
             },
         );
         await connection.sendNotification('initialized', {});
@@ -347,6 +367,16 @@ describe('SvelTeX language server — Node IPC transport', () => {
         expect(server.initializeResult.serverInfo?.name).toBe(
             'sveltex-language-server',
         );
+    });
+
+    it("does NOT advertise semantic tokens when client === 'vscode'", () => {
+        // VS Code regenerates its TM grammar from `sveltex/resolvedTags`,
+        // so it doesn't want semantic tokens overlaying that work.
+        // `initializationOptions.client: 'vscode'` (set in this describe's
+        // beforeAll) is the signal the server reads.
+        expect(
+            server.initializeResult.capabilities.semanticTokensProvider,
+        ).toBeUndefined();
     });
 
     it('answers math completion over the IPC transport', async () => {

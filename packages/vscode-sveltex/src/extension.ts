@@ -232,8 +232,13 @@ function startLanguageClient(extensionPath: string): lc.LanguageClient {
         diagnosticCollectionName: 'sveltex',
         // The SvelTeX server resolves its own two child servers from these
         // paths; without them it would fall back to a `node_modules` lookup
-        // that fails in the packaged, dependency-free extension.
+        // that fails in the packaged, dependency-free extension. `client`
+        // identifies us so the server can skip features that would step
+        // on our own TextMate regen (notably semantic tokens for custom
+        // escape/code verbatim bodies — VS Code's TM grammar already
+        // paints those via `markup.fenced_code`).
         initializationOptions: {
+            client: 'vscode',
             serverPaths: {
                 svelteLanguageServer: serverPaths.svelteLanguageServer,
                 mathLanguageServer: serverPaths.mathLanguageServer,
