@@ -466,12 +466,24 @@ importers:
         specifier: ^4.8.0
         version: 4.8.4
     devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
       tree-sitter:
         specifier: 0.25.0
         version: 0.25.0(patch_hash=581e1c376edeabe3d25b64ea7bac59e14cc731627b17b97acccf0cce1dd051cb)
       tree-sitter-cli:
         specifier: ^0.26.8
         version: 0.26.8
+      vscode-oniguruma:
+        specifier: ^2.0.1
+        version: 2.0.1
+      vscode-textmate:
+        specifier: ^9.3.2
+        version: 9.3.2
 
   packages/vscode-sveltex:
     dependencies:

@@ -1,0 +1,24 @@
++++
+title = 'Mixed'
++++
+
+# {metadata.title}
+
+Some math: $a^2 + b^2 = c^2$.
+
+{#if showFigure}
+  <tex>
+    \node {The figure caption is "{caption}"};
+  </tex>
+
+  Display:
+  $$
+  \nabla \times \vec{B} = \mu_0 \vec{J}
+  $$
+{/if}
+
+{#each posts as post (post.slug)}
+  - **{post.title}** by {post.author}
+{/each}
+
+{@render footer({year: 2025})}

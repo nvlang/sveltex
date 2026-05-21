@@ -55,7 +55,8 @@
     "install": "node-gyp-build",
     "generate": "tree-sitter generate",
     "test": "tree-sitter generate && tree-sitter test",
-    "parse": "tree-sitter parse"
+    "parse": "tree-sitter parse",
+    "parity": "node scripts/parity.mjs"
   },
   "dependencies": {
     "node-addon-api": "^8.0.0",
@@ -70,7 +71,11 @@
     }
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.1",
     "tree-sitter": "0.25.0",
-    "tree-sitter-cli": "^0.26.8"
+    "tree-sitter-cli": "^0.26.8",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   }
 }
