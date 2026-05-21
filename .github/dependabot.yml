@@ -17,6 +17,14 @@ updates:
       prefix: 'build(deps)'
       prefix-development: 'build(deps-dev)'
       include: 'scope'
+    # `widen` makes Dependabot extend existing ranges (e.g. `^4` → `^4 || ^5`)
+    # rather than replacing them when a new major lands. This is the default
+    # for npm packages with `peerDependencies` (the "library" heuristic), but
+    # pin it explicitly: `@nvl/sveltex` ships peer ranges that the test suite
+    # validates, and a silent default change upstream would silently narrow
+    # them. Every peer dep is also a devDep here, so the PR that bumps the
+    # devDep automatically widens the peer entry in the same diff.
+    versioning-strategy: 'widen'
     schedule:
       # `monthly` is the least-frequent interval available on github.com;
       # `yearly` exists only on GitHub Enterprise Server.
