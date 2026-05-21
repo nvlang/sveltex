@@ -2,22 +2,7 @@
 
 ## 0.5.0
 
-### Minor Changes
-
-- [`33b8d16`](https://github.com/nvlang/sveltex/commit/33b8d167966e6148df72e55b4b761e7587ae9149)
-  Thanks [@nvlang](https://github.com/nvlang)! - Add a `frontmatter`
-  configuration option controlling which of SvelTeX's three
-  frontmatter-processing steps run. Each toggles independently — `head` (the
-  generated `<svelte:head>`), `metadata` (the `export const metadata`
-  module-script export), and `imports` (the `imports` frontmatter key) — or all
-  at once via `frontmatter: false`.
-
-    This makes the `<svelte:head>` injection opt-out: set
-    `frontmatter: { head: false }` to build the document's `<head>` yourself
-    while still reading the frontmatter from the `metadata` export. The
-    frontmatter block is still parsed, stripped from the output, and passed to
-    transformers regardless. Resolves
-    [#24](https://github.com/nvlang/sveltex/issues/24).
+### BREAKING CHANGES
 
 - [`33b8d16`](https://github.com/nvlang/sveltex/commit/33b8d167966e6148df72e55b4b761e7587ae9149)
   Thanks [@nvlang](https://github.com/nvlang)! - Remove the per-key
@@ -46,18 +31,24 @@
       fonts as separate packages, so also install the
       `@mathjax/mathjax-<font>-font` package matching your configured
       `math.font`.
-    - MathJax v4 initializes a single, process-global document, so each build
-      uses one math `outputFormat` (`svg` or `chtml`) — sufficient for any
-      SvelteKit build, which has a single preprocessor configuration.
-    - **Accessible math by default.** The `mathjax` backend emits assistive
-      MathML while leaving MathJax's own speech-string generation off — emitting
-      both can make some screen readers announce an expression twice. SvelTeX's
-      `enable*` accessibility options now select which MathJax extensions are
-      loaded, so opting into speech, braille or semantic enrichment works as
-      documented.
-    - Modernized SvelTeX's element-detecting regexes
-      ([#25](https://github.com/nvlang/sveltex/issues/25)).
-    - Updated dependencies, including some breaking major-version bumps.
+- Updated dependencies, including some breaking major-version bumps.
+
+### Minor Changes
+
+- [`33b8d16`](https://github.com/nvlang/sveltex/commit/33b8d167966e6148df72e55b4b761e7587ae9149)
+  Thanks [@nvlang](https://github.com/nvlang)! - Add a `frontmatter`
+  configuration option controlling which of SvelTeX's three
+  frontmatter-processing steps run. Each toggles independently — `head` (the
+  generated `<svelte:head>`), `metadata` (the `export const metadata`
+  module-script export), and `imports` (the `imports` frontmatter key) — or all
+  at once via `frontmatter: false`.
+
+    This makes the `<svelte:head>` injection opt-out: set
+    `frontmatter: { head: false }` to build the document's `<head>` yourself
+    while still reading the frontmatter from the `metadata` export. The
+    frontmatter block is still parsed, stripped from the output, and passed to
+    transformers regardless. Resolves
+    [#24](https://github.com/nvlang/sveltex/issues/24).
 
 - [`ad1a3fa`](https://github.com/nvlang/sveltex/commit/ad1a3fa5503a211e3f04710cbdfe04a945bc1a64)
   Thanks [@nvlang](https://github.com/nvlang)! - Runtime and platform updates:
@@ -69,13 +60,15 @@
       Consumers that imported internals via source paths (e.g.
       `@nvl/sveltex/src/...`) will need to switch to the `./dist/*` equivalent
       or to a public export from the package root.
-    - **`hast-util-to-html` reclassified** from a peer dependency to a runtime
-      dependency. Downstream consumers no longer need to install it themselves.
-    - Runtime `uuid` dependency bumped from v13 to v14 (no SvelTeX-facing API
-      change; flagged here for visibility in the transitive tree).
 
 ### Patch Changes
 
+- Modernized SvelTeX's element-detecting regexes.
+  Fixes [#25](https://github.com/nvlang/sveltex/issues/25).
+
+- **`hast-util-to-html` reclassified** from a peer dependency to a runtime
+  dependency. Downstream consumers no longer need to install it themselves.
+  
 - [`33b8d16`](https://github.com/nvlang/sveltex/commit/33b8d167966e6148df72e55b4b761e7587ae9149)
   Thanks [@nvlang](https://github.com/nvlang)! - Fix `charset` frontmatter
   handling to emit the HTML-correct `<meta charset="…">` instead of the invalid
@@ -108,6 +101,9 @@
   (`script_context_deprecated`) and Svelte 6 removes. Building a `.sveltex` page
   with frontmatter no longer logs a deprecation warning. User-authored
   `<script context="module">` blocks are still recognized.
+
+- Runtime `uuid` dependency bumped from v13 to v14 (no SvelTeX-facing API
+  change; flagged here for visibility in the transitive tree).
 
 ## 0.4.4
 
