@@ -39,11 +39,19 @@ const SERVER_BIN = join(
     'server.js',
 );
 
+/** Live verbatim tag list pushed to the client via `sveltex/resolvedTags`. */
+interface ResolvedTags {
+    verbatimTags: string[];
+    latexTags: string[];
+}
+
 /** A spawned SvelTeX language server and its stdio LSP connection. */
 interface Spawned {
     connection: ProtocolConnection;
     child: ChildProcess;
     initializeResult: InitializeResult;
+    /** Resolves with the first `sveltex/resolvedTags` notification. */
+    firstResolvedTags: Promise<ResolvedTags>;
 }
 
 /**
@@ -81,6 +89,16 @@ async function spawn(): Promise<Spawned> {
     // the narrower `ProtocolConnection` view — the runtime object is a
     // `MessageConnection`, so this cast is sound.
     const star = connection as unknown as MessageConnection;
+    // Capture the first `sveltex/resolvedTags` notification before the
+    // catch-all swallows everything — method-specific handlers in
+    // vscode-jsonrpc take precedence over the catch-all.
+    let resolveFirstTags: (tags: ResolvedTags) => void;
+    const firstResolvedTags = new Promise<ResolvedTags>((resolve) => {
+        resolveFirstTags = resolve;
+    });
+    star.onNotification('sveltex/resolvedTags', (params: unknown) => {
+        resolveFirstTags(params as ResolvedTags);
+    });
     star.onNotification(() => undefined);
     star.onRequest(() => null);
     connection.listen();
@@ -94,7 +112,7 @@ async function spawn(): Promise<Spawned> {
         },
     );
     await connection.sendNotification('initialized', {});
-    return { connection, child, initializeResult };
+    return { connection, child, initializeResult, firstResolvedTags };
 }
 
 /** Resolves after `ms` milliseconds. */
@@ -302,6 +320,21 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         expect(result.data.length).toBeGreaterThanOrEqual(5);
         expect(result.data[2]).toBe('literal'.length);
     });
+
+    it('pushes `sveltex/resolvedTags` after `initialized`', async () => {
+        // Race the notification against a timeout: receiving it proves the
+        // server pushes its tag list to the client. The values match the
+        // built-in defaults (no SvelTeX config was loaded — rootUri is null).
+        const tags = await Promise.race([
+            server.firstResolvedTags,
+            delay(2_000).then(() => null),
+        ]);
+        expect(tags).not.toBeNull();
+        expect(tags?.verbatimTags).toEqual(
+            expect.arrayContaining(['tex', 'verbatim']),
+        );
+        expect(tags?.latexTags).toEqual(expect.arrayContaining(['tex']));
+    });
 });
 
 describe('SvelTeX language server — Node IPC transport', () => {
@@ -323,6 +356,13 @@ describe('SvelTeX language server — Node IPC transport', () => {
             new IPCMessageWriter(child),
         );
         const star = connection as unknown as MessageConnection;
+        let resolveFirstTags: (tags: ResolvedTags) => void;
+        const firstResolvedTags = new Promise<ResolvedTags>((resolve) => {
+            resolveFirstTags = resolve;
+        });
+        star.onNotification('sveltex/resolvedTags', (params: unknown) => {
+            resolveFirstTags(params as ResolvedTags);
+        });
         star.onNotification(() => undefined);
         star.onRequest(() => null);
         connection.listen();
@@ -336,7 +376,7 @@ describe('SvelTeX language server — Node IPC transport', () => {
             },
         );
         await connection.sendNotification('initialized', {});
-        server = { connection, child, initializeResult };
+        server = { connection, child, initializeResult, firstResolvedTags };
     });
 
     afterAll(async () => {

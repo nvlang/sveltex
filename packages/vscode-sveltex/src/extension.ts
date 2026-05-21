@@ -15,6 +15,20 @@ const defaultEscapeTags = ['verb', 'verbatim'];
 const tagRegex = /[a-zA-Z][-.:0-9_a-zA-Z]*/u;
 
 /**
+ * The shape of the `sveltex/resolvedTags` notification the SvelTeX language
+ * server pushes after `initialized` and after every config reload.
+ *
+ * `verbatimTags` is the full list of registered verbatim tag names from the
+ * user's `sveltex.config.js` / `svelte.config.js`; `latexTags` is the subset
+ * whose `type` is `'tex'`. The extension derives its `escapeTags` (the
+ * non-LaTeX verbatim tags) by subtraction.
+ */
+interface LspResolvedTags {
+    verbatimTags: string[];
+    latexTags: string[];
+}
+
+/**
  * Idea: start with two copies of the same grammar, `sveltex.tmLanguage.json`
  * and `sveltex.tmLanguage.json_default`. The `sveltex.tmLanguage.json_default`
  * file is never modified, but is also not used for syntax highlighting.
@@ -241,29 +255,69 @@ function startLanguageClient(extensionPath: string): lc.LanguageClient {
     return languageClient;
 }
 
+/**
+ * Picks the tag list to bake into the TextMate grammar, in priority order:
+ *
+ *   1. An explicit user setting (any of folder / workspace / global scope) —
+ *      respected verbatim. A user who set `sveltex.latexTags` deliberately
+ *      means to override.
+ *   2. The LSP-resolved tag list pushed via `sveltex/resolvedTags` — derived
+ *      from the user's `sveltex.config.js`, so it stays in step with build
+ *      and LSP behaviour without manual duplication.
+ *   3. The hard-coded defaults (`['tex', 'latex', 'tikz']` etc.) — used until
+ *      the LSP connects, and when no user setting exists.
+ */
+function pickTags(
+    inspection: ReturnType<vscode.WorkspaceConfiguration['inspect']> | undefined,
+    fromLsp: string[] | undefined,
+    fallback: string[],
+): string[] {
+    const explicit =
+        (inspection?.workspaceFolderValue as string[] | undefined) ??
+        (inspection?.workspaceValue as string[] | undefined) ??
+        (inspection?.globalValue as string[] | undefined);
+    if (explicit !== undefined) return explicit;
+    if (fromLsp !== undefined) return fromLsp;
+    return fallback;
+}
+
 function activate(context: vscode.ExtensionContext) {
     const grammarDir = path.join(context.extensionPath, 'syntaxes');
 
+    /**
+     * Latest `sveltex/resolvedTags` payload, or `undefined` until the LSP
+     * has pushed one. `updateGrammar` reads it on every refresh, so a fresh
+     * notification automatically feeds the next regeneration.
+     */
+    let lspResolved: LspResolvedTags | undefined;
+
     const updateGrammar = () => {
-        const latexTags = vscode.workspace
-            .getConfiguration()
-            .get<string[]>('sveltex.latexTags');
-        const escapeTags = vscode.workspace
-            .getConfiguration()
-            .get<string[]>('sveltex.escapeTags');
-        if (latexTags || escapeTags) {
-            updateGrammarFile(
-                grammarDir,
-                latexTags ?? defaultLatexTags,
-                escapeTags ?? defaultEscapeTags,
-            );
-        }
+        const config = vscode.workspace.getConfiguration();
+        const latexInspect = config.inspect<string[]>('sveltex.latexTags');
+        const escapeInspect = config.inspect<string[]>('sveltex.escapeTags');
+
+        // The LSP reports `verbatimTags` (all of them) and `latexTags` (the
+        // TeX subset). The extension's `escapeTags` setting is the
+        // non-TeX subset — compute it by subtraction.
+        const lspLatex = lspResolved?.latexTags;
+        const lspEscape = lspResolved
+            ? lspResolved.verbatimTags.filter(
+                  (t) => !lspResolved!.latexTags.includes(t),
+              )
+            : undefined;
+
+        const latex = pickTags(latexInspect, lspLatex, defaultLatexTags);
+        const escape = pickTags(escapeInspect, lspEscape, defaultEscapeTags);
+
+        updateGrammarFile(grammarDir, latex, escape);
     };
 
-    // Update grammar when the extension is activated
+    // Cold-start paint: the LSP hasn't connected yet, so this runs against
+    // whatever the user setting (or defaults) provides. The grammar is
+    // refreshed once `sveltex/resolvedTags` arrives.
     updateGrammar();
 
-    // Update grammar when the settings change
+    // Update grammar when the user settings change.
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (
@@ -283,6 +337,25 @@ function activate(context: vscode.ExtensionContext) {
     } catch (error) {
         void vscode.window.showErrorMessage(
             `SvelTeX: failed to start the language server. ${String(error)}`,
+        );
+    }
+
+    // Subscribe to `sveltex/resolvedTags` notifications. The server pushes
+    // the live tag list on `initialized` and on every config reload, so the
+    // TextMate grammar stays in step with `sveltex.config.js` without the
+    // user having to mirror their config in the `sveltex.latexTags` /
+    // `sveltex.escapeTags` settings. `onNotification` can be called before
+    // the client finishes its `initialize` handshake — the client buffers
+    // handler registrations until the underlying connection is up.
+    if (client) {
+        context.subscriptions.push(
+            client.onNotification(
+                'sveltex/resolvedTags',
+                (params: LspResolvedTags) => {
+                    lspResolved = params;
+                    updateGrammar();
+                },
+            ),
         );
     }
 }

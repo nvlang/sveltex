@@ -159,6 +159,23 @@ export function createServer(connection: Connection): void {
     };
 
     /**
+     * Pushes the live verbatim tag list to the client over the custom
+     * `sveltex/resolvedTags` notification.
+     *
+     * The VS Code extension uses this to rebuild its TextMate grammar from
+     * the same source of truth the LSP uses — the user's
+     * `sveltex.config.js` — instead of from a separate VS Code user setting
+     * that has to be kept in sync manually. Other clients (Zed, …) can
+     * ignore the notification harmlessly.
+     */
+    function notifyResolvedTags(): void {
+        void connection.sendNotification('sveltex/resolvedTags', {
+            verbatimTags: config.verbatimTags,
+            latexTags: config.latexTags,
+        });
+    }
+
+    /**
      * Forwards hover/completion in non-delegated regions to dedicated child
      * servers: the math language server for `math` regions, TexLab for LaTeX
      * `verbatim` regions. Spawns its children lazily on first use.
@@ -490,6 +507,10 @@ export function createServer(connection: Connection): void {
                 if (!root) break;
                 config = await loadConfigSnapshot(root, logInfo);
                 regionForwarder.updateConfig(config);
+                // Tell the client about the new tag list so it can refresh
+                // any tag-derived state (e.g. the VS Code extension's
+                // TextMate grammar).
+                notifyResolvedTags();
             }
         } finally {
             configReloadInFlight = false;
@@ -517,6 +538,15 @@ export function createServer(connection: Connection): void {
         // The debounce timer must not by itself keep the process alive.
         configReloadTimer.unref();
     }
+
+    // The `initialized` notification arrives *after* `initialize` returned
+    // and the client has finished setting up its side. That's the safe
+    // earliest point to push server-initiated notifications — sending one
+    // during `onInitialize` itself races the client's notification
+    // handler registration.
+    connection.onInitialized(() => {
+        notifyResolvedTags();
+    });
 
     // A watched `svelte.config.*` (or a `sveltex.config.*` it imports)
     // changed: schedule a debounced reload so region detection and TexLab
