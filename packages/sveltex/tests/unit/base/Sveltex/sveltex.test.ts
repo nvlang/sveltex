@@ -659,9 +659,13 @@ describe('Sveltex.markup()', () => {
             );
             const preprocess_ = preprocessFn(preprocessor_);
             const output = await preprocess_(
-                ['---', 'title: Example', 'author: Jane Doe', '---', '*text*'].join(
-                    '\n',
-                ),
+                [
+                    '---',
+                    'title: Example',
+                    'author: Jane Doe',
+                    '---',
+                    '*text*',
+                ].join('\n'),
             );
             expect(output).not.toContain('<svelte:head>');
             expect(output).not.toContain('<title>');
@@ -694,7 +698,7 @@ describe('Sveltex.markup()', () => {
     });
 
     describe('script tags', () => {
-        describe('doesn\'t add <script> or module-script tags if already present', () => {
+        describe("doesn't add <script> or module-script tags if already present", () => {
             it.each([
                 [
                     '<script>\n</script>',

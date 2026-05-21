@@ -150,9 +150,7 @@ export function hoverMarkdown(
     // For a command that denotes a Unicode glyph, show the glyph and its
     // Unicode standard name — e.g. `∮ (contour integral)`.
     if (command.unicode) {
-        const named = command.unicodeName
-            ? ` (${command.unicodeName})`
-            : '';
+        const named = command.unicodeName ? ` (${command.unicodeName})` : '';
         lines.push(`**${command.unicode}**${named}`, '');
     }
 

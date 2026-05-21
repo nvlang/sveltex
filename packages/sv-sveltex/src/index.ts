@@ -326,9 +326,7 @@ export default defineAddon({
     },
 
     nextSteps: ({ options }) => {
-        const steps = [
-            'Review your SvelTeX backends in `sveltex.config.js`.',
-        ];
+        const steps = ['Review your SvelTeX backends in `sveltex.config.js`.'];
         if (options.demoRoute) {
             steps.push(
                 'Visit the `/sveltex-demo` route to see the SvelTeX demo page.',

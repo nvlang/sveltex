@@ -177,8 +177,8 @@ type WithFullCssConfiguration<
     : { css: FullCssConfiguration<CA> };
 
 export type MathJaxFullCssConfiguration<
-    CA extends
-        PossibleMathCssApproach<'mathjax'> = PossibleMathCssApproach<'mathjax'>,
+    CA extends PossibleMathCssApproach<'mathjax'> =
+        PossibleMathCssApproach<'mathjax'>,
 > = FullCssConfiguration<CA> & {
     font?: MathjaxFont | undefined;
 };

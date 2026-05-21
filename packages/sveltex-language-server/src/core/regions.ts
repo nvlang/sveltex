@@ -161,10 +161,7 @@ function detectVerbatimRanges(
  * environment — otherwise its match runs greedily to the next, unrelated
  * `</tex>` and swallows the real block in between.
  */
-function maskRanges(
-    document: string,
-    ranges: readonly TaggedRange[],
-): string {
+function maskRanges(document: string, ranges: readonly TaggedRange[]): string {
     if (ranges.length === 0) return document;
     const chars = document.split('');
     for (const range of ranges) {
@@ -243,10 +240,7 @@ export function computeRegions(
         // inline-code span and pair it with a *later*, unrelated `</tex>` —
         // swallowing the genuine verbatim block in between.
         tagged.push(
-            ...detectVerbatimRanges(
-                maskRanges(document, tagged),
-                verbatimTags,
-            ),
+            ...detectVerbatimRanges(maskRanges(document, tagged), verbatimTags),
         );
     } catch {
         // If SvelTeX's parser throws (malformed input mid-edit is common), fall

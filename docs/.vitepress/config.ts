@@ -51,7 +51,10 @@ export default defineConfig({
                 // `src/public/` by `scripts/build-playground.mjs`); the
                 // playground worker imports it from that runtime URL, so
                 // Rollup must not try to resolve or bundle it.
-                external: ['@nvl/sveltex', '/playground/sveltex-playground.mjs'],
+                external: [
+                    '@nvl/sveltex',
+                    '/playground/sveltex-playground.mjs',
+                ],
             },
             target: ESBUILD_MODULES_TARGET,
         },
@@ -108,7 +111,8 @@ export default defineConfig({
                 async () => (await import('shiki/langs/html.mjs')).default,
                 async () => (await import('shiki/langs/ts.mjs')).default,
                 async () => (await import('shiki/langs/js.mjs')).default,
-                async () => (await import('shiki/langs/shellscript.mjs')).default,
+                async () =>
+                    (await import('shiki/langs/shellscript.mjs')).default,
                 async () => (await import('shiki/langs/xml.mjs')).default,
                 async () => (await import('shiki/langs/css.mjs')).default,
                 async () => (await import('shiki/langs/scss.mjs')).default,

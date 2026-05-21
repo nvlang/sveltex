@@ -53,10 +53,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SvelteProxy } from './svelte-proxy.js';
 import { computeRegions, type Region } from './regions.js';
 import { buildVirtualSvelte } from './virtual-svelte.js';
-import {
-    RegionForwarder,
-    isLatexVerbatimRegion,
-} from './region-forwarding.js';
+import { RegionForwarder, isLatexVerbatimRegion } from './region-forwarding.js';
 import {
     defaultConfigSnapshot,
     loadConfigSnapshot,
@@ -204,7 +201,10 @@ export function createServer(connection: Connection): void {
      * the region the boundary _opens_ (so a caret right after a `$…$` is
      * treated as the following region, not the math one).
      */
-    function regionAt(doc: OpenDocument, position: Position): Region | undefined {
+    function regionAt(
+        doc: OpenDocument,
+        position: Position,
+    ): Region | undefined {
         const textDoc = TextDocument.create(
             'mem://sveltex',
             'sveltex',

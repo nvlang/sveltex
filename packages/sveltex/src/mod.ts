@@ -31,4 +31,3 @@ export {
     getTexPresetDefaults,
     getDefaultCacheDirectory,
 } from './base/defaults.js';
-

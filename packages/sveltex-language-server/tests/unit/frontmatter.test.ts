@@ -58,12 +58,9 @@ describe('computeFrontmatterHover', () => {
     });
 
     it('recognises a key in a YAML list item (`- rel:`)', () => {
-        const source = [
-            '---',
-            'link:',
-            '  - rel: stylesheet',
-            '---',
-        ].join('\n');
+        const source = ['---', 'link:', '  - rel: stylesheet', '---'].join(
+            '\n',
+        );
         const hover = computeFrontmatterHover(source, {
             line: 2,
             character: 5,
@@ -72,9 +69,7 @@ describe('computeFrontmatterHover', () => {
     });
 
     it('recognises a TOML `[table]` header', () => {
-        const source = ['+++', '[base]', 'target = "_blank"', '+++'].join(
-            '\n',
-        );
+        const source = ['+++', '[base]', 'target = "_blank"', '+++'].join('\n');
         const hover = computeFrontmatterHover(source, {
             line: 1,
             character: 3,
@@ -123,12 +118,9 @@ describe('computeFrontmatterHover', () => {
     });
 
     it('documents a standard `<meta name>` value', () => {
-        const source = [
-            '---',
-            'meta:',
-            '  - name: description',
-            '---',
-        ].join('\n');
+        const source = ['---', 'meta:', '  - name: description', '---'].join(
+            '\n',
+        );
         const hover = computeFrontmatterHover(source, {
             line: 2,
             character: 14,
@@ -158,9 +150,7 @@ describe('computeFrontmatterHover', () => {
     });
 
     it('documents the `name` key itself when the caret is on the key', () => {
-        const source = ['---', 'meta:', '  - name: viewport', '---'].join(
-            '\n',
-        );
+        const source = ['---', 'meta:', '  - name: viewport', '---'].join('\n');
         // Character 5 is inside `name` — the key, not the `viewport` value.
         const hover = computeFrontmatterHover(source, {
             line: 2,
@@ -180,12 +170,9 @@ describe('computeFrontmatterHover', () => {
 
     it('documents a meta name written as a key (the mapping form)', () => {
         // `meta: { description: … }` — the name is a key, not a `name:` value.
-        const source = [
-            '---',
-            'meta:',
-            '  description: A summary',
-            '---',
-        ].join('\n');
+        const source = ['---', 'meta:', '  description: A summary', '---'].join(
+            '\n',
+        );
         const hover = computeFrontmatterHover(source, {
             line: 2,
             character: 6,
@@ -355,9 +342,7 @@ describe('computeFrontmatterCompletion', () => {
     });
 
     it('suggests `<meta http-equiv>` values after `http-equiv:`', () => {
-        const source = ['---', 'meta:', '  - http-equiv: ', '---'].join(
-            '\n',
-        );
+        const source = ['---', 'meta:', '  - http-equiv: ', '---'].join('\n');
         const labels = computeFrontmatterCompletion(source, {
             line: 2,
             character: 16,

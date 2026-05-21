@@ -39,9 +39,8 @@ import type { MathBackend, SveltexConfigSnapshot } from './config.js';
 import { remapCompletion, remapHover, type RemapContext } from './remap.js';
 
 /** The math backends that have a corresponding math language server. */
-const FORWARDABLE_MATH_BACKENDS: ReadonlySet<MathBackend> = new Set<MathBackend>(
-    ['mathjax', 'katex'],
-);
+const FORWARDABLE_MATH_BACKENDS: ReadonlySet<MathBackend> =
+    new Set<MathBackend>(['mathjax', 'katex']);
 
 /**
  * Resolves the absolute path of the math language server's `bin/server.js`.
@@ -407,8 +406,7 @@ export class RegionForwarder {
         source: string,
         region: Region,
     ): Promise<
-        | { proxy: LspProxy; languageId: string; extension: string }
-        | undefined
+        { proxy: LspProxy; languageId: string; extension: string } | undefined
     > {
         if (region.kind === 'math') {
             const proxy = await this.#ensureMathProxy();
@@ -452,9 +450,7 @@ export class RegionForwarder {
             const proxy = new LspProxy(
                 {
                     kind: 'fork',
-                    module: resolveMathServerPath(
-                        this.#mathServerPathOverride,
-                    ),
+                    module: resolveMathServerPath(this.#mathServerPathOverride),
                     args: ['--stdio'],
                 },
                 'sveltex-math-language-server',

@@ -156,31 +156,23 @@ describe('server (spawned over stdio)', () => {
     it('advertises completion (on `\\` and `{`) and hover capabilities', () => {
         const caps = katexInit.capabilities;
         expect(caps.hoverProvider).toBe(true);
-        expect(caps.completionProvider?.triggerCharacters).toEqual([
-            '\\',
-            '{',
-        ]);
+        expect(caps.completionProvider?.triggerCharacters).toEqual(['\\', '{']);
     });
 
     it('reports its server name', () => {
-        expect(katexInit.serverInfo?.name).toBe(
-            'sveltex-math-language-server',
-        );
+        expect(katexInit.serverInfo?.name).toBe('sveltex-math-language-server');
     });
 
     it('answers completion for an opened document', async () => {
         const uri = 'mem://completion.tex';
-        await katexServer.connection.sendNotification(
-            'textDocument/didOpen',
-            {
-                textDocument: {
-                    uri,
-                    languageId: 'latex',
-                    version: 1,
-                    text: '\\alp',
-                },
+        await katexServer.connection.sendNotification('textDocument/didOpen', {
+            textDocument: {
+                uri,
+                languageId: 'latex',
+                version: 1,
+                text: '\\alp',
             },
-        );
+        });
         const result = await katexServer.connection.sendRequest<CompletionList>(
             'textDocument/completion',
             { textDocument: { uri }, position: { line: 0, character: 4 } },
@@ -190,17 +182,14 @@ describe('server (spawned over stdio)', () => {
 
     it('answers hover for a command in an opened document', async () => {
         const uri = 'mem://hover.tex';
-        await katexServer.connection.sendNotification(
-            'textDocument/didOpen',
-            {
-                textDocument: {
-                    uri,
-                    languageId: 'latex',
-                    version: 1,
-                    text: '\\frac{1}{2}',
-                },
+        await katexServer.connection.sendNotification('textDocument/didOpen', {
+            textDocument: {
+                uri,
+                languageId: 'latex',
+                version: 1,
+                text: '\\frac{1}{2}',
             },
-        );
+        });
         const hover = await katexServer.connection.sendRequest<Hover | null>(
             'textDocument/hover',
             { textDocument: { uri }, position: { line: 0, character: 2 } },
@@ -210,17 +199,14 @@ describe('server (spawned over stdio)', () => {
 
     it('tracks incremental document changes', async () => {
         const uri = 'mem://change.tex';
-        await katexServer.connection.sendNotification(
-            'textDocument/didOpen',
-            {
-                textDocument: {
-                    uri,
-                    languageId: 'latex',
-                    version: 1,
-                    text: 'x',
-                },
+        await katexServer.connection.sendNotification('textDocument/didOpen', {
+            textDocument: {
+                uri,
+                languageId: 'latex',
+                version: 1,
+                text: 'x',
             },
-        );
+        });
         // Replace the whole text with `\bet`.
         await katexServer.connection.sendNotification(
             'textDocument/didChange',

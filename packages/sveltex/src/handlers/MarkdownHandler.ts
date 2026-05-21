@@ -451,14 +451,11 @@ export function adjustHtmlSpacingAndEscape(
             /? >
         `,
         (match) => {
-            return match.replace(
-                /(?:(["'])\{.*\}\1)|(?:\{.*\})/gsu,
-                (m) => {
-                    const id_ = generateId();
-                    escaped[id_] = m;
-                    return id_;
-                },
-            );
+            return match.replace(/(?:(["'])\{.*\}\1)|(?:\{.*\})/gsu, (m) => {
+                const id_ = generateId();
+                escaped[id_] = m;
+                return id_;
+            });
         },
     );
 

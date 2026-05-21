@@ -194,9 +194,7 @@ async function extractKatex(): Promise<RawCommand[]> {
     return [...byName.entries()]
         .map(([name, category]): RawCommand => {
             const unicode = unicodeByName.get(name);
-            return unicode
-                ? { name, category, unicode }
-                : { name, category };
+            return unicode ? { name, category, unicode } : { name, category };
         })
         .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -340,9 +338,7 @@ async function extractMathjax(): Promise<RawCommand[]> {
     return [...byName.entries()]
         .map(([name, category]): RawCommand => {
             const unicode = unicodeByName.get(name);
-            return unicode
-                ? { name, category, unicode }
-                : { name, category };
+            return unicode ? { name, category, unicode } : { name, category };
         })
         .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -482,11 +478,7 @@ function serialiseList(commands: RawCommand[]): string {
 /** Generates the `commands.generated.ts` module and writes it to disk. */
 async function main(): Promise<void> {
     const unicodeNames = await fetchUnicodeNames();
-    const katex = enrich(
-        await extractKatex(),
-        unicodeNames,
-        loadDocs('katex'),
-    );
+    const katex = enrich(await extractKatex(), unicodeNames, loadDocs('katex'));
     const mathjax = enrich(
         await extractMathjax(),
         unicodeNames,

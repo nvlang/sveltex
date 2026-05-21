@@ -1,6 +1,6 @@
 {
   "name": "create-sveltex",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Deprecated: use `npx sv add @nvl/sv-sveltex` instead",
   "type": "module",
   "license": "MIT",

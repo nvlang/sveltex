@@ -36,7 +36,6 @@ import {
     type FrontmatterEntryDoc,
 } from './frontmatter-data.js';
 
-
 /** A key or value token located on a frontmatter line. */
 interface Token {
     /** The bare token text. */
@@ -125,8 +124,7 @@ function frontmatterContext(
     lines: readonly string[],
     lineIndex: number,
 ): string | undefined {
-    const indentOf = (s: string): number =>
-        (/^\s*/u.exec(s)?.[0] ?? '').length;
+    const indentOf = (s: string): number => (/^\s*/u.exec(s)?.[0] ?? '').length;
     let minIndent = indentOf(lines[lineIndex] ?? '');
     for (let i = lineIndex - 1; i >= 0; i -= 1) {
         const raw = lines[i] ?? '';
@@ -427,20 +425,18 @@ export function computeFrontmatterCompletion(
         end: { line: position.line, character: position.character },
     };
 
-    const items = Object.entries(entries).map(
-        ([name, doc]): CompletionItem => {
-            const item: CompletionItem = {
-                label: name,
-                kind,
-                documentation: {
-                    kind: MarkupKind.Markdown,
-                    value: doc.summary,
-                },
-                textEdit: { range, newText: name },
-            };
-            if (doc.element) item.detail = doc.element;
-            return item;
-        },
-    );
+    const items = Object.entries(entries).map(([name, doc]): CompletionItem => {
+        const item: CompletionItem = {
+            label: name,
+            kind,
+            documentation: {
+                kind: MarkupKind.Markdown,
+                value: doc.summary,
+            },
+            textEdit: { range, newText: name },
+        };
+        if (doc.element) item.detail = doc.element;
+        return item;
+    });
     return { isIncomplete: false, items };
 }

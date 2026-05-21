@@ -194,8 +194,7 @@ interface MathjaxCommonInputProcessorOptions {}
 /**
  * Options for the MathML input processor.
  */
-interface MathjaxMathmlInputProcessorOptions
-    extends MathjaxCommonInputProcessorOptions {
+interface MathjaxMathmlInputProcessorOptions extends MathjaxCommonInputProcessorOptions {
     /**
      * Specifies how to parse the MathML input.
      *
@@ -432,8 +431,7 @@ export type MathjaxDefaultTexExtension =
  * input jax. They are listed with their default values. To set any of these
  * options, include a `tex` section in your `MathJax` global object.
  */
-interface MathjaxTexInputProcessorOptions
-    extends MathjaxCommonInputProcessorOptions {
+interface MathjaxTexInputProcessorOptions extends MathjaxCommonInputProcessorOptions {
     /**
      * Extensions that the TeX input processor (Jax) should use.
      *
@@ -1325,8 +1323,7 @@ interface MathjaxCommonOutputProcessorOptions {
 /**
  * SVG options.
  */
-interface MathjaxSvgOutputProcessorOptions
-    extends MathjaxCommonOutputProcessorOptions {
+interface MathjaxSvgOutputProcessorOptions extends MathjaxCommonOutputProcessorOptions {
     /**
      * [MathJax v4.0 documentation for
      * `blacker`](https://docs.mathjax.org/en/v4.0/options/output/svg.html#svg-blacker):
@@ -1418,8 +1415,7 @@ interface MathjaxSvgOutputProcessorOptions
  * values. To set any of these options, include a chtml section in your MathJax
  * global object.
  */
-interface MathjaxChtmlOutputProcessorOptions
-    extends MathjaxCommonOutputProcessorOptions {
+interface MathjaxChtmlOutputProcessorOptions extends MathjaxCommonOutputProcessorOptions {
     /**
      * Set to `true` to match x-height of surrounding font.
      *

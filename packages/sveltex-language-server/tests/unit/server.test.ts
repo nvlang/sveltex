@@ -114,11 +114,9 @@ async function delay(ms: number): Promise<void> {
 async function stop(server: Spawned): Promise<void> {
     try {
         await Promise.race([
-            server.connection
-                .sendRequest('shutdown')
-                .then(async () => {
-                    await server.connection.sendNotification('exit');
-                }),
+            server.connection.sendRequest('shutdown').then(async () => {
+                await server.connection.sendNotification('exit');
+            }),
             delay(2_000),
         ]);
     } catch {
@@ -129,11 +127,7 @@ async function stop(server: Spawned): Promise<void> {
 }
 
 /** Opens a `.sveltex` document and waits out the server's reparse debounce. */
-async function open(
-    server: Spawned,
-    uri: string,
-    text: string,
-): Promise<void> {
+async function open(server: Spawned, uri: string, text: string): Promise<void> {
     await server.connection.sendNotification('textDocument/didOpen', {
         textDocument: { uri, languageId: 'sveltex', version: 1, text },
     });
@@ -253,9 +247,7 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         const timeout = delay(2_000).then(() => 'timeout' as const);
         const outcome = await Promise.race([completion, timeout]);
         if (outcome !== 'timeout') {
-            expect(items(outcome).map((i) => i.label)).not.toContain(
-                '\\alpha',
-            );
+            expect(items(outcome).map((i) => i.label)).not.toContain('\\alpha');
         }
     });
 });
@@ -282,13 +274,15 @@ describe('SvelTeX language server — Node IPC transport', () => {
         star.onNotification(() => undefined);
         star.onRequest(() => null);
         connection.listen();
-        const initializeResult =
-            await connection.sendRequest<InitializeResult>('initialize', {
+        const initializeResult = await connection.sendRequest<InitializeResult>(
+            'initialize',
+            {
                 processId: process.pid,
                 rootUri: null,
                 workspaceFolders: null,
                 capabilities: {},
-            });
+            },
+        );
         await connection.sendNotification('initialized', {});
         server = { connection, child, initializeResult };
     });

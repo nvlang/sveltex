@@ -1,6 +1,6 @@
 {
   "name": "@nvl/sveltex-math-language-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Language Server Protocol implementation for TeX math (KaTeX / MathJax) inside SvelTeX documents",
   "type": "module",
   "license": "MIT",

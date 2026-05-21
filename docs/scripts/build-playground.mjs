@@ -130,18 +130,21 @@ const external = [
 const depsAliasPlugin = {
     name: 'sveltex-deps-browser-alias',
     setup(pluginBuild) {
-        pluginBuild.onResolve({ filter: /(^|[\\/])deps(\.js|\.ts)?$/ }, (args) => {
-            if (args.kind === 'entry-point') return null;
-            const resolved = resolve(args.resolveDir, args.path);
-            const isDepsBarrel =
-                resolved === realDeps ||
-                resolved === realDeps.replace(/\.ts$/, '.js') ||
-                resolved === realDeps.replace(/\.ts$/, '');
-            if (isDepsBarrel) {
-                return { path: shimDeps };
-            }
-            return null;
-        });
+        pluginBuild.onResolve(
+            { filter: /(^|[\\/])deps(\.js|\.ts)?$/ },
+            (args) => {
+                if (args.kind === 'entry-point') return null;
+                const resolved = resolve(args.resolveDir, args.path);
+                const isDepsBarrel =
+                    resolved === realDeps ||
+                    resolved === realDeps.replace(/\.ts$/, '.js') ||
+                    resolved === realDeps.replace(/\.ts$/, '');
+                if (isDepsBarrel) {
+                    return { path: shimDeps };
+                }
+                return null;
+            },
+        );
     },
 };
 
@@ -180,10 +183,7 @@ const decodeEntitiesWorkerPlugin = {
                     return null;
                 }
                 return {
-                    path: resolved.path.replace(
-                        /index\.dom\.js$/,
-                        'index.js',
-                    ),
+                    path: resolved.path.replace(/index\.dom\.js$/, 'index.js'),
                 };
             },
         );
@@ -353,16 +353,13 @@ const mathjaxComponentsPlugin = {
             { filter: /^virtual:mathjax-components$/ },
             () => ({ path: 'virtual:mathjax-components', namespace: 'mjx' }),
         );
-        pluginBuild.onLoad(
-            { filter: /.*/, namespace: 'mjx' },
-            async () => ({
-                contents: await generateMathjaxComponentsModule(),
-                // Resolve the literal `import()` paths (absolute file paths
-                // into `node_modules`) relative to the MathJax package.
-                resolveDir: sveltexPkg,
-                loader: 'js',
-            }),
-        );
+        pluginBuild.onLoad({ filter: /.*/, namespace: 'mjx' }, async () => ({
+            contents: await generateMathjaxComponentsModule(),
+            // Resolve the literal `import()` paths (absolute file paths
+            // into `node_modules`) relative to the MathJax package.
+            resolveDir: sveltexPkg,
+            loader: 'js',
+        }));
     },
 };
 

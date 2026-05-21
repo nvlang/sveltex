@@ -334,10 +334,7 @@ function handleResponse(event: MessageEvent<ResponseMessage>): void {
         }
         next[SVELTE_OUTPUT_TAB] = code;
         outputs.value = next;
-        stageNames.value = [
-            ...stages.map((s) => s.name),
-            SVELTE_OUTPUT_TAB,
-        ];
+        stageNames.value = [...stages.map((s) => s.name), SVELTE_OUTPUT_TAB];
         if (!stageNames.value.includes(activeTab.value)) {
             activeTab.value = SVELTE_OUTPUT_TAB;
         }
@@ -423,7 +420,9 @@ const errorHeadline = computed(() =>
                             type="button"
                             role="tab"
                             class="stx-tab"
-                            :class="{ 'stx-tab--active': inputTab === 'document' }"
+                            :class="{
+                                'stx-tab--active': inputTab === 'document',
+                            }"
                             :aria-selected="inputTab === 'document'"
                             @click="inputTab = 'document'"
                         >
@@ -433,7 +432,9 @@ const errorHeadline = computed(() =>
                             type="button"
                             role="tab"
                             class="stx-tab"
-                            :class="{ 'stx-tab--active': inputTab === 'config' }"
+                            :class="{
+                                'stx-tab--active': inputTab === 'config',
+                            }"
                             :aria-selected="inputTab === 'config'"
                             @click="inputTab = 'config'"
                         >
@@ -443,9 +444,11 @@ const errorHeadline = computed(() =>
                     <button
                         type="button"
                         class="stx-reset"
-                        :title="inputTab === 'document'
-                            ? 'Reset the document to the example'
-                            : 'Reset the configuration to the defaults'"
+                        :title="
+                            inputTab === 'document'
+                                ? 'Reset the document to the example'
+                                : 'Reset the configuration to the defaults'
+                        "
                         @click="resetActiveInput"
                     >
                         Reset
@@ -462,11 +465,14 @@ const errorHeadline = computed(() =>
                         ref="highlightEl"
                         class="stx-editor__highlight"
                         aria-hidden="true"
-                    ><span
+                    >
+                        <span
                             v-for="(token, i) in editorTokens"
                             :key="i"
                             :style="tokenStyle(token)"
-                        >{{ token.content }}</span></div>
+                            >{{ token.content }}</span
+                        >
+                    </div>
                     <textarea
                         ref="inputEl"
                         v-model="currentEditorText"
@@ -475,9 +481,11 @@ const errorHeadline = computed(() =>
                         autocapitalize="off"
                         autocomplete="off"
                         autocorrect="off"
-                        :aria-label="inputTab === 'document'
-                            ? 'SvelTeX document source'
-                            : 'SvelTeX configuration source'"
+                        :aria-label="
+                            inputTab === 'document'
+                                ? 'SvelTeX document source'
+                                : 'SvelTeX configuration source'
+                        "
                         @scroll="syncScroll"
                     ></textarea>
                 </div>
@@ -516,10 +524,7 @@ const errorHeadline = computed(() =>
                         <strong>{{ errorHeadline }}</strong>
                         <p>{{ errorMessage }}</p>
                     </div>
-                    <div
-                        v-else-if="tabs.length === 0"
-                        class="stx-message"
-                    >
+                    <div v-else-if="tabs.length === 0" class="stx-message">
                         Loading the SvelTeX preprocessor…
                     </div>
                     <!--
@@ -528,11 +533,7 @@ const errorHeadline = computed(() =>
                         font style come from Shiki. No markup in the generated
                         output is ever interpreted, executed, or `v-html`-ed.
                     -->
-                    <pre
-                        v-else
-                        class="stx-code"
-                        role="tabpanel"
-                    ><code><span
+                    <pre v-else class="stx-code" role="tabpanel"><code><span
                             v-for="(token, i) in outputTokens"
                             :key="i"
                             :style="tokenStyle(token)"
@@ -541,13 +542,13 @@ const errorHeadline = computed(() =>
             </section>
         </div>
         <p class="stx-note">
-            Runs entirely in your browser — no server is involved, and
-            nothing you type leaves your machine. The
-            <code>+page.sveltex</code> document is only ever fed to
-            SvelTeX's text-only <code>trace</code> step; its code is never
-            executed. The <code>sveltex.config.js</code> tab
-            <em>is</em> evaluated (that's the point — it constructs the
-            preprocessor), in this worker, never elsewhere.
+            Runs entirely in your browser — no server is involved, and nothing
+            you type leaves your machine. The
+            <code>+page.sveltex</code> document is only ever fed to SvelTeX's
+            text-only <code>trace</code> step; its code is never executed. The
+            <code>sveltex.config.js</code> tab <em>is</em> evaluated (that's the
+            point — it constructs the preprocessor), in this worker, never
+            elsewhere.
         </p>
     </div>
 </template>

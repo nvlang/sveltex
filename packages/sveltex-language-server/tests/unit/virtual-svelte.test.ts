@@ -61,9 +61,7 @@ describe('buildVirtualSvelte', () => {
         const regions = computeRegions(source, config);
         const { sourceMap } = buildVirtualSvelte(source, regions);
         const mathOffset = source.indexOf('x + y');
-        expect(
-            sourceMap.sourceOffsetToGenerated(mathOffset),
-        ).toBeUndefined();
+        expect(sourceMap.sourceOffsetToGenerated(mathOffset)).toBeUndefined();
     });
 
     it('produces an empty virtual document for an empty source', () => {

@@ -155,9 +155,7 @@ export function isNativeCompletionItem(item: CompletionItem): boolean {
  *
  * @returns An absolute path, or `undefined` if none could be determined.
  */
-export function workspaceRootOf(
-    params: InitializeParams,
-): string | undefined {
+export function workspaceRootOf(params: InitializeParams): string | undefined {
     const folder = params.workspaceFolders?.[0]?.uri;
     if (folder) return uriToPath(folder);
     // `rootUri` / `rootPath` are deprecated in the LSP spec but are still the

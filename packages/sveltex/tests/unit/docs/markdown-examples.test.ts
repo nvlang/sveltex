@@ -7,10 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { preprocess, type PreprocessorGroup } from 'svelte/compiler';
 import { sveltex } from '../../../src/mod.js';
 
-const run = async (
-    s: PreprocessorGroup,
-    input: string,
-): Promise<string> => {
+const run = async (s: PreprocessorGroup, input: string): Promise<string> => {
     const result = await preprocess(input, s, { filename: 'test.sveltex' });
     return result.code;
 };

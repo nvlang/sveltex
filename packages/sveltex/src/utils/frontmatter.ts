@@ -60,7 +60,14 @@ export function interpretFrontmatter(
     obj: object | undefined,
 ): { frontmatter: Frontmatter; meta: Meta[] } | undefined {
     if (obj === undefined) return undefined;
-    const { title, noscript, base, link, meta: rawMeta, ...rest } = obj as {
+    const {
+        title,
+        noscript,
+        base,
+        link,
+        meta: rawMeta,
+        ...rest
+    } = obj as {
         title: unknown;
         noscript: unknown;
         base: unknown;
@@ -309,11 +316,7 @@ function applyMetaBlock(
                 if (name === 'charset') {
                     result = addCharset(result, content, silent);
                 } else if (name) {
-                    result = addMetaName(
-                        result,
-                        { name, content },
-                        silent,
-                    );
+                    result = addMetaName(result, { name, content }, silent);
                 } else if (httpEquiv) {
                     result = addMetaHttpEquiv(
                         result,
@@ -448,9 +451,7 @@ export function handleFrontmatter(
             const objectKey = identifierRegExp.test(key)
                 ? key
                 : JSON.stringify(key);
-            scriptModuleLines.push(
-                `${objectKey}: ${JSON.stringify(value)},`,
-            );
+            scriptModuleLines.push(`${objectKey}: ${JSON.stringify(value)},`);
         });
 
         if (scriptModuleLines.length > 0) {
@@ -508,8 +509,7 @@ export function handleFrontmatter(
             if (
                 0 < entries.length &&
                 entries.every(
-                    ([k, v]) =>
-                        (k === 'href' || k === 'target') && isString(v),
+                    ([k, v]) => (k === 'href' || k === 'target') && isString(v),
                 )
             ) {
                 /* v8 ignore stop */

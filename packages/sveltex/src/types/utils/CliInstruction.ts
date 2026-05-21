@@ -9,8 +9,7 @@ import type { SpawnOptionsWithoutStdio } from '../../deps.js';
  * method from the `node:child_process` module).
  */
 export interface CliInstruction
-    extends SpawnOptionsWithoutStdio,
-        Record<string, unknown> {
+    extends SpawnOptionsWithoutStdio, Record<string, unknown> {
     /**
      * Command to execute.
      *

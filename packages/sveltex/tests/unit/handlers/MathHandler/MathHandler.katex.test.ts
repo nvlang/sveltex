@@ -40,13 +40,16 @@ describe("MathHandler<'katex'>", () => {
 
         // Stub global fetch to avoid real network requests and timeouts during tests.
         // Return a minimal CSS containing "font-style" so assertions depending on CSS content pass.
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: true,
-            text: async () =>
-                Promise.resolve(
-                    '/* mocked katex css */\n.katex { font-style: italic; }\n.katex .base { font-weight: normal; }',
-                ),
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                text: async () =>
+                    Promise.resolve(
+                        '/* mocked katex css */\n.katex { font-style: italic; }\n.katex .base { font-weight: normal; }',
+                    ),
+            }),
+        );
 
         const mocks = await spy(
             ['writeFileEnsureDir', 'fancyWrite', 'log', 'existsSync', 'mkdir'],

@@ -10,7 +10,9 @@ import { setupTest } from './setup/suite.js';
  * file lives at `packages/sv-sveltex/tests/`, so `../../sveltex/` resolves to
  * the sibling `packages/sveltex/` package.
  */
-const localSveltexPkgDir = fileURLToPath(new URL('../../sveltex/', import.meta.url));
+const localSveltexPkgDir = fileURLToPath(
+    new URL('../../sveltex/', import.meta.url),
+);
 
 const { test, testCases } = setupTest(
     { addon },

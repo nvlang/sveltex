@@ -56,11 +56,7 @@ describe('utils/diagnosers/texConfiguration', () => {
             [{ caching: { enabled: 'yes' } }, 1, 0],
             [{ caching: { cacheDirectory: 'node_modules/.cache/x' } }, 0, 0],
             [{ caching: { cacheDirectory: 123 } }, 1, 0],
-            [
-                { caching: { enabled: 0, cacheDirectory: null } },
-                2,
-                0,
-            ],
+            [{ caching: { enabled: 0, cacheDirectory: null } }, 2, 0],
 
             // --- Compilation options ---
             [{ compilation: { shellEscape: false } }, 0, 0],
@@ -145,7 +141,11 @@ describe('utils/diagnosers/texConfiguration', () => {
             [{ optimization: { currentColor: 123 } }, 1, 0],
             [{ optimization: { overrideOptimization: null } }, 0, 0],
             [
-                { optimization: { overrideOptimization: (svg: string) => svg } },
+                {
+                    optimization: {
+                        overrideOptimization: (svg: string) => svg,
+                    },
+                },
                 0,
                 0,
             ],

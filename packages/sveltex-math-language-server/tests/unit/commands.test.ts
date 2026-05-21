@@ -136,10 +136,7 @@ describe('CommandTable', () => {
     it('filters by prefix, environments only, for `\\begin{...}`', () => {
         const matches = table.withPrefix('a', true);
         // Only `aligned` and `array` are environments; `alpha` is excluded.
-        expect(matches.map((c) => c.name).sort()).toEqual([
-            'aligned',
-            'array',
-        ]);
+        expect(matches.map((c) => c.name).sort()).toEqual(['aligned', 'array']);
     });
 
     it('treats an empty prefix as matching the whole (filtered) pool', () => {

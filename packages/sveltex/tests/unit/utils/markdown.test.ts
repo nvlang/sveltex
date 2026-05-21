@@ -85,7 +85,7 @@ describe('adjustHtmlSpacing with component info', () => {
         ).toMatch(/<ExampleID>\n{2,}text\n{2,}<\/ExampleID>/u);
     });
 
-    it("falls back to the prefersInline arg when a component has no `prefersInline`", () => {
+    it('falls back to the prefersInline arg when a component has no `prefersInline`', () => {
         // The matching component exists but leaves `prefersInline` undefined,
         // so the `prefersInline` argument (`true`) is used.
         expect(

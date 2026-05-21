@@ -749,13 +749,16 @@ describe('TexHandler.process()', () => {
                 debug: { verbosity: 'box' },
             });
             const { log } = await spy(['log'], false);
-            const config = mergeConfigs({ tag: 'tex', ...defaultConfig }, {
-                overrides: {
-                    compilation: { intermediateFiletype: 'pdf' },
-                    conversion: { converter: 'poppler' },
+            const config = mergeConfigs(
+                { tag: 'tex', ...defaultConfig },
+                {
+                    overrides: {
+                        compilation: { intermediateFiletype: 'pdf' },
+                        conversion: { converter: 'poppler' },
+                    },
+                    documentClass: 'standalone',
                 },
-                documentClass: 'standalone',
-            });
+            );
             await ath.process('first', {
                 attributes: { ref: 'one' },
                 filename: 'test.sveltex',
@@ -801,14 +804,17 @@ describe('TexHandler.process()', () => {
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
-                config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
-                    overrides: {
-                        compilation: { intermediateFiletype: 'pdf' },
-                        conversion: { converter: 'poppler' },
-                        optimization: { currentColor: null },
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            compilation: { intermediateFiletype: 'pdf' },
+                            conversion: { converter: 'poppler' },
+                            optimization: { currentColor: null },
+                        },
+                        documentClass: 'standalone',
                     },
-                    documentClass: 'standalone',
-                }),
+                ),
             });
             expect(log).not.toHaveBeenCalled();
             expect(writeFile_).toHaveBeenNthCalledWith(
@@ -838,14 +844,17 @@ describe('TexHandler.process()', () => {
                 filename: 'test.sveltex',
                 selfClosing: false,
                 tag: 'tex',
-                config: mergeConfigs({ tag: 'tex', ...defaultConfig }, {
-                    overrides: {
-                        compilation: { intermediateFiletype: 'pdf' },
-                        conversion: { converter: 'poppler' },
-                        optimization: { currentColor: '#12345' },
+                config: mergeConfigs(
+                    { tag: 'tex', ...defaultConfig },
+                    {
+                        overrides: {
+                            compilation: { intermediateFiletype: 'pdf' },
+                            conversion: { converter: 'poppler' },
+                            optimization: { currentColor: '#12345' },
+                        },
+                        documentClass: 'standalone',
                     },
-                    documentClass: 'standalone',
-                }),
+                ),
             });
             expect(log).not.toHaveBeenCalled();
             // `fill="currentColor"` is still added (poppler branch), but no hex
