@@ -55,18 +55,17 @@ const PALETTE = {
 function classifyTsNode(type) {
     if (type === 'frontmatter_content') return 'frontmatter';
     if (type.startsWith('math_content_')) return 'math';
-    // TM nests `punctuation.definition.string.{begin,end}.tex` *inside*
-    // `meta.math.{block,inline}.tex`, so the delimiters carry the math scope
-    // too. Mirror that here — otherwise the delimiters always show as
-    // tm-only.
     if (type === 'math_delimiter') return 'math';
     if (type === 'tex_verbatim_body') return 'verbatim-tex-body';
     if (type === 'plain_verbatim_body') return 'verbatim-plain-body';
     if (type === 'svelte_expression_body') return 'mustache-body';
     if (type === 'svelte_each_iterable') return 'mustache-body';
+    if (type === 'svelte_each_binding') return 'mustache-body';
+    if (type === 'svelte_each_index') return 'mustache-body';
     if (type === 'svelte_each_key') return 'mustache-body';
     if (type === 'svelte_snippet_params') return 'mustache-body';
     if (type === 'svelte_await_promise') return 'mustache-body';
+    if (type === 'svelte_await_binding') return 'mustache-body';
     if (type === 'svelte_block_tag') return 'block-tag';
     if (type === 'svelte_each_as') return 'block-tag';
     if (type === 'svelte_await_keyword') return 'block-tag';
@@ -79,8 +78,15 @@ function classifyTmScopes(scopes) {
     if (has(/\bmeta\.math\b/)) return 'math';
     if (has(/\bmeta\.embedded\.block\.latex\b/)) return 'verbatim-tex-body';
     if (has(/\bmeta\.verbatim\.body\.plain|verbatim-plain/)) return 'verbatim-plain-body';
-    if (has(/\bmeta\.embedded\.expression\.svelte/)) return 'mustache-body';
-    if (has(/\b(punctuation\.definition\.block|keyword)\..*\bsvelte\b/)) return 'block-tag';
+    if (has(/\bmeta\.embedded\.expression\.svelte\b/)) return 'mustache-body';
+    // Block-tag delimiters / keywords — only count `punctuation.section.
+    // embedded.*` as block-tag when the scope chain is inside a
+    // `meta.special.*.svelte` container; otherwise it's just a plain
+    // mustache `{` / `}`.
+    if (has(/\bmeta\.special\.\w+\.svelte\b/)) {
+        if (has(/\b(keyword|storage\.type)\..*\bsvelte\b/)) return 'block-tag';
+        if (has(/\bpunctuation\.(definition\.keyword|section\.embedded\.(begin|end))\..*\bsvelte\b/)) return 'block-tag';
+    }
     return null;
 }
 
@@ -146,6 +152,10 @@ async function loadRegistry() {
     ).buffer;
     await oniguruma.loadWASM(wasm);
 
+    // `source.svelte` comes from `docs/misc/svelte.tmLanguage.json`,
+    // vendored from upstream and refreshed weekly by the
+    // `vendor-update` workflow — so block tags / mustache / interpolation
+    // tokenise through the real Svelte grammar rather than a stub.
     const grammarFiles = {
         'source.sveltex': join(
             REPO_ROOT,
@@ -155,9 +165,13 @@ async function loadRegistry() {
             REPO_ROOT,
             'packages/vscode-sveltex/syntaxes/markdown.tmLanguage.yaml',
         ),
+        'source.svelte': join(
+            REPO_ROOT,
+            'docs/misc/svelte.tmLanguage.json',
+        ),
     };
     const externalScopes = [
-        'source.yaml', 'source.toml', 'source.json', 'source.svelte',
+        'source.yaml', 'source.toml', 'source.json',
         'source.js', 'source.ts', 'source.css', 'source.css.scss',
         'source.sass', 'source.css.postcss', 'source.stylus',
         'text.tex.latex', 'text.html.basic', 'text.html.derivative',
@@ -176,9 +190,15 @@ async function loadRegistry() {
         loadGrammar: async (scope) => {
             const path = grammarFiles[scope];
             if (path) {
+                const text = readFileSync(path, 'utf-8');
+                const raw = path.endsWith('.json')
+                    ? JSON.parse(text)
+                    : jsYaml.load(text);
+                // Always end filename in `.json` so vscode-textmate
+                // parses JSON, not PLIST.
                 return vsctm.parseRawGrammar(
-                    JSON.stringify(jsYaml.load(readFileSync(path, 'utf-8'))),
-                    path + '.json',
+                    JSON.stringify(raw),
+                    path.endsWith('.json') ? path : `${path}.json`,
                 );
             }
             if (externalScopes.includes(scope)) return stub(scope);
@@ -257,11 +277,11 @@ function divergenceWhy(d) {
     if (d.ts && !d.tm) {
         const reasons = {
             frontmatter: 'TextMate frontmatter pattern requires `source.yaml`/`toml`/`json` to resolve — in a bench without those, the body shows unclassified.',
-            math: 'TextMate would tag this if the math grammar fired but the inner span is unclassified at this position.',
+            math: 'Per-byte boundary mismatch inside a math span (e.g. tree-sitter splits delimiter from content; TM uses one continuous `meta.math.*` scope).',
             'verbatim-tex-body': 'TextMate normally tags `<tex>` bodies as `meta.embedded.block.latex`. Likely a per-character gap in the TM tokeniser.',
             'verbatim-plain-body': 'The TextMate grammar has no dedicated scope for `<verbatim>` bodies; left as plain text.',
-            'mustache-body': '**Real parity gap**: the TextMate grammar does not parse `{ … }` mustache expressions as a distinct construct.',
-            'block-tag': '**Real parity gap**: the TextMate grammar does not parse `{#if`/`{/each}`/etc. block-tag delimiters as keywords.',
+            'mustache-body': 'TM via `source.svelte` did not inject here — usually because a Markdown construct (e.g. a list-item paragraph) absorbed the line first. Tree-sitter parses these top-level.',
+            'block-tag': 'TM via `source.svelte` did not inject here — typically a Markdown list / paragraph swallowed the line before `source.svelte#special-tags` could fire. Tree-sitter parses these top-level so it picks them up regardless.',
         };
         return reasons[d.ts] ?? '';
     }

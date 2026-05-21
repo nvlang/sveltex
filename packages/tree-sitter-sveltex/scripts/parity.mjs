@@ -18,9 +18,11 @@
  *   - LSP behaviour (hovers, completions, diagnostics) — both extensions
  *     ride on the same LSP, so any divergence there isn't a grammar issue.
  *   - Theme rendering / colour scheme — that's editor-side.
- *   - Markdown / Svelte / JS injection contents — both grammars hand those
- *     off to the host editor's grammar chain, which produces different
- *     output by design.
+ *   - YAML / TOML / LaTeX body tokenisation inside embedded blocks — the
+ *     bench loads zero-pattern stubs for those host grammars (they ship
+ *     with VS Code language extensions, not vendored here). Only
+ *     `source.svelte` is loaded for real, from the vendored
+ *     `docs/misc/svelte.tmLanguage.json`.
  *
  * Run:    pnpm parity
  * Output: parity-report.md (in the package root)
@@ -81,8 +83,23 @@ function classifyTsNode(type) {
     if (type === 'math_delimiter') return 'math';
     if (type === 'tex_verbatim_body') return 'verbatim-tex-body';
     if (type === 'plain_verbatim_body') return 'verbatim-plain-body';
+    // Mustache / block-head JS payloads. The Svelte TM grammar tags all of
+    // these with `meta.embedded.expression.svelte` — collapse them to one
+    // parity kind so the bench doesn't over-report divergences for the
+    // structural decomposition (`iterable` vs `binding` vs `key` etc.)
+    // tree-sitter does on top.
     if (type === 'svelte_expression_body') return 'mustache-body';
+    if (type === 'svelte_each_iterable') return 'mustache-body';
+    if (type === 'svelte_each_binding') return 'mustache-body';
+    if (type === 'svelte_each_index') return 'mustache-body';
+    if (type === 'svelte_each_key') return 'mustache-body';
+    if (type === 'svelte_snippet_params') return 'mustache-body';
+    if (type === 'svelte_await_promise') return 'mustache-body';
+    if (type === 'svelte_await_binding') return 'mustache-body';
+    // Block-tag delimiters + the keyword tokens TM puts between them.
     if (type === 'svelte_block_tag') return 'block-tag';
+    if (type === 'svelte_each_as') return 'block-tag';
+    if (type === 'svelte_await_keyword') return 'block-tag';
     return null;
 }
 
@@ -152,16 +169,31 @@ function classifyTmScopes(scopes) {
     if (has(/\bmeta\.verbatim\.body\.plain|verbatim-plain/)) {
         return 'verbatim-plain-body';
     }
-    // Svelte mustache expressions: the current TextMate grammar does NOT
-    // emit a first-class scope for these. They'd surface only if the
-    // markup got handed to `source.svelte`, which the SvelTeX TM grammar
-    // doesn't currently arrange. Surfacing this gap is the point of the
-    // parity bench.
-    if (has(/\bmeta\.embedded\.expression\.svelte/)) {
+    // Svelte mustache / block-head JS payloads: scoped as
+    // `meta.embedded.expression.svelte` (with an inner `source.ts` /
+    // `source.js`) by the upstream Svelte grammar. The same scope wraps
+    // both plain `{name}` interpolation bodies and the JS-bearing parts
+    // of block heads (`items` and `(item.id)` inside `{#each items as
+    // item (item.id)}`).
+    if (has(/\bmeta\.embedded\.expression\.svelte\b/)) {
         return 'mustache-body';
     }
-    if (has(/\b(punctuation\.definition\.block|keyword)\..*\bsvelte\b/)) {
-        return 'block-tag';
+    // Block-tag delimiters / keywords. The Svelte TM grammar wraps every
+    // block tag in a `meta.special.{if,each,await,key,snippet,…}.svelte`
+    // scope, and *inside* that scope it tags individual pieces with:
+    //   - `punctuation.section.embedded.{begin,end}.svelte` for `{` / `}`
+    //   - `punctuation.definition.keyword.svelte` for the `#` / `:` /
+    //     `/` / `@` sigil
+    //   - `keyword.control.{conditional,flow,as,…}.svelte`,
+    //     `keyword.other.svelte`, `storage.type.svelte` for the keyword
+    //     identifier (`if`, `each`, `await`, `then`, `catch`, `as`,
+    //     `const`, `html`, `render`, `debug`, `attach`, …)
+    // Gating on `meta.special.*.svelte` keeps plain `{name}` interpolation
+    // braces — which share `punctuation.section.embedded.*.svelte` but
+    // are NOT block tags — out of this bucket.
+    if (has(/\bmeta\.special\.\w+\.svelte\b/)) {
+        if (has(/\b(keyword|storage\.type)\..*\bsvelte\b/)) return 'block-tag';
+        if (has(/\bpunctuation\.(definition\.keyword|section\.embedded\.(begin|end))\..*\bsvelte\b/)) return 'block-tag';
     }
     return null;
 }
@@ -223,7 +255,12 @@ async function loadRegistry() {
 
     // The published markdown grammar has `scopeName: text.markdown`, not
     // `text.html.markdown` — see `packages/vscode-sveltex/package.json`'s
-    // `contributes.grammars`.
+    // `contributes.grammars`. The Svelte grammar is loaded from
+    // `docs/misc/svelte.tmLanguage.json`, vendored from upstream
+    // (`sveltejs/language-tools`) and kept fresh by the weekly
+    // `vendor-update` workflow — so the bench tokenises Svelte
+    // mustaches / block tags / interpolation through the *real* grammar
+    // the SvelTeX TM grammar would resolve to at runtime in VS Code.
     const grammarFiles = {
         'source.sveltex': join(
             REPO_ROOT,
@@ -233,24 +270,27 @@ async function loadRegistry() {
             REPO_ROOT,
             'packages/vscode-sveltex/syntaxes/markdown.tmLanguage.yaml',
         ),
+        'source.svelte': join(
+            REPO_ROOT,
+            'docs/misc/svelte.tmLanguage.json',
+        ),
     };
 
     // The SvelTeX TextMate grammar's frontmatter / verbatim / fenced-code
     // patterns include external grammars (`source.yaml`, `source.toml`,
-    // `text.tex.latex`, `source.svelte`, etc.). If `loadGrammar` returns
-    // `null` for any of these, vscode-textmate silently fails the entire
+    // `text.tex.latex`, etc.) that ship with VS Code's bundled language
+    // extensions — we don't vendor them here. If `loadGrammar` returns
+    // `null` for any of them, vscode-textmate silently fails the entire
     // enclosing rule — its begin/end never fires and the outer
-    // `meta.embedded.block.*` scope is never emitted. In VS Code those
-    // grammars are typically available (ships with the language extensions);
-    // here we stand in a zero-pattern grammar for each one so the
-    // *outer* begin/end fires and the parity bench can compare on the
-    // structural scopes we care about. The inner language tokenization is
-    // out of scope for parity.
+    // `meta.embedded.block.*` scope is never emitted. So we stand in a
+    // zero-pattern grammar for each one: the outer begin/end fires and
+    // the parity bench compares on the structural scopes we care about.
+    // The inner-language tokenisation (the YAML body of frontmatter,
+    // the LaTeX body of `<tex>`) is out of scope for this bench.
     const externalScopes = [
         'source.yaml',
         'source.toml',
         'source.json',
-        'source.svelte',
         'source.js',
         'source.ts',
         'source.css',
@@ -278,11 +318,16 @@ async function loadRegistry() {
         loadGrammar: async (scopeName) => {
             const path = grammarFiles[scopeName];
             if (path) {
-                const yaml = readFileSync(path, 'utf-8');
-                const raw = jsYaml.load(yaml);
+                const text = readFileSync(path, 'utf-8');
+                const raw = path.endsWith('.json')
+                    ? JSON.parse(text)
+                    : jsYaml.load(text);
+                // Always end the filename in `.json` — vscode-textmate
+                // picks PLIST vs JSON parsing off the extension, and
+                // we've already serialised `raw` to JSON above.
                 return vsctm.parseRawGrammar(
                     JSON.stringify(raw),
-                    path + '.json',
+                    path.endsWith('.json') ? path : `${path}.json`,
                 );
             }
             if (externalScopes.includes(scopeName)) {
