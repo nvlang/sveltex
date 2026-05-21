@@ -24,6 +24,7 @@ jobs:
   build:
     name: Build the VitePress site
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       # Audit outbound traffic during the build (fetches grammars, fonts,
@@ -87,6 +88,7 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     permissions:
       pages: write

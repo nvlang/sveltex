@@ -26,6 +26,9 @@ jobs:
   vendor-update:
     name: Refresh vendored upstream files
     runs-on: ubuntu-latest
+    # `pnpm vendor:update` makes one HTTP fetch per `VENDORED` entry; a
+    # stuck upstream shouldn't tie up a runner for the 6-hour default.
+    timeout-minutes: 20
     permissions:
       contents: write # for the chore/vendor-update branch the PR opens against
       pull-requests: write # for `peter-evans/create-pull-request` to open the PR
@@ -58,9 +61,27 @@ jobs:
       - name: Refresh vendored files
         run: pnpm vendor:update
 
+      # PRs opened with the default `GITHUB_TOKEN` do NOT trigger
+      # `pull_request`-driven workflows (a documented GitHub guard against
+      # recursion). That would leave the weekly vendor PR with zero CI
+      # signal. Open it as the `sveltex-release` App instead -- same
+      # credentials as `ci.yml`'s release job -- so `ci.yml` and
+      # `dependency-review.yml` fire on the PR as they would for a human.
+      - name: Mint a GitHub-App installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - name: Open PR if anything changed
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          token: ${{ steps.app-token.outputs.token }}
+          # Vendor refreshes go through the same `develop` -> `main` flow as
+          # everything else; the default base (the repo's default branch)
+          # would otherwise target `main` directly.
+          base: develop
           branch: chore/vendor-update
           commit-message: 'chore(vendor): refresh upstream files'
           title: 'chore(vendor): refresh vendored upstream files'

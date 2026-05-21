@@ -16,10 +16,18 @@ on:
 permissions:
   contents: read
 
+# Serialize manual dispatches -- two parallel `vsce publish` calls of the
+# same `.vsix` would race on the marketplace API. `cancel-in-progress:
+# false` queues the second instead of aborting an in-flight publish.
+concurrency:
+  group: vscode-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: Publish to VS Code Marketplace + Open VSX
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: release
     permissions:
       contents: read

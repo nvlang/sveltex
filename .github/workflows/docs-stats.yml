@@ -36,10 +36,18 @@ jobs:
   redeploy-if-changed:
     name: Redeploy the docs if a rounded figure moved
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: write # to dispatch the "Deploy docs to GitHub Pages" workflow
     steps:
+      # Audit egress -- this job holds `actions: write` and dispatches
+      # `docs.yml` via `gh workflow run`. Parity with other write-permission
+      # workflows in this repo.
+      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
