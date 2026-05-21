@@ -83,7 +83,7 @@ export async function mathjaxRequire(file: string): Promise<unknown> {
         throw new Error(
             `[playground] MathJax requested component "${file}" ` +
                 `(normalised: "${key}"), which is not bundled. ` +
-                'The bundler\'s MathJax component list may be out of date.',
+                "The bundler's MathJax component list may be out of date.",
         );
     }
     return load();

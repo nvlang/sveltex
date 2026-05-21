@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.3.0
+
+### Minor Changes
+
+- [`975a770`](https://github.com/nvlang/sveltex/commit/975a770780ef38707b33d0524766a2c41f0b75e4)
+  Thanks [@nvlang](https://github.com/nvlang)! - Deprecate `create-sveltex` in
+  favour of the new `@nvl/sv-sveltex` community add-on for the Svelte CLI
+  (`sv`). The `create-sveltex` binary no longer scaffolds a project; it now
+  prints a notice pointing to `npx sv add @nvl/sv-sveltex` (for existing
+  projects) and `npx sv create` (for new projects). The
+  `plop`/`inquirer`/`minimist` dependencies and the `template/` tree have been
+  removed.
+
 ## 0.1.4
 
 ### Patch Changes

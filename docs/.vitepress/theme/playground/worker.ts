@@ -85,7 +85,9 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope;
  * living inside `/public`.
  */
 const bundleUrl =
-    self.location.origin + '/' + ['playground', 'sveltex-playground.mjs'].join('/');
+    self.location.origin +
+    '/' +
+    ['playground', 'sveltex-playground.mjs'].join('/');
 
 /**
  * Lazily-loaded SvelTeX bundle. Built once on the first request and reused;
@@ -96,7 +98,9 @@ let modulePromise: Promise<SveltexModule> | undefined;
 function getModule(): Promise<SveltexModule> {
     if (!modulePromise) {
         // Runtime URL import: served from `src/public/` at the site root.
-        modulePromise = import(/* @vite-ignore */ bundleUrl) as Promise<SveltexModule>;
+        modulePromise = import(
+            /* @vite-ignore */ bundleUrl
+        ) as Promise<SveltexModule>;
     }
     return modulePromise;
 }

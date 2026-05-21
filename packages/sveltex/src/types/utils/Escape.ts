@@ -171,14 +171,16 @@ export interface ProcessedSnippet {
     unescapeOptions: UnescapeOptions;
 }
 
-export interface EscapableSnippet<T extends SnippetType = SnippetType>
-    extends Snippet<T> {
+export interface EscapableSnippet<
+    T extends SnippetType = SnippetType,
+> extends Snippet<T> {
     escapeOptions?: EscapeOptions | undefined;
     unescapeOptions?: UnescapeOptions | undefined;
 }
 
-export interface EscapedSnippet<T extends SnippetType = SnippetType>
-    extends Snippet<T> {
+export interface EscapedSnippet<
+    T extends SnippetType = SnippetType,
+> extends Snippet<T> {
     unescapeOptions?: UnescapeOptions | undefined;
 }
 

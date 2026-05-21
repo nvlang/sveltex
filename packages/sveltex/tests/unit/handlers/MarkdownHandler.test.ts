@@ -596,9 +596,7 @@ describe('MarkdownHandler.create missing dependencies', () => {
             vi.doMock(dep, () => {
                 throw new Error(`${dep} not found`);
             });
-            await expect(
-                MarkdownHandler.create(backend, {}),
-            ).rejects.toThrow();
+            await expect(MarkdownHandler.create(backend, {})).rejects.toThrow();
             expect(missingDeps).toContain(dep);
             vi.doUnmock(dep);
         },

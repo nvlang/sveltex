@@ -176,19 +176,11 @@ export function buildRegionVirtualDocument(
     // not. Embed the former in the LaTeX scaffold (the project's, or the
     // built-in default).
     const scaffold =
-        region.kind === 'verbatim'
-            ? latexScaffold
-            : { prefix: '', suffix: '' };
+        region.kind === 'verbatim' ? latexScaffold : { prefix: '', suffix: '' };
     const text = `${scaffold.prefix}${innerText}${scaffold.suffix}`;
 
     const sourceMap = SourceMap.create(
-        [
-            identityMapping(
-                innerStart,
-                scaffold.prefix.length,
-                innerText.length,
-            ),
-        ],
+        [identityMapping(innerStart, scaffold.prefix.length, innerText.length)],
         source,
         text,
     );

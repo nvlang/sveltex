@@ -181,9 +181,7 @@ function readVerbatimTags(
  * @returns The deduplicated tag list, or `undefined` if the config declares no
  * `tex`-typed verbatim environment.
  */
-function readLatexTags(
-    config: Record<string, unknown>,
-): string[] | undefined {
+function readLatexTags(config: Record<string, unknown>): string[] | undefined {
     const verbatim = config['verbatim'];
     if (!isObject(verbatim)) return undefined;
     const tags = new Set<string>();

@@ -97,8 +97,7 @@ describe('multiple math snippets in a single document', () => {
         expect(code).toBeDefined();
         // Both expressions were handed to KaTeX and rendered.
         expect(code).toContain('katex');
-        const renderedMathCount = (code?.match(/class="katex"/gu) ?? [])
-            .length;
+        const renderedMathCount = (code?.match(/class="katex"/gu) ?? []).length;
         expect(renderedMathCount).toBe(2);
         // The textual context around the two snippets survived.
         expect(code).toContain('First ');
@@ -137,9 +136,7 @@ describe('Sveltex.trace', () => {
 
     test('yields empty code when preprocessing throws', async () => {
         const debugModule = await import('../../../../src/utils/debug.js');
-        const logSpy = vi
-            .spyOn(debugModule, 'log')
-            .mockReturnValue(undefined);
+        const logSpy = vi.spyOn(debugModule, 'log').mockReturnValue(undefined);
         const escapeModule = await import('../../../../src/utils/escape.js');
         const escapeSpy = vi
             .spyOn(escapeModule, 'escape')

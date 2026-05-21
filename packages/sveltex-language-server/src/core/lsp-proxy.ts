@@ -17,11 +17,7 @@
 // Both end up as a `ChildProcessWithoutNullStreams`-like object exposing
 // `stdin`/`stdout`/`stderr`; the proxy speaks LSP over those pipes.
 
-import {
-    fork,
-    spawn,
-    type ChildProcess,
-} from 'node:child_process';
+import { fork, spawn, type ChildProcess } from 'node:child_process';
 // `vscode-languageserver-protocol`'s `./node` subpath alias is not resolvable
 // under `Node16` resolution (the package predates the npm `exports` field), so
 // the Node entry point is imported via its concrete file path — the same

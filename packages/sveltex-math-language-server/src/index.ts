@@ -24,7 +24,11 @@ import {
 import { createServer } from './core/server.js';
 
 export { createServer, resolveBackend } from './core/server.js';
-export type { MathLspBackend, MathCommand, CommandCategory } from './core/commands.js';
+export type {
+    MathLspBackend,
+    MathCommand,
+    CommandCategory,
+} from './core/commands.js';
 export { CommandTable, createCommandTable } from './core/commands.js';
 export { computeCompletion, computeHover } from './core/features.js';
 export {
@@ -34,10 +38,7 @@ export {
     type CompletionContext,
 } from './core/context.js';
 export { describeCommand, hoverMarkdown } from './core/describe.js';
-export {
-    KATEX_COMMANDS,
-    MATHJAX_COMMANDS,
-} from './data/commands.generated.js';
+export { KATEX_COMMANDS, MATHJAX_COMMANDS } from './data/commands.generated.js';
 
 /**
  * Starts the SvelTeX math language server over stdio.

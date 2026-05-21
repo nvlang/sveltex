@@ -147,9 +147,9 @@ describe.concurrent('utils/misc', () => {
             // Objects and arrays are neither strings nor booleans/numbers/null,
             // so they are not copied into the result.
             log.mockClear();
-            expect(interpretAttributes({ a: {}, b: [1, 2], c: 'kept' })).toEqual(
-                { c: 'kept' },
-            );
+            expect(
+                interpretAttributes({ a: {}, b: [1, 2], c: 'kept' }),
+            ).toEqual({ c: 'kept' });
             expect(log).not.toHaveBeenCalled();
         });
     });

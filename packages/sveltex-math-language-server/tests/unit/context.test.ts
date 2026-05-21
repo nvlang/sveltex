@@ -4,10 +4,7 @@
 // and the escaped-backslash edge case.
 
 import { describe, expect, it } from 'vitest';
-import {
-    commandAtCaret,
-    completionContextAt,
-} from '../../src/core/context.js';
+import { commandAtCaret, completionContextAt } from '../../src/core/context.js';
 
 describe('completionContextAt — ordinary commands', () => {
     it('recognises a lone backslash (empty prefix)', () => {

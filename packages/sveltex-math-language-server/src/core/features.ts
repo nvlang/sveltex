@@ -75,9 +75,7 @@ function buildCompletionItem(
 ): CompletionItem {
     // Inside `\begin{...}` the slot holds a bare environment name; everywhere
     // else a command is `\name`. The label mirrors what is inserted.
-    const insertText = isEnvironmentName
-        ? command.name
-        : `\\${command.name}`;
+    const insertText = isEnvironmentName ? command.name : `\\${command.name}`;
     const label = insertText;
     return {
         label,
@@ -124,10 +122,7 @@ export function computeCompletion(
         return { isIncomplete: false, items: [] };
     }
 
-    const matches = table.withPrefix(
-        context.prefix,
-        context.isEnvironmentName,
-    );
+    const matches = table.withPrefix(context.prefix, context.isEnvironmentName);
     const replaceRange: Range = {
         start: doc.positionAt(context.backslashOffset),
         end: position,

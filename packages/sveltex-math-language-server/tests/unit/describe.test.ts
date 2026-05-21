@@ -55,7 +55,10 @@ describe('hoverMarkdown', () => {
     });
 
     it('shows a `\\begin…\\end` pair for an environment without a signature', () => {
-        const command: MathCommand = { name: 'matrix', category: 'environment' };
+        const command: MathCommand = {
+            name: 'matrix',
+            category: 'environment',
+        };
         expect(hoverMarkdown(command, 'katex')).toContain(
             '\\begin{matrix} … \\end{matrix}',
         );

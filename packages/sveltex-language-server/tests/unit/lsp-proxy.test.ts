@@ -40,9 +40,7 @@ describe('LspProxy — fork transport', () => {
         expect(proxy.isRunning).toBe(false);
         const result = await proxy.start(initParams);
         expect(proxy.isRunning).toBe(true);
-        expect(result.serverInfo?.name).toBe(
-            'sveltex-math-language-server',
-        );
+        expect(result.serverInfo?.name).toBe('sveltex-math-language-server');
         expect(proxy.initializeResult).toEqual(result);
     });
 
@@ -100,9 +98,7 @@ describe('LspProxy — spawn transport', () => {
             'math-spawn-test',
         );
         const result = await proxy.start(initParams);
-        expect(result.serverInfo?.name).toBe(
-            'sveltex-math-language-server',
-        );
+        expect(result.serverInfo?.name).toBe('sveltex-math-language-server');
     });
 });
 

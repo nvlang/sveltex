@@ -248,9 +248,9 @@ describe.concurrent('config/defaults', () => {
         const inlineMeta = getDefaultCodeConfig('escape').inlineMeta;
 
         it('parses lang + meta from `{lang meta} code` when the tag is valid', () => {
-            expect(inlineMeta?.('{js title=x} const a = 1;', () => true)).toEqual(
-                { code: 'const a = 1;', lang: 'js', meta: 'title=x' },
-            );
+            expect(
+                inlineMeta?.('{js title=x} const a = 1;', () => true),
+            ).toEqual({ code: 'const a = 1;', lang: 'js', meta: 'title=x' });
         });
 
         it('does not extract lang/meta from braces when the tag is invalid', () => {

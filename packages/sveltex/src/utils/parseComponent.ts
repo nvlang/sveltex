@@ -122,7 +122,6 @@ export function parseComponent(html: string): ParsedComponent {
         for (
             let attMatch: RegExpExecArray | null;
             (attMatch = attributesRegExp.exec(attributesString));
-
         ) {
             let { attribute_name, value } =
                 attMatch.groups as unknown as AttributesRegExpMatchGroups;

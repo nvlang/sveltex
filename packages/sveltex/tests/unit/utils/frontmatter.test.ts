@@ -322,7 +322,10 @@ describe('interpretFrontmatter()', () => {
         [{ base: { target: '_blank' } }, { base: { target: '_blank' } }],
         // `link` is truthy but not an array: `frontmatter.link` is reset to an
         // empty array and nothing is interpreted.
-        [{ link: { rel: 'stylesheet' } } as unknown as Frontmatter, { link: [] }],
+        [
+            { link: { rel: 'stylesheet' } } as unknown as Frontmatter,
+            { link: [] },
+        ],
         // `link` is an array, but none of its items are valid objects with a
         // string `rel`, so the interpreted link list stays empty.
         [
@@ -776,9 +779,7 @@ describe('handleFrontmatter()', () => {
                     '  content: beta',
                 optionsForProcessor: { type: 'yaml' },
             },
-            headLines: [
-                '<meta http-equiv="default-style" content="beta">',
-            ],
+            headLines: ['<meta http-equiv="default-style" content="beta">'],
             scriptModuleLines: [
                 'export const metadata = {',
                 'meta: [{"http-equiv":"default-style","content":"beta"}],',
@@ -806,8 +807,7 @@ describe('handleFrontmatter()', () => {
         {
             label: 'charset preserved alongside an http-equiv',
             snippet: {
-                innerContent:
-                    'meta:\n  charset: utf-8\n  default-style: foo',
+                innerContent: 'meta:\n  charset: utf-8\n  default-style: foo',
                 optionsForProcessor: { type: 'yaml' },
             },
             headLines: [
@@ -908,7 +908,7 @@ describe('handleFrontmatter()', () => {
                     config ?? {
                         head: true,
                         metadata: true,
-                                imports: true,
+                        imports: true,
                     },
                 ),
             ).toMatchObject({
@@ -961,4 +961,3 @@ describe('normalizeFrontmatterConfiguration()', () => {
         expect(normalizeFrontmatterConfiguration(input)).toEqual(expected);
     });
 });
-

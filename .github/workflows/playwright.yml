@@ -17,8 +17,8 @@ on:
     inputs:
       update_snapshots:
         description: >-
-          Regenerate the golden snapshots instead of comparing against them,
-          and upload the result as an artifact for review.
+          Regenerate the golden snapshots instead of comparing against them, and
+          upload the result as an artifact for review.
         type: boolean
         default: false
 
@@ -123,7 +123,9 @@ jobs:
         # the Playwright binary directly with `pnpm exec`; going through the
         # `pnpm playwright` script forwards a stray `--`, which Playwright
         # then reads as a (non-matching) test-file filter.
-        run: pnpm exec playwright test ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
+        run:
+          pnpm exec playwright test ${{ inputs.update_snapshots &&
+          '--update-snapshots' || '' }}
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
