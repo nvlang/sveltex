@@ -14,7 +14,9 @@
 //   * `_verbatim_plain_content`— the body of a `<verb>/<verbatim>` env:
 //                                everything up to the matching `</tag>`,
 //   * `_inline_math_content`   — the body of `$ ... $`,
-//   * `_display_math_content`  — the body of `$$ ... $$`.
+//   * `_display_math_content`  — the body of `$$ ... $$`,
+//   * `_svelte_expression_body`— the body of `{ ... }` (excluding the
+//                                braces, which the LR grammar matches).
 //
 // The scanner is stateless between tokens (no `serialize`/`deserialize`
 // payload), which keeps it trivially correct under tree-sitter's speculative
@@ -37,6 +39,7 @@ enum TokenType {
     INLINE_MATH_CONTENT,
     DISPLAY_MATH_CONTENT,
     MARKDOWN_CHUNK,
+    SVELTE_EXPRESSION_BODY,
     ERROR_SENTINEL,
 };
 
@@ -435,33 +438,56 @@ static void skip_script_or_style_after_name(TSLexer *lexer,
     }
 }
 
-// Consumes a balanced `{ … }` mustache tag whose opening `{` has *already*
-// been consumed by the caller. Nested braces are tracked so a `{ {x} }`
-// expression is consumed as a whole; an unbalanced tag consumes to EOF.
-// Strings and template literals inside the expression are skipped so a `}`
-// (or a `$`) inside a string literal does not end the tag prematurely.
-static void skip_mustache_after_open(TSLexer *lexer) {
-    unsigned depth = 1;
+// ── `_svelte_expression_body` ────────────────────────────────────────────
+//
+// Consumes the body of a `{ … }` mustache expression. The cursor starts
+// just past the opening `{` (the LR grammar matches the literal `{` itself)
+// and stops just before the matching `}`, so the LR grammar can match the
+// `}` after this token. Nested braces are tracked so `{ {x} }` works; an
+// unbalanced expression consumes to EOF. Strings and template literals
+// inside the expression are skipped verbatim so a `}` inside `"..."` does
+// not end the body prematurely.
+static bool scan_svelte_expression_body(TSLexer *lexer) {
+    lexer->result_symbol = SVELTE_EXPRESSION_BODY;
+    bool consumed = false;
+    unsigned depth = 1; // inside the opening `{` already consumed by the LR grammar
+
     for (;;) {
-        if (is_eof(lexer)) return;
+        if (is_eof(lexer)) {
+            // Unmatched — keep what we've collected so the partial parse is
+            // still useful for highlighting.
+            lexer->mark_end(lexer);
+            return consumed;
+        }
         int32_t c = lexer->lookahead;
         if (c == '{') {
             depth++;
             advance(lexer);
+            consumed = true;
             continue;
         }
         if (c == '}') {
+            if (depth == 1) {
+                // Matching close: stop here so the LR grammar can consume
+                // the `}` as part of the `svelte_expression` rule.
+                lexer->mark_end(lexer);
+                return consumed;
+            }
             depth--;
             advance(lexer);
-            if (depth == 0) return;
+            consumed = true;
             continue;
         }
         if (c == '\'' || c == '"' || c == '`') {
             // Skip a string / template literal verbatim.
             int32_t quote = c;
             advance(lexer);
+            consumed = true;
             for (;;) {
-                if (is_eof(lexer)) return;
+                if (is_eof(lexer)) {
+                    lexer->mark_end(lexer);
+                    return consumed;
+                }
                 int32_t s = lexer->lookahead;
                 if (s == '\\') {
                     advance(lexer);
@@ -477,6 +503,7 @@ static void skip_mustache_after_open(TSLexer *lexer) {
             continue;
         }
         advance(lexer);
+        consumed = true;
     }
 }
 
@@ -616,14 +643,12 @@ static bool scan_markdown_chunk(TSLexer *lexer) {
         }
 
         if (here == '{') {
-            // A Svelte mustache tag / logic-block delimiter. SvelTeX escapes
-            // `{ … }`, so a `$` inside it is JS, not math — skip the balanced
-            // tag wholesale.
-            advance(lexer);  // consume '{'
-            skip_mustache_after_open(lexer);
-            consumed = true;
-            at_line_start = false;
-            continue;
+            // A Svelte mustache expression is a separate top-level construct
+            // (the LR grammar matches `{` + body + `}`), so the chunk ends
+            // here. The cursor is exactly at the `{`, so `mark_end` pins the
+            // boundary at the opening brace.
+            lexer->mark_end(lexer);
+            return consumed;
         }
 
         if (here == '\\') {
@@ -838,6 +863,9 @@ bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
     }
     if (valid_symbols[INLINE_MATH_CONTENT]) {
         return scan_math_body(lexer, INLINE_MATH_CONTENT, false);
+    }
+    if (valid_symbols[SVELTE_EXPRESSION_BODY]) {
+        return scan_svelte_expression_body(lexer);
     }
     if (valid_symbols[MARKDOWN_CHUNK]) {
         return scan_markdown_chunk(lexer);

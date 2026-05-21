@@ -55,6 +55,10 @@
           "named": true
         },
         {
+          "type": "svelte_expression",
+          "named": true
+        },
+        {
           "type": "verbatim_environment",
           "named": true
         }
@@ -164,6 +168,27 @@
   },
   {
     "type": "plain_verbatim_body",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_expression",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "svelte_expression_body",
     "named": true,
     "fields": {}
   },
@@ -327,5 +352,13 @@
   {
     "type": "verbatim_attributes",
     "named": true
+  },
+  {
+    "type": "{",
+    "named": false
+  },
+  {
+    "type": "}",
+    "named": false
   }
 ]

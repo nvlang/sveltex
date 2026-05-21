@@ -8,6 +8,9 @@ prebuilds/
 *.wasm
 *.obj
 *.o
+*.dylib
+*.so
+*.dll
 
 # Editor/log noise.
 *.log

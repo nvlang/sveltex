@@ -55,6 +55,7 @@ module.exports = grammar({
         $._inline_math_content, // body of `$ ... $`
         $._display_math_content, // body of `$$ ... $$`
         $._markdown_chunk, // a run of ordinary Markdown text
+        $._svelte_expression_body, // body of `{ … }` (excluding the braces)
         $._error_sentinel, // tree-sitter's invalid-input sentinel
     ],
 
@@ -99,15 +100,38 @@ module.exports = grammar({
 
         // ── Body blocks ──────────────────────────────────────────────────
         //
-        // Verbatim environments and math are recognised explicitly; anything
-        // else is an opaque `markdown_chunk` for the `markdown` grammar.
+        // Verbatim environments, math and Svelte mustache expressions are
+        // recognised explicitly; anything else is an opaque `markdown_chunk`
+        // for the `markdown` grammar.
         _block: ($) =>
             choice(
                 $.verbatim_environment,
                 $.display_math,
                 $.inline_math,
+                $.svelte_expression,
                 $.markdown_chunk,
             ),
+
+        // ── Svelte mustache expressions ──────────────────────────────────
+        //
+        // A `{ … }` expression in prose. The braces are matched by the LR
+        // grammar; the body is consumed by the external scanner, which
+        // tracks brace depth and steps over string literals so embedded
+        // braces inside `'...'` / `"..."` / `` `...` `` do not perturb the
+        // matching. `injections.scm` ships the body to the JavaScript
+        // grammar. Logic-block tags (`{#if}` / `{:else}` / `{/each}` etc.)
+        // are not specially recognised yet — they are parsed as ordinary
+        // mustache expressions whose content happens to start with `#` / `:`
+        // / `/`; the JavaScript injection will flag the syntax, which is the
+        // expected fallback until first-class Svelte-block parsing lands.
+        svelte_expression: ($) =>
+            seq(
+                '{',
+                optional(field('body', $.svelte_expression_body)),
+                '}',
+            ),
+
+        svelte_expression_body: ($) => $._svelte_expression_body,
 
         // ── Verbatim environments ────────────────────────────────────────
         //

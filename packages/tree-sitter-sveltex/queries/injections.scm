@@ -95,3 +95,14 @@
 ; A `<verb>`/`<verbatim>` environment is intentionally opaque (SvelTeX escapes
 ; its contents rather than rendering them), so `plain_verbatim_body` is left
 ; un-injected — it is plain text.
+
+; ── Svelte mustache expressions ──────────────────────────────────────────
+;
+; A `{ … }` expression in prose. The body (between the braces, exclusive) is
+; a JavaScript expression in Svelte's syntax; delegate to the JS grammar.
+; Logic-block sigils (`#`/`/`/`:`/`@`) at the start of the body are not yet
+; specially recognised — the JS grammar will flag them as syntax errors,
+; which is the expected fallback until first-class Svelte-block parsing
+; lands.
+((svelte_expression_body) @injection.content
+  (#set! injection.language "javascript"))

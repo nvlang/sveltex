@@ -86,3 +86,12 @@
   (#set! injection.language "svelte"))
 
 ; `<verb>`/`<verbatim>` bodies are intentionally opaque and left un-injected.
+
+; ── Svelte mustache expressions ──────────────────────────────────────────
+;
+; The body of a `{ … }` expression (the braces themselves are matched by the
+; grammar) is a JavaScript expression — delegate to Zed's built-in JS
+; grammar. Logic-block sigils (`#`/`/`/`:`/`@`) get flagged by the JS parser
+; until first-class Svelte-block parsing lands in this grammar.
+((svelte_expression_body) @injection.content
+  (#set! injection.language "javascript"))

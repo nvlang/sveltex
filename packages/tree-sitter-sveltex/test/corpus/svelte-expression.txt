@@ -1,0 +1,138 @@
+================================================================================
+A simple mustache expression
+================================================================================
+Hello {name}!
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+A mustache expression containing a string with a comma
+================================================================================
+The shouting fruits are {shouting.join(', ')}.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+A mustache expression with a string containing a closing brace
+================================================================================
+{label || "}"}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+A mustache expression with a string containing an opening brace
+================================================================================
+{label || "{"}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+A mustache expression with nested object literals
+================================================================================
+{f({a: 1, b: {c: 2}})}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+A mustache expression with a template literal containing braces
+================================================================================
+{`hello ${name.toUpperCase()}!`}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+An escaped opening brace is plain Markdown, not a mustache expression
+================================================================================
+The literal text \{not an expression\} is prose.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk))
+
+================================================================================
+A multi-line mustache expression
+================================================================================
+{
+  items
+    .filter(x => x > 0)
+    .length
+}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+Multiple mustache expressions on a line
+================================================================================
+{first} and {second} and {third}.
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk))
+
+================================================================================
+An empty mustache expression
+================================================================================
+Empty: {} here.
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_expression)
+  (markdown_chunk))
+
+================================================================================
+A Svelte logic-block tag is parsed as a mustache expression
+================================================================================
+{#if ready}yes{/if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body))
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+A mustache expression at end of file with no trailing whitespace
+================================================================================
+trailing {expr}
+--------------------------------------------------------------------------------
+
+(document
+  (markdown_chunk)
+  (svelte_expression
+    (svelte_expression_body)))

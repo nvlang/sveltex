@@ -131,9 +131,46 @@
         },
         {
           "type": "SYMBOL",
+          "name": "svelte_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "markdown_chunk"
         }
       ]
+    },
+    "svelte_expression": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "body",
+              "content": {
+                "type": "SYMBOL",
+                "name": "svelte_expression_body"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "svelte_expression_body": {
+      "type": "SYMBOL",
+      "name": "_svelte_expression_body"
     },
     "verbatim_environment": {
       "type": "CHOICE",
@@ -730,6 +767,10 @@
     {
       "type": "SYMBOL",
       "name": "_markdown_chunk"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_svelte_expression_body"
     },
     {
       "type": "SYMBOL",
