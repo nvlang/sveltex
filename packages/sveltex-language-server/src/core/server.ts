@@ -804,13 +804,16 @@ export function createServer(connection: Connection): void {
 
     // Semantic tokens — computed natively from the document's regions, which
     // were resolved using the live SvelTeX config (so user-configured
-    // verbatim tags like `<MyVerb>` are recognised). The provider returns
+    // verbatim tags like `<MyTex>` are recognised). The provider returns
     // an empty token set for unknown documents rather than `null`: a
     // `null`-returning provider is treated as "no support" by some clients
-    // and they stop asking.
-    connection.languages.semanticTokens.on(({ textDocument }) => {
+    // and they stop asking. `computeSemanticTokens` is async because it
+    // lazily loads the bundled LaTeX TextMate grammar on first use — the
+    // load is amortised across requests and never blocks the document
+    // sync path.
+    connection.languages.semanticTokens.on(async ({ textDocument }) => {
         const doc = documents.get(textDocument.uri);
         if (!doc) return { data: [] };
-        return computeSemanticTokens(doc.text, doc.regions);
+        return computeSemanticTokens(doc.text, doc.regions, config.latexTags);
     });
 }

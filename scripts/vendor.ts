@@ -50,6 +50,27 @@ const VENDORED: readonly VendoredAsset[] = [
         license: 'MIT',
         attribution: 'sveltejs/language-tools — Svelte TextMate grammar',
     },
+    {
+        // The TextMate grammars the SvelTeX language server tokenises
+        // user-configured `<MyTex>` verbatim bodies with for
+        // `textDocument/semanticTokens/full` — VS Code's bundled LaTeX
+        // syntax extension shares this source. `LaTeX.tmLanguage.json`
+        // (`text.tex.latex`) depends on `TeX.tmLanguage.json`
+        // (`text.tex`) for braces / comments / math primitives, so both
+        // are vendored.
+        target: 'packages/sveltex-language-server/src/grammars/LaTeX.tmLanguage.json',
+        source: 'https://raw.githubusercontent.com/jlelong/vscode-latex-basics/master/syntaxes/LaTeX.tmLanguage.json',
+        transform: 'verbatim',
+        license: 'MIT',
+        attribution: 'jlelong/vscode-latex-basics — LaTeX TextMate grammar',
+    },
+    {
+        target: 'packages/sveltex-language-server/src/grammars/TeX.tmLanguage.json',
+        source: 'https://raw.githubusercontent.com/jlelong/vscode-latex-basics/master/syntaxes/TeX.tmLanguage.json',
+        transform: 'verbatim',
+        license: 'MIT',
+        attribution: 'jlelong/vscode-latex-basics — TeX TextMate grammar',
+    },
 ];
 
 /** Fetches `url`, throwing with a descriptive message on any non-OK status. */

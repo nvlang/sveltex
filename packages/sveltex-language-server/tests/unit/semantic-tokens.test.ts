@@ -17,23 +17,19 @@ import {
 
 const defaultConfig = defaultConfigSnapshot();
 
-/**
- * Returns `regions` together with `data` so each test can assert against both
- * sides at once without re-running `computeRegions` everywhere.
- */
-function tokensFor(
+/** Resolves `regions` and `data` for `source` under the given config. */
+async function tokensFor(
     source: string,
     config: SveltexConfigSnapshot = defaultConfig,
-): { data: number[]; regions: Region[] } {
+): Promise<{ data: number[]; regions: Region[] }> {
     const regions = computeRegions(source, config);
-    const tokens = computeSemanticTokens(source, regions);
+    const tokens = await computeSemanticTokens(source, regions, config.latexTags);
     return { data: [...tokens.data], regions };
 }
 
 /**
  * Decodes the LSP delta-encoded data array back into absolute
- * `{ line, char, length, type, modifiers }` tokens. Used by the tests to
- * assert against the wire format without re-implementing it.
+ * `{ line, char, length, type, modifiers }` tokens.
  */
 function decode(data: number[]): {
     line: number;
@@ -62,159 +58,197 @@ function decode(data: number[]): {
     return out;
 }
 
+const typeIndex = (name: string): number => SEMANTIC_TOKEN_TYPES.indexOf(name as never);
+
+/**
+ * Builds a config snapshot that registers `MyTex` (latex-type) and
+ * `MyVerb` (escape-type) so the LaTeX tokenisation path and the flat-
+ * string path both get exercised against user-configured tags.
+ */
+function configWithCustomTags(): SveltexConfigSnapshot {
+    return {
+        ...defaultConfig,
+        verbatimTags: [...defaultConfig.verbatimTags, 'MyTex', 'MyVerb'],
+        latexTags: [...defaultConfig.latexTags, 'MyTex'],
+    };
+}
+
 describe('legend', () => {
     it('declares a non-empty token-type vocabulary', () => {
         expect(SEMANTIC_TOKEN_TYPES.length).toBeGreaterThan(0);
+        // Both the LaTeX-aware path (`comment`/`function`) and the
+        // flat-string fallback path (`string`) need their advertised
+        // entries in the legend or the wire encoding refers to a
+        // non-existent type.
         expect(SEMANTIC_TOKEN_TYPES).toContain('string');
+        expect(SEMANTIC_TOKEN_TYPES).toContain('comment');
+        expect(SEMANTIC_TOKEN_TYPES).toContain('function');
     });
 
     it('declares a (possibly empty) modifier vocabulary', () => {
-        // No `toBeArray` in vitest — array-ness via Array.isArray is what
-        // matters; `length` is the only thing the encoder reads.
         expect(Array.isArray(SEMANTIC_TOKEN_MODIFIERS)).toBe(true);
     });
 });
 
 describe('emits nothing when there is nothing to emit', () => {
-    it('returns an empty stream for an empty document', () => {
-        expect(tokensFor('').data).toEqual([]);
+    it('returns an empty stream for an empty document', async () => {
+        expect((await tokensFor('')).data).toEqual([]);
     });
 
-    it('returns an empty stream for plain markdown', () => {
-        expect(tokensFor('# Hello\n\nJust prose.').data).toEqual([]);
+    it('returns an empty stream for plain markdown', async () => {
+        expect((await tokensFor('# Hello\n\nJust prose.')).data).toEqual([]);
     });
 
-    it('returns an empty stream for a document with only math', () => {
-        // Math regions are deliberately NOT covered — the editor grammar
-        // handles them.
-        expect(tokensFor('Inline $a^2$ and display\n\n$$x = 1$$').data).toEqual(
-            [],
-        );
+    it('returns an empty stream for a document with only math', async () => {
+        expect(
+            (await tokensFor('Inline $a^2$ and display\n\n$$x = 1$$')).data,
+        ).toEqual([]);
     });
 
-    it('returns an empty stream for a self-closing verbatim tag', () => {
-        // `<tex />` has no body to colour.
-        expect(tokensFor('Before <tex /> after').data).toEqual([]);
+    it('returns an empty stream for a self-closing verbatim tag', async () => {
+        expect((await tokensFor('Before <tex /> after')).data).toEqual([]);
     });
 });
 
 describe('skips standard verbatim tags handled by editor grammars', () => {
-    // Semantic tokens replace whatever colour the static grammar would give
-    // a range. Emitting tokens for `<tex>` (`tex|latex|tikz|verb|verbatim`)
-    // would clobber the editor's LaTeX / fenced-code colouring of the body
-    // with a uniform `string`. Skip them.
+    // Semantic tokens REPLACE whatever colour the static grammar would
+    // give a range. Emitting tokens for `<tex>` would clobber the editor's
+    // LaTeX / fenced-code colouring with something coarser; skip them.
 
-    it('emits nothing for `<tex>`', () => {
-        expect(tokensFor('<tex>\\LaTeX</tex>').data).toEqual([]);
+    it('emits nothing for `<tex>`', async () => {
+        expect((await tokensFor('<tex>\\LaTeX</tex>')).data).toEqual([]);
     });
 
-    it('emits nothing for a multi-line `<tex>` body', () => {
+    it('emits nothing for a multi-line `<tex>` body', async () => {
         const source = ['<tex>', '\\node {x};', '\\node {y};', '</tex>'].join(
             '\n',
         );
-        expect(tokensFor(source).data).toEqual([]);
+        expect((await tokensFor(source)).data).toEqual([]);
     });
 
-    it('emits nothing for `<latex>` / `<tikz>`', () => {
-        expect(tokensFor('<latex>\\alpha</latex>').data).toEqual([]);
-        expect(tokensFor('<tikz>\\node {x};</tikz>').data).toEqual([]);
+    it('emits nothing for `<latex>` / `<tikz>`', async () => {
+        expect((await tokensFor('<latex>\\alpha</latex>')).data).toEqual([]);
+        expect((await tokensFor('<tikz>\\node {x};</tikz>')).data).toEqual([]);
     });
 
-    it('emits nothing for `<verbatim>` / `<verb>`', () => {
-        expect(tokensFor('<verbatim>\nliteral\n</verbatim>').data).toEqual([]);
-        expect(tokensFor('<verb>raw text</verb>').data).toEqual([]);
+    it('emits nothing for `<verbatim>` / `<verb>`', async () => {
+        expect(
+            (await tokensFor('<verbatim>\nliteral\n</verbatim>')).data,
+        ).toEqual([]);
+        expect((await tokensFor('<verb>raw text</verb>')).data).toEqual([]);
     });
 
-    it('treats the tag name case-insensitively', () => {
-        // The tree-sitter grammar accepts `TeX`/`LaTeX`/`TikZ`/`Verbatim`
-        // case variants; the TM grammar uses `(?i)`. Both yield native
-        // highlighting, so skip them here too.
-        expect(tokensFor('<TeX>\\alpha</TeX>').data).toEqual([]);
-        expect(tokensFor('<Verbatim>raw</Verbatim>').data).toEqual([]);
+    it('treats the tag name case-insensitively', async () => {
+        expect((await tokensFor('<TeX>\\alpha</TeX>')).data).toEqual([]);
+        expect((await tokensFor('<Verbatim>raw</Verbatim>')).data).toEqual([]);
     });
 });
 
-describe('user-configured custom tags', () => {
-    /**
-     * Builds a config snapshot with `MyVerb` (escape-type) and `MyTex`
-     * (latex-type) added to the verbatim tag list, simulating a user's
-     * `sveltex.config.js`.
-     */
-    function configWithCustomTags(): SveltexConfigSnapshot {
-        return {
-            ...defaultConfig,
-            verbatimTags: [...defaultConfig.verbatimTags, 'MyVerb', 'MyTex'],
-            latexTags: [...defaultConfig.latexTags, 'MyTex'],
-        };
-    }
+describe('LaTeX-aware tokenisation for custom latex tags', () => {
+    // The body of a `<MyTex>` is tokenised through the vendored
+    // `text.tex.latex` TextMate grammar. We assert against the LSP token
+    // *types* (`comment`, `function`, …) rather than the byte-exact
+    // ranges — the grammar is upstream and may emit slightly different
+    // boundaries (e.g. with or without the leading `\` in a command) on a
+    // future refresh, but the types it picks for the canonical pieces are
+    // stable.
 
-    it('emits tokens for `<MyVerb>` once registered in the config', () => {
-        const source = 'Before <MyVerb>secret</MyVerb> after';
-        const cfg = configWithCustomTags();
-        // Sanity check: regions classify the custom tag as verbatim.
-        const regions = computeRegions(source, cfg);
-        expect(regions.some((r) => r.kind === 'verbatim')).toBe(true);
-        // And the encoder picks it up.
-        const tokens = decode(computeSemanticTokens(source, regions).data);
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]?.length).toBe('secret'.length);
+    it('emits a `comment` token for `% comment` lines', async () => {
+        const source = '<MyTex>\n% just a comment\n</MyTex>';
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
+        const commentTokens = tokens.filter((t) => t.type === typeIndex('comment'));
+        expect(commentTokens.length).toBeGreaterThan(0);
     });
 
-    it('emits tokens for `<MyTex>` once registered as a latex tag', () => {
-        const source = '<MyTex>\n\\alpha\n</MyTex>';
-        const cfg = configWithCustomTags();
-        const regions = computeRegions(source, cfg);
-        const tokens = decode(computeSemanticTokens(source, regions).data);
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]?.length).toBe('\\alpha'.length);
+    it('emits a `function` token for `\\command`', async () => {
+        const source = '<MyTex>\n\\draw (0,0);\n</MyTex>';
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
+        const functionTokens = tokens.filter(
+            (t) => t.type === typeIndex('function'),
+        );
+        expect(functionTokens.length).toBeGreaterThan(0);
     });
 
-    it('emits nothing for an unregistered custom tag', () => {
-        // `<Foo>` is not in any config; falls through as plain markdown / HTML.
+    it('emits multiple token types across a tikzpicture body', async () => {
+        const source = [
+            '<MyTex>',
+            '% a comment',
+            '\\begin{tikzpicture}',
+            '  \\draw[->] (0, 0) -- (2, 1);',
+            '\\end{tikzpicture}',
+            '</MyTex>',
+        ].join('\n');
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
+        const seenTypes = new Set(tokens.map((t) => t.type));
+        // At least `comment` and `function` should appear — the rest
+        // (variable / operator / number) are nice-to-haves and depend on
+        // the upstream grammar's exact scope assignments.
+        expect(seenTypes.has(typeIndex('comment'))).toBe(true);
+        expect(seenTypes.has(typeIndex('function'))).toBe(true);
+    });
+
+    it('emits NO `string` token inside a LaTeX body', async () => {
+        // The flat-string fallback only runs for non-latex verbatim. A
+        // LaTeX body's un-tokenised stretches (whitespace, punctuation)
+        // should be left bare so the editor's static grammar can colour
+        // them — not painted `string`.
+        const source = '<MyTex>\n  some text  \n</MyTex>';
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
+        const stringTokens = tokens.filter((t) => t.type === typeIndex('string'));
+        expect(stringTokens.length).toBe(0);
+    });
+});
+
+describe('non-latex custom verbatim falls back to flat `string`', () => {
+    it('paints `<MyVerb>` body with `string` tokens', async () => {
+        const source = '<MyVerb>\nliteral content\n</MyVerb>';
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
+        expect(tokens.length).toBeGreaterThan(0);
+        // Every token should be the same `string` type — no LaTeX
+        // tokenisation runs on non-latex tags.
+        for (const t of tokens) {
+            expect(t.type).toBe(typeIndex('string'));
+        }
+    });
+
+    it('emits nothing for an unregistered custom tag', async () => {
         const source = 'Before <Foo>nothing here</Foo> after';
-        expect(tokensFor(source).data).toEqual([]);
+        expect((await tokensFor(source)).data).toEqual([]);
     });
 });
 
 describe('delta-encoding invariants', () => {
-    /**
-     * Builds a config snapshot that registers `MyTex` (latex-type) and
-     * `MyVerb` (escape-type) as custom verbatim tags. The delta-encoding
-     * tests below use these names so they exercise the actually-emitting
-     * path — the built-in `<tex>` / `<verbatim>` are intentionally skipped
-     * by the encoder (editor grammars already paint them) and would
-     * trivially produce an empty token stream.
-     */
-    function configWithTwoCustomTags(): SveltexConfigSnapshot {
-        return {
-            ...defaultConfig,
-            verbatimTags: [...defaultConfig.verbatimTags, 'MyTex', 'MyVerb'],
-            latexTags: [...defaultConfig.latexTags, 'MyTex'],
-        };
-    }
-
-    it('produces a multiple-of-5 data length', () => {
+    it('produces a multiple-of-5 data length', async () => {
         const source = [
             '<MyTex>',
-            'one',
-            'two',
-            'three',
+            '\\begin{tikzpicture}',
+            '\\end{tikzpicture}',
             '</MyTex>',
             '',
             '<MyVerb>',
-            'four',
+            'literal',
             '</MyVerb>',
         ].join('\n');
-        const regions = computeRegions(source, configWithTwoCustomTags());
-        const { data } = computeSemanticTokens(source, regions);
+        const { data } = await tokensFor(source, configWithCustomTags());
         expect(data.length % 5).toBe(0);
         expect(data.length).toBeGreaterThan(0);
     });
 
-    it('keeps tokens in non-decreasing line order', () => {
+    it('keeps tokens in non-decreasing line order', async () => {
         const source = [
             '<MyTex>',
-            'a',
+            '\\draw (a)',
+            '\\draw (b)',
             '</MyTex>',
             '',
             '<MyVerb>',
@@ -222,13 +256,13 @@ describe('delta-encoding invariants', () => {
             'c',
             '</MyVerb>',
         ].join('\n');
-        const regions = computeRegions(source, configWithTwoCustomTags());
-        const tokens = decode(computeSemanticTokens(source, regions).data);
+        const tokens = decode(
+            (await tokensFor(source, configWithCustomTags())).data,
+        );
         for (let i = 1; i < tokens.length; i++) {
             const prev = tokens[i - 1];
             const curr = tokens[i];
             if (!prev || !curr) throw new Error('decode invariant broken');
-            // Either strictly later line, or same line later column.
             expect(
                 curr.line > prev.line ||
                     (curr.line === prev.line && curr.char > prev.char),
