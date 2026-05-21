@@ -287,38 +287,23 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         expect(provider.full).toBeTruthy();
     });
 
-    it('returns semantic tokens for a `<tex>` body', async () => {
-        const uri = 'file:///tmp/semtok.sveltex';
-        // `<tex>` body covers the `\node {x};` line (line 1, columns 0-9).
+    it('returns an empty token stream for the built-in `<tex>` tag', async () => {
+        // The five standard verbatim tags (`tex`/`latex`/`tikz`/`verb`/
+        // `verbatim`) are intentionally skipped by the encoder: the editor
+        // grammar already paints their bodies (LaTeX or fenced-code), and
+        // a uniform `string` semantic token would replace that with a flat
+        // colour. This test pins that contract — the request still succeeds
+        // (returns an empty data array, not `null`) so the wire path is
+        // alive; the unit tests in `semantic-tokens.test.ts` cover the
+        // emitting path against custom tags.
+        const uri = 'file:///tmp/semtok-tex.sveltex';
         await open(server, uri, '<tex>\n\\node {x};\n</tex>\n');
         const result = await server.connection.sendRequest<SemanticTokens>(
             'textDocument/semanticTokens/full',
             { textDocument: { uri } },
         );
         expect(result).not.toBeNull();
-        // One token, encoded as five integers — decode and check the
-        // line/length match the body line.
-        expect(result.data.length).toBeGreaterThanOrEqual(5);
-        // First (and only) token: deltaLine=1, deltaChar=0, length=10.
-        expect(result.data[0]).toBe(1);
-        expect(result.data[1]).toBe(0);
-        expect(result.data[2]).toBe('\\node {x};'.length);
-    });
-
-    it('emits tokens for a user-configured verbatim tag via the live config', async () => {
-        // No SvelTeX config is loaded for this spawned server (rootUri is
-        // null), so the snapshot falls back to the defaults — which include
-        // `tex`/`latex`/`tikz`/`verb`/`verbatim`. A custom tag isn't
-        // recognised here without a config; this test instead exercises the
-        // built-in `<verbatim>` to confirm the wire path round-trips data.
-        const uri = 'file:///tmp/semtok-verb.sveltex';
-        await open(server, uri, '<verbatim>\nliteral\n</verbatim>\n');
-        const result = await server.connection.sendRequest<SemanticTokens>(
-            'textDocument/semanticTokens/full',
-            { textDocument: { uri } },
-        );
-        expect(result.data.length).toBeGreaterThanOrEqual(5);
-        expect(result.data[2]).toBe('literal'.length);
+        expect(result.data).toEqual([]);
     });
 
     it('pushes `sveltex/resolvedTags` after `initialized`', async () => {

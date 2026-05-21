@@ -98,62 +98,39 @@ describe('emits nothing when there is nothing to emit', () => {
     });
 });
 
-describe('emits one token per body line of a verbatim region', () => {
-    it('covers a single-line `<tex>` body', () => {
-        const source = '<tex>\\LaTeX</tex>';
-        const tokens = decode(tokensFor(source).data);
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]).toEqual({
-            line: 0,
-            char: 5,
-            length: '\\LaTeX'.length,
-            type: SEMANTIC_TOKEN_TYPES.indexOf('string'),
-            modifiers: 0,
-        });
+describe('skips standard verbatim tags handled by editor grammars', () => {
+    // Semantic tokens replace whatever colour the static grammar would give
+    // a range. Emitting tokens for `<tex>` (`tex|latex|tikz|verb|verbatim`)
+    // would clobber the editor's LaTeX / fenced-code colouring of the body
+    // with a uniform `string`. Skip them.
+
+    it('emits nothing for `<tex>`', () => {
+        expect(tokensFor('<tex>\\LaTeX</tex>').data).toEqual([]);
     });
 
-    it('splits a multi-line `<tex>` body into one token per line', () => {
+    it('emits nothing for a multi-line `<tex>` body', () => {
         const source = ['<tex>', '\\node {x};', '\\node {y};', '</tex>'].join(
             '\n',
         );
-        const tokens = decode(tokensFor(source).data);
-        // Two body lines.
-        expect(tokens).toHaveLength(2);
-        expect(tokens[0]?.line).toBe(1);
-        expect(tokens[0]?.char).toBe(0);
-        expect(tokens[0]?.length).toBe('\\node {x};'.length);
-        expect(tokens[1]?.line).toBe(2);
-        expect(tokens[1]?.char).toBe(0);
-        expect(tokens[1]?.length).toBe('\\node {y};'.length);
+        expect(tokensFor(source).data).toEqual([]);
     });
 
-    it('does not include the trailing newline in a token', () => {
-        const source = '<tex>\nabc\n</tex>';
-        const tokens = decode(tokensFor(source).data);
-        // One token on line 1, covering exactly "abc" (no newline).
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]?.length).toBe(3);
+    it('emits nothing for `<latex>` / `<tikz>`', () => {
+        expect(tokensFor('<latex>\\alpha</latex>').data).toEqual([]);
+        expect(tokensFor('<tikz>\\node {x};</tikz>').data).toEqual([]);
     });
 
-    it('emits a token at the right column for a body sharing the line with the open tag', () => {
-        // `<tex>body</tex>` — body starts at column 5.
-        const source = 'leading <tex>body</tex> trailing';
-        const tokens = decode(tokensFor(source).data);
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]).toEqual({
-            line: 0,
-            char: '<leading <tex>'.length - 1, // 13
-            length: 'body'.length,
-            type: SEMANTIC_TOKEN_TYPES.indexOf('string'),
-            modifiers: 0,
-        });
+    it('emits nothing for `<verbatim>` / `<verb>`', () => {
+        expect(tokensFor('<verbatim>\nliteral\n</verbatim>').data).toEqual([]);
+        expect(tokensFor('<verb>raw text</verb>').data).toEqual([]);
     });
 
-    it('covers a `<verbatim>` body the same way as `<tex>`', () => {
-        const source = '<verbatim>\nliteral\n</verbatim>';
-        const tokens = decode(tokensFor(source).data);
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0]?.length).toBe('literal'.length);
+    it('treats the tag name case-insensitively', () => {
+        // The tree-sitter grammar accepts `TeX`/`LaTeX`/`TikZ`/`Verbatim`
+        // case variants; the TM grammar uses `(?i)`. Both yield native
+        // highlighting, so skip them here too.
+        expect(tokensFor('<TeX>\\alpha</TeX>').data).toEqual([]);
+        expect(tokensFor('<Verbatim>raw</Verbatim>').data).toEqual([]);
     });
 });
 
@@ -200,35 +177,53 @@ describe('user-configured custom tags', () => {
 });
 
 describe('delta-encoding invariants', () => {
+    /**
+     * Builds a config snapshot that registers `MyTex` (latex-type) and
+     * `MyVerb` (escape-type) as custom verbatim tags. The delta-encoding
+     * tests below use these names so they exercise the actually-emitting
+     * path — the built-in `<tex>` / `<verbatim>` are intentionally skipped
+     * by the encoder (editor grammars already paint them) and would
+     * trivially produce an empty token stream.
+     */
+    function configWithTwoCustomTags(): SveltexConfigSnapshot {
+        return {
+            ...defaultConfig,
+            verbatimTags: [...defaultConfig.verbatimTags, 'MyTex', 'MyVerb'],
+            latexTags: [...defaultConfig.latexTags, 'MyTex'],
+        };
+    }
+
     it('produces a multiple-of-5 data length', () => {
         const source = [
-            '<tex>',
+            '<MyTex>',
             'one',
             'two',
             'three',
-            '</tex>',
+            '</MyTex>',
             '',
-            '<verbatim>',
+            '<MyVerb>',
             'four',
-            '</verbatim>',
+            '</MyVerb>',
         ].join('\n');
-        const { data } = tokensFor(source);
+        const regions = computeRegions(source, configWithTwoCustomTags());
+        const { data } = computeSemanticTokens(source, regions);
         expect(data.length % 5).toBe(0);
         expect(data.length).toBeGreaterThan(0);
     });
 
     it('keeps tokens in non-decreasing line order', () => {
         const source = [
-            '<tex>',
+            '<MyTex>',
             'a',
-            '</tex>',
+            '</MyTex>',
             '',
-            '<verbatim>',
+            '<MyVerb>',
             'b',
             'c',
-            '</verbatim>',
+            '</MyVerb>',
         ].join('\n');
-        const tokens = decode(tokensFor(source).data);
+        const regions = computeRegions(source, configWithTwoCustomTags());
+        const tokens = decode(computeSemanticTokens(source, regions).data);
         for (let i = 1; i < tokens.length; i++) {
             const prev = tokens[i - 1];
             const curr = tokens[i];

@@ -12,26 +12,86 @@
 // semantic tokens marking each region's body — and the editor lays those
 // on top of whatever its static grammar produced.
 //
-// What this DOES:
-//   - One `string` token per line of every verbatim region's body. That is
-//     enough to visually distinguish a `<MyVerb>` body from the surrounding
-//     prose in any LSP-supporting editor (VS Code, Zed, Helix, Neovim, …).
+// CRITICAL: semantic tokens *replace* whatever colour the static grammar
+// would give a range, they don't refine it. Emitting a `string` token over
+// the entire body of `<tex>…</tex>` therefore *kills* the LaTeX
+// highlighting the editor grammar would otherwise paint — bare uniform
+// colour instead of `\begin`-as-keyword, `\draw`-as-function, etc.
 //
-// What this DOESN'T do (yet):
-//   - Fine-grained tokenisation of the body. A `<tex>` body still needs
-//     TexLab — forwarded via `region-forwarding.ts` — for hover/completion
-//     semantics; emitting token streams for `\command{arg}` would duplicate
-//     that work and is left to a future iteration.
-//   - Tokens for `math` / `code` / `frontmatter` regions. Those are handled
-//     by the editor's own grammar (Markdown's fenced-code injection for
-//     code, tree-sitter / TextMate math handling for math, the markdown
-//     frontmatter rule for frontmatter) and do not need LSP refinement.
+// What this DOES:
+//   - One `string` token per body line of every *non-standard* verbatim
+//     region — those whose tag is NOT in {tex, latex, tikz, verb, verbatim}.
+//     For non-standard tags the editor grammar produces nothing, so the
+//     uniform colour is strictly an improvement.
+//
+// What this DOESN'T do:
+//   - Touch standard verbatim tags. Their bodies are handled by the editor
+//     grammars (`text.tex.latex` injection for `<tex>` / `<latex>` /
+//     `<tikz>` and the `markup.fenced_code` styling for `<verb>` /
+//     `<verbatim>`), and any token we'd emit would overwrite that work.
+//   - Fine-grained tokenisation of the body. A future iteration could
+//     emit `\command` → `keyword`, `% comment` → `comment`, etc. for
+//     custom TeX-typed envs; for now they get the same flat `string`
+//     colour as escape envs.
+//   - Tokens for `math` / `code` / `frontmatter` regions. The editor's own
+//     grammar handles them (Markdown's fenced-code injection for code,
+//     tree-sitter / TextMate math handling for math, the markdown
+//     frontmatter rule for frontmatter); no LSP refinement is needed.
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SemanticTokensBuilder } from 'vscode-languageserver';
 import type { SemanticTokens } from 'vscode-languageserver-protocol';
 import type { Region } from './regions.js';
 import { verbatimBodyOffsets } from './region-virtual.js';
+
+/**
+ * Tag names every shipping SvelTeX editor grammar handles natively:
+ *
+ *   - VS Code TextMate (`packages/vscode-sveltex/syntaxes/sveltex.
+ *     tmLanguage.yaml`) — `tex`/`latex`/`tikz` open a
+ *     `meta.embedded.block.latex` region with a `text.tex.latex` injection,
+ *     `verb`/`verbatim` open a `meta.embedded.block.plain` region with
+ *     `markup.fenced_code` content styling.
+ *   - Zed tree-sitter (`packages/tree-sitter-sveltex/grammar.js`) —
+ *     `TEX_VERBATIM_TAGS` / `PLAIN_VERBATIM_TAGS` produce
+ *     `tex_verbatim_body` / `plain_verbatim_body` nodes, with the LaTeX
+ *     injection wired in `editors/zed/languages/sveltex/injections.scm`.
+ *
+ * Semantic tokens are skipped for these because the editor grammar's
+ * colouring is strictly richer than the flat `string` colour this module
+ * can produce, and emitting tokens would *replace* the grammar's work
+ * with the uniform colour.
+ *
+ * Custom tags from the user's `sveltex.config.js` are not in this set, so
+ * they DO get tokens — there the editor grammar produces nothing and the
+ * uniform colour is strictly better than no colouring at all.
+ *
+ * Comparisons are case-insensitive, mirroring the case handling in the
+ * editor grammars (`(?i)` in TextMate, the `TeX`/`LaTeX`/`TikZ` aliases
+ * in the tree-sitter grammar).
+ */
+const NATIVELY_HIGHLIGHTED_TAGS: ReadonlySet<string> = new Set([
+    'tex',
+    'latex',
+    'tikz',
+    'verb',
+    'verbatim',
+]);
+
+/**
+ * Returns whether the opening tag of `region` is one of the
+ * {@link NATIVELY_HIGHLIGHTED_TAGS}. A `verbatim` region whose tag isn't
+ * recognised (or whose slice is malformed) returns `false`, so the LSP
+ * defaults to emitting tokens for it (safer to over-colour an exotic edge
+ * case than to silently drop a real user-configured tag).
+ */
+function isNativelyHighlighted(source: string, region: Region): boolean {
+    if (region.kind !== 'verbatim') return false;
+    const slice = source.slice(region.sourceStart, region.sourceEnd);
+    const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(slice);
+    if (!tagMatch) return false;
+    return NATIVELY_HIGHLIGHTED_TAGS.has((tagMatch[1] ?? '').toLowerCase());
+}
 
 /**
  * Token-type vocabulary the SvelTeX LSP advertises in its `semanticTokens`
@@ -78,6 +138,10 @@ export function computeSemanticTokens(
 
     for (const region of regions) {
         if (region.kind !== 'verbatim') continue;
+        // Editor grammars already paint `<tex>` etc. better than we can —
+        // skip them to avoid overwriting their colouring with our uniform
+        // `string`.
+        if (isNativelyHighlighted(text, region)) continue;
         const body = verbatimBodyOffsets(text, region);
         if (!body) continue;
         pushLineSplitTokens(builder, doc, text, body[0], body[1]);
