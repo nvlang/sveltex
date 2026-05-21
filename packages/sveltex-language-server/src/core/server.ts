@@ -68,6 +68,11 @@ import {
     computeFrontmatterCompletion,
     computeFrontmatterHover,
 } from './frontmatter.js';
+import {
+    SEMANTIC_TOKEN_MODIFIERS,
+    SEMANTIC_TOKEN_TYPES,
+    computeSemanticTokens,
+} from './semantic-tokens.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -435,6 +440,19 @@ export function createServer(connection: Connection): void {
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
+                    // Native semantic tokens, computed locally from the
+                    // already-resolved verbatim tag list. Lets editors
+                    // (notably Zed, whose compiled tree-sitter grammar
+                    // can't be parameterised) colour user-configured
+                    // verbatim envs without touching the editor side.
+                    semanticTokensProvider: {
+                        legend: {
+                            tokenTypes: [...SEMANTIC_TOKEN_TYPES],
+                            tokenModifiers: [...SEMANTIC_TOKEN_MODIFIERS],
+                        },
+                        full: true,
+                        range: false,
+                    },
                     // Proxied — forwarded to `svelte-language-server`; each is
                     // advertised only if that child advertises it.
                     ...pickDefined(childCapabilities, [
@@ -752,5 +770,17 @@ export function createServer(connection: Connection): void {
         const doc = documents.get(params.textDocument.uri);
         if (!doc) return null;
         return computeSelectionRanges(doc.text, params.positions, config);
+    });
+
+    // Semantic tokens — computed natively from the document's regions, which
+    // were resolved using the live SvelTeX config (so user-configured
+    // verbatim tags like `<MyVerb>` are recognised). The provider returns
+    // an empty token set for unknown documents rather than `null`: a
+    // `null`-returning provider is treated as "no support" by some clients
+    // and they stop asking.
+    connection.languages.semanticTokens.on(({ textDocument }) => {
+        const doc = documents.get(textDocument.uri);
+        if (!doc) return { data: [] };
+        return computeSemanticTokens(doc.text, doc.regions);
     });
 }

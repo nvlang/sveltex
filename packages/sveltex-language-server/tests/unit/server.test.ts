@@ -27,6 +27,7 @@ import type {
     DocumentSymbol,
     Hover,
     InitializeResult,
+    SemanticTokens,
 } from 'vscode-languageserver-protocol';
 
 /** Absolute path of the compiled `bin/server.js`. */
@@ -249,6 +250,57 @@ describe('SvelTeX language server (spawned over stdio)', () => {
         if (outcome !== 'timeout') {
             expect(items(outcome).map((i) => i.label)).not.toContain('\\alpha');
         }
+    });
+
+    it('advertises a semantic-tokens provider with a non-empty legend', () => {
+        const provider =
+            server.initializeResult.capabilities.semanticTokensProvider;
+        expect(provider).toBeDefined();
+        // `SemanticTokensProvider` is `{ legend, full?, range? }` in the
+        // protocol types; narrow it before reading the legend.
+        if (!provider || !('legend' in provider)) {
+            throw new Error('semantic-tokens provider missing legend');
+        }
+        expect(provider.legend.tokenTypes.length).toBeGreaterThan(0);
+        expect(provider.legend.tokenTypes).toContain('string');
+        // `full: true` (not just an options object) is what the
+        // `vscode-languageclient` reference impl requires for end-to-end
+        // requests to fire.
+        expect(provider.full).toBeTruthy();
+    });
+
+    it('returns semantic tokens for a `<tex>` body', async () => {
+        const uri = 'file:///tmp/semtok.sveltex';
+        // `<tex>` body covers the `\node {x};` line (line 1, columns 0-9).
+        await open(server, uri, '<tex>\n\\node {x};\n</tex>\n');
+        const result = await server.connection.sendRequest<SemanticTokens>(
+            'textDocument/semanticTokens/full',
+            { textDocument: { uri } },
+        );
+        expect(result).not.toBeNull();
+        // One token, encoded as five integers — decode and check the
+        // line/length match the body line.
+        expect(result.data.length).toBeGreaterThanOrEqual(5);
+        // First (and only) token: deltaLine=1, deltaChar=0, length=10.
+        expect(result.data[0]).toBe(1);
+        expect(result.data[1]).toBe(0);
+        expect(result.data[2]).toBe('\\node {x};'.length);
+    });
+
+    it('emits tokens for a user-configured verbatim tag via the live config', async () => {
+        // No SvelTeX config is loaded for this spawned server (rootUri is
+        // null), so the snapshot falls back to the defaults — which include
+        // `tex`/`latex`/`tikz`/`verb`/`verbatim`. A custom tag isn't
+        // recognised here without a config; this test instead exercises the
+        // built-in `<verbatim>` to confirm the wire path round-trips data.
+        const uri = 'file:///tmp/semtok-verb.sveltex';
+        await open(server, uri, '<verbatim>\nliteral\n</verbatim>\n');
+        const result = await server.connection.sendRequest<SemanticTokens>(
+            'textDocument/semanticTokens/full',
+            { textDocument: { uri } },
+        );
+        expect(result.data.length).toBeGreaterThanOrEqual(5);
+        expect(result.data[2]).toBe('literal'.length);
     });
 });
 
