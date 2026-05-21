@@ -56,7 +56,8 @@
     "generate": "tree-sitter generate",
     "test": "tree-sitter generate && tree-sitter test",
     "parse": "tree-sitter parse",
-    "parity": "node scripts/parity.mjs"
+    "parity": "node scripts/parity.mjs",
+    "parity:render": "node scripts/parity-render.mjs"
   },
   "dependencies": {
     "node-addon-api": "^8.0.0",
