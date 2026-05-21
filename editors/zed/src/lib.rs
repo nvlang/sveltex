@@ -26,7 +26,7 @@
 //! own working directory via Zed's npm helpers, exactly as Zed's first-party
 //! Svelte extension installs `svelte-language-server`.
 
-use std::fs;
+use std::{env, fs};
 
 use zed_extension_api::{self as zed, LanguageServerId, Result};
 
@@ -104,7 +104,7 @@ impl SveltexExtension {
             self.did_install = true;
         }
 
-        let entry = extension_server_path();
+        let entry = extension_server_path()?;
         if fs::metadata(&entry).map(|m| m.is_file()).unwrap_or(false) {
             Ok(entry)
         } else {
@@ -132,12 +132,20 @@ fn workspace_server_path(worktree: &zed::Worktree) -> Option<String> {
     }
 }
 
-/// Returns the `bin/server.js` path for an extension-managed install. Zed's
-/// `npm_install_package` installs into `node_modules` under the extension's
-/// current working directory, so the entry point is a fixed relative path
-/// from there.
-fn extension_server_path() -> String {
-    format!("node_modules/{SERVER_PACKAGE}/{SERVER_ENTRY}")
+/// Returns the absolute `bin/server.js` path for an extension-managed
+/// install. Zed's `npm_install_package` installs into `node_modules` under
+/// the extension's current working directory, so resolve that directory
+/// explicitly rather than handing Node a relative path it would resolve
+/// against the *project's* working directory (which is where Zed launches
+/// the language server, not the extension's working directory). Mirrors
+/// `zed-extensions/svelte`'s `get_package_path`.
+fn extension_server_path() -> Result<String> {
+    let cwd = env::current_dir().map_err(|e| e.to_string())?;
+    let path = cwd
+        .join("node_modules")
+        .join(SERVER_PACKAGE)
+        .join(SERVER_ENTRY);
+    Ok(path.to_string_lossy().into_owned())
 }
 
 impl zed::Extension for SveltexExtension {
