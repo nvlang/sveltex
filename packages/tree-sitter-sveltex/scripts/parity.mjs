@@ -115,55 +115,46 @@ function tsRegions(source) {
 
 /**
  * Classify a TextMate scope chain into a parity kind, or `null` if none of
- * the scopes match. The check is "innermost scope that matches wins" so
- * outer/parent scopes don't drown out a more specific embedded scope.
+ * the scopes match. We look at the *whole* chain rather than just the
+ * innermost scope: the SvelTeX TM grammar uses `meta.embedded.block.latex`
+ * for both math content and verbatim-`<tex>` content, so the only way to
+ * tell them apart is whether `meta.math.*` is anywhere above in the
+ * containment chain.
  *
  * @param {string[]} scopes
  * @returns {(typeof KINDS)[number] | null}
  */
 function classifyTmScopes(scopes) {
-    // Scan from innermost (last) to outermost (first); first match wins.
-    for (let i = scopes.length - 1; i >= 0; i--) {
-        const s = scopes[i];
-        // Frontmatter: yaml / toml / json embedded blocks. The SvelTeX
-        // grammar wraps these in `meta.embedded.block.frontmatter.*`.
-        if (
-            /\bmeta\.embedded\.(block\.)?(yaml|toml|json|frontmatter)/.test(s)
-        ) {
-            return 'frontmatter';
-        }
-        // Math: SvelTeX assigns `meta.math.*` (e.g. meta.math.block.sveltex,
-        // meta.math.inline.sveltex) and embeds latex inside.
-        if (/\bmeta\.(math|embedded\.(block|expression)\.latex)/.test(s)) {
-            // But the latex injection inside a verbatim env should classify
-            // as verbatim-tex-body, not math; the verbatim env scope is
-            // checked first below if present.
-            // We let context decide: if there's an enclosing verbatim scope
-            // too, defer.
-            const hasVerb = scopes.some((sc) =>
-                /\bmeta\.tag\.verbatim|verbatim-environment/.test(sc),
-            );
-            if (!hasVerb) return 'math';
-        }
-        // Verbatim environments. The SvelTeX grammar uses
-        // `meta.tag.verbatim.tex.sveltex` / `…plain…` for the open/close
-        // tags and embeds latex (for tex) or nothing (for plain) inside.
-        if (/\bmeta\.embedded\.block\.latex/.test(s)) {
-            return 'verbatim-tex-body';
-        }
-        if (/\bmeta\.verbatim\.body\.plain/.test(s)) {
-            return 'verbatim-plain-body';
-        }
-        // Svelte mustache expressions / block tags. The current TextMate
-        // grammar does NOT have first-class scopes for these — they'd be
-        // captured via injected source.svelte at best — so these usually
-        // return null here. That's the gap the parity bench surfaces.
-        if (/\bmeta\.embedded\.expression\.svelte/.test(s)) {
-            return 'mustache-body';
-        }
-        if (/\b(punctuation\.definition\.block|keyword)\..*svelte/.test(s)) {
-            return 'block-tag';
-        }
+    const has = (/** @type {RegExp} */ re) => scopes.some((s) => re.test(s));
+
+    // Frontmatter: `meta.embedded.block.frontmatter.{yaml,toml,json}`.
+    if (has(/\bmeta\.embedded\.(block\.)?(yaml|toml|json|frontmatter)/)) {
+        return 'frontmatter';
+    }
+    // Math: `meta.math.*` always wins, even if the body is
+    // `meta.embedded.block.latex` (which math regions also use).
+    if (has(/\bmeta\.math\b/)) {
+        return 'math';
+    }
+    // Verbatim TeX body: `meta.embedded.block.latex` with no math scope
+    // above it — that means we're inside `<tex>…</tex>`, not `$…$`.
+    if (has(/\bmeta\.embedded\.block\.latex\b/)) {
+        return 'verbatim-tex-body';
+    }
+    // Verbatim plain body: scope name varies by grammar; match liberally.
+    if (has(/\bmeta\.verbatim\.body\.plain|verbatim-plain/)) {
+        return 'verbatim-plain-body';
+    }
+    // Svelte mustache expressions: the current TextMate grammar does NOT
+    // emit a first-class scope for these. They'd surface only if the
+    // markup got handed to `source.svelte`, which the SvelTeX TM grammar
+    // doesn't currently arrange. Surfacing this gap is the point of the
+    // parity bench.
+    if (has(/\bmeta\.embedded\.expression\.svelte/)) {
+        return 'mustache-body';
+    }
+    if (has(/\b(punctuation\.definition\.block|keyword)\..*\bsvelte\b/)) {
+        return 'block-tag';
     }
     return null;
 }
@@ -237,6 +228,40 @@ async function loadRegistry() {
         ),
     };
 
+    // The SvelTeX TextMate grammar's frontmatter / verbatim / fenced-code
+    // patterns include external grammars (`source.yaml`, `source.toml`,
+    // `text.tex.latex`, `source.svelte`, etc.). If `loadGrammar` returns
+    // `null` for any of these, vscode-textmate silently fails the entire
+    // enclosing rule — its begin/end never fires and the outer
+    // `meta.embedded.block.*` scope is never emitted. In VS Code those
+    // grammars are typically available (ships with the language extensions);
+    // here we stand in a zero-pattern grammar for each one so the
+    // *outer* begin/end fires and the parity bench can compare on the
+    // structural scopes we care about. The inner language tokenization is
+    // out of scope for parity.
+    const externalScopes = [
+        'source.yaml',
+        'source.toml',
+        'source.json',
+        'source.svelte',
+        'source.js',
+        'source.ts',
+        'source.css',
+        'source.css.scss',
+        'source.sass',
+        'source.css.postcss',
+        'source.stylus',
+        'text.tex.latex',
+        'text.html.basic',
+        'text.html.derivative',
+    ];
+    /** @param {string} scope */
+    const stubGrammar = (scope) =>
+        vsctm.parseRawGrammar(
+            JSON.stringify({ scopeName: scope, patterns: [] }),
+            `${scope}.stub.json`,
+        );
+
     return new vsctm.Registry({
         onigLib: Promise.resolve({
             createOnigScanner: (sources) =>
@@ -245,10 +270,18 @@ async function loadRegistry() {
         }),
         loadGrammar: async (scopeName) => {
             const path = grammarFiles[scopeName];
-            if (!path) return null;
-            const yaml = readFileSync(path, 'utf-8');
-            const raw = jsYaml.load(yaml);
-            return vsctm.parseRawGrammar(JSON.stringify(raw), path + '.json');
+            if (path) {
+                const yaml = readFileSync(path, 'utf-8');
+                const raw = jsYaml.load(yaml);
+                return vsctm.parseRawGrammar(
+                    JSON.stringify(raw),
+                    path + '.json',
+                );
+            }
+            if (externalScopes.includes(scopeName)) {
+                return stubGrammar(scopeName);
+            }
+            return null;
         },
     });
 }
