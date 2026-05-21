@@ -20,7 +20,7 @@ repository = "https://github.com/nvlang/sveltex"
 # building from this monorepo subdirectory.
 [grammars.sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "2eb1ebe001e1bd3d488617f3db625f1e2b8d49f0"
+rev = "5670d745f218f932a50eed90e046864d1de2462a"
 path = "packages/tree-sitter-sveltex"
 
 # The SvelTeX language server. Zed launches it over stdio; see `src/lib.rs`.
