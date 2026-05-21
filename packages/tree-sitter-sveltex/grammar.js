@@ -100,14 +100,24 @@ module.exports = grammar({
 
         // ── Body blocks ──────────────────────────────────────────────────
         //
-        // Verbatim environments, math and Svelte mustache expressions are
-        // recognised explicitly; anything else is an opaque `markdown_chunk`
-        // for the `markdown` grammar.
+        // Verbatim environments, math, Svelte mustache expressions, Svelte
+        // logic blocks (`{#if}`/`{#each}`/…) and Svelte `@`-commands
+        // (`{@const}`/`{@html}`/…) are recognised explicitly; anything else
+        // is an opaque `markdown_chunk` for the `markdown` grammar.
         _block: ($) =>
             choice(
                 $.verbatim_environment,
                 $.display_math,
                 $.inline_math,
+                $.svelte_at_const,
+                $.svelte_at_html,
+                $.svelte_at_render,
+                $.svelte_at_debug,
+                $.svelte_block_if,
+                $.svelte_block_each,
+                $.svelte_block_await,
+                $.svelte_block_key,
+                $.svelte_block_snippet,
                 $.svelte_expression,
                 $.markdown_chunk,
             ),
@@ -119,11 +129,7 @@ module.exports = grammar({
         // tracks brace depth and steps over string literals so embedded
         // braces inside `'...'` / `"..."` / `` `...` `` do not perturb the
         // matching. `injections.scm` ships the body to the JavaScript
-        // grammar. Logic-block tags (`{#if}` / `{:else}` / `{/each}` etc.)
-        // are not specially recognised yet — they are parsed as ordinary
-        // mustache expressions whose content happens to start with `#` / `:`
-        // / `/`; the JavaScript injection will flag the syntax, which is the
-        // expected fallback until first-class Svelte-block parsing lands.
+        // grammar.
         svelte_expression: ($) =>
             seq(
                 '{',
@@ -132,6 +138,198 @@ module.exports = grammar({
             ),
 
         svelte_expression_body: ($) => $._svelte_expression_body,
+
+        // ── Svelte @-commands ────────────────────────────────────────────
+        //
+        // `{@const x = 1}` / `{@html expr}` / `{@render expr(args)}` /
+        // `{@debug a, b, c}`. Each carries an expression body (the body
+        // grammar is JS in all four cases). Word-boundary regexes on the
+        // opening tokens keep `{@constx}` from being mistaken for
+        // `{@const}` + body.
+        svelte_at_const: ($) =>
+            seq(
+                alias($._at_const_open, $.svelte_block_tag),
+                field('body', $.svelte_expression_body),
+                '}',
+            ),
+        svelte_at_html: ($) =>
+            seq(
+                alias($._at_html_open, $.svelte_block_tag),
+                field('body', $.svelte_expression_body),
+                '}',
+            ),
+        svelte_at_render: ($) =>
+            seq(
+                alias($._at_render_open, $.svelte_block_tag),
+                field('body', $.svelte_expression_body),
+                '}',
+            ),
+        // `{@debug}` (no args) is its own complete token because the
+        // boundary regex on `_at_debug_open` would otherwise consume the
+        // closing `}` greedily, leaving no `}` for the grammar to match.
+        svelte_at_debug: ($) =>
+            choice(
+                seq(
+                    alias($._at_debug_open, $.svelte_block_tag),
+                    field('body', $.svelte_expression_body),
+                    '}',
+                ),
+                alias($._at_debug_empty, $.svelte_block_tag),
+            ),
+
+        // ── Svelte logic blocks ──────────────────────────────────────────
+        //
+        // `{#if cond}` / `{:else if cond}` / `{:else}` / `{/if}` etc.
+        // Continuation branches (`{:else if}`, `{:else}`, `{:then}`,
+        // `{:catch}`) are pulled out so the parent block's grammar reads
+        // naturally; their bodies live in a `svelte_block_content` repeat
+        // of `_block`, which makes the whole thing recursive — blocks
+        // nest, and any block can contain math, verbatim environments,
+        // markdown, more blocks, etc.
+        svelte_block_content: ($) => repeat1($._block),
+
+        svelte_block_if: ($) =>
+            seq(
+                alias($._block_if_open, $.svelte_block_tag),
+                field('condition', $.svelte_expression_body),
+                '}',
+                optional(field('then', $.svelte_block_content)),
+                repeat(field('elseif', $.svelte_branch_else_if)),
+                optional(field('else', $.svelte_branch_else)),
+                alias($._block_if_close, $.svelte_block_tag),
+            ),
+        svelte_branch_else_if: ($) =>
+            seq(
+                alias($._branch_else_if, $.svelte_block_tag),
+                field('condition', $.svelte_expression_body),
+                '}',
+                optional(field('content', $.svelte_block_content)),
+            ),
+        svelte_branch_else: ($) =>
+            seq(
+                alias($._branch_else, $.svelte_block_tag),
+                optional(field('content', $.svelte_block_content)),
+            ),
+
+        // `{#each items as item, i (key)}` — the whole head is kept opaque
+        // as one expression body so the JavaScript injection can colour
+        // `items`, `as`, the binding and the optional `(key)` together.
+        // Refining the head into `iterable` / `binding` / `index` / `key`
+        // fields would need its own scanner pass; deferred.
+        svelte_block_each: ($) =>
+            seq(
+                alias($._block_each_open, $.svelte_block_tag),
+                field('head', $.svelte_expression_body),
+                '}',
+                optional(field('body', $.svelte_block_content)),
+                optional(field('else', $.svelte_branch_else)),
+                alias($._block_each_close, $.svelte_block_tag),
+            ),
+
+        // `{#await promise}` / `{:then value}` / `{:catch error}` /
+        // `{/await}`. Each continuation's binding is optional
+        // (`{:then}` / `{:catch}` are valid).
+        svelte_block_await: ($) =>
+            seq(
+                alias($._block_await_open, $.svelte_block_tag),
+                field('promise', $.svelte_expression_body),
+                '}',
+                optional(field('pending', $.svelte_block_content)),
+                optional(field('then', $.svelte_branch_then)),
+                optional(field('catch', $.svelte_branch_catch)),
+                alias($._block_await_close, $.svelte_block_tag),
+            ),
+        // `{:then}` / `{:catch}` (no binding) need their own complete
+        // tokens — same reason as `{@debug}` above.
+        svelte_branch_then: ($) =>
+            choice(
+                seq(
+                    alias($._branch_then_with_value, $.svelte_block_tag),
+                    field('value', $.svelte_expression_body),
+                    '}',
+                    optional(field('content', $.svelte_block_content)),
+                ),
+                seq(
+                    alias($._branch_then_empty, $.svelte_block_tag),
+                    optional(field('content', $.svelte_block_content)),
+                ),
+            ),
+        svelte_branch_catch: ($) =>
+            choice(
+                seq(
+                    alias($._branch_catch_with_error, $.svelte_block_tag),
+                    field('error', $.svelte_expression_body),
+                    '}',
+                    optional(field('content', $.svelte_block_content)),
+                ),
+                seq(
+                    alias($._branch_catch_empty, $.svelte_block_tag),
+                    optional(field('content', $.svelte_block_content)),
+                ),
+            ),
+
+        // `{#key expr}…{/key}` — re-render the content whenever `expr`
+        // changes.
+        svelte_block_key: ($) =>
+            seq(
+                alias($._block_key_open, $.svelte_block_tag),
+                field('expr', $.svelte_expression_body),
+                '}',
+                optional(field('body', $.svelte_block_content)),
+                alias($._block_key_close, $.svelte_block_tag),
+            ),
+
+        // `{#snippet name(args)}…{/snippet}` — Svelte 5 named snippet.
+        // The head (name + args) is kept as one opaque expression body for
+        // the same reason as `{#each}`.
+        svelte_block_snippet: ($) =>
+            seq(
+                alias($._block_snippet_open, $.svelte_block_tag),
+                field('signature', $.svelte_expression_body),
+                '}',
+                optional(field('body', $.svelte_block_content)),
+                alias($._block_snippet_close, $.svelte_block_tag),
+            ),
+
+        // ── Block-tag opening / continuation / closing tokens ────────────
+        //
+        // Each opener requires a trailing `\s` so `{#ifx}` does not match
+        // `{#if`. Where the keyword has no expression body (`{:else}` /
+        // `{/if}` and friends), the closing `}` is part of the token; the
+        // grammar therefore does NOT consume a separate `}` for those.
+        // Where the keyword DOES carry a body, the opener consumes the
+        // whitespace boundary but leaves the `}` for the grammar to match
+        // after the expression body.
+
+        // `{@…` heads.
+        _at_const_open: () => token(seq('{@const', /\s/)),
+        _at_html_open: () => token(seq('{@html', /\s/)),
+        _at_render_open: () => token(seq('{@render', /\s/)),
+        _at_debug_open: () => token(seq('{@debug', /\s/)),
+        _at_debug_empty: () => token(seq('{@debug', /\s*}/)),
+
+        // `{#…` heads.
+        _block_if_open: () => token(seq('{#if', /\s/)),
+        _block_each_open: () => token(seq('{#each', /\s/)),
+        _block_await_open: () => token(seq('{#await', /\s/)),
+        _block_key_open: () => token(seq('{#key', /\s/)),
+        _block_snippet_open: () => token(seq('{#snippet', /\s/)),
+
+        // `{:…` continuations.
+        _branch_else_if: () => token(seq('{:else', /\s+/, 'if', /\s/)),
+        _branch_else: () => token(seq('{:else', /\s*}/)),
+        _branch_then_with_value: () => token(seq('{:then', /\s/)),
+        _branch_then_empty: () => token(seq('{:then', /\s*}/)),
+        _branch_catch_with_error: () => token(seq('{:catch', /\s/)),
+        _branch_catch_empty: () => token(seq('{:catch', /\s*}/)),
+
+        // `{/…}` closes. The closing `}` is baked in because there is no
+        // body to consume between the keyword and the close.
+        _block_if_close: () => token(seq('{/if', /\s*}/)),
+        _block_each_close: () => token(seq('{/each', /\s*}/)),
+        _block_await_close: () => token(seq('{/await', /\s*}/)),
+        _block_key_close: () => token(seq('{/key', /\s*}/)),
+        _block_snippet_close: () => token(seq('{/snippet', /\s*}/)),
 
         // ── Verbatim environments ────────────────────────────────────────
         //

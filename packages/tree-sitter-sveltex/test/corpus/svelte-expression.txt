@@ -114,17 +114,18 @@ Empty: {} here.
   (markdown_chunk))
 
 ================================================================================
-A Svelte logic-block tag is parsed as a mustache expression
+A Svelte if-block is parsed structurally, not as a mustache expression
 ================================================================================
 {#if ready}yes{/if}
 --------------------------------------------------------------------------------
 
 (document
-  (svelte_expression
-    (svelte_expression_body))
-  (markdown_chunk)
-  (svelte_expression
-    (svelte_expression_body)))
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
 
 ================================================================================
 A mustache expression at end of file with no trailing whitespace

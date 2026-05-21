@@ -84,7 +84,7 @@ Inline `$state` is code, but $y$ is math.
   (markdown_chunk))
 
 ================================================================================
-A Svelte logic block and mustache tag are recognised as svelte_expression
+A Svelte logic block parses with a nested mustache expression
 ================================================================================
 {#if ready}
   Welcome, {name}!
@@ -92,14 +92,15 @@ A Svelte logic block and mustache tag are recognised as svelte_expression
 --------------------------------------------------------------------------------
 
 (document
-  (svelte_expression
-    (svelte_expression_body))
-  (markdown_chunk)
-  (svelte_expression
-    (svelte_expression_body))
-  (markdown_chunk)
-  (svelte_expression
-    (svelte_expression_body)))
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
 
 ================================================================================
 A Svelte script block stays inside the Markdown chunk

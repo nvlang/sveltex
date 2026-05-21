@@ -49,3 +49,15 @@
 ; (SvelTeX escapes rather than renders it) and has no injection, so highlight
 ; it as plain raw text.
 (plain_verbatim_body) @markup.raw
+
+; ── Svelte mustache + block tags ─────────────────────────────────────────
+
+; The bare `{` / `}` of a `{ … }` mustache expression.
+(svelte_expression ["{" "}"] @punctuation.bracket)
+
+; The block-tag tokens — `{@const`, `{#if`, `{:else}`, `{/each}`, … — are
+; all aliased to `svelte_block_tag` in the grammar so a single capture
+; covers every flavour. Coloured as `@keyword.control` so editors using the
+; standard tree-sitter highlight set pick them out from the surrounding
+; prose.
+(svelte_block_tag) @keyword.control

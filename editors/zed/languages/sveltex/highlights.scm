@@ -29,3 +29,14 @@
 ; The body of a `<verb>` / `<verbatim>` environment is intentionally literal
 ; (SvelTeX escapes rather than renders it) and carries no injection.
 (plain_verbatim_body) @text.literal
+
+; ── Svelte mustache + block tags ─────────────────────────────────────────
+
+; The bare `{` / `}` of a `{ … }` mustache expression.
+(svelte_expression ["{" "}"] @punctuation.bracket)
+
+; All block-tag delimiters (`{@const`, `{#if`, `{:else}`, `{/each}`, ...)
+; are aliased to `svelte_block_tag` in the grammar, so one capture covers
+; the whole family. `@keyword` lights them up consistently with Zed's
+; built-in Svelte highlighting of the same constructs.
+(svelte_block_tag) @keyword

@@ -1,0 +1,375 @@
+================================================================================
+{@const} declaration
+================================================================================
+{@const total = items.length}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_at_const
+    (svelte_block_tag)
+    (svelte_expression_body)))
+
+================================================================================
+{@html} interpolation
+================================================================================
+{@html sanitize(content)}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_at_html
+    (svelte_block_tag)
+    (svelte_expression_body)))
+
+================================================================================
+{@render} snippet call
+================================================================================
+{@render greeting('hello')}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_at_render
+    (svelte_block_tag)
+    (svelte_expression_body)))
+
+================================================================================
+{@debug} with arguments
+================================================================================
+{@debug user, posts}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_at_debug
+    (svelte_block_tag)
+    (svelte_expression_body)))
+
+================================================================================
+{@debug} without arguments
+================================================================================
+{@debug}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_at_debug
+    (svelte_block_tag)))
+
+================================================================================
+{#if} block (no else)
+================================================================================
+{#if ready} hello {/if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#if}/{:else} block
+================================================================================
+{#if loaded}
+  Welcome!
+{:else}
+  Loading...
+{/if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_branch_else
+      (svelte_block_tag)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_block_tag)))
+
+================================================================================
+{#if}/{:else if}/{:else} chain
+================================================================================
+{#if a}
+  alpha
+{:else if b}
+  beta
+{:else if c}
+  gamma
+{:else}
+  delta
+{/if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_branch_else_if
+      (svelte_block_tag)
+      (svelte_expression_body)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_branch_else_if
+      (svelte_block_tag)
+      (svelte_expression_body)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_branch_else
+      (svelte_block_tag)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} block with binding
+================================================================================
+{#each items as item}
+  - {item.name}
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} block with binding, index, and key
+================================================================================
+{#each items as item, i (item.id)}
+  {i}: {item.name}
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} with {:else} fallback
+================================================================================
+{#each items as item}
+  - {item}
+{:else}
+  No items.
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_branch_else
+      (svelte_block_tag)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_block_tag)))
+
+================================================================================
+{#await}/{:then}/{:catch} full form
+================================================================================
+{#await fetch('/api')}
+  Loading...
+{:then response}
+  Done: {response.status}
+{:catch error}
+  Failed: {error.message}
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_branch_then
+      (svelte_block_tag)
+      (svelte_expression_body)
+      (svelte_block_content
+        (markdown_chunk)
+        (svelte_expression
+          (svelte_expression_body))
+        (markdown_chunk)))
+    (svelte_branch_catch
+      (svelte_block_tag)
+      (svelte_expression_body)
+      (svelte_block_content
+        (markdown_chunk)
+        (svelte_expression
+          (svelte_expression_body))
+        (markdown_chunk)))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} with no value binding on {:then}
+================================================================================
+{#await ready}
+  Working
+{:then}
+  Done
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_branch_then
+      (svelte_block_tag)
+      (svelte_block_content
+        (markdown_chunk)))
+    (svelte_block_tag)))
+
+================================================================================
+{#key} block
+================================================================================
+{#key value}
+  Re-rendered each time `value` changes.
+{/key}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_key
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} block
+================================================================================
+{#snippet greeting(name)}
+  Hello, {name}!
+{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+Nested {#if} blocks
+================================================================================
+{#if outer}
+  {#if inner}
+    deep
+  {/if}
+{/if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_if
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_block_if
+        (svelte_block_tag)
+        (svelte_expression_body)
+        (svelte_block_content
+          (markdown_chunk))
+        (svelte_block_tag))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} block containing math
+================================================================================
+{#each formulas as f}
+  $${f.tex}$$
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (display_math
+        (math_delimiter)
+        (math_content_display)
+        (math_delimiter))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} block containing a verbatim environment
+================================================================================
+{#each figures as fig}
+  <tex>
+    \node {fig.label};
+  </tex>
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_expression_body)
+    (svelte_block_content
+      (markdown_chunk)
+      (verbatim_environment
+        (verbatim_tex_open_tag
+          (tag_name))
+        (tex_verbatim_body)
+        (verbatim_close_tag
+          (tag_name)))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+A malformed {#if (no body) falls back to a plain mustache expression
+================================================================================
+{#if}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))
+
+================================================================================
+{#ifx} is not a block tag — falls back to plain mustache expression
+================================================================================
+{#ifx}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_expression
+    (svelte_expression_body)))

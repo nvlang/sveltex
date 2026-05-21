@@ -55,6 +55,42 @@
           "named": true
         },
         {
+          "type": "svelte_at_const",
+          "named": true
+        },
+        {
+          "type": "svelte_at_debug",
+          "named": true
+        },
+        {
+          "type": "svelte_at_html",
+          "named": true
+        },
+        {
+          "type": "svelte_at_render",
+          "named": true
+        },
+        {
+          "type": "svelte_block_await",
+          "named": true
+        },
+        {
+          "type": "svelte_block_each",
+          "named": true
+        },
+        {
+          "type": "svelte_block_if",
+          "named": true
+        },
+        {
+          "type": "svelte_block_key",
+          "named": true
+        },
+        {
+          "type": "svelte_block_snippet",
+          "named": true
+        },
+        {
           "type": "svelte_expression",
           "named": true
         },
@@ -170,6 +206,541 @@
     "type": "plain_verbatim_body",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "svelte_at_const",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_at_debug",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_at_html",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_at_render",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_await",
+    "named": true,
+    "fields": {
+      "catch": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_branch_catch",
+            "named": true
+          }
+        ]
+      },
+      "pending": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "promise": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      },
+      "then": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_branch_then",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_content",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "display_math",
+          "named": true
+        },
+        {
+          "type": "inline_math",
+          "named": true
+        },
+        {
+          "type": "markdown_chunk",
+          "named": true
+        },
+        {
+          "type": "svelte_at_const",
+          "named": true
+        },
+        {
+          "type": "svelte_at_debug",
+          "named": true
+        },
+        {
+          "type": "svelte_at_html",
+          "named": true
+        },
+        {
+          "type": "svelte_at_render",
+          "named": true
+        },
+        {
+          "type": "svelte_block_await",
+          "named": true
+        },
+        {
+          "type": "svelte_block_each",
+          "named": true
+        },
+        {
+          "type": "svelte_block_if",
+          "named": true
+        },
+        {
+          "type": "svelte_block_key",
+          "named": true
+        },
+        {
+          "type": "svelte_block_snippet",
+          "named": true
+        },
+        {
+          "type": "svelte_expression",
+          "named": true
+        },
+        {
+          "type": "verbatim_environment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_each",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "else": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_branch_else",
+            "named": true
+          }
+        ]
+      },
+      "head": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_if",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      },
+      "else": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_branch_else",
+            "named": true
+          }
+        ]
+      },
+      "elseif": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_branch_else_if",
+            "named": true
+          }
+        ]
+      },
+      "then": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_key",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "expr": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_block_snippet",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "signature": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_branch_catch",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "error": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_branch_else",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_branch_else_if",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      },
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "svelte_branch_then",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_block_content",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_expression_body",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "svelte_block_tag",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "svelte_expression",
@@ -343,6 +914,10 @@
   },
   {
     "type": "math_content_paren",
+    "named": true
+  },
+  {
+    "type": "svelte_block_tag",
     "named": true
   },
   {
