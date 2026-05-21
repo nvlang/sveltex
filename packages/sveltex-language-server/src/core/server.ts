@@ -535,9 +535,36 @@ export function createServer(connection: Connection): void {
                 // any tag-derived state (e.g. the VS Code extension's
                 // TextMate grammar).
                 notifyResolvedTags();
+                // Region kinds depend on the config — which tags are
+                // `noop` (delegated to the Svelte proxy) vs
+                // `tex`/`escape`/`code` (blanked out of the virtual
+                // document), the math delimiters, the directive settings.
+                // So a config change must re-parse every OPEN document;
+                // otherwise its regions, virtual document and source map
+                // stay frozen at the old config until the next keystroke,
+                // and e.g. a freshly-added `noop` env's body keeps being
+                // hidden from `svelte-language-server`.
+                await resyncOpenDocuments();
             }
         } finally {
             configReloadInFlight = false;
+        }
+    }
+
+    /**
+     * Re-parses every open document against the current {@link config} and
+     * re-syncs it to the Svelte proxy (close + re-open so the proxy drops
+     * its stale virtual document and its source map cleanly, independent
+     * of LSP version bookkeeping).
+     */
+    async function resyncOpenDocuments(): Promise<void> {
+        // Snapshot first: `rebuild` rewrites the `documents` map entry.
+        for (const existing of [...documents.values()]) {
+            const doc = rebuild(existing.uri, existing.text, existing.version);
+            if (proxy.isRunning) {
+                await proxyDidClose(doc.uri);
+                await proxyDidOpen(doc);
+            }
         }
     }
 

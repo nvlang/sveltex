@@ -151,6 +151,40 @@ function detectVerbatimRanges(
 }
 
 /**
+ * Relabels, in place, every `verbatim`-kinded range whose opening tag is
+ * one of `noopTags` to kind `svelte`.
+ *
+ * `type: 'noop'` verbatim envs pass their body to the Svelte compiler
+ * unchanged (SvelTeX does nothing to them), so the LSP must let
+ * `svelte-language-server` see that body. `verbatim` regions are blanked
+ * out of the virtual `.svelte` document; `svelte` regions (a
+ * {@link DELEGATED_KINDS} member) are copied into it. Comparison is
+ * case-insensitive, matching SvelTeX's own tag handling.
+ *
+ * Operates over the full tagged set rather than a single detector's
+ * output because a noop element can be classified `verbatim` by the mdast
+ * pass (`snippetTypeToRegionKind`) or by the verbatim regex scan,
+ * depending on the surrounding document.
+ */
+function relabelNoopRanges(
+    ranges: TaggedRange[],
+    document: string,
+    noopTags: readonly string[],
+): void {
+    if (noopTags.length === 0) return;
+    const noopTagsLower = new Set(noopTags.map((t) => t.toLowerCase()));
+    for (const range of ranges) {
+        if (range.kind !== 'verbatim') continue;
+        const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(
+            document.slice(range.start, range.end),
+        );
+        if (noopTagsLower.has((tagMatch?.[1] ?? '').toLowerCase())) {
+            range.kind = 'svelte';
+        }
+    }
+}
+
+/**
  * Returns a copy of `document` with every character inside one of `ranges`
  * replaced by a space; newline characters are kept, so offsets _and_ line
  * numbers are preserved.
@@ -239,30 +273,21 @@ export function computeRegions(
         // document would anchor on a `<tex>` that is really inside an
         // inline-code span and pair it with a *later*, unrelated `</tex>` —
         // swallowing the genuine verbatim block in between.
-        const verbatimRanges = detectVerbatimRanges(
-            maskRanges(document, tagged),
-            verbatimTags,
+        tagged.push(
+            ...detectVerbatimRanges(maskRanges(document, tagged), verbatimTags),
         );
+
         // `noop`-typed envs pass their body to Svelte unchanged — so the
-        // body should travel INTO the virtual `.svelte` document handed
-        // to `svelte-language-server`, not be blanked out of it like
-        // `verbatim` regions are. Relabelling to `svelte` puts them in
-        // `DELEGATED_KINDS` and so leaves them visible to the proxy.
-        const noopTagsLower = new Set(
-            config.noopTags.map((t) => t.toLowerCase()),
-        );
-        if (noopTagsLower.size > 0) {
-            for (const range of verbatimRanges) {
-                const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(
-                    document.slice(range.start, range.end),
-                );
-                const tag = (tagMatch?.[1] ?? '').toLowerCase();
-                if (noopTagsLower.has(tag)) {
-                    range.kind = 'svelte';
-                }
-            }
-        }
-        tagged.push(...verbatimRanges);
+        // body should travel INTO the virtual `.svelte` document handed to
+        // `svelte-language-server`, not be blanked out of it like
+        // `verbatim` regions are. Relabel any `verbatim`-kinded range whose
+        // opening tag is a noop env to `svelte` (a `DELEGATED_KIND`), so it
+        // stays visible to the proxy. This runs over the WHOLE tagged set,
+        // not just the `detectVerbatimRanges` output, because a noop
+        // element can be classified `verbatim` by either detector (the
+        // mdast pass via `snippetTypeToRegionKind`, or the verbatim scan)
+        // depending on the surrounding document.
+        relabelNoopRanges(tagged, document, config.noopTags);
     } catch {
         // If SvelTeX's parser throws (malformed input mid-edit is common), fall
         // back to treating the whole document as delegated Markdown. The Svelte

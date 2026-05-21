@@ -44,6 +44,36 @@ describe('buildVirtualSvelte', () => {
         expect(text).toContain('text');
     });
 
+    it('copies a noop verbatim body into the virtual document', () => {
+        // `type: 'noop'` envs are relabelled to `svelte` (delegated), so
+        // their body must reach the virtual `.svelte` document — that's
+        // what lets `svelte-language-server` offer completion / hover
+        // inside them. (`escape`-typed envs, by contrast, stay blanked.)
+        const noopConfig = {
+            ...config,
+            verbatimTags: [...config.verbatimTags, 'Raw'],
+            noopTags: ['Raw'],
+        };
+        const source = '# Heading\n\n<Raw>\n<button on:click={fn} />\n</Raw>\n';
+        const regions = computeRegions(source, noopConfig);
+        const { text } = buildVirtualSvelte(source, regions);
+        expect(text).toContain('<button on:click={fn} />');
+    });
+
+    it('blanks an escape verbatim body from the virtual document', () => {
+        // The complement: `escape`-typed bodies must NOT reach Svelte —
+        // they're literal text and Svelte would mis-parse e.g. `{ … }`.
+        const escapeConfig = {
+            ...config,
+            verbatimTags: [...config.verbatimTags, 'Esc'],
+            escapeTags: [...config.escapeTags, 'Esc'],
+        };
+        const source = '<Esc>{not a mustache}</Esc>';
+        const regions = computeRegions(source, escapeConfig);
+        const { text } = buildVirtualSvelte(source, regions);
+        expect(text).not.toContain('not a mustache');
+    });
+
     it('emits a source map that round-trips delegated offsets', () => {
         const source = '<script>\nlet value = 42;\n</script>';
         const regions = computeRegions(source, config);
