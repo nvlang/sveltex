@@ -34,7 +34,7 @@
 
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -47,6 +47,13 @@ import vsctm from 'vscode-textmate';
 import oniguruma from 'vscode-oniguruma';
 import type { Region } from './regions.js';
 import { verbatimBodyOffsets } from './region-virtual.js';
+
+// JSON imports of the vendored grammars. Inlined by esbuild when this file
+// is bundled into the VS Code extension; required-at-runtime by `tsc` for
+// the standalone LSP (the LSP build copies them to `dist/grammars/` —
+// matching the path tsc emits). Either way, no runtime file lookup needed.
+import latexGrammarRaw from '../grammars/LaTeX.tmLanguage.json' with { type: 'json' };
+import texGrammarRaw from '../grammars/TeX.tmLanguage.json' with { type: 'json' };
 
 /**
  * Tag names every shipping SvelTeX editor grammar handles natively:
@@ -182,23 +189,51 @@ type LatexTokenizer = (lines: readonly string[]) => readonly {
 
 let latexTokenizerPromise: Promise<LatexTokenizer | null> | undefined;
 
-const GRAMMARS_DIR = join(
-    dirname(fileURLToPath(import.meta.url)),
-    '..',
-    'grammars',
-);
+/** Pre-serialised grammar JSONs, ready for `vsctm.parseRawGrammar`. */
+const LATEX_GRAMMAR_JSON = JSON.stringify(latexGrammarRaw);
+const TEX_GRAMMAR_JSON = JSON.stringify(texGrammarRaw);
 
-async function loadLatexTokenizer(): Promise<LatexTokenizer | null> {
+/**
+ * Resolves the bytes of `vscode-oniguruma`'s `onig.wasm`.
+ *
+ * Two contexts need to work:
+ *
+ *   - **LSP standalone (`tsc` output)** — `vscode-oniguruma` is a regular
+ *     dependency, present at `node_modules/vscode-oniguruma/release/
+ *     onig.wasm`. `createRequire(import.meta.url).resolve(...)` finds it.
+ *   - **VS Code extension (`esbuild` bundle)** — the bundled
+ *     `dist/sveltex-language-server.js` has no `node_modules` next to it;
+ *     `require.resolve` fails. The extension's `scripts/build.ts` copies
+ *     the wasm to `dist/onig.wasm`, sitting next to the bundle.
+ *
+ * The fallback chain handles both: try node-module resolution first, fall
+ * back to a path relative to this module's `import.meta.url`. Either way
+ * we end up with a `Buffer`.
+ */
+function loadOnigWasm(): Buffer | null {
     try {
-        // `require.resolve` isn't a built-in in ESM; synthesise one via
-        // `createRequire` keyed to this module's URL so the `vscode-
-        // oniguruma` lookup uses the standard Node resolution algorithm
-        // from this package's location.
         const requireFromHere = createRequire(import.meta.url);
         const wasmPath = requireFromHere.resolve(
             'vscode-oniguruma/release/onig.wasm',
         );
-        const wasm = readFileSync(wasmPath);
+        return readFileSync(wasmPath);
+    } catch {
+        // Bundled fall-through.
+    }
+    const here = dirname(fileURLToPath(import.meta.url));
+    for (const candidate of [
+        join(here, 'onig.wasm'), // next to the bundle
+        join(here, '..', 'onig.wasm'), // one level up (LSP standalone)
+    ]) {
+        if (existsSync(candidate)) return readFileSync(candidate);
+    }
+    return null;
+}
+
+async function loadLatexTokenizer(): Promise<LatexTokenizer | null> {
+    try {
+        const wasm = loadOnigWasm();
+        if (!wasm) return null;
         await oniguruma.loadWASM(wasm);
 
         const registry = new vsctm.Registry({
@@ -209,19 +244,15 @@ async function loadLatexTokenizer(): Promise<LatexTokenizer | null> {
             }),
             // `vsctm.Registry`'s `loadGrammar` is typed as
             // `(scopeName) => Promise<RawGrammar | null>`, but our reads
-            // are synchronous (`readFileSync` of a small JSON shipped in
-            // `dist/grammars/`). Wrapping in `Promise.resolve` satisfies
-            // the type without imposing an `async` we'd then have no
-            // `await` for — pick your rule poison.
+            // are synchronous (`JSON.stringify` over pre-imported
+            // objects). Wrapping in `Promise.resolve` satisfies the type
+            // without imposing an `async` we'd then have no `await` for.
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             loadGrammar: (scopeName) => {
                 if (scopeName === 'text.tex.latex') {
                     return Promise.resolve(
                         vsctm.parseRawGrammar(
-                            readFileSync(
-                                join(GRAMMARS_DIR, 'LaTeX.tmLanguage.json'),
-                                'utf-8',
-                            ),
+                            LATEX_GRAMMAR_JSON,
                             'LaTeX.tmLanguage.json',
                         ),
                     );
@@ -229,10 +260,7 @@ async function loadLatexTokenizer(): Promise<LatexTokenizer | null> {
                 if (scopeName === 'text.tex') {
                     return Promise.resolve(
                         vsctm.parseRawGrammar(
-                            readFileSync(
-                                join(GRAMMARS_DIR, 'TeX.tmLanguage.json'),
-                                'utf-8',
-                            ),
+                            TEX_GRAMMAR_JSON,
                             'TeX.tmLanguage.json',
                         ),
                     );

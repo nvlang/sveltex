@@ -288,6 +288,26 @@ function typeCheck(): void {
 
 // ----- pipeline -------------------------------------------------------------
 
+/**
+ * Copies `onig.wasm` alongside the bundled SvelTeX language server.
+ *
+ * `@nvl/sveltex-language-server` uses `vscode-oniguruma` to tokenise
+ * custom `<MyTex>` verbatim bodies with the bundled LaTeX TextMate
+ * grammar (for `textDocument/semanticTokens`). The package's JS gets
+ * bundled into `dist/sveltex-language-server.js`, but its WASM blob has
+ * to travel separately — esbuild treats `.wasm` as opaque. The LSP
+ * runtime looks for the wasm at a path relative to its own JS file
+ * (`./onig.wasm` next to the bundle) when `require.resolve` of the
+ * package fails (the published `.vsix` ships no `node_modules`), so
+ * copy it here.
+ */
+function copyOnigWasm(): void {
+    const wasmSrc = requireFromPackage.resolve(
+        'vscode-oniguruma/release/onig.wasm',
+    );
+    fs.copyFileSync(wasmSrc, path.join(distDir, 'onig.wasm'));
+}
+
 async function main(): Promise<void> {
     buildGrammars();
     // Start from a clean `dist/` so artifacts from an earlier build — e.g. a
@@ -297,6 +317,7 @@ async function main(): Promise<void> {
     fs.mkdirSync(distDir, { recursive: true });
     const servers = resolveServerBundles();
     await Promise.all([bundleExtension(), bundleServers(servers)]);
+    copyOnigWasm();
     typeCheck();
 }
 
