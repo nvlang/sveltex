@@ -59,6 +59,8 @@ module.exports = grammar({
         $._each_iterable, // `{#each ITERABLE as …}` — up to ` as ` boundary
         $._each_binding, // `… as BINDING[, INDEX][ (KEY)]}` — binding only
         $._each_key, // `… (KEY)}` — key expression inside the parens
+        $._snippet_params, // `{#snippet name(PARAMS)}` — params inside parens
+        $._await_promise, // `{#await PROMISE[ then|catch BINDING]}` — promise
         $._error_sentinel, // tree-sitter's invalid-input sentinel
     ],
 
@@ -261,17 +263,32 @@ module.exports = grammar({
 
         // `{#await promise}` / `{:then value}` / `{:catch error}` /
         // `{/await}`. Each continuation's binding is optional
-        // (`{:then}` / `{:catch}` are valid).
+        // (`{:then}` / `{:catch}` are valid). The shorthand
+        // `{#await promise then value}` / `{#await promise catch error}`
+        // collapses the head + first continuation into a single tag,
+        // surfacing the keyword + binding as fields on the head itself.
         svelte_block_await: ($) =>
             seq(
                 alias($._block_await_open, $.svelte_block_tag),
-                field('promise', $.svelte_expression_body),
-                '}',
+                field('promise', $.svelte_await_promise),
+                optional(
+                    seq(
+                        alias($._await_keyword, $.svelte_await_keyword),
+                        field('binding', $.svelte_await_binding),
+                    ),
+                ),
+                $._await_close_brace,
                 optional(field('pending', $.svelte_block_content)),
                 optional(field('then', $.svelte_branch_then)),
                 optional(field('catch', $.svelte_branch_catch)),
                 alias($._block_await_close, $.svelte_block_tag),
             ),
+
+        svelte_await_promise: ($) => $._await_promise,
+        svelte_await_binding: () => token(/[A-Za-z_$][A-Za-z0-9_$]*/),
+        _await_keyword: () =>
+            token(seq(/[ \t]+/, choice('then', 'catch'), /[ \t]+/)),
+        _await_close_brace: () => token(/[ \t]*}/),
         // `{:then}` / `{:catch}` (no binding) need their own complete
         // tokens — same reason as `{@debug}` above.
         svelte_branch_then: ($) =>
@@ -312,17 +329,28 @@ module.exports = grammar({
                 alias($._block_key_close, $.svelte_block_tag),
             ),
 
-        // `{#snippet name(args)}…{/snippet}` — Svelte 5 named snippet.
-        // The head (name + args) is kept as one opaque expression body for
-        // the same reason as `{#each}`.
+        // `{#snippet name(params)}…{/snippet}` — Svelte 5 named snippet.
+        // The head is decomposed: a `name` identifier and a `params` body
+        // captured separately so destructuring patterns inside the params
+        // (`{#snippet box({width, height})}`) don't get sent to the JS
+        // injection as a malformed top-level expression.
         svelte_block_snippet: ($) =>
             seq(
                 alias($._block_snippet_open, $.svelte_block_tag),
-                field('signature', $.svelte_expression_body),
-                '}',
+                field('name', $.svelte_snippet_name),
+                $._snippet_open_paren,
+                optional(field('params', $.svelte_snippet_params)),
+                ')',
+                $._snippet_close_brace,
                 optional(field('body', $.svelte_block_content)),
                 alias($._block_snippet_close, $.svelte_block_tag),
             ),
+
+        svelte_snippet_name: () => token(/[A-Za-z_$][A-Za-z0-9_$]*/),
+        svelte_snippet_params: ($) => $._snippet_params,
+
+        _snippet_open_paren: () => token(/[ \t]*\(/),
+        _snippet_close_brace: () => token(/[ \t]*}/),
 
         // ── Block-tag opening / continuation / closing tokens ────────────
         //

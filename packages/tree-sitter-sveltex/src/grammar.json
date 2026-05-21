@@ -698,12 +698,42 @@
           "name": "promise",
           "content": {
             "type": "SYMBOL",
-            "name": "svelte_expression_body"
+            "name": "svelte_await_promise"
           }
         },
         {
-          "type": "STRING",
-          "value": "}"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_await_keyword"
+                  },
+                  "named": true,
+                  "value": "svelte_await_keyword"
+                },
+                {
+                  "type": "FIELD",
+                  "name": "binding",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "svelte_await_binding"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_await_close_brace"
         },
         {
           "type": "CHOICE",
@@ -763,6 +793,53 @@
           "value": "svelte_block_tag"
         }
       ]
+    },
+    "svelte_await_promise": {
+      "type": "SYMBOL",
+      "name": "_await_promise"
+    },
+    "svelte_await_binding": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Za-z_$][A-Za-z0-9_$]*"
+      }
+    },
+    "_await_keyword": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "PATTERN",
+            "value": "[ \\t]+"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "then"
+              },
+              {
+                "type": "STRING",
+                "value": "catch"
+              }
+            ]
+          },
+          {
+            "type": "PATTERN",
+            "value": "[ \\t]+"
+          }
+        ]
+      }
+    },
+    "_await_close_brace": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]*}"
+      }
     },
     "svelte_branch_then": {
       "type": "CHOICE",
@@ -983,15 +1060,39 @@
         },
         {
           "type": "FIELD",
-          "name": "signature",
+          "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "svelte_expression_body"
+            "name": "svelte_snippet_name"
           }
         },
         {
+          "type": "SYMBOL",
+          "name": "_snippet_open_paren"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "params",
+              "content": {
+                "type": "SYMBOL",
+                "name": "svelte_snippet_params"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "STRING",
-          "value": "}"
+          "value": ")"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_snippet_close_brace"
         },
         {
           "type": "CHOICE",
@@ -1019,6 +1120,31 @@
           "value": "svelte_block_tag"
         }
       ]
+    },
+    "svelte_snippet_name": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Za-z_$][A-Za-z0-9_$]*"
+      }
+    },
+    "svelte_snippet_params": {
+      "type": "SYMBOL",
+      "name": "_snippet_params"
+    },
+    "_snippet_open_paren": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]*\\("
+      }
+    },
+    "_snippet_close_brace": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]*}"
+      }
     },
     "_at_const_open": {
       "type": "TOKEN",
@@ -1975,6 +2101,14 @@
     {
       "type": "SYMBOL",
       "name": "_each_key"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_snippet_params"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_await_promise"
     },
     {
       "type": "SYMBOL",

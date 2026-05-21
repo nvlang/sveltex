@@ -213,7 +213,7 @@
 (document
   (svelte_block_await
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_await_promise)
     (svelte_block_content
       (markdown_chunk))
     (svelte_branch_then
@@ -247,7 +247,7 @@
 (document
   (svelte_block_await
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_await_promise)
     (svelte_block_content
       (markdown_chunk))
     (svelte_branch_then
@@ -283,7 +283,8 @@
 (document
   (svelte_block_snippet
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
     (svelte_block_content
       (markdown_chunk)
       (svelte_expression

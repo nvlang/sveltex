@@ -1,0 +1,183 @@
+================================================================================
+{#snippet} head: no params
+================================================================================
+{#snippet greeting()}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} head: single param
+================================================================================
+{#snippet greeting(name)}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} head: multiple params
+================================================================================
+{#snippet greeting(first, last)}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} head: destructuring params (no JS-injection mis-parse)
+================================================================================
+{#snippet box({width, height})}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} head: default values + nested calls in params
+================================================================================
+{#snippet card(title = computeDefault(), level = 1)}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#snippet} head: rest params
+================================================================================
+{#snippet item(label, ...rest)}body{/snippet}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_snippet
+    (svelte_block_tag)
+    (svelte_snippet_name)
+    (svelte_snippet_params)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} shorthand: then-only
+================================================================================
+{#await fetch('/api') then response}
+  Got: {response.status}
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_await_promise)
+    (svelte_await_keyword)
+    (svelte_await_binding)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} shorthand: catch-only
+================================================================================
+{#await fetch('/api') catch error}
+  Failed: {error.message}
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_await_promise)
+    (svelte_await_keyword)
+    (svelte_await_binding)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} plain (no shorthand)
+================================================================================
+{#await promise}
+  Loading
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_await_promise)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} promise containing a string with ` then `
+================================================================================
+{#await parse("now then later") then result}
+  {result}
+{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_await_promise)
+    (svelte_await_keyword)
+    (svelte_await_binding)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_expression
+        (svelte_expression_body))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#await} promise containing a method call (no false-positive on `.then`)
+================================================================================
+{#await promise.then(transform) then result}body{/await}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_await
+    (svelte_block_tag)
+    (svelte_await_promise)
+    (svelte_await_keyword)
+    (svelte_await_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))

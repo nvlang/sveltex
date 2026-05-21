@@ -119,3 +119,15 @@
 
 ((svelte_each_key) @injection.content
   (#set! injection.language "javascript"))
+
+; ── `{#snippet}` and `{#await}` head fields ──────────────────────────────
+;
+; The snippet `params` list is a JS function-parameter list (identifiers,
+; defaults, destructuring, rest). The `await` `promise` is a JS expression;
+; the optional shorthand `binding` is a single identifier so injection is
+; unnecessary.
+((svelte_snippet_params) @injection.content
+  (#set! injection.language "javascript"))
+
+((svelte_await_promise) @injection.content
+  (#set! injection.language "javascript"))

@@ -38,3 +38,18 @@ literals so a `,` inside `(item.id, count)` or an `as` inside
 applies only to `iterable` and `key`; `binding` and `index` are
 Svelte-side parameter patterns, kept un-injected so JS doesn't
 mis-render `{ name, age }` destructuring as a block statement.
+
+`{#snippet name(params)}` decomposes into `name` (an identifier
+captured as `@function` in highlights) and `params` (the parameter
+list inside the parens, captured as a `svelte_snippet_params` node
+that gets the JS injection — so destructuring patterns like
+`{#snippet box({width, height})}` parse and highlight correctly).
+
+`{#await promise}` gains a shorthand-form decomposition: the
+`promise` is its own node (with JS injection) and, when the
+shorthand `{#await … then value}` / `{#await … catch error}` form
+is used, the keyword and binding surface as `svelte_await_keyword`
+and `svelte_await_binding` fields. The promise scanner detects the
+` then `/` catch ` boundary while respecting nested calls
+(`promise.then(transform)` doesn't trigger the boundary inside the
+expression) and string literals.

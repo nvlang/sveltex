@@ -68,3 +68,12 @@
 (svelte_each_as) @keyword.control
 (svelte_each_binding) @variable.parameter
 (svelte_each_index) @variable.parameter
+
+; `{#snippet name(...)}` — the name is a snippet declaration (function
+; identifier); decorate as `@function`.
+(svelte_snippet_name) @function
+
+; `{#await promise then|catch binding}` shorthand — the keyword and the
+; binding identifier.
+(svelte_await_keyword) @keyword.control
+(svelte_await_binding) @variable.parameter

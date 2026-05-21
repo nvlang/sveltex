@@ -312,9 +312,29 @@
     }
   },
   {
+    "type": "svelte_await_binding",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_await_promise",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "svelte_block_await",
     "named": true,
     "fields": {
+      "binding": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_await_binding",
+            "named": true
+          }
+        ]
+      },
       "catch": {
         "multiple": false,
         "required": false,
@@ -340,7 +360,7 @@
         "required": true,
         "types": [
           {
-            "type": "svelte_expression_body",
+            "type": "svelte_await_promise",
             "named": true
           }
         ]
@@ -360,6 +380,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "svelte_await_keyword",
+          "named": true
+        },
         {
           "type": "svelte_block_tag",
           "named": true
@@ -620,12 +644,22 @@
           }
         ]
       },
-      "signature": {
+      "name": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "svelte_expression_body",
+            "type": "svelte_snippet_name",
+            "named": true
+          }
+        ]
+      },
+      "params": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_snippet_params",
             "named": true
           }
         ]
@@ -782,6 +816,11 @@
     "fields": {}
   },
   {
+    "type": "svelte_each_index",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "svelte_each_iterable",
     "named": true,
     "fields": {}
@@ -809,6 +848,16 @@
   },
   {
     "type": "svelte_expression_body",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_snippet_name",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_snippet_params",
     "named": true,
     "fields": {}
   },
@@ -970,15 +1019,15 @@
     "named": true
   },
   {
+    "type": "svelte_await_keyword",
+    "named": true
+  },
+  {
     "type": "svelte_block_tag",
     "named": true
   },
   {
     "type": "svelte_each_as",
-    "named": true
-  },
-  {
-    "type": "svelte_each_index",
     "named": true
   },
   {

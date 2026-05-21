@@ -19,7 +19,9 @@
 //                                braces, which the LR grammar matches),
 //   * `_each_iterable`         — `{#each ITERABLE as …}` up to ` as `,
 //   * `_each_binding`          — `… as BINDING[, INDEX][ (KEY)]}` binding,
-//   * `_each_key`              — `… (KEY)}` key expression inside parens.
+//   * `_each_key`              — `… (KEY)}` key expression inside parens,
+//   * `_snippet_params`        — `{#snippet name(PARAMS)}` inside parens,
+//   * `_await_promise`         — `{#await PROMISE[ then|catch BINDING]}`.
 //
 // The scanner is stateless between tokens (no `serialize`/`deserialize`
 // payload), which keeps it trivially correct under tree-sitter's speculative
@@ -46,6 +48,8 @@ enum TokenType {
     EACH_ITERABLE,
     EACH_BINDING,
     EACH_KEY,
+    SNIPPET_PARAMS,
+    AWAIT_PROMISE,
     ERROR_SENTINEL,
 };
 
@@ -662,14 +666,16 @@ static bool scan_each_binding(TSLexer *lexer) {
     }
 }
 
-// `_each_key`: scan a JS expression inside the parens of `… (key)}`. The
-// cursor starts just past the opening `(` and stops just before the
-// matching `)`. Tracks paren depth so `(foo(x))` works.
-static bool scan_each_key(TSLexer *lexer) {
-    lexer->result_symbol = EACH_KEY;
+// Generic helper: scan a balanced body that ends at the matching `)`. The
+// cursor starts just past the opening `(` (paren_depth=1) and stops just
+// before the matching `)`. Tracks paren depth so `(foo(x))` works; tracks
+// braces/brackets/strings for the same reasons as the other JS scanners.
+// Used by `{#each ... (KEY)}` and `{#snippet name(PARAMS)}`.
+static bool scan_paren_balanced_body(TSLexer *lexer, enum TokenType result) {
+    lexer->result_symbol = result;
     bool consumed = false;
     unsigned brace_depth = 0;
-    unsigned paren_depth = 1; // we are inside the opening `(` already
+    unsigned paren_depth = 1; // inside the opening `(` already
     unsigned bracket_depth = 0;
 
     for (;;) {
@@ -687,6 +693,84 @@ static bool scan_each_key(TSLexer *lexer) {
         if (c == '}') { if (brace_depth > 0) brace_depth--; advance(lexer); consumed = true; continue; }
         if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
         if (c == ')') { paren_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '\'' || c == '"' || c == '`') {
+            skip_string_literal(lexer, c, &consumed);
+            continue;
+        }
+        advance(lexer);
+        consumed = true;
+    }
+}
+
+// Looks like ` then ` or ` catch ` (whitespace + keyword + whitespace) at
+// the current cursor — same disposable-lookahead trick as
+// `starts_as_keyword`. Used by `scan_await_promise` to detect the
+// shorthand boundary.
+static bool starts_await_keyword(TSLexer *lexer) {
+    if (lexer->lookahead != ' ' && lexer->lookahead != '\t') return false;
+    advance(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+    }
+    // `then` or `catch`?
+    int32_t c = lexer->lookahead;
+    if (c == 't') {
+        advance(lexer);
+        if (lexer->lookahead != 'h') return false;
+        advance(lexer);
+        if (lexer->lookahead != 'e') return false;
+        advance(lexer);
+        if (lexer->lookahead != 'n') return false;
+        advance(lexer);
+    } else if (c == 'c') {
+        advance(lexer);
+        if (lexer->lookahead != 'a') return false;
+        advance(lexer);
+        if (lexer->lookahead != 't') return false;
+        advance(lexer);
+        if (lexer->lookahead != 'c') return false;
+        advance(lexer);
+        if (lexer->lookahead != 'h') return false;
+        advance(lexer);
+    } else {
+        return false;
+    }
+    return lexer->lookahead == ' ' || lexer->lookahead == '\t';
+}
+
+// `_await_promise`: scan a JS expression that ends either at the shorthand
+// ` then ` / ` catch ` boundary or at the closing `}`. Cursor stops just
+// before the matching boundary (the LR grammar consumes ` then ` /
+// ` catch ` or `}` next).
+static bool scan_await_promise(TSLexer *lexer) {
+    lexer->result_symbol = AWAIT_PROMISE;
+    bool consumed = false;
+    unsigned brace_depth = 0;
+    unsigned paren_depth = 0;
+    unsigned bracket_depth = 0;
+
+    for (;;) {
+        if (is_eof(lexer)) {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        if (brace_depth == 0 && paren_depth == 0 && bracket_depth == 0) {
+            lexer->mark_end(lexer);
+            if (starts_await_keyword(lexer)) return consumed;
+        }
+        int32_t c = lexer->lookahead;
+        if (c == '}') {
+            if (brace_depth == 0) {
+                lexer->mark_end(lexer);
+                return consumed;
+            }
+            brace_depth--; advance(lexer); consumed = true; continue;
+        }
+        if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
+        if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ')') { if (paren_depth > 0) paren_depth--; advance(lexer); consumed = true; continue; }
         if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
         if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
         if (c == '\'' || c == '"' || c == '`') {
@@ -1062,7 +1146,13 @@ bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
         return scan_each_binding(lexer);
     }
     if (valid_symbols[EACH_KEY]) {
-        return scan_each_key(lexer);
+        return scan_paren_balanced_body(lexer, EACH_KEY);
+    }
+    if (valid_symbols[SNIPPET_PARAMS]) {
+        return scan_paren_balanced_body(lexer, SNIPPET_PARAMS);
+    }
+    if (valid_symbols[AWAIT_PROMISE]) {
+        return scan_await_promise(lexer);
     }
     if (valid_symbols[SVELTE_EXPRESSION_BODY]) {
         return scan_svelte_expression_body(lexer);

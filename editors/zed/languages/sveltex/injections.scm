@@ -104,3 +104,14 @@
 
 ((svelte_each_key) @injection.content
   (#set! injection.language "javascript"))
+
+; `{#snippet name(params)}` — params are a JS function-parameter list
+; (identifiers, defaults, destructuring, rest); the name itself is a
+; single identifier and doesn't need an injection.
+((svelte_snippet_params) @injection.content
+  (#set! injection.language "javascript"))
+
+; `{#await promise then|catch binding}` — the promise is a JS expression;
+; the binding is a single identifier so we don't inject on it.
+((svelte_await_promise) @injection.content
+  (#set! injection.language "javascript"))
