@@ -438,6 +438,16 @@
     "type": "svelte_block_each",
     "named": true,
     "fields": {
+      "binding": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "svelte_each_binding",
+            "named": true
+          }
+        ]
+      },
       "body": {
         "multiple": false,
         "required": false,
@@ -458,12 +468,32 @@
           }
         ]
       },
-      "head": {
+      "index": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_each_index",
+            "named": true
+          }
+        ]
+      },
+      "iterable": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "svelte_expression_body",
+            "type": "svelte_each_iterable",
+            "named": true
+          }
+        ]
+      },
+      "key": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "svelte_each_key",
             "named": true
           }
         ]
@@ -475,6 +505,10 @@
       "types": [
         {
           "type": "svelte_block_tag",
+          "named": true
+        },
+        {
+          "type": "svelte_each_as",
           "named": true
         }
       ]
@@ -743,6 +777,21 @@
     }
   },
   {
+    "type": "svelte_each_binding",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_each_iterable",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "svelte_each_key",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "svelte_expression",
     "named": true,
     "fields": {
@@ -889,6 +938,10 @@
     "named": false
   },
   {
+    "type": ")",
+    "named": false
+  },
+  {
     "type": "<",
     "named": false
   },
@@ -918,6 +971,14 @@
   },
   {
     "type": "svelte_block_tag",
+    "named": true
+  },
+  {
+    "type": "svelte_each_as",
+    "named": true
+  },
+  {
+    "type": "svelte_each_index",
     "named": true
   },
   {

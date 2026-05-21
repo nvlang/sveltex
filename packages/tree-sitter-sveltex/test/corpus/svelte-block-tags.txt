@@ -135,7 +135,9 @@
 (document
   (svelte_block_each
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
     (svelte_block_content
       (markdown_chunk)
       (svelte_expression
@@ -154,7 +156,11 @@
 (document
   (svelte_block_each
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_each_index)
+    (svelte_each_key)
     (svelte_block_content
       (markdown_chunk)
       (svelte_expression
@@ -178,7 +184,9 @@
 (document
   (svelte_block_each
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
     (svelte_block_content
       (markdown_chunk)
       (svelte_expression
@@ -319,7 +327,9 @@ Nested {#if} blocks
 (document
   (svelte_block_each
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
     (svelte_block_content
       (markdown_chunk)
       (display_math
@@ -342,7 +352,9 @@ Nested {#if} blocks
 (document
   (svelte_block_each
     (svelte_block_tag)
-    (svelte_expression_body)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
     (svelte_block_content
       (markdown_chunk)
       (verbatim_environment

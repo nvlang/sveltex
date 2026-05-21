@@ -98,11 +98,24 @@
 
 ; ── Svelte mustache expressions ──────────────────────────────────────────
 ;
-; A `{ … }` expression in prose. The body (between the braces, exclusive) is
-; a JavaScript expression in Svelte's syntax; delegate to the JS grammar.
-; Logic-block sigils (`#`/`/`/`:`/`@`) at the start of the body are not yet
-; specially recognised — the JS grammar will flag them as syntax errors,
-; which is the expected fallback until first-class Svelte-block parsing
-; lands.
+; A `{ … }` expression in prose. The body (between the braces, exclusive)
+; is a JavaScript expression in Svelte's syntax; delegate to the JS
+; grammar. This rule covers plain mustaches AND the body of every
+; `{#if cond}` / `{@const x = …}` / `{:then v}` / `{:catch e}` / `{#await
+; promise}` / `{#key expr}` / `{#snippet …}` head, since they all share
+; `svelte_expression_body` for the JS-expression slot.
 ((svelte_expression_body) @injection.content
+  (#set! injection.language "javascript"))
+
+; ── `{#each}` head fields ────────────────────────────────────────────────
+;
+; The `iterable` and `key` sub-bodies are JS expressions; inject JS into
+; them. The `binding` is a Svelte-side identifier (or destructuring
+; pattern) — it's syntactically valid JS in most cases, but injecting JS
+; would highlight a destructuring like `{name, age}` as a block statement
+; rather than a parameter pattern, which is wrong. Leave it un-injected.
+((svelte_each_iterable) @injection.content
+  (#set! injection.language "javascript"))
+
+((svelte_each_key) @injection.content
   (#set! injection.language "javascript"))

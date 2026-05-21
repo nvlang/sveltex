@@ -61,3 +61,10 @@
 ; standard tree-sitter highlight set pick them out from the surrounding
 ; prose.
 (svelte_block_tag) @keyword.control
+
+; The ` as ` keyword inside an `{#each}` head and the parameter-list
+; binding/index identifiers. The binding is a Svelte-side pattern (not a
+; JS variable reference), so `@variable.parameter` is the right scope.
+(svelte_each_as) @keyword.control
+(svelte_each_binding) @variable.parameter
+(svelte_each_index) @variable.parameter

@@ -56,6 +56,9 @@ module.exports = grammar({
         $._display_math_content, // body of `$$ ... $$`
         $._markdown_chunk, // a run of ordinary Markdown text
         $._svelte_expression_body, // body of `{ … }` (excluding the braces)
+        $._each_iterable, // `{#each ITERABLE as …}` — up to ` as ` boundary
+        $._each_binding, // `… as BINDING[, INDEX][ (KEY)]}` — binding only
+        $._each_key, // `… (KEY)}` — key expression inside the parens
         $._error_sentinel, // tree-sitter's invalid-input sentinel
     ],
 
@@ -211,20 +214,50 @@ module.exports = grammar({
                 optional(field('content', $.svelte_block_content)),
             ),
 
-        // `{#each items as item, i (key)}` — the whole head is kept opaque
-        // as one expression body so the JavaScript injection can colour
-        // `items`, `as`, the binding and the optional `(key)` together.
-        // Refining the head into `iterable` / `binding` / `index` / `key`
-        // fields would need its own scanner pass; deferred.
+        // `{#each items as item, i (key)}` — the head is decomposed into
+        // named fields so each piece can be highlighted / injected on its
+        // own terms. `iterable` and `key` are JS expressions (and get the
+        // JS injection in `injections.scm`); `binding` and `index` are
+        // Svelte-side identifiers (no JS injection — the JS grammar would
+        // otherwise flag `as` and the binding-list comma as syntax errors).
         svelte_block_each: ($) =>
             seq(
                 alias($._block_each_open, $.svelte_block_tag),
-                field('head', $.svelte_expression_body),
-                '}',
+                field('iterable', $.svelte_each_iterable),
+                alias($._each_as, $.svelte_each_as),
+                field('binding', $.svelte_each_binding),
+                optional(
+                    seq($._each_comma, field('index', $.svelte_each_index)),
+                ),
+                optional(
+                    seq(
+                        $._each_open_paren,
+                        field('key', $.svelte_each_key),
+                        ')',
+                    ),
+                ),
+                $._each_close_brace,
                 optional(field('body', $.svelte_block_content)),
                 optional(field('else', $.svelte_branch_else)),
                 alias($._block_each_close, $.svelte_block_tag),
             ),
+
+        svelte_each_iterable: ($) => $._each_iterable,
+        svelte_each_binding: ($) => $._each_binding,
+        svelte_each_index: () => token(/[A-Za-z_$][A-Za-z0-9_$]*/),
+        svelte_each_key: ($) => $._each_key,
+
+        // ` as ` between the iterable and the binding. Captured as its own
+        // node (aliased to `svelte_each_as`) so highlights.scm can colour
+        // the keyword distinctly from the surrounding expression bodies.
+        _each_as: () => token(seq(/[ \t]+/, 'as', /[ \t]+/)),
+
+        // Separators that may carry surrounding whitespace. The grammar's
+        // `extras` is empty (whitespace is meaningful around `$` math
+        // fences), so each separator owns its own whitespace boundary.
+        _each_comma: () => token(/,[ \t]*/),
+        _each_open_paren: () => token(/[ \t]*\(/),
+        _each_close_brace: () => token(/[ \t]*}/),
 
         // `{#await promise}` / `{:then value}` / `{:catch error}` /
         // `{/await}`. Each continuation's binding is optional

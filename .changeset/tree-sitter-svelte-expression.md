@@ -29,3 +29,12 @@ environments, mustache expressions, more blocks, and Markdown. All
 opening / continuation / closing delimiters share the
 `svelte_block_tag` alias so a single highlight query covers every
 flavour.
+
+The `{#each}` head is further decomposed into named fields:
+`iterable`, `as`, `binding`, optional `index`, optional `key`. The
+external scanner tracks brace / paren / bracket nesting and string
+literals so a `,` inside `(item.id, count)` or an `as` inside
+`"name as alias"` doesn't fire prematurely. The JavaScript injection
+applies only to `iterable` and `key`; `binding` and `index` are
+Svelte-side parameter patterns, kept un-injected so JS doesn't
+mis-render `{ name, age }` destructuring as a block statement.

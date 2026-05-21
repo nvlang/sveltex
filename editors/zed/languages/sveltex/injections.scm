@@ -89,9 +89,18 @@
 
 ; ── Svelte mustache expressions ──────────────────────────────────────────
 ;
-; The body of a `{ … }` expression (the braces themselves are matched by the
-; grammar) is a JavaScript expression — delegate to Zed's built-in JS
-; grammar. Logic-block sigils (`#`/`/`/`:`/`@`) get flagged by the JS parser
-; until first-class Svelte-block parsing lands in this grammar.
+; The body of a `{ … }` expression / `{@const}` / `{#if}` / `{:then}` /
+; `{#await}` / `{#key}` / `{#snippet}` head is a JavaScript expression —
+; delegate to Zed's built-in JS grammar.
 ((svelte_expression_body) @injection.content
+  (#set! injection.language "javascript"))
+
+; `{#each iterable as binding, index (key)}` decomposes the head into
+; named fields. The `iterable` and `key` are JS expressions; the
+; `binding` is a Svelte parameter pattern (destructuring or identifier),
+; left un-injected so JS doesn't mis-render `{a, b}` as a block.
+((svelte_each_iterable) @injection.content
+  (#set! injection.language "javascript"))
+
+((svelte_each_key) @injection.content
   (#set! injection.language "javascript"))

@@ -16,7 +16,10 @@
 //   * `_inline_math_content`   — the body of `$ ... $`,
 //   * `_display_math_content`  — the body of `$$ ... $$`,
 //   * `_svelte_expression_body`— the body of `{ ... }` (excluding the
-//                                braces, which the LR grammar matches).
+//                                braces, which the LR grammar matches),
+//   * `_each_iterable`         — `{#each ITERABLE as …}` up to ` as `,
+//   * `_each_binding`          — `… as BINDING[, INDEX][ (KEY)]}` binding,
+//   * `_each_key`              — `… (KEY)}` key expression inside parens.
 //
 // The scanner is stateless between tokens (no `serialize`/`deserialize`
 // payload), which keeps it trivially correct under tree-sitter's speculative
@@ -40,6 +43,9 @@ enum TokenType {
     DISPLAY_MATH_CONTENT,
     MARKDOWN_CHUNK,
     SVELTE_EXPRESSION_BODY,
+    EACH_ITERABLE,
+    EACH_BINDING,
+    EACH_KEY,
     ERROR_SENTINEL,
 };
 
@@ -438,6 +444,29 @@ static void skip_script_or_style_after_name(TSLexer *lexer,
     }
 }
 
+// Skips a string or template literal starting at the current quote char.
+// Returns when the closing quote has been consumed, or on EOF. Sets
+// `*made_progress` to true if any chars were consumed.
+static void skip_string_literal(TSLexer *lexer, int32_t quote,
+                                bool *made_progress) {
+    advance(lexer); // opening quote
+    *made_progress = true;
+    for (;;) {
+        if (is_eof(lexer)) return;
+        int32_t s = lexer->lookahead;
+        if (s == '\\') {
+            advance(lexer);
+            if (!is_eof(lexer)) advance(lexer);
+            continue;
+        }
+        if (s == quote) {
+            advance(lexer);
+            return;
+        }
+        advance(lexer);
+    }
+}
+
 // ── `_svelte_expression_body` ────────────────────────────────────────────
 //
 // Consumes the body of a `{ … }` mustache expression. The cursor starts
@@ -500,6 +529,168 @@ static bool scan_svelte_expression_body(TSLexer *lexer) {
                 }
                 advance(lexer);
             }
+            continue;
+        }
+        advance(lexer);
+        consumed = true;
+    }
+}
+
+// ── `{#each}`-head scanners ──────────────────────────────────────────────
+//
+// `{#each iterable as binding[, index][ (key)]}` decomposes the head into
+// four named sub-bodies (`iterable`, `binding`, `key`) plus a plain
+// identifier (`index`). The cursor for each scanner starts just past the
+// previous LR token (the `{#each ` opener for `iterable`, the literal
+// ` as ` for `binding`, etc.) and stops *just before* the next literal
+// token the LR grammar matches (` as ` / `,` / `(` / `}` for the body
+// scanners, `)` for the key scanner).
+//
+// Why custom scanners rather than reusing `scan_svelte_expression_body`:
+// the body of `{ … }` stops at the matching `}` and only that; the each
+// head needs different stop conditions depending on which sub-body is
+// being scanned. All four respect JS string-literal escaping and
+// brace/bracket nesting so the boundaries inside an embedded object or
+// string don't fire prematurely.
+
+// Common helper: returns true iff the cursor is positioned at a
+// whitespace + "as" + whitespace sequence (matching the LR `_each_as`
+// token). Does not advance the cursor — uses the lexer's lookahead only.
+// vscode-textmate-style: peeks ahead by `advance`+save? `TSLexer` exposes
+// only single-char `lookahead`, so we have to actually advance and rely on
+// the caller having `mark_end`ed the boundary first.
+static bool starts_as_keyword(TSLexer *lexer) {
+    // Caller must be at the position to test.
+    if (lexer->lookahead != ' ' && lexer->lookahead != '\t') return false;
+    // Mark the boundary before we walk forward so we can return false
+    // without consuming anything (the caller's last `mark_end` is what
+    // tree-sitter sees if we don't `mark_end` again).
+    advance(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+    }
+    if (lexer->lookahead != 'a') return false;
+    advance(lexer);
+    if (lexer->lookahead != 's') return false;
+    advance(lexer);
+    if (lexer->lookahead != ' ' && lexer->lookahead != '\t') return false;
+    return true;
+}
+
+// `_each_iterable`: scan a JS expression that ends at the ` as ` boundary
+// at brace/paren/bracket-depth 0. Cursor stops just before the leading
+// whitespace of ` as `.
+static bool scan_each_iterable(TSLexer *lexer) {
+    lexer->result_symbol = EACH_ITERABLE;
+    bool consumed = false;
+    unsigned brace_depth = 0; // `{`/`}`
+    unsigned paren_depth = 0; // `(`/`)`
+    unsigned bracket_depth = 0; // `[`/`]`
+
+    for (;;) {
+        if (is_eof(lexer)) {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        // Only check for the ` as ` boundary at outer depth — inside an
+        // embedded `[items as Type]` (TS-style assertion) we want the
+        // outer `as`, not the inner one.
+        if (brace_depth == 0 && paren_depth == 0 && bracket_depth == 0) {
+            lexer->mark_end(lexer);
+            if (starts_as_keyword(lexer)) return consumed;
+        }
+        int32_t c = lexer->lookahead;
+        if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
+        if (c == '}') {
+            if (brace_depth == 0) {
+                // Hit the enclosing `}` without finding ` as ` — malformed
+                // each head, but produce what we have so the partial parse
+                // is still useful.
+                lexer->mark_end(lexer);
+                return consumed;
+            }
+            brace_depth--; advance(lexer); consumed = true; continue;
+        }
+        if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ')') { if (paren_depth > 0) paren_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '\'' || c == '"' || c == '`') {
+            skip_string_literal(lexer, c, &consumed);
+            continue;
+        }
+        advance(lexer);
+        consumed = true;
+    }
+}
+
+// `_each_binding`: scan a binding pattern (identifier, destructuring,
+// etc.) that ends at `,` (introducing the index), `(` (introducing the
+// key), or `}` (closing the head). All three stop conditions only fire
+// at outer depth.
+static bool scan_each_binding(TSLexer *lexer) {
+    lexer->result_symbol = EACH_BINDING;
+    bool consumed = false;
+    unsigned brace_depth = 0;
+    unsigned paren_depth = 0;
+    unsigned bracket_depth = 0;
+
+    for (;;) {
+        if (is_eof(lexer)) {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        int32_t c = lexer->lookahead;
+        if (brace_depth == 0 && paren_depth == 0 && bracket_depth == 0) {
+            if (c == ',' || c == '(' || c == '}') {
+                lexer->mark_end(lexer);
+                return consumed;
+            }
+        }
+        if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
+        if (c == '}') { brace_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ')') { if (paren_depth > 0) paren_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '\'' || c == '"' || c == '`') {
+            skip_string_literal(lexer, c, &consumed);
+            continue;
+        }
+        advance(lexer);
+        consumed = true;
+    }
+}
+
+// `_each_key`: scan a JS expression inside the parens of `… (key)}`. The
+// cursor starts just past the opening `(` and stops just before the
+// matching `)`. Tracks paren depth so `(foo(x))` works.
+static bool scan_each_key(TSLexer *lexer) {
+    lexer->result_symbol = EACH_KEY;
+    bool consumed = false;
+    unsigned brace_depth = 0;
+    unsigned paren_depth = 1; // we are inside the opening `(` already
+    unsigned bracket_depth = 0;
+
+    for (;;) {
+        if (is_eof(lexer)) {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        int32_t c = lexer->lookahead;
+        if (c == ')' && paren_depth == 1
+            && brace_depth == 0 && bracket_depth == 0) {
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
+        if (c == '}') { if (brace_depth > 0) brace_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ')') { paren_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
+        if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '\'' || c == '"' || c == '`') {
+            skip_string_literal(lexer, c, &consumed);
             continue;
         }
         advance(lexer);
@@ -863,6 +1054,15 @@ bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
     }
     if (valid_symbols[INLINE_MATH_CONTENT]) {
         return scan_math_body(lexer, INLINE_MATH_CONTENT, false);
+    }
+    if (valid_symbols[EACH_ITERABLE]) {
+        return scan_each_iterable(lexer);
+    }
+    if (valid_symbols[EACH_BINDING]) {
+        return scan_each_binding(lexer);
+    }
+    if (valid_symbols[EACH_KEY]) {
+        return scan_each_key(lexer);
     }
     if (valid_symbols[SVELTE_EXPRESSION_BODY]) {
         return scan_svelte_expression_body(lexer);

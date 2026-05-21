@@ -40,3 +40,9 @@
 ; the whole family. `@keyword` lights them up consistently with Zed's
 ; built-in Svelte highlighting of the same constructs.
 (svelte_block_tag) @keyword
+
+; `{#each ... as ...}` head fields: the `as` keyword and the binding /
+; index identifiers (Svelte-side parameter patterns, not JS references).
+(svelte_each_as) @keyword
+(svelte_each_binding) @variable.parameter
+(svelte_each_index) @variable.parameter

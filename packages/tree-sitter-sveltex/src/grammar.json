@@ -497,15 +497,86 @@
         },
         {
           "type": "FIELD",
-          "name": "head",
+          "name": "iterable",
           "content": {
             "type": "SYMBOL",
-            "name": "svelte_expression_body"
+            "name": "svelte_each_iterable"
           }
         },
         {
-          "type": "STRING",
-          "value": "}"
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_each_as"
+          },
+          "named": true,
+          "value": "svelte_each_as"
+        },
+        {
+          "type": "FIELD",
+          "name": "binding",
+          "content": {
+            "type": "SYMBOL",
+            "name": "svelte_each_binding"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_each_comma"
+                },
+                {
+                  "type": "FIELD",
+                  "name": "index",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "svelte_each_index"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_each_open_paren"
+                },
+                {
+                  "type": "FIELD",
+                  "name": "key",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "svelte_each_key"
+                  }
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_each_close_brace"
         },
         {
           "type": "CHOICE",
@@ -549,6 +620,66 @@
           "value": "svelte_block_tag"
         }
       ]
+    },
+    "svelte_each_iterable": {
+      "type": "SYMBOL",
+      "name": "_each_iterable"
+    },
+    "svelte_each_binding": {
+      "type": "SYMBOL",
+      "name": "_each_binding"
+    },
+    "svelte_each_index": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Za-z_$][A-Za-z0-9_$]*"
+      }
+    },
+    "svelte_each_key": {
+      "type": "SYMBOL",
+      "name": "_each_key"
+    },
+    "_each_as": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "PATTERN",
+            "value": "[ \\t]+"
+          },
+          {
+            "type": "STRING",
+            "value": "as"
+          },
+          {
+            "type": "PATTERN",
+            "value": "[ \\t]+"
+          }
+        ]
+      }
+    },
+    "_each_comma": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": ",[ \\t]*"
+      }
+    },
+    "_each_open_paren": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]*\\("
+      }
+    },
+    "_each_close_brace": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]*}"
+      }
     },
     "svelte_block_await": {
       "type": "SEQ",
@@ -1832,6 +1963,18 @@
     {
       "type": "SYMBOL",
       "name": "_svelte_expression_body"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_each_iterable"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_each_binding"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_each_key"
     },
     {
       "type": "SYMBOL",
