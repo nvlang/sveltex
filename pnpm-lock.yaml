@@ -232,7 +232,7 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1
       svelte:
-        specifier: ^5.55.9
+        specifier: ^5.55.8
         version: 5.55.9(@typescript-eslint/types@8.59.4)
       svgo:
         specifier: ^4.0.1
