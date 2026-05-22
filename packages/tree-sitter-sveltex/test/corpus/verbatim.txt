@@ -116,10 +116,20 @@ After.
   (markdown_chunk))
 
 ================================================================================
-A non-verbatim HTML tag stays inside the Markdown chunk
+A non-verbatim HTML tag is carved out of the Markdown chunk
 ================================================================================
 A paragraph with <strong>bold</strong> and a <Counter /> component.
 --------------------------------------------------------------------------------
 
 (document
+  (markdown_chunk)
+  (html_open_tag
+    (tag_name))
+  (markdown_chunk)
+  (html_close_tag
+    (tag_name))
+  (markdown_chunk)
+  (html_self_closing_tag
+    (tag_name)
+    (element_attributes))
   (markdown_chunk))

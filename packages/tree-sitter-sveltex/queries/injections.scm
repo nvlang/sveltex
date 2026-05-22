@@ -96,6 +96,25 @@
 ; its contents rather than rendering them), so `plain_verbatim_body` is left
 ; un-injected — it is plain text.
 
+; ── Plain HTML / Svelte element tags ───────────────────────────────────────
+;
+; `<div>`, `<p>`, `<Counter>`, `</div>`, `<br/>`, … are carved out of the
+; Markdown stream by the grammar (so the element body is a *fresh*
+; `markdown_chunk` — see the note at the top — and the closing tag is its own
+; node). Each tag is delegated to the `svelte` grammar, exactly like the
+; verbatim tags above, so element names, attributes and any Svelte expressions
+; inside them are highlighted consistently. This is what makes `</div>`
+; highlighted (CommonMark leaves it inert) and lets Markdown flow through the
+; element without the CommonMark HTML-block suppression.
+((html_open_tag) @injection.content
+  (#set! injection.language "svelte"))
+
+((html_self_closing_tag) @injection.content
+  (#set! injection.language "svelte"))
+
+((html_close_tag) @injection.content
+  (#set! injection.language "svelte"))
+
 ; ── Svelte mustache expressions ──────────────────────────────────────────
 ;
 ; A `{ … }` expression in prose. The body (between the braces, exclusive)

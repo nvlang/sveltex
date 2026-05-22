@@ -45,6 +45,7 @@ enum TokenType {
     DISPLAY_MATH_CONTENT,
     MARKDOWN_CHUNK,
     SVELTE_EXPRESSION_BODY,
+    ELEMENT_ATTRIBUTES,
     EACH_ITERABLE,
     EACH_BINDING,
     EACH_KEY,
@@ -97,46 +98,153 @@ static bool consume_line_ending(TSLexer *lexer) {
     return false;
 }
 
-// ── Verbatim-environment look-ahead ──────────────────────────────────────
-//
-// At a `<`, decide whether what follows opens a verbatim environment. The
-// lexer's lookahead is the `<`.
-//
-// Returns the length of the matched tag name (>0) on success and consumes the
-// `<` and the tag name, or returns 0 on failure (having consumed only scratch
-// input). The caller must `mark_end` before calling so a failed probe is
-// discarded.
-static unsigned probe_verbatim_open(TSLexer *lexer, char *out_name,
-                                    unsigned out_cap) {
-    advance(lexer);  // consume '<'
-    if (lexer->lookahead == '/') return 0;  // a closing tag, not an opening
-
-    unsigned len = 0;
-    while (len + 1 < out_cap && is_tag_name_char(lexer->lookahead)) {
-        out_name[len++] = (char)lexer->lookahead;
-        advance(lexer);
-    }
-    out_name[len] = '\0';
-    if (len == 0) return 0;
-
-    // The char after the name must be whitespace or `>` for this to be a tag.
-    int32_t after = lexer->lookahead;
-    bool ok = after == '>' || after == ' ' || after == '\t' ||
-              after == '\r' || after == '\n';
-    if (!ok) return 0;
-
-    for (unsigned i = 0; i < VERBATIM_TAG_COUNT; i++) {
-        if (strcmp(out_name, VERBATIM_TAGS[i]) == 0) return len;
-    }
-    return 0;
-}
-
 // Returns whether `name` is one of the configured verbatim tags.
 static bool is_verbatim_tag(const char *name) {
     for (unsigned i = 0; i < VERBATIM_TAG_COUNT; i++) {
         if (strcmp(name, VERBATIM_TAGS[i]) == 0) return true;
     }
     return false;
+}
+
+// Forward declaration: case-insensitive equality of an already-read tag name
+// against a keyword (defined with the `<script>`/`<style>` helpers below).
+static bool eq_keyword_ci(const char *name, const char *keyword);
+
+// ── Tag look-ahead / classification ──────────────────────────────────────
+//
+// Classification of what a `<` in the Markdown stream begins. Used by
+// `scan_markdown_chunk` to decide whether (and how) to stop.
+enum TagKind {
+    TAG_NONE,        // not a tag start — ordinary `<` text (`a < b`, `<3`, …)
+    TAG_VERBATIM,    // a verbatim environment open tag (`<tex …>`, `<verb>`)
+    TAG_SCRIPT,      // `<script …>` — opaque block, skip wholesale
+    TAG_STYLE,       // `<style …>`  — opaque block, skip wholesale
+    TAG_ELEMENT,     // a plain HTML/Svelte element open/self-closing tag
+    TAG_ELEMENT_CLOSE,  // a plain element close tag `</name>`
+};
+//
+// At a `<`, classify what follows. The lexer's lookahead is the `<`. This
+// CONSUMES the `<` (+ optional `/`) and the tag name as scratch (the caller has
+// already `mark_end`-ed the boundary at the `<`), leaving the cursor at the
+// char after the name. Returns the classification.
+//
+// The first char of a tag name must be an ASCII letter (`[A-Za-z]`). This is
+// the key guard against false positives in prose: `a < b`, `1<2`, `x <- y` and
+// `<3` all have a non-letter after the `<` (or `</`) and so classify as
+// TAG_NONE — they stay inside the Markdown run.
+// Lookahead from just after a tag name: does a well-formed terminator `>`
+// appear before a blank line or EOF? An (inline) HTML/Svelte tag may span
+// several lines but never contains a blank line, so a `<` whose tag has no
+// terminator is prose, not a tag — declining to carve it keeps an unclosed
+// `<foo` as ordinary text instead of producing a `MISSING ">"` error node
+// that runs to EOF. Steps over quoted strings and brace-balanced `{…}` so a
+// `>` inside them is not mistaken for the terminator and a newline inside
+// them does not count toward a blank line. Pure scratch lookahead: the caller
+// has already `mark_end`ed the chunk at `<`, so advancing here cannot change
+// the emitted token.
+static bool tag_has_terminator(TSLexer *lexer) {
+    bool blank_pending = false;  // a newline seen with only whitespace since
+    for (;;) {
+        if (is_eof(lexer)) return false;
+        int32_t c = lexer->lookahead;
+        if (c == '>') return true;
+        if (c == '"' || c == '\'') {
+            int32_t q = c;
+            advance(lexer);
+            while (!is_eof(lexer) && lexer->lookahead != q) advance(lexer);
+            if (!is_eof(lexer)) advance(lexer);  // closing quote
+            blank_pending = false;
+            continue;
+        }
+        if (c == '{') {
+            unsigned depth = 0;
+            for (;;) {
+                if (is_eof(lexer)) break;
+                int32_t b = lexer->lookahead;
+                if (b == '{') { depth++; advance(lexer); continue; }
+                if (b == '}') {
+                    advance(lexer);
+                    if (depth <= 1) break;
+                    depth--;
+                    continue;
+                }
+                if (b == '"' || b == '\'' || b == '`') {
+                    int32_t q = b;
+                    advance(lexer);
+                    while (!is_eof(lexer) && lexer->lookahead != q) advance(lexer);
+                    if (!is_eof(lexer)) advance(lexer);
+                    continue;
+                }
+                advance(lexer);
+            }
+            blank_pending = false;
+            continue;
+        }
+        if (c == '\n') {
+            if (blank_pending) return false;  // blank line — not a tag
+            blank_pending = true;
+            advance(lexer);
+            continue;
+        }
+        if (c == '\r' || c == ' ' || c == '\t') {
+            advance(lexer);
+            continue;
+        }
+        blank_pending = false;
+        advance(lexer);
+    }
+}
+
+static enum TagKind classify_tag_at_lt(TSLexer *lexer, char *out_name,
+                                       unsigned out_cap) {
+    advance(lexer);  // consume '<'
+    bool closing = false;
+    if (lexer->lookahead == '/') {
+        closing = true;
+        advance(lexer);
+    }
+    int32_t first = lexer->lookahead;
+    if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z'))) {
+        out_name[0] = '\0';
+        return TAG_NONE;
+    }
+    unsigned len = 0;
+    out_name[len++] = (char)first;
+    advance(lexer);
+    while (len + 1 < out_cap && is_tag_name_char(lexer->lookahead)) {
+        out_name[len++] = (char)lexer->lookahead;
+        advance(lexer);
+    }
+    out_name[len] = '\0';
+
+    // A real tag name never *ends* in a `-`, `.` or `:` separator; rejecting
+    // these rules out `<https://…>` autolinks (name would be `https:` followed
+    // by `/`) and similar prose containing a `<word:`.
+    char last = out_name[len - 1];
+    if (last == '-' || last == '.' || last == ':') return TAG_NONE;
+
+    // The char after the name must plausibly continue a tag.
+    int32_t after = lexer->lookahead;
+    bool plausible = after == '>' || after == ' ' || after == '\t' ||
+                     after == '\r' || after == '\n' || after == '/';
+    if (!plausible) return TAG_NONE;
+
+    if (is_verbatim_tag(out_name)) {
+        // Verbatim *open* tags are their own construct; a verbatim *close* tag
+        // is consumed by the verbatim body scanner, never reached here. Only
+        // an opening verbatim tag should stop the chunk as TAG_VERBATIM.
+        return closing ? TAG_NONE : TAG_VERBATIM;
+    }
+    if (!closing && eq_keyword_ci(out_name, "script")) return TAG_SCRIPT;
+    if (!closing && eq_keyword_ci(out_name, "style")) return TAG_STYLE;
+
+    // Only carve a plain element tag out of the Markdown stream when it is
+    // actually well-formed — i.e. a terminating `>` follows before any blank
+    // line or EOF. Otherwise a stray `<word` in prose (or a genuinely
+    // unterminated tag) would become an `html_open_tag` with a `MISSING ">"`
+    // error spanning to EOF; declining here leaves it as ordinary text.
+    if (!tag_has_terminator(lexer)) return TAG_NONE;
+    return closing ? TAG_ELEMENT_CLOSE : TAG_ELEMENT;
 }
 
 // ── Frontmatter ──────────────────────────────────────────────────────────
@@ -793,6 +901,89 @@ static bool scan_await_promise(TSLexer *lexer) {
     }
 }
 
+// ── `_element_attributes` ────────────────────────────────────────────────
+//
+// Consume the attribute run of a plain element open / self-closing tag. The
+// cursor starts right after the tag name (the LR grammar matched `<name`) and
+// stops just before the closing `>` or `/>` (which the LR grammar matches
+// next). Quoted attribute values (`"..."` / `'...'`) and Svelte mustache
+// attributes / shorthands (`{...}`, possibly nested) are stepped over so a `>`
+// or `/` inside them does not end the tag early (`<div title="a>b">`,
+// `<a href={x > y ? p : q}>`). An unterminated tag consumes to EOF.
+//
+// Declines (returns false) when there are no attributes — i.e. the cursor is
+// already at `>` or at a `/` that begins `/>` — so the grammar's `optional`
+// attribute slot is left empty and the right tag arm (open vs self-closing) is
+// chosen by the following `>` / `/>` token.
+static bool scan_element_attributes(TSLexer *lexer) {
+    lexer->result_symbol = ELEMENT_ATTRIBUTES;
+    bool consumed = false;
+
+    for (;;) {
+        if (is_eof(lexer)) break;
+        int32_t c = lexer->lookahead;
+
+        if (c == '>') {
+            // End of an open tag — attributes (if any) end here.
+            lexer->mark_end(lexer);
+            return consumed;
+        }
+        if (c == '/') {
+            // Could be the `/` of a self-closing `/>`. Peek: if a `>` follows,
+            // the attribute run ends before the `/`. (A bare `/` not followed
+            // by `>` is unusual but kept as attribute text.)
+            lexer->mark_end(lexer);
+            advance(lexer);  // scratch
+            if (lexer->lookahead == '>') {
+                // `/>` — stop before the `/` (already marked).
+                return consumed;
+            }
+            // A lone `/` — part of the attributes; keep it.
+            consumed = true;
+            continue;
+        }
+        if (c == '"' || c == '\'') {
+            skip_string_literal(lexer, c, &consumed);
+            continue;
+        }
+        if (c == '{') {
+            // A Svelte mustache attribute / shorthand. Step over a brace-
+            // balanced run (respecting string literals inside) so a `>` or
+            // `/` inside the expression is ignored.
+            unsigned depth = 0;
+            for (;;) {
+                if (is_eof(lexer)) break;
+                int32_t b = lexer->lookahead;
+                if (b == '{') { depth++; advance(lexer); consumed = true; continue; }
+                if (b == '}') {
+                    advance(lexer);
+                    consumed = true;
+                    if (depth <= 1) break;
+                    depth--;
+                    continue;
+                }
+                if (b == '"' || b == '\'' || b == '`') {
+                    skip_string_literal(lexer, b, &consumed);
+                    continue;
+                }
+                advance(lexer);
+                consumed = true;
+            }
+            continue;
+        }
+        advance(lexer);
+        consumed = true;
+    }
+
+    // EOF without a closing `>` — keep what we have so the partial parse is
+    // still useful.
+    if (consumed) {
+        lexer->mark_end(lexer);
+        return true;
+    }
+    return false;
+}
+
 // ── `_markdown_chunk` ────────────────────────────────────────────────────
 //
 // Consume a maximal run of ordinary content. The run stops just before the
@@ -893,36 +1084,44 @@ static bool scan_markdown_chunk(TSLexer *lexer) {
         }
 
         if (here == '<') {
-            // Probe the tag. `mark_end` first so the boundary (the `<`) is
-            // the token end if this turns out to be a verbatim environment.
+            // Classify the tag. `mark_end` first so the boundary (the `<`) is
+            // the token end if the run must stop here.
             lexer->mark_end(lexer);
             char name[32];
-            unsigned len = probe_verbatim_open(lexer, name, sizeof(name));
-            if (len > 0) {
-                // A verbatim environment starts here — the chunk ends at the
-                // already-marked `<`.
+            enum TagKind kind = classify_tag_at_lt(lexer, name, sizeof(name));
+            if (kind == TAG_VERBATIM || kind == TAG_ELEMENT ||
+                kind == TAG_ELEMENT_CLOSE) {
+                // A verbatim environment or a plain element tag starts here —
+                // the chunk ends at the already-marked `<` so the LR grammar
+                // can match the tag. (For TAG_ELEMENT* this is the change that
+                // carves `<div>` / `</div>` out of the Markdown stream.)
+                //
+                // Exception: if nothing has been consumed yet, the cursor is
+                // *at* the tag start. Returning an empty token would loop
+                // forever, so decline — the surrounding grammar then matches
+                // the tag rule directly without a leading `markdown_chunk`.
+                if (!consumed) return false;
                 return consumed;
             }
-            // Not verbatim. `probe_verbatim_open` left the (lower-case-able)
-            // tag name in `name`; a `<script>` / `<style>` element is opaque
-            // to SvelTeX, so skip the whole element — the cursor is already
-            // positioned right after the tag name.
-            if (eq_keyword_ci(name, "script")) {
+            // `<script>` / `<style>` elements are opaque to SvelTeX; skip the
+            // whole element. `classify_tag_at_lt` left the cursor right after
+            // the tag name.
+            if (kind == TAG_SCRIPT) {
                 skip_script_or_style_after_name(lexer, "script");
                 consumed = true;
                 at_line_start = false;
                 continue;
             }
-            if (eq_keyword_ci(name, "style")) {
+            if (kind == TAG_STYLE) {
                 skip_script_or_style_after_name(lexer, "style");
                 consumed = true;
                 at_line_start = false;
                 continue;
             }
-            // Any other `<` is ordinary Markdown/HTML/Svelte text. The probe
-            // consumed the `<` (and any partial name) as scratch; that scratch
-            // is now kept text, so the next loop iteration's `mark_end` (or
-            // the final one) includes it.
+            // TAG_NONE: an ordinary `<` is plain Markdown text (`a < b`, `<3`).
+            // The classify probe consumed the `<` (and any partial name) as
+            // scratch; that scratch is now kept text, so the next iteration's
+            // `mark_end` (or the final one) includes it.
             consumed = true;
             at_line_start = false;
             continue;
@@ -1167,6 +1366,9 @@ bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
     }
     if (valid_symbols[SVELTE_EXPRESSION_BODY]) {
         return scan_svelte_expression_body(lexer);
+    }
+    if (valid_symbols[ELEMENT_ATTRIBUTES]) {
+        return scan_element_attributes(lexer);
     }
     if (valid_symbols[MARKDOWN_CHUNK]) {
         return scan_markdown_chunk(lexer);
