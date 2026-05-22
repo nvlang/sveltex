@@ -20,7 +20,7 @@ repository = "https://github.com/nvlang/sveltex"
 # building from this monorepo subdirectory.
 [grammars.sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "20985ae2d427a5b66e862d62c739094a0e501a49"
+rev = "fbde0585265b6b0624b961929ab662d5b5fe8a21"
 path = "packages/tree-sitter-sveltex"
 
 # The SvelTeX fork of the tree-sitter Markdown grammar (split into a block and
