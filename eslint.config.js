@@ -22,6 +22,10 @@ export default defineConfig(
             // tree-sitter grammar DSL (not a TypeScript-checked module) and
             // the native binding glue is not part of the type-checked source.
             'packages/tree-sitter-sveltex/**',
+            // The vendored fork of tree-sitter-markdown (block + inline
+            // grammars): grammar DSL, generated C parsers and multi-language
+            // bindings, none of which is part of the type-checked source.
+            'packages/tree-sitter-markdown-sveltex/**',
             // The Zed extension is a standalone Rust crate, not a JS package.
             'editors/**',
         ],

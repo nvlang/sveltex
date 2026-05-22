@@ -56,6 +56,7 @@ module.exports = grammar({
         $._display_math_content, // body of `$$ ... $$`
         $._markdown_chunk, // a run of ordinary Markdown text
         $._svelte_expression_body, // body of `{ … }` (excluding the braces)
+        $._element_attributes, // attributes of an HTML/Svelte element open tag
         $._each_iterable, // `{#each ITERABLE as …}` — up to ` as ` boundary
         $._each_binding, // `… as BINDING[, INDEX][ (KEY)]}` — binding only
         $._each_key, // `… (KEY)}` — key expression inside the parens
@@ -125,6 +126,12 @@ module.exports = grammar({
                 $.svelte_block_key,
                 $.svelte_block_snippet,
                 $.svelte_expression,
+                // HTML/Svelte element tags carved out of the Markdown stream
+                // (see the "Element tags" section below). These must precede
+                // `markdown_chunk` so a tag start commits to the tag arm.
+                $.html_self_closing_tag,
+                $.html_open_tag,
+                $.html_close_tag,
                 $.markdown_chunk,
             ),
 
@@ -500,6 +507,75 @@ module.exports = grammar({
 
         tex_verbatim_body: ($) => $._verbatim_tex_content,
         plain_verbatim_body: ($) => $._verbatim_plain_content,
+
+        // ── Element tags (plain HTML / Svelte components) ─────────────────
+        //
+        // Tags that are NOT verbatim environments — `<div>`, `<p>`,
+        // `<Counter>`, `</div>`, `<br/>`, … — are carved out of the Markdown
+        // stream as standalone *inline* nodes; the element's inner content is
+        // left as ordinary `markdown_chunk`(s). This is the deliberate
+        // departure from CommonMark's "HTML block" rule: because the body is a
+        // fresh `markdown_chunk`, it gets its own Markdown injection and is no
+        // longer suppressed (Markdown flows *through* the tags), and because
+        // `</div>` is its own node it can be injected to `svelte` and
+        // highlighted (CommonMark would leave it inert).
+        //
+        // We do NOT model a matched `element` (open + body + close) node: HTML
+        // here is treated inline, so void elements (`<br>`, `<img>`), Svelte
+        // self-closing components (`<Counter />`) and intentionally mismatched
+        // / unclosed tags must all parse without forcing well-nesting. Standalone
+        // tags also keep the body as plain blocks, which is exactly what the
+        // fresh-injection fix requires.
+        //
+        // The external scanner stops a `markdown_chunk` right before a tag
+        // start (a `<` or `</` followed by a valid tag-name char), but only
+        // when not inside inline code / a fenced block. The LR rules below then
+        // match the tag. The tag name is a `token.immediate` so `< div>` (with
+        // a space) is NOT a tag — it stays prose, mirroring HTML/JSX.
+
+        // `<name …>` — an opening (or void-element) tag. Attributes are
+        // consumed by the external scanner, which steps over quoted strings and
+        // `{…}` mustaches so a `>` inside `title="a>b"` or `class={x>y}` does
+        // not close the tag prematurely. The scanner stops before the closing
+        // `>` (left for the LR grammar) and declines if it sees a self-closing
+        // `/>` (so the `html_self_closing_tag` arm wins instead).
+        html_open_tag: ($) =>
+            seq(
+                '<',
+                field('name', alias($._element_tag_name, $.tag_name)),
+                optional(field('attributes', $.element_attributes)),
+                token.immediate('>'),
+            ),
+
+        // `<name … />` — a self-closing tag (Svelte component or void element
+        // written XML-style). Same attribute handling; the scanner here stops
+        // before the `/>`.
+        html_self_closing_tag: ($) =>
+            seq(
+                '<',
+                field('name', alias($._element_tag_name, $.tag_name)),
+                optional(field('attributes', $.element_attributes)),
+                token.immediate('/>'),
+            ),
+
+        // `</name>` — a closing tag.
+        html_close_tag: ($) =>
+            seq(
+                '</',
+                field('name', alias($._element_tag_name, $.tag_name)),
+                token.immediate('>'),
+            ),
+
+        // A tag name: `[A-Za-z][-.:0-9_A-Za-z]*` (HTML element names and Svelte
+        // component names / namespaced `svelte:…`). `token.immediate` so it
+        // glues to the `<` / `</`.
+        _element_tag_name: () =>
+            token.immediate(/[A-Za-z][-.:0-9_A-Za-z]*/),
+
+        // The attribute run of an open / self-closing tag, produced by the
+        // external scanner (handles quotes + mustaches; stops before `>` or
+        // `/>`).
+        element_attributes: ($) => $._element_attributes,
 
         // ── Math ─────────────────────────────────────────────────────────
         //

@@ -99,6 +99,23 @@ in the SvelTeX repo and is published to the Zed extension registry as
 extension launches the same `@nvl/sveltex-language-server` and speaks
 LSP over stdio.
 
+::: tip Enable the heading outline in Zed
+
+Zed's outline panel and breadcrumbs default to its tree-sitter queries, which
+can't see the Markdown headings (they're delegated to an injected grammar). To
+get the heading outline (as VS Code shows it), tell Zed to use the language
+server's symbols for the `SvelTeX` language in your `settings.json`:
+
+```json
+{
+  "languages": {
+    "SvelTeX": { "document_symbols": "on" }
+  }
+}
+```
+
+:::
+
 ### Other editors
 
 The language server is editor-agnostic. Any LSP-aware editor (Neovim,

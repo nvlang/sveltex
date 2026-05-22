@@ -66,6 +66,29 @@ It then launches `node …/bin/server.js --stdio`.
 Recommended companion language extensions for full injection highlighting:
 **LaTeX**, **Svelte**, and **TOML** (Markdown, YAML and JSON are built in).
 
+## Recommended settings
+
+**Document outline.** The `.sveltex` outline (and breadcrumbs) is best sourced
+from the language server, which lists the document's **Markdown headings** —
+matching the VS Code extension. Zed otherwise uses the tree-sitter
+`outline.scm`, which can't see Markdown headings (they're delegated to an
+injected grammar) and so only lists the frontmatter block. Enable the language
+server's symbols for the `SvelTeX` language in your Zed `settings.json`:
+
+```json
+{
+  "languages": {
+    "SvelTeX": { "document_symbols": "on" }
+  }
+}
+```
+
+**Semantic highlighting.** Zed has `semantic_tokens` **off by default** — set it
+to `"combined"` so the language server can colour `escape`/`code` verbatim
+bodies, which the static grammar can't (it only recognises the hard-coded
+`tex`/`latex`/`tikz` and `verb`/`verbatim` tag names — see the
+[verbatim docs](https://sveltex.dev/docs/verbatim#editor-syntax-highlighting)).
+
 ## License
 
 MIT

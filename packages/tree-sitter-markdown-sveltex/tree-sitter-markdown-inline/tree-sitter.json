@@ -1,0 +1,45 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "markdown_inline_sveltex",
+      "scope": "text.markdown_inline_sveltex",
+      "path": ".",
+      "external-files": [
+        "../common/common.js"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "injections": [
+        "queries/injections.scm"
+      ],
+      "injection-regex": "^markdown_inline_sveltex$"
+    }
+  ],
+  "metadata": {
+    "version": "0.3.2",
+    "license": "MIT",
+    "description": "SvelTeX fork of the tree-sitter Markdown inline grammar (underscore emphasis ending in a digit fixed)",
+    "authors": [
+      {
+        "name": "MDeiml",
+        "url": "https://github.com/MDeiml"
+      },
+      {
+        "name": "N. V. Lang"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/nvlang/sveltex"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": false,
+    "node": true,
+    "python": false,
+    "rust": true,
+    "swift": false
+  }
+}

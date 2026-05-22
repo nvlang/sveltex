@@ -22,7 +22,7 @@ verbatim covers four processing modes in total.
 | `'tex'` | Compile the contents as a LaTeX document, convert the output to SVG, and import the SVG as a Svelte component. See the [TeX page](tex) for the full pipeline. | `<Tex>`, `<tex>`, `<tikz>` |
 | `'code'` | Run the contents through the configured [code](code) backend (Shiki, starry-night, highlight.js, or escape-only) and wrap the result. | `<Code>`, `<Highlight>` |
 | `'escape'` | HTML- and brace-escape the contents (so curly braces don't get interpreted as Svelte mustache tags) and emit them verbatim. | `<Verbatim>` |
-| `'noop'` | Don't process the body at all — pass it through unchanged. Useful for tags whose body Svelte should see as-is. | `<Raw>` |
+| `'noop'` | Don't process the body at all — no Markdown, math, code, or TeX handling. SvelTeX is effectively switched off for the region; the body passes through to Svelte unchanged. | `<Raw>` |
 
 ## Configuration
 
@@ -111,20 +111,71 @@ These apply to every verbatim type:
 SvelTeX processes verbatim environments **at build time** — the body is
 turned into HTML and handed to Svelte's compiler regardless of editor
 support. The SvelTeX editor extensions additionally try to colour the
-body of a verbatim block _as you type_, but only for a fixed set of tag
-names:
+body of a verbatim block _as you type_, and how well they manage depends
+on the editor.
 
--   `sveltex.latexTags` (default `["tex", "latex", "tikz"]`) — the body
-    is highlighted as LaTeX.
--   `sveltex.escapeTags` (default `["verb", "verbatim"]`) — the body is
-    highlighted as a plain fenced-code block.
+### VS Code
 
-A custom tag like `<Code>` or `<Highlight>` falls outside both lists, so
-its contents look unstyled in the editor (the build output is unaffected
-— Shiki / starry-night / highlight.js still run as configured). You can
-add custom tags to either setting to opt them in, but they'll all share
-the same coarse highlighting (LaTeX, or plain fenced-code) — there is
-no per-tag language hint.
+The VS Code extension **regenerates its TextMate grammar from your
+`sveltex.config.js`**, so each configured environment's body is highlighted
+according to its `type`:
+
+-   `'tex'` → highlighted as **LaTeX**;
+-   `'escape'` / `'code'` → highlighted as a **plain fenced-code block**;
+-   `'noop'` → treated as **Svelte** markup.
+
+Because the grammar is rebuilt from your config, custom tag names work — a
+`<Diagram>` of `type: 'tex'` gets LaTeX highlighting just like `<tex>`.
+
+::: warning Reload after changing your verbatim config
+
+The grammar is regenerated when the extension loads — **not** live as you edit
+the config. After you add, remove, or rename a verbatim environment in
+`sveltex.config.js`, run **Developer: Reload Window** (or restart VS Code) so
+the regenerated grammar takes effect; until then the editor keeps highlighting
+the previous set of tags.
+
+:::
+
+### Zed
+
+Zed compiles the tree-sitter grammar from a pinned commit and **cannot read
+your config**, so only a fixed set of hard-coded tag names is recognised:
+
+-   **LaTeX** body highlighting applies to environments named exactly `tex`,
+    `latex`, or `tikz` — or their canonical capitalisations `TeX`, `LaTeX`,
+    `TikZ`. Matching is **case-sensitive** (`TEX`, `Tikz`, etc. are _not_
+    recognised).
+-   `verb` / `verbatim` (and `Verb` / `Verbatim`) bodies are rendered as plain
+    text.
+
+A custom-named LaTeX environment (say, `<Diagram>` aliased to TikZ) therefore
+won't get LaTeX highlighting in Zed — name it `tex`/`latex`/`tikz` (or add one
+of those as an alias) if you want it. The build output is unaffected either way.
+
+### Semantic highlighting
+
+In **Zed**, semantic highlighting is what lets the language server colour
+`escape`- and `code`-type verbatim bodies — the static grammar can't, since it
+can't read your config. Zed has it **off by default**, so turn it on: set
+`semantic_tokens` to `"combined"` (LSP tokens layered on tree-sitter), either
+globally or under `"languages": { "SvelTeX": { … } }`. In **VS Code** the
+regenerated TextMate grammar already covers those bodies and the extension
+emits no SvelTeX semantic tokens, so the editor's
+`editor.semanticHighlighting.enabled` (default `configuredByTheme`) doesn't
+change `.sveltex` highlighting either way.
+
+::: info Highlighting mirrors SvelTeX's parsing, not CommonMark
+
+The editor highlighting (in both extensions) intentionally diverges from
+CommonMark/GFM in the same ways SvelTeX's own Markdown parsing does — see
+[Markdown implementation](implementation/markdown). For SvelTeX this is a
+feature: what you see highlighted reflects how SvelTeX will actually parse the
+source. If you're used to **mdsvex** or a stock CommonMark/GFM renderer,
+though, the highlighting may _not_ match how those parse the same input — don't
+read it as a preview of their output.
+
+:::
 
 ::: tip Prefer fenced backticks for code
 
@@ -240,11 +291,12 @@ export default await sveltex({}, {
 });
 ```
 
-The `Raw` tag is recognised and excluded from markdown processing, but
-its body is passed through unchanged to the Svelte compiler — useful
-for hand-written Svelte fragments that share a tag name you want to
-treat as verbatim everywhere else (so the markdown processor leaves them
-alone).
+The point of `noop` is to **switch SvelTeX off for the region**: the `Raw`
+tag is recognised so the region is carved out, but then *no* processing runs
+on its body — no Markdown, no math, no code or TeX handling. The body is
+passed through to the Svelte compiler exactly as written. Use it for
+hand-written Svelte (or raw HTML) fragments you want left completely alone,
+where the markdown processor would otherwise touch them.
 
 ## Hover for the IntelliSense
 

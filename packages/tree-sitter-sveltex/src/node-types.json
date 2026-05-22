@@ -47,6 +47,18 @@
           "named": true
         },
         {
+          "type": "html_close_tag",
+          "named": true
+        },
+        {
+          "type": "html_open_tag",
+          "named": true
+        },
+        {
+          "type": "html_self_closing_tag",
+          "named": true
+        },
+        {
           "type": "inline_math",
           "named": true
         },
@@ -106,6 +118,11 @@
     }
   },
   {
+    "type": "element_attributes",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "frontmatter",
     "named": true,
     "fields": {
@@ -155,6 +172,74 @@
     "type": "frontmatter_content",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "html_close_tag",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "html_open_tag",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "element_attributes",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "html_self_closing_tag",
+    "named": true,
+    "fields": {
+      "attributes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "element_attributes",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "tag_name",
+            "named": true
+          }
+        ]
+      }
+    }
   },
   {
     "type": "inline_math",
@@ -431,6 +516,18 @@
       "types": [
         {
           "type": "display_math",
+          "named": true
+        },
+        {
+          "type": "html_close_tag",
+          "named": true
+        },
+        {
+          "type": "html_open_tag",
+          "named": true
+        },
+        {
+          "type": "html_self_closing_tag",
           "named": true
         },
         {
@@ -1022,6 +1119,10 @@
   },
   {
     "type": ")",
+    "named": false
+  },
+  {
+    "type": "/>",
     "named": false
   },
   {

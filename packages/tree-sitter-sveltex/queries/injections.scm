@@ -14,19 +14,23 @@
 
 ; ── Markdown prose ───────────────────────────────────────────────────────
 ;
-; Every `markdown_chunk` is delegated to the standard `markdown` grammar.
+; Every `markdown_chunk` is delegated to the SvelTeX markdown FORK
+; (`markdown_sveltex`, vendored at `packages/tree-sitter-markdown-sveltex`).
 ; `injection.combined` stitches all chunks of a document back together, so the
 ; embedded Markdown parser sees one continuous document and block constructs
 ; (lists, tables, reference links, ...) that happen to straddle a `.sveltex`
 ; construct still resolve correctly.
 ;
-; The `markdown` grammar in turn injects `markdown_inline` for inline spans,
-; the fenced-code languages for ``` blocks, and `html`/`svelte` for embedded
-; markup — so Svelte `<script>`, logic blocks and mustache tags are handled by
-; that downstream grammar, exactly as they are in a plain `.svelte`/`.md`
-; setup.
+; The fork is the standard `markdown` grammar with two SvelTeX deviations from
+; CommonMark — indented code blocks disabled, and underscore emphasis ending in
+; a digit (`_italic 1_`) recognised — and is renamed to avoid clashing with the
+; editor's built-in `markdown`/`markdown-inline` grammars. It in turn injects
+; `markdown_inline_sveltex` for inline spans, the fenced-code languages for
+; ``` blocks, and `html`/`svelte` for embedded markup — so Svelte `<script>`,
+; logic blocks and mustache tags are handled downstream, exactly as in a plain
+; `.svelte`/`.md` setup.
 ((markdown_chunk) @injection.content
-  (#set! injection.language "markdown")
+  (#set! injection.language "markdown_sveltex")
   (#set! injection.combined))
 
 ; ── Frontmatter ──────────────────────────────────────────────────────────
@@ -95,6 +99,25 @@
 ; A `<verb>`/`<verbatim>` environment is intentionally opaque (SvelTeX escapes
 ; its contents rather than rendering them), so `plain_verbatim_body` is left
 ; un-injected — it is plain text.
+
+; ── Plain HTML / Svelte element tags ───────────────────────────────────────
+;
+; `<div>`, `<p>`, `<Counter>`, `</div>`, `<br/>`, … are carved out of the
+; Markdown stream by the grammar (so the element body is a *fresh*
+; `markdown_chunk` — see the note at the top — and the closing tag is its own
+; node). Each tag is delegated to the `svelte` grammar, exactly like the
+; verbatim tags above, so element names, attributes and any Svelte expressions
+; inside them are highlighted consistently. This is what makes `</div>`
+; highlighted (CommonMark leaves it inert) and lets Markdown flow through the
+; element without the CommonMark HTML-block suppression.
+((html_open_tag) @injection.content
+  (#set! injection.language "svelte"))
+
+((html_self_closing_tag) @injection.content
+  (#set! injection.language "svelte"))
+
+((html_close_tag) @injection.content
+  (#set! injection.language "svelte"))
 
 ; ── Svelte mustache expressions ──────────────────────────────────────────
 ;

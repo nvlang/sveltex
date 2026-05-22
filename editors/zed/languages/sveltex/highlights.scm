@@ -30,6 +30,18 @@
 ; (SvelTeX escapes rather than renders it) and carries no injection.
 (plain_verbatim_body) @text.literal
 
+; ── Plain HTML / Svelte element tags ───────────────────────────────────────
+;
+; `<div>`, `</div>`, `<br/>`, … carved out of the Markdown stream. The injected
+; `svelte` grammar provides the precise highlighting; these are fallbacks.
+(html_open_tag ["<" ">"] @punctuation.bracket)
+(html_self_closing_tag ["<" "/>"] @punctuation.bracket)
+(html_close_tag ["</" ">"] @punctuation.bracket)
+(html_open_tag (tag_name) @tag)
+(html_self_closing_tag (tag_name) @tag)
+(html_close_tag (tag_name) @tag)
+(element_attributes) @attribute
+
 ; ── Svelte mustache + block tags ─────────────────────────────────────────
 
 ; The bare `{` / `}` of a `{ … }` mustache expression.

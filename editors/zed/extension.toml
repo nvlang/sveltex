@@ -20,8 +20,30 @@ repository = "https://github.com/nvlang/sveltex"
 # building from this monorepo subdirectory.
 [grammars.sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "5670d745f218f932a50eed90e046864d1de2462a"
+rev = "20985ae2d427a5b66e862d62c739094a0e501a49"
 path = "packages/tree-sitter-sveltex"
+
+# The SvelTeX fork of the tree-sitter Markdown grammar (split into a block and
+# an inline grammar, as upstream is). Every `markdown_chunk` of a `.sveltex`
+# document is injected into `markdown_sveltex` (block), which in turn injects
+# `markdown_inline_sveltex` for inline runs. The fork carries two deviations
+# from CommonMark — indented code blocks disabled, and underscore emphasis
+# ending in a digit recognised — and is renamed to avoid clashing with Zed's
+# built-in `markdown`/`markdown-inline` grammars.
+#
+# NOTE FOR MAINTAINERS: like `[grammars.sveltex]` above, both `rev`s must point
+# at a *pushed* commit of the `nvlang/sveltex` repository — Zed compiles grammars
+# from the remote, not the working tree — and must be bumped whenever the
+# vendored grammar under `packages/tree-sitter-markdown-sveltex/` changes.
+[grammars.markdown_sveltex]
+repository = "https://github.com/nvlang/sveltex"
+rev = "41a15416e69d85b476a8180977085d0d088bb43a"
+path = "packages/tree-sitter-markdown-sveltex/tree-sitter-markdown"
+
+[grammars.markdown_inline_sveltex]
+repository = "https://github.com/nvlang/sveltex"
+rev = "41a15416e69d85b476a8180977085d0d088bb43a"
+path = "packages/tree-sitter-markdown-sveltex/tree-sitter-markdown-inline"
 
 # The SvelTeX language server. Zed launches it over stdio; see `src/lib.rs`.
 # `@nvl/sveltex-language-server`'s `bin/server.js` is a thin, dependency-free

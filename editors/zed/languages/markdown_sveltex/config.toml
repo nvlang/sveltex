@@ -1,0 +1,49 @@
+# SvelTeX markdown FORK — block grammar (`markdown_sveltex`).
+#
+# This language is NOT opened directly by users; it exists only as an injection
+# target. Every `markdown_chunk` of a `.sveltex` document is delegated to it
+# (see `../sveltex/injections.scm`). It is the upstream
+# `tree-sitter-grammars/tree-sitter-markdown` block grammar with two SvelTeX
+# deviations from CommonMark, baked into the vendored grammar at
+# `packages/tree-sitter-markdown-sveltex`:
+#
+#   1. indented code blocks are disabled (4-space-indented text stays prose), and
+#   2. underscore emphasis ending in a digit (`_italic 1_`) is recognised.
+#
+# Because Zed scopes queries per grammar *name*, and this grammar is renamed to
+# avoid clashing with Zed's built-in `markdown`, the highlights/injections that
+# the built-in relied on are restated in this directory.
+# NB: `name` MUST equal the string used in `injection.language` references
+# (here, from `../sveltex/injections.scm`). Zed resolves an injected language by
+# its `name`, case-insensitively — a descriptive name like "SvelTeX Markdown"
+# would silently fail to resolve and leave all injected prose unhighlighted.
+name = "markdown_sveltex"
+grammar = "markdown_sveltex"
+
+# Mirror Zed's built-in Markdown comment + autoclose conventions so the
+# behaviour inside injected prose matches a normal Markdown buffer.
+block_comment = ["<!-- ", " -->"]
+
+[[brackets]]
+start = "{"
+end = "}"
+close = true
+newline = false
+
+[[brackets]]
+start = "["
+end = "]"
+close = true
+newline = false
+
+[[brackets]]
+start = "("
+end = ")"
+close = true
+newline = false
+
+[[brackets]]
+start = "`"
+end = "`"
+close = true
+newline = false
