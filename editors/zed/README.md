@@ -83,10 +83,10 @@ server's symbols for the `SvelTeX` language in your Zed `settings.json`:
 }
 ```
 
-**Semantic highlighting.** Keep `semantic_tokens` enabled (the default): it lets
-the language server colour `escape`/`code` verbatim bodies, which the static
-grammar can't (it only recognises the hard-coded `tex`/`latex`/`tikz` and
-`verb`/`verbatim` tag names — see the
+**Semantic highlighting.** Zed has `semantic_tokens` **off by default** — set it
+to `"combined"` so the language server can colour `escape`/`code` verbatim
+bodies, which the static grammar can't (it only recognises the hard-coded
+`tex`/`latex`/`tikz` and `verb`/`verbatim` tag names — see the
 [verbatim docs](https://sveltex.dev/docs/verbatim#editor-syntax-highlighting)).
 
 ## License

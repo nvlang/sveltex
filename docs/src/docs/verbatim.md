@@ -155,12 +155,15 @@ of those as an alias) if you want it. The build output is unaffected either way.
 
 ### Semantic highlighting
 
-Keep **semantic highlighting** on (it's the default in both editors). In Zed it
-is what lets the language server colour `escape`- and `code`-type verbatim
-bodies — the static grammar can't, since it can't see your config — so make
-sure `semantic_tokens` is enabled. In VS Code the regenerated TextMate grammar
-already covers this, so the extension doesn't emit SvelTeX semantic tokens
-there.
+In **Zed**, semantic highlighting is what lets the language server colour
+`escape`- and `code`-type verbatim bodies — the static grammar can't, since it
+can't read your config. Zed has it **off by default**, so turn it on: set
+`semantic_tokens` to `"combined"` (LSP tokens layered on tree-sitter), either
+globally or under `"languages": { "SvelTeX": { … } }`. In **VS Code** the
+regenerated TextMate grammar already covers those bodies and the extension
+emits no SvelTeX semantic tokens, so the editor's
+`editor.semanticHighlighting.enabled` (default `configuredByTheme`) doesn't
+change `.sveltex` highlighting either way.
 
 ::: info Highlighting mirrors SvelTeX's parsing, not CommonMark
 
