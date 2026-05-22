@@ -669,6 +669,18 @@ table {
 }
 
 /*
+Tailwind's preflight resets `svg { display: block }`. MathJax renders
+inline math as an inline `<mjx-container>` wrapping an `<svg>`, so a
+block-level child turns the formula into a "block inside inline" and the
+browser breaks the line before and after it. Restore the SVG to inline
+flow; display math stays centred via the container's own
+`text-align: center`. (Unlayered, so it beats Tailwind's `@layer base`.)
+*/
+mjx-container svg {
+    display: inline;
+}
+
+/*
 Fix horizontal overflow for display math.
 */
 mjx-container.MathJax[display='true'] {
