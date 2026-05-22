@@ -771,7 +771,7 @@ static bool scan_each_binding(TSLexer *lexer) {
             }
         }
         if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
-        if (c == '}') { brace_depth--; advance(lexer); consumed = true; continue; }
+        if (c == '}') { if (brace_depth > 0) brace_depth--; advance(lexer); consumed = true; continue; }
         if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
         if (c == ')') { if (paren_depth > 0) paren_depth--; advance(lexer); consumed = true; continue; }
         if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
@@ -811,7 +811,7 @@ static bool scan_paren_balanced_body(TSLexer *lexer, enum TokenType result) {
         if (c == '{') { brace_depth++; advance(lexer); consumed = true; continue; }
         if (c == '}') { if (brace_depth > 0) brace_depth--; advance(lexer); consumed = true; continue; }
         if (c == '(') { paren_depth++; advance(lexer); consumed = true; continue; }
-        if (c == ')') { paren_depth--; advance(lexer); consumed = true; continue; }
+        if (c == ')') { if (paren_depth > 0) paren_depth--; advance(lexer); consumed = true; continue; }
         if (c == '[') { bracket_depth++; advance(lexer); consumed = true; continue; }
         if (c == ']') { if (bracket_depth > 0) bracket_depth--; advance(lexer); consumed = true; continue; }
         if (c == '\'' || c == '"' || c == '`') {
