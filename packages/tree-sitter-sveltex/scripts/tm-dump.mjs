@@ -58,10 +58,13 @@ const file = process.argv[2];
 const src = readFileSync(file, 'utf-8');
 let stack = vsctm.INITIAL, off = 0;
 for (const line of src.split(/(?<=\n)/)) {
-  const { tokens, ruleStack } = g.tokenizeLine(line, stack);
+  // Feed the line WITHOUT its trailing newline — vscode-textmate's `$`/`while`
+  // anchoring misfires when the `\n` is present (lists never terminate).
+  const lineText = line.replace(/\r?\n$/, '');
+  const { tokens, ruleStack } = g.tokenizeLine(lineText, stack);
   stack = ruleStack;
   for (const t of tokens) {
-    const slice = JSON.stringify(line.slice(t.startIndex, t.endIndex).replace(/\n/g, '\\n')).padEnd(28);
+    const slice = JSON.stringify(lineText.slice(t.startIndex, t.endIndex)).padEnd(28);
     const scopes = t.scopes.slice(1).join(' / ') || '(none)';
     console.log(`${(off + t.startIndex).toString().padStart(3)} ${slice} ${scopes}`);
   }

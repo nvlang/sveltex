@@ -57,7 +57,9 @@
     "test": "tree-sitter generate && tree-sitter test",
     "parse": "tree-sitter parse",
     "parity": "node scripts/parity.mjs",
-    "parity:render": "node scripts/parity-render.mjs"
+    "parity:render": "node scripts/parity-render.mjs",
+    "parity:markdown": "node scripts/parity-markdown.mjs --corpus=commonmark,gfm,fuzzer,real",
+    "parity:markdown:html": "node scripts/parity-markdown-html.mjs --corpus=commonmark,gfm,fuzzer,real"
   },
   "dependencies": {
     "node-addon-api": "^8.0.0",
@@ -72,6 +74,7 @@
     }
   },
   "devDependencies": {
+    "@nvl/tree-sitter-markdown-sveltex": "workspace:*",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
     "tree-sitter": "0.25.0",

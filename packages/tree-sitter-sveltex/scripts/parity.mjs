@@ -217,14 +217,20 @@ async function tmRegions(registry, source) {
     let current = null;
 
     for (const line of source.split(/(?<=\n)/)) {
+        // Feed vscode-textmate the line WITHOUT its trailing newline. With the
+        // `\n` present, `$`/`while` anchoring misfires (e.g. a list's `while`
+        // never terminates and swallows the rest of the document) — which is
+        // NOT how VS Code, which tokenizes newline-stripped lines, behaves.
+        // `line.length` (with the `\n`) still drives the running offset.
+        const lineText = line.replace(/\r?\n$/, '');
         const { tokens, ruleStack: next } = grammar.tokenizeLine(
-            line,
+            lineText,
             ruleStack,
         );
         ruleStack = next;
         for (const token of tokens) {
-            const start = offset + token.startIndex;
-            const end = offset + token.endIndex;
+            const start = offset + Math.min(token.startIndex, lineText.length);
+            const end = offset + Math.min(token.endIndex, lineText.length);
             const kind = classifyTmScopes(token.scopes);
             if (current && current.kind === kind && current.end === start) {
                 current.end = end; // extend run

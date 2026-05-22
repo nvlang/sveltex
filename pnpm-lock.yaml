@@ -485,6 +485,9 @@ importers:
         specifier: ^4.8.0
         version: 4.8.4
     devDependencies:
+      '@nvl/tree-sitter-markdown-sveltex':
+        specifier: workspace:*
+        version: link:../tree-sitter-markdown-sveltex
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
