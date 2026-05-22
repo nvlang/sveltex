@@ -31,13 +31,22 @@ languages/sveltex/
 
 ## How the grammar is wired
 
-`extension.toml`'s `[grammars.sveltex]` block points Zed at this monorepo and
-the grammar's subdirectory (`packages/tree-sitter-sveltex`). Zed clones the
-repository at the pinned `rev` and compiles the grammar itself.
+`extension.toml` declares three tree-sitter grammars, all built from this
+monorepo:
 
-> **Maintainers:** the `rev` in `extension.toml` must be a *pushed* commit SHA
-> of `nvlang/sveltex` — Zed builds the grammar from the remote, not the
-> working tree. Bump it whenever the grammar changes.
+- `[grammars.sveltex]` — the `.sveltex` grammar itself, from
+  `packages/tree-sitter-sveltex`.
+- `[grammars.markdown_sveltex]` and `[grammars.markdown_inline_sveltex]` — the
+  forked Markdown block/inline grammars, from
+  `packages/tree-sitter-markdown-sveltex`, injected into every Markdown chunk
+  in place of Zed's built-in `markdown`/`markdown-inline`.
+
+Zed clones the repository at each block's pinned `rev` and compiles the
+grammars itself.
+
+> **Maintainers:** every `rev` in `extension.toml` must be a *pushed* commit
+> SHA of `nvlang/sveltex` — Zed builds the grammars from the remote, not the
+> working tree. Bump the relevant `rev`(s) whenever a grammar changes.
 
 ## How the language server is wired
 

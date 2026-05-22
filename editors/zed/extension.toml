@@ -1,6 +1,6 @@
 id = "sveltex"
 name = "SvelTeX"
-version = "0.1.0"
+version = "0.2.0"
 schema_version = 1
 authors = ["N. V. Lang <hi@nvlang.dev>"]
 description = "SvelTeX (.sveltex) language support: syntax highlighting via tree-sitter and the @nvl/sveltex-language-server LSP."
