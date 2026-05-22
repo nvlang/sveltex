@@ -129,12 +129,17 @@ async function bytewiseTm(registry, source) {
     let ruleStack = vsctm.INITIAL;
     let offset = 0;
     for (const line of source.split(/(?<=\n)/)) {
-        const { tokens, ruleStack: next } = grammar.tokenizeLine(line, ruleStack);
+        // Strip the trailing newline before tokenizing — feeding the `\n`
+        // breaks vscode-textmate's `$`/`while` anchoring (lists never
+        // terminate). `line.length` (with the `\n`) still drives the offset.
+        const lineText = line.replace(/\r?\n$/, '');
+        const { tokens, ruleStack: next } = grammar.tokenizeLine(lineText, ruleStack);
         ruleStack = next;
         for (const token of tokens) {
             const kind = classifyTmScopes(token.scopes);
             if (kind) {
-                for (let i = token.startIndex; i < token.endIndex; i++) {
+                const stop = Math.min(token.endIndex, lineText.length);
+                for (let i = token.startIndex; i < stop; i++) {
                     out[offset + i] = kind;
                 }
             }

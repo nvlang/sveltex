@@ -424,22 +424,24 @@ export async function tmMarkdownRegions(registry, source) {
     let current = null;
 
     for (const line of source.split(/(?<=\n)/)) {
+        // Feed vscode-textmate the line WITHOUT its trailing newline. With the
+        // `\n` present, `$`/`while` anchoring misfires — a list's `while` never
+        // terminates and swallows the rest of the document, so TextMate appears
+        // to massively under-tokenize real-world docs. That is a harness bug,
+        // not a grammar limitation: VS Code tokenizes newline-stripped lines.
+        // `line.length` (with the `\n`) still drives the running offset.
+        const lineText = line.replace(/\r?\n$/, '');
         const { tokens, ruleStack: next } = grammar.tokenizeLine(
-            line,
+            lineText,
             ruleStack,
         );
         ruleStack = next;
         for (const token of tokens) {
-            // vscode-textmate inflates the EOL token's `endIndex` by one column
-            // past the actual line length (it reserves a virtual slot for the
-            // newline). Left unclamped, that off-by-one makes a line-final
-            // region end one byte beyond the next line's first token start, so
-            // the consecutive-token merge below silently fails and a single
-            // construct (e.g. a fenced code block spanning several lines) gets
-            // reported as several fragments — half matched, half spurious
-            // tm-only. Clamp to the real line length to keep offsets exact.
-            const start = offset + Math.min(token.startIndex, line.length);
-            const end = offset + Math.min(token.endIndex, line.length);
+            // Clamp to the stripped line length: vscode-textmate still reports a
+            // virtual EOL token one past the end, which would otherwise push a
+            // line-final region past the next line's first token.
+            const start = offset + Math.min(token.startIndex, lineText.length);
+            const end = offset + Math.min(token.endIndex, lineText.length);
             if (end <= start) continue;
             const kind = classifyTmMarkdownScopes(token.scopes);
             if (current && current.kind === kind && current.end === start) {
