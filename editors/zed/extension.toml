@@ -31,10 +31,10 @@ path = "packages/tree-sitter-sveltex"
 # ending in a digit recognised — and is renamed to avoid clashing with Zed's
 # built-in `markdown`/`markdown-inline` grammars.
 #
-# NOTE FOR MAINTAINERS: like `[grammars.sveltex]` above, `rev` must point at a
-# *pushed* commit of the `nvlang/sveltex` repository — Zed compiles grammars
-# from the remote, not the working tree. The `REPLACE_AFTER_PUSH` placeholder is
-# intentional: set it to the pushed commit SHA once this branch is on the remote.
+# NOTE FOR MAINTAINERS: like `[grammars.sveltex]` above, both `rev`s must point
+# at a *pushed* commit of the `nvlang/sveltex` repository — Zed compiles grammars
+# from the remote, not the working tree — and must be bumped whenever the
+# vendored grammar under `packages/tree-sitter-markdown-sveltex/` changes.
 [grammars.markdown_sveltex]
 repository = "https://github.com/nvlang/sveltex"
 rev = "41a15416e69d85b476a8180977085d0d088bb43a"
