@@ -1,20 +1,23 @@
 ; Document outline for SvelTeX (`.sveltex`) in Zed.
 ;
-; The `sveltex` grammar does not parse Markdown headings (they live inside the
-; opaque `markdown_chunk` nodes that are delegated to the Markdown grammar),
-; so the outline surfaces the structural blocks the grammar *does* own: the
-; frontmatter block and each verbatim environment. This gives a quick jump
-; target for the LaTeX/TikZ figures and metadata in a document.
+; SvelTeX's Markdown headings — the natural outline of a document — live inside
+; the injected Markdown grammar (the `sveltex` grammar delegates Markdown to it
+; via opaque `markdown_chunk` nodes), so they are invisible to this query. The
+; SvelTeX language server provides the heading outline instead, via
+; `textDocument/documentSymbol`; set `document_symbols = "on"` for the `SvelTeX`
+; language in your Zed settings to use it (this matches the VS Code outline):
+;
+;     "languages": { "SvelTeX": { "document_symbols": "on" } }
+;
+; This tree-sitter query is only the fallback when that setting is off. It
+; surfaces the frontmatter block alone — verbatim environments are intentionally
+; omitted to keep the outline uncluttered.
 ;
 ; `@item` marks an outline entry; `@name` is the text shown for it.
 
-; The frontmatter block.
+; The frontmatter block. Capture only the OPENING fence via the `open:` field —
+; a `frontmatter` node has two `frontmatter_fence` children (the opening and
+; closing `---`/`+++`), so an unconstrained `(frontmatter_fence) @name` would
+; list the same block twice.
 (frontmatter
-  (frontmatter_fence) @name) @item
-
-; Each verbatim environment, named by its tag (`tex`, `verbatim`, ...).
-(verbatim_environment
-  (verbatim_tex_open_tag (tag_name) @name)) @item
-
-(verbatim_environment
-  (verbatim_plain_open_tag (tag_name) @name)) @item
+  open: (frontmatter_fence) @name) @item
