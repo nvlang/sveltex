@@ -13,7 +13,11 @@
 # Because Zed scopes queries per grammar *name*, and this grammar is renamed to
 # avoid clashing with Zed's built-in `markdown`, the highlights/injections that
 # the built-in relied on are restated in this directory.
-name = "SvelTeX Markdown (block)"
+# NB: `name` MUST equal the string used in `injection.language` references
+# (here, from `../sveltex/injections.scm`). Zed resolves an injected language by
+# its `name`, case-insensitively — a descriptive name like "SvelTeX Markdown"
+# would silently fail to resolve and leave all injected prose unhighlighted.
+name = "markdown_sveltex"
 grammar = "markdown_sveltex"
 
 # Mirror Zed's built-in Markdown comment + autoclose conventions so the
