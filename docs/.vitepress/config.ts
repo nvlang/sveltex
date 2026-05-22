@@ -136,71 +136,64 @@ export default defineConfig({
                 multiline: true,
                 rowspan: true,
             });
-            md.use(container as any, 'info', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
+            // Custom callouts: `::: info` / `::: warning` / `::: danger`.
+            // Each renders an icon + a title row, then the content. The
+            // title defaults to the callout type ("Info", "Warning",
+            // "Danger"); any text after the type -- `::: warning Heads up`
+            // -- overrides it, and may contain inline markdown.
+            const calloutIcon: Record<string, string> = {
+                info:
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">' +
+                    '<circle cx="12" cy="12" r="10"/>' +
+                    '<path d="M12 16v-4"/><path d="M12 8h.01"/>' +
+                    '</svg>',
+                warning:
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert">' +
+                    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>' +
+                    '<path d="M12 9v4"/>' +
+                    '<path d="M12 17h.01"/>' +
+                    '</svg>',
+                danger:
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x">' +
+                    '<circle cx="12" cy="12" r="10"/>' +
+                    '<path d="m15 9-6 6"/>' +
+                    '<path d="m9 9 6 6"/>' +
+                    '</svg>',
+            };
+            const calloutTitle: Record<string, string> = {
+                info: 'Info',
+                warning: 'Warning',
+                danger: 'Danger',
+            };
+            for (const name of ['info', 'warning', 'danger'] as const) {
+                md.use(container as any, name, {
+                    render: (tokens: any, idx: any) => {
+                        const token = tokens[idx];
+                        if (token.nesting !== 1) {
+                            // Closing: end `.content`, then `.custom-block`.
+                            return '</div></div>\n';
+                        }
+                        // `token.info` is the full `:::` params, e.g.
+                        // "warning Heads up". Strip the type name to get an
+                        // optional custom title; fall back to the default.
+                        const custom = token.info
+                            .trim()
+                            .slice(name.length)
+                            .trim();
+                        const title = custom
+                            ? md.renderInline(custom)
+                            : calloutTitle[name];
                         return (
-                            '<div class="custom-block info">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">' +
-                            '<circle cx="12" cy="12" r="10"/>' +
-                            '<path d="M12 16v-4"/><path d="M12 8h.01"/>' +
-                            '</svg>' +
+                            `<div class="custom-block ${name}">` +
+                            '<div class="custom-block-title">' +
+                            `<div class="icon">${calloutIcon[name]}</div>` +
+                            `<span class="custom-block-title-text">${title}</span>` +
                             '</div>' +
                             '<div class="content">'
                         );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
-            md.use(container as any, 'warning', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
-                        return (
-                            '<div class="custom-block warning">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert">' +
-                            '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>' +
-                            '<path d="M12 9v4"/>' +
-                            '<path d="M12 17h.01"/>' +
-                            '</svg>' +
-                            '</div>' +
-                            '<div class="content">'
-                        );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
-            md.use(container as any, 'danger', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
-                        return (
-                            '<div class="custom-block danger">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x">' +
-                            '<circle cx="12" cy="12" r="10"/>' +
-                            '<path d="m15 9-6 6"/>' +
-                            '<path d="m9 9 6 6"/>' +
-                            '</svg>' +
-                            '</div>' +
-                            '<div class="content">'
-                        );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
+                    },
+                });
+            }
         },
     },
     vue: {},
