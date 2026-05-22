@@ -37,12 +37,12 @@ path = "packages/tree-sitter-sveltex"
 # intentional: set it to the pushed commit SHA once this branch is on the remote.
 [grammars.markdown_sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "REPLACE_AFTER_PUSH"
+rev = "41a15416e69d85b476a8180977085d0d088bb43a"
 path = "packages/tree-sitter-markdown-sveltex/tree-sitter-markdown"
 
 [grammars.markdown_inline_sveltex]
 repository = "https://github.com/nvlang/sveltex"
-rev = "REPLACE_AFTER_PUSH"
+rev = "41a15416e69d85b476a8180977085d0d088bb43a"
 path = "packages/tree-sitter-markdown-sveltex/tree-sitter-markdown-inline"
 
 # The SvelTeX language server. Zed launches it over stdio; see `src/lib.rs`.
