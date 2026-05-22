@@ -60,6 +60,12 @@ jobs:
       - name: Package + publish
         working-directory: packages/vscode-sveltex
         run: |
+          # The workspace package is named `vscode-sveltex`, but the published
+          # extension's identity is `<publisher>.<name>` =
+          # `sveltex-preprocessor.sveltex`. Restore the marketplace `name` just
+          # before packaging; the CI checkout is ephemeral, so it is never
+          # committed.
+          node -e "const p=require('./package.json');p.name='sveltex';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
           pnpm dlx @vscode/vsce@3 package --no-dependencies -o sveltex.vsix
           pnpm dlx @vscode/vsce@3 publish --packagePath sveltex.vsix
           pnpm dlx ovsx publish sveltex.vsix \

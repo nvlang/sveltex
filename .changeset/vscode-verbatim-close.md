@@ -1,5 +1,5 @@
 ---
-'sveltex': patch
+'vscode-sveltex': patch
 ---
 
 Fix multi-line `<tex>` / `<latex>` / `<tikz>` and `<verbatim>` blocks never

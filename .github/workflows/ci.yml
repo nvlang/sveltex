@@ -504,16 +504,23 @@ jobs:
       - name: Publish the VS Code extension
         # The extension (`packages/vscode-sveltex`) is excluded from the npm
         # publish above, so it needs its own publish step. `changeset tag`
-        # (run by `ci:publish`) created a `sveltex@<version>` tag at HEAD only
-        # if the extension's version was bumped this release cycle — when it
-        # was, package the extension once and publish that one `.vsix` to both
-        # the VS Code Marketplace and Open VSX (the registry used by VSCodium,
-        # Cursor, Windsurf, Gitpod, …).
+        # (run by `ci:publish`) created a `vscode-sveltex@<version>` tag at HEAD
+        # only if the extension's version was bumped this release cycle — when
+        # it was, package the extension once and publish that one `.vsix` to
+        # both the VS Code Marketplace and Open VSX (the registry used by
+        # VSCodium, Cursor, Windsurf, Gitpod, …).
         if: steps.changesets.outputs.published == 'true'
         working-directory: packages/vscode-sveltex
         run: |
-          if git tag --points-at HEAD | grep -q '^sveltex@'; then
+          if git tag --points-at HEAD | grep -q '^vscode-sveltex@'; then
             echo 'Extension released this cycle — packaging and publishing.'
+            # The workspace package is named `vscode-sveltex` (so its release
+            # tag reads `vscode-sveltex@<version>` rather than the ambiguous
+            # `sveltex@<version>`), but the published extension's identity is
+            # `<publisher>.<name>` = `sveltex-preprocessor.sveltex`. Restore the
+            # marketplace `name` just before packaging; the CI checkout is
+            # ephemeral, so this rewrite is never committed.
+            node -e "const p=require('./package.json');p.name='sveltex';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
             pnpm dlx @vscode/vsce@3 package --no-dependencies -o sveltex.vsix
             pnpm dlx @vscode/vsce@3 publish --packagePath sveltex.vsix
             pnpm dlx ovsx publish sveltex.vsix \

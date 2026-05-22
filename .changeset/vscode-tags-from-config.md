@@ -1,5 +1,5 @@
 ---
-'sveltex': minor
+'vscode-sveltex': minor
 '@nvl/sveltex-language-server': minor
 ---
 

@@ -1,5 +1,5 @@
 {
-  "name": "sveltex",
+  "name": "vscode-sveltex",
   "displayName": "SvelTeX",
   "description": "Svelte + Markdown + LaTeX",
   "version": "2.0.0",

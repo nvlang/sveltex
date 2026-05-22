@@ -1,5 +1,5 @@
 ---
-'sveltex': patch
+'vscode-sveltex': patch
 ---
 
 Disable indented (4-space) code blocks in the VS Code extension's
