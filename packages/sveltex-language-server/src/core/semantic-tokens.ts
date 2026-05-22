@@ -36,7 +36,7 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SemanticTokensBuilder } from 'vscode-languageserver';
 import type { SemanticTokens } from 'vscode-languageserver-protocol';
-import type { Region } from './regions.js';
+import { verbatimBodyOffsets, type Region } from './regions.js';
 
 /**
  * Tag names every shipping SvelTeX editor grammar handles natively (the
@@ -77,30 +77,6 @@ function tagNameOf(source: string, region: Region): string | null {
 }
 
 /**
- * Inner body offsets of a verbatim region — the half-open `[start, end)`
- * range between the opening `<tag …>` and the closing `</tag …>`.
- * Returns `null` for self-closing `<tag … />` or an unrecognised wrapper
- * (no body to colour either way).
- */
-function verbatimBodyOffsets(
-    source: string,
-    region: Region,
-): readonly [number, number] | null {
-    const slice = source.slice(region.sourceStart, region.sourceEnd);
-    // Self-closing: no body.
-    if (/\/\s*>\s*$/u.test(slice) && !/<\/\s*[a-zA-Z]/u.test(slice)) {
-        return null;
-    }
-    const open = /^<[a-zA-Z][^>]*>/u.exec(slice);
-    const close = /<\/\s*[a-zA-Z][^>]*>\s*$/u.exec(slice);
-    if (!open || !close) return null;
-    const innerStart = region.sourceStart + open[0].length;
-    const innerEnd = region.sourceEnd - close[0].length;
-    if (innerEnd <= innerStart) return null;
-    return [innerStart, innerEnd] as const;
-}
-
-/**
  * Computes the encoded `SemanticTokens` for `text`.
  *
  * @param text - Full text of the `.sveltex` document.
@@ -130,7 +106,7 @@ export function computeSemanticTokens(
         if (region.kind !== 'verbatim') continue;
         const tag = tagNameOf(text, region);
         if (!tag || !targets.has(tag)) continue;
-        const body = verbatimBodyOffsets(text, region);
+        const body = verbatimBodyOffsets(text, region.sourceStart, region.sourceEnd);
         if (!body) continue;
         pushLineSplitTokens(builder, doc, text, body[0], body[1]);
     }

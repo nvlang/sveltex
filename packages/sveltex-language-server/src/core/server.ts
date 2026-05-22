@@ -16,6 +16,8 @@
 // virtual document, so the embedded Svelte server never sees them; requests and
 // responses that land there are dropped.
 
+import { watch as fsWatch, type FSWatcher } from 'node:fs';
+import { basename, dirname } from 'node:path';
 import type { Connection } from 'vscode-languageserver';
 import {
     DidChangeTextDocumentNotification,
@@ -55,6 +57,7 @@ import { computeRegions, type Region } from './regions.js';
 import { buildVirtualSvelte } from './virtual-svelte.js';
 import { RegionForwarder, isLatexVerbatimRegion } from './region-forwarding.js';
 import {
+    collectConfigDependencies,
     defaultConfigSnapshot,
     loadConfigSnapshot,
     type SveltexConfigSnapshot,
@@ -131,6 +134,16 @@ export function createServer(connection: Connection): void {
     let configReloadTimer: NodeJS.Timeout | undefined;
     let configReloadInFlight = false;
     let configReloadQueued = false;
+
+    /**
+     * Server-side filesystem watchers over the config's dependency graph (the
+     * `svelte.config.*` plus every file it statically imports). Supplements the
+     * client's own file watcher: it makes live reload fire for helper modules
+     * the client's fixed `*.config.*` glob misses, and for clients (Zed,
+     * standalone) that register no watcher at all. Re-armed on every reload —
+     * see {@link rearmConfigWatchers}.
+     */
+    let configWatchers: FSWatcher[] = [];
 
     /**
      * The embedded Svelte language server. Notifications it emits for a virtual
@@ -385,6 +398,7 @@ export function createServer(connection: Connection): void {
             workspaceRoot = workspaceRootOf(params);
             if (workspaceRoot) {
                 config = await loadConfigSnapshot(workspaceRoot, logInfo);
+                rearmConfigWatchers();
             }
             // The forwarder needs the resolved config (math backend, LaTeX
             // tags) before any request can be routed.
@@ -530,6 +544,9 @@ export function createServer(connection: Connection): void {
                 const root = workspaceRoot;
                 if (!root) break;
                 config = await loadConfigSnapshot(root, logInfo);
+                // The dependency graph can change between reloads (an import
+                // added or removed), so re-arm the watchers each time.
+                rearmConfigWatchers();
                 regionForwarder.updateConfig(config);
                 // Tell the client about the new tag list so it can refresh
                 // any tag-derived state (e.g. the VS Code extension's
@@ -590,6 +607,67 @@ export function createServer(connection: Connection): void {
         configReloadTimer.unref();
     }
 
+    /**
+     * (Re)arms the server-side config watchers: closes any existing watchers,
+     * then watches the directory of each file in the current config's
+     * dependency graph, filtering events to those files by name. Watching the
+     * containing directory rather than the file itself survives the atomic
+     * write-and-rename many editors use on save. Safe to call repeatedly and
+     * never throws.
+     */
+    function rearmConfigWatchers(): void {
+        for (const watcher of configWatchers) {
+            try {
+                watcher.close();
+            } catch {
+                // Already closed / gone — ignore.
+            }
+        }
+        configWatchers = [];
+
+        const configPath = config.configPath;
+        if (!configPath) return;
+
+        let dependencies: string[];
+        try {
+            dependencies = collectConfigDependencies(configPath);
+        } catch {
+            dependencies = [configPath];
+        }
+
+        // One watcher per directory, with a basename allow-list so unrelated
+        // edits in that directory (likely, when it is the project root) don't
+        // trigger a reload.
+        const namesByDir = new Map<string, Set<string>>();
+        for (const dependency of dependencies) {
+            const dir = dirname(dependency);
+            const names = namesByDir.get(dir) ?? new Set<string>();
+            names.add(basename(dependency));
+            namesByDir.set(dir, names);
+        }
+
+        for (const [dir, names] of namesByDir) {
+            try {
+                const watcher = fsWatch(dir, (_event, filename) => {
+                    // `filename` is null on some platforms — reload to be safe.
+                    if (filename === null || names.has(filename.toString())) {
+                        scheduleConfigReload();
+                    }
+                });
+                // A transient watch error (directory removed, limit hit) must
+                // not crash the server.
+                watcher.on('error', () => {
+                    /* ignore */
+                });
+                // The watcher must not by itself keep the process alive.
+                watcher.unref();
+                configWatchers.push(watcher);
+            } catch {
+                // A directory we cannot watch just isn't covered.
+            }
+        }
+    }
+
     // The `initialized` notification arrives *after* `initialize` returned
     // and the client has finished setting up its side. That's the safe
     // earliest point to push server-initiated notifications — sending one
@@ -609,6 +687,14 @@ export function createServer(connection: Connection): void {
 
     connection.onShutdown(async () => {
         if (configReloadTimer) clearTimeout(configReloadTimer);
+        for (const watcher of configWatchers) {
+            try {
+                watcher.close();
+            } catch {
+                // Already closed / gone — ignore.
+            }
+        }
+        configWatchers = [];
         await Promise.all([proxy.stop(), regionForwarder.stop()]);
     });
 

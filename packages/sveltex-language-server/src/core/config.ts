@@ -4,7 +4,7 @@
 // that the region detector ({@link computeRegions}) needs.
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Readable } from 'node:stream';
 import { getDefaultMathConfig } from '@nvl/sveltex';
@@ -174,6 +174,88 @@ export function findSvelteConfigFile(
     return undefined;
 }
 
+/** Extensions tried, in order, when resolving an extensionless import. */
+const RESOLVE_EXTENSIONS = [
+    '.js',
+    '.mjs',
+    '.cjs',
+    '.ts',
+    '.mts',
+    '.cts',
+    '.json',
+] as const;
+
+/**
+ * Resolves a (possibly extensionless or directory) module path to a concrete
+ * file, mimicking Node's relative-import resolution closely enough for the
+ * dependency scan: the path itself, then with each known extension, then an
+ * `index.*` inside it.
+ *
+ * @returns The resolved file path, or `undefined` if nothing matches.
+ */
+function resolveModuleFile(modulePath: string): string | undefined {
+    const candidates = [
+        modulePath,
+        ...RESOLVE_EXTENSIONS.map((ext) => modulePath + ext),
+        ...RESOLVE_EXTENSIONS.map((ext) => join(modulePath, `index${ext}`)),
+    ];
+    for (const candidate of candidates) {
+        try {
+            if (statSync(candidate).isFile()) return candidate;
+        } catch {
+            // Not a file (or inaccessible) — try the next candidate.
+        }
+    }
+    return undefined;
+}
+
+/** Matches a *relative* specifier in an `import` / `export … from` / `require`. */
+const RELATIVE_IMPORT_RE =
+    /(?:from|import|require)\s*\(?\s*['"](\.[^'"\n]+)['"]/gu;
+
+/**
+ * Statically collects the files a `svelte.config.*` depends on for its SvelTeX
+ * settings: the config itself plus every file it (transitively) pulls in via a
+ * *relative* `import` / `export … from` / `require` specifier — a separate
+ * `sveltex.config.js`, a shared `verbatim-tags.js`, and so on.
+ *
+ * The live config reload ({@link loadConfigSnapshot}) already re-reads the whole
+ * graph; this lets the host *watch* that graph so an edit to a helper module —
+ * not just to the fixed `*.config.*` filenames — actually triggers a reload.
+ *
+ * It is a deliberately conservative **static** scan: it never executes the
+ * config (that is the loader child's job), so it follows only literal relative
+ * specifiers, not dynamic/computed paths or bare package specifiers. A missed
+ * dependency only narrows the watch set; an over-match only widens it. Either
+ * way it never throws — an unreadable file is simply skipped.
+ *
+ * @param configPath - Absolute path of the entry `svelte.config.*`.
+ * @returns Absolute paths of the entry and its transitive relative imports.
+ */
+export function collectConfigDependencies(configPath: string): string[] {
+    const seen = new Set<string>();
+    const queue = [configPath];
+    while (queue.length > 0) {
+        const next = queue.pop();
+        if (next === undefined) break;
+        const resolved = resolveModuleFile(next);
+        if (resolved === undefined || seen.has(resolved)) continue;
+        seen.add(resolved);
+        let source: string;
+        try {
+            source = readFileSync(resolved, 'utf8');
+        } catch {
+            continue;
+        }
+        const dir = dirname(resolved);
+        for (const match of source.matchAll(RELATIVE_IMPORT_RE)) {
+            const specifier = match[1];
+            if (specifier) queue.push(join(dir, specifier));
+        }
+    }
+    return [...seen];
+}
+
 /**
  * Narrowing helper: `true` for non-null objects.
  */
@@ -182,18 +264,32 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Extracts the verbatim environment names from a user config object.
+ * Extracts the verbatim environment names — and every entry's `aliases` — from
+ * a user config object.
  *
- * A SvelTeX config's `verbatim` field is a record keyed by environment name, so
- * its keys are exactly the verbatim tags.
+ * A SvelTeX config's `verbatim` field is a record keyed by environment name,
+ * and each entry may declare additional `aliases` that are fully interchangeable
+ * with the primary name. SvelTeX recognises a tag written with any of those
+ * names, so the LSP must too: an alias missing here would leave `<MyAlias>…`
+ * undetected as a verbatim region, get it delegated to the Svelte server as
+ * markup, and produce exactly the spurious diagnostics the proxy exists to
+ * suppress (and an aliased `tex` env would never reach TexLab).
  */
 function readVerbatimTags(
     config: Record<string, unknown>,
 ): string[] | undefined {
     const verbatim = config['verbatim'];
     if (!isObject(verbatim)) return undefined;
-    const keys = Object.keys(verbatim);
-    return keys.length > 0 ? keys : undefined;
+    const tags = new Set<string>();
+    for (const [name, entry] of Object.entries(verbatim)) {
+        tags.add(name);
+        if (isObject(entry) && Array.isArray(entry['aliases'])) {
+            for (const alias of entry['aliases']) {
+                if (typeof alias === 'string') tags.add(alias);
+            }
+        }
+    }
+    return tags.size > 0 ? [...tags] : undefined;
 }
 
 /**
@@ -641,9 +737,10 @@ export async function loadConfigSnapshot(
     // entries of that type. `verbatimTags` keeps its fallback because
     // SvelTeX's Markdown parser uses it as a "what to treat as opaque"
     // list and an empty list there would over-process raw HTML.
-    const hasVerbatim = readVerbatimTags(candidate) !== undefined;
+    const verbatimTags = readVerbatimTags(candidate);
+    const hasVerbatim = verbatimTags !== undefined;
     const snapshot: SveltexConfigSnapshot = {
-        verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
+        verbatimTags: verbatimTags ?? base.verbatimTags,
         latexTags: hasVerbatim
             ? (readTagsOfType(candidate, 'tex') ?? [])
             : base.latexTags,

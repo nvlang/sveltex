@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+    collectConfigDependencies,
     defaultConfigSnapshot,
     findSvelteConfigFile,
     loadConfigSnapshot,
@@ -109,8 +110,37 @@ describe('config file location and loading', () => {
         const snapshot = await loadConfigSnapshot(dir);
         expect(snapshot.mathBackend).toBe('katex');
         expect(snapshot.latexTags.sort()).toEqual(['latex', 'tikz']);
-        expect(snapshot.verbatimTags).toEqual(['latex']);
+        // `verbatimTags` must include each env's aliases, not just the record
+        // keys — otherwise an aliased env (`<tikz>…`) goes undetected as a
+        // verbatim region, gets delegated to svelte-LSP as markup, and an
+        // aliased `tex` env never reaches TexLab.
+        expect(snapshot.verbatimTags.sort()).toEqual(['latex', 'tikz']);
         expect(snapshot.configPath).toContain('svelte.config.mjs');
+    });
+
+    it('collectConfigDependencies follows relative imports transitively', () => {
+        // Live reload must fire for helper modules the client's fixed
+        // `*.config.*` glob misses — e.g. an arbitrarily-named
+        // `verbatim-tags.mjs` pulled in transitively.
+        const configPath = join(dir, 'svelte.config.mjs');
+        writeFileSync(
+            configPath,
+            "import config from './sveltex.config.mjs';\n" +
+                'export default config;\n',
+        );
+        writeFileSync(
+            join(dir, 'sveltex.config.mjs'),
+            "import './verbatim-tags.mjs';\n" +
+                'export default { preprocess: [] };\n',
+        );
+        writeFileSync(join(dir, 'verbatim-tags.mjs'), 'export const tags = {};\n');
+        expect(collectConfigDependencies(configPath).sort()).toEqual(
+            [
+                join(dir, 'svelte.config.mjs'),
+                join(dir, 'sveltex.config.mjs'),
+                join(dir, 'verbatim-tags.mjs'),
+            ].sort(),
+        );
     });
 
     it('reads a directly-exported `Sveltex` instance', async () => {

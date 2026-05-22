@@ -1,6 +1,6 @@
 ---
 '@nvl/sveltex-language-server': minor
-'sveltex': patch
+'vscode-sveltex': patch
 ---
 
 Two related fixes for custom verbatim envs:
@@ -10,9 +10,10 @@ the SvelTeX docs, `type: 'noop'` "passes the body to Svelte unchanged",
 so the body should travel into the virtual `.svelte` document the LSP
 hands to `svelte-language-server`. Previously the LSP classified all
 verbatim regions as kind `'verbatim'`, which is blanked from the
-virtual document — Svelte never saw `<MyNoop>` bodies. They are now
-relabelled to kind `'svelte'` (one of the delegated kinds) so the
-proxy gets them.
+virtual document — Svelte never saw `<MyNoop>` bodies. Now the body
+is delegated (kind `'svelte'`) while the wrapper tags stay blanked, so
+the proxy sees the body without tripping over the SvelTeX wrapper tags
+(which are rewritten at build time and aren't real Svelte components).
 
 **Custom `escape`- and `code`-typed envs get flat semantic-token
 coloring in non-VS-Code clients.** A scoped `textDocument/

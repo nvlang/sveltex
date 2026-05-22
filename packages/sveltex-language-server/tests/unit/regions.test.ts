@@ -136,12 +136,13 @@ describe('computeRegions — resilience', () => {
         expect(regions.some((r) => r.kind === 'verbatim')).toBe(true);
     });
 
-    it('relabels noop verbatim ranges as `svelte` (delegated to svelte-LSP)', () => {
-        // `type: 'noop'` envs pass their body to Svelte unchanged. The
-        // LSP must hand that body to `svelte-language-server`, so the
-        // region's kind must be one of `DELEGATED_KINDS` (here:
-        // `svelte`) — not `verbatim`, which is blanked out of the
-        // virtual `.svelte` document.
+    it('delegates a noop env body but keeps its wrapper tags non-delegated', () => {
+        // `type: 'noop'` envs pass their BODY to Svelte unchanged, so the body
+        // must be a `DELEGATED_KIND` (`svelte`) and reach `svelte-language-
+        // server`. But the wrapper tags are SvelTeX constructs (rewritten at
+        // build time via the `component` option), so they must stay `verbatim`
+        // — blanked out of the virtual `.svelte` doc — otherwise svelte-LSP
+        // reports the literal `<MyNoop>` as an undefined component.
         const custom = {
             ...config,
             verbatimTags: [...config.verbatimTags, 'MyNoop'],
@@ -149,15 +150,21 @@ describe('computeRegions — resilience', () => {
         };
         const source = 'before <MyNoop><MyComponent /></MyNoop> after';
         const regions = computeRegions(source, custom);
-        const matched = regions.find(
-            (r) =>
-                source
-                    .slice(r.sourceStart, r.sourceEnd)
-                    .includes('<MyComponent />'),
+        const regionAt = (offset: number) =>
+            regions.find(
+                (r) => r.sourceStart <= offset && offset < r.sourceEnd,
+            );
+
+        // The body is delegated as `svelte`.
+        const body = regions.find((r) =>
+            source.slice(r.sourceStart, r.sourceEnd).includes('<MyComponent'),
         );
-        expect(matched).toBeDefined();
-        expect(matched?.kind).toBe('svelte');
-        expect(isDelegated(matched?.kind ?? 'verbatim')).toBe(true);
+        expect(body?.kind).toBe('svelte');
+        expect(isDelegated(body?.kind ?? 'verbatim')).toBe(true);
+
+        // The opening and closing wrapper tags are NOT delegated.
+        expect(regionAt(source.indexOf('<MyNoop>'))?.kind).toBe('verbatim');
+        expect(regionAt(source.indexOf('</MyNoop>'))?.kind).toBe('verbatim');
     });
 
     it('keeps escape verbatim ranges as `verbatim` (NOT delegated)', () => {
