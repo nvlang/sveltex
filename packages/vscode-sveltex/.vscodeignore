@@ -19,8 +19,9 @@ node_modules/**
 # Grammar sources: the YAML is compiled to JSON at build time and not shipped.
 # Both the live `*.tmLanguage.json` files AND the `*.tmLanguage.json_default`
 # template are shipped — `extension.ts`'s `updateGrammarFile()` reads the
-# template at activation to regenerate the live grammar from the user's
-# `latexTags` / `escapeTags` settings, so excluding it breaks activation.
+# template at activation to regenerate the live grammar from the verbatim tags
+# the language server resolves from the user's `sveltex.config.js`, so excluding
+# it breaks activation.
 **/*.tmLanguage.yaml
 
 # Editor / VCS / tooling metadata.

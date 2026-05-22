@@ -43,8 +43,9 @@ const requireFromPackage = nodeModule.createRequire(
  * Converts the TextMate grammar YAML sources to JSON.
  *
  * The `sveltex` grammar additionally gets a `*.json_default` copy: the
- * extension rewrites `sveltex.tmLanguage.json` at runtime from the user's
- * `latexTags` / `escapeTags` settings, and that pristine copy is the template
+ * extension rewrites `sveltex.tmLanguage.json` at runtime from the verbatim
+ * tags the language server resolves from the user's `sveltex.config.js` (the
+ * `sveltex/resolvedTags` notification), and that pristine copy is the template
  * it rewrites from (see `src/extension.ts`).
  */
 function buildGrammars(): void {

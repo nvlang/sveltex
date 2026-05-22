@@ -20,7 +20,28 @@ const defaultPlainTags = ['verb', 'verbatim'];
  */
 const noopTagPlaceholder = 'sveltexNoopTag';
 
-const tagRegex = /[a-zA-Z][-.:0-9_a-zA-Z]*/u;
+/**
+ * Validates a single verbatim tag name. Anchored (`^…$`) so a tag is accepted
+ * only if it matches *entirely* — `.test()` on an unanchored pattern returns
+ * true for any string merely *containing* a valid run (e.g. `te x`, `C++`,
+ * `tex)|(?:`), which would let whitespace or raw regex syntax leak into the
+ * generated grammar.
+ */
+const tagRegex = /^[a-zA-Z][-.:0-9_a-zA-Z]*$/u;
+
+/**
+ * Escapes a verbatim tag name so it can be spliced into one of the grammar's
+ * regexes as a literal. Regex metacharacters are backslash-escaped, and
+ * because the grammar is JSON *text*, the escaping backslash is itself doubled
+ * so `JSON.parse` restores a single one. Even after the anchored
+ * {@link tagRegex} filter a valid tag can still contain `.` (which would
+ * otherwise match any character), so escaping is required for correctness;
+ * escaping the full metacharacter set is cheap insurance against a tag
+ * smuggling regex syntax into the grammar.
+ */
+function escapeTagForJsonRegex(tag: string): string {
+    return tag.replace(/[.*+?^${}()|[\]\\]/gu, '\\\\$&');
+}
 
 /**
  * The shape of the `sveltex/resolvedTags` notification the SvelTeX language
@@ -76,9 +97,16 @@ function updateGrammarFile(
         'utf8',
     );
 
-    const latexTags = [...latexTagsIn].filter((tag) => tagRegex.test(tag));
-    const plainTags = plainTagsIn.filter((tag) => tagRegex.test(tag));
-    const noopTags = noopTagsIn.filter((tag) => tagRegex.test(tag));
+    // Validate each tag against the anchored pattern (dropping anything with
+    // whitespace or regex metacharacters), then de-duplicate. A `Set`
+    // preserves first-seen order; the `escape`/`code` merge in `regenerate`
+    // can otherwise hand us the same name twice (e.g. via aliases).
+    const sanitize = (tags: string[]): string[] => [
+        ...new Set(tags.filter((tag) => tagRegex.test(tag))),
+    ];
+    const latexTags = sanitize(latexTagsIn);
+    const plainTags = sanitize(plainTagsIn);
+    const noopTags = sanitize(noopTagsIn);
 
     // Empty lists would expand to `()`/empty alternations that match any
     // tag name; substitute a UUID so the regex matches nothing instead.
@@ -86,15 +114,20 @@ function updateGrammarFile(
     if (plainTags.length === 0) plainTags.push(crypto.randomUUID());
     if (noopTags.length === 0) noopTags.push(crypto.randomUUID());
 
+    // Join into a regex alternation, regex-escaping each tag first (see
+    // `escapeTagForJsonRegex`).
+    const alternation = (tags: string[]): string =>
+        tags.map(escapeTagForJsonRegex).join('|');
+
     grammar = grammar.replaceAll(
         defaultLatexTags.join('|'),
-        latexTags.join('|'),
+        alternation(latexTags),
     );
     grammar = grammar.replaceAll(
         defaultPlainTags.join('|'),
-        plainTags.join('|'),
+        alternation(plainTags),
     );
-    grammar = grammar.replaceAll(noopTagPlaceholder, noopTags.join('|'));
+    grammar = grammar.replaceAll(noopTagPlaceholder, alternation(noopTags));
 
     // Write the modified grammar to the dynamically set grammar file
     fs.writeFileSync(path.join(grammarDir, 'sveltex.tmLanguage.json'), grammar);
@@ -304,12 +337,31 @@ function activate(context: vscode.ExtensionContext) {
         code: string[];
         noop: string[];
     }): void => {
-        updateGrammarFile(
-            grammarDir,
-            tags.latex,
-            [...tags.escape, ...tags.code],
-            tags.noop,
-        );
+        // A failure to rewrite the grammar — a read-only install (EACCES) or a
+        // missing `_default` template (ENOENT) — must NOT abort activation: the
+        // cold-start call below runs before the language client starts, so an
+        // uncaught throw here would take down the LSP and the syntax
+        // highlighting the extension otherwise still provides. Log and carry on
+        // with whatever grammar is already on disk.
+        try {
+            updateGrammarFile(
+                grammarDir,
+                tags.latex,
+                [...tags.escape, ...tags.code],
+                tags.noop,
+            );
+        } catch (error) {
+            const detail =
+                error instanceof Error
+                    ? (error.stack ?? error.message)
+                    : String(error);
+            const message =
+                '[sveltex] Failed to regenerate the TextMate grammar; ' +
+                'keeping the existing one.\n' +
+                detail;
+            if (client) client.outputChannel.appendLine(message);
+            else console.error(message);
+        }
     };
 
     // Cold-start paint: the LSP hasn't connected yet, so this runs against
