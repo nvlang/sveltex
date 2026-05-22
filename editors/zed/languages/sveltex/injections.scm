@@ -17,13 +17,19 @@
 
 ; ── Markdown prose ───────────────────────────────────────────────────────
 ;
-; Every `markdown_chunk` is delegated to Zed's Markdown grammar.
+; Every `markdown_chunk` is delegated to the SvelTeX markdown FORK
+; (`markdown_sveltex`, vendored at `packages/tree-sitter-markdown-sveltex` and
+; defined as a Zed language under `../markdown_sveltex`). The fork is CommonMark
+; with two SvelTeX deviations — indented code blocks disabled, and underscore
+; emphasis ending in a digit recognised — but is otherwise the built-in
+; Markdown grammar (HTML blocks, fenced code, inline injection all preserved).
 ; `injection.combined` stitches all chunks of the document into one virtual
 ; Markdown document, so block constructs (lists, tables, reference links)
-; that straddle a `.sveltex` construct still resolve. The Markdown grammar in
-; turn injects fenced-code languages and HTML/Svelte.
+; that straddle a `.sveltex` construct still resolve. The fork in turn injects
+; fenced-code languages, `markdown_inline_sveltex` for inline runs, and
+; HTML/Svelte.
 ((markdown_chunk) @injection.content
-  (#set! injection.language "markdown")
+  (#set! injection.language "markdown_sveltex")
   (#set! injection.combined))
 
 ; ── Frontmatter ──────────────────────────────────────────────────────────

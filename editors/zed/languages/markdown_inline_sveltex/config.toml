@@ -1,0 +1,9 @@
+# SvelTeX markdown FORK — inline grammar (`markdown_inline_sveltex`).
+#
+# Injection target only (never opened directly). The block grammar
+# (`markdown_sveltex`) reparses each `(inline)` run with this grammar. It is the
+# upstream `tree-sitter-markdown-inline` grammar carrying the SvelTeX fix for
+# underscore emphasis ending in a digit (`_italic 1_`, `_italic1_`), renamed to
+# avoid clashing with Zed's built-in `markdown-inline`.
+name = "SvelTeX Markdown (inline)"
+grammar = "markdown_inline_sveltex"

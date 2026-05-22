@@ -14,19 +14,23 @@
 
 ; ── Markdown prose ───────────────────────────────────────────────────────
 ;
-; Every `markdown_chunk` is delegated to the standard `markdown` grammar.
+; Every `markdown_chunk` is delegated to the SvelTeX markdown FORK
+; (`markdown_sveltex`, vendored at `packages/tree-sitter-markdown-sveltex`).
 ; `injection.combined` stitches all chunks of a document back together, so the
 ; embedded Markdown parser sees one continuous document and block constructs
 ; (lists, tables, reference links, ...) that happen to straddle a `.sveltex`
 ; construct still resolve correctly.
 ;
-; The `markdown` grammar in turn injects `markdown_inline` for inline spans,
-; the fenced-code languages for ``` blocks, and `html`/`svelte` for embedded
-; markup — so Svelte `<script>`, logic blocks and mustache tags are handled by
-; that downstream grammar, exactly as they are in a plain `.svelte`/`.md`
-; setup.
+; The fork is the standard `markdown` grammar with two SvelTeX deviations from
+; CommonMark — indented code blocks disabled, and underscore emphasis ending in
+; a digit (`_italic 1_`) recognised — and is renamed to avoid clashing with the
+; editor's built-in `markdown`/`markdown-inline` grammars. It in turn injects
+; `markdown_inline_sveltex` for inline spans, the fenced-code languages for
+; ``` blocks, and `html`/`svelte` for embedded markup — so Svelte `<script>`,
+; logic blocks and mustache tags are handled downstream, exactly as in a plain
+; `.svelte`/`.md` setup.
 ((markdown_chunk) @injection.content
-  (#set! injection.language "markdown")
+  (#set! injection.language "markdown_sveltex")
   (#set! injection.combined))
 
 ; ── Frontmatter ──────────────────────────────────────────────────────────
