@@ -17,16 +17,17 @@
 use tree_sitter_language::LanguageFn;
 
 extern "C" {
-    fn tree_sitter_markdown() -> *const ();
-    fn tree_sitter_markdown_inline() -> *const ();
+    fn tree_sitter_markdown_sveltex() -> *const ();
+    fn tree_sitter_markdown_inline_sveltex() -> *const ();
 }
 
 /// The tree-sitter [`LanguageFn`][LanguageFn] for the block grammar.
-pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_markdown) };
+pub const LANGUAGE: LanguageFn =
+    unsafe { LanguageFn::from_raw(tree_sitter_markdown_sveltex) };
 
 /// The tree-sitter [`LanguageFn`][LanguageFn] for the inline grammar.
 pub const INLINE_LANGUAGE: LanguageFn =
-    unsafe { LanguageFn::from_raw(tree_sitter_markdown_inline) };
+    unsafe { LanguageFn::from_raw(tree_sitter_markdown_inline_sveltex) };
 
 /// The syntax highlighting queries for the block grammar.
 pub const HIGHLIGHT_QUERY_BLOCK: &str =

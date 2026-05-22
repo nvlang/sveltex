@@ -10,5 +10,5 @@ import "unsafe"
 
 // Get the tree-sitter Language for the inline grammar.
 func InlineLanguage() unsafe.Pointer {
-	return unsafe.Pointer(C.tree_sitter_markdown_inline())
+	return unsafe.Pointer(C.tree_sitter_markdown_inline_sveltex())
 }

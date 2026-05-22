@@ -2,16 +2,16 @@
 
 typedef struct TSLanguage TSLanguage;
 
-TSLanguage *tree_sitter_markdown(void);
+TSLanguage *tree_sitter_markdown_sveltex(void);
 
-TSLanguage *tree_sitter_markdown_inline(void);
+TSLanguage *tree_sitter_markdown_inline_sveltex(void);
 
 static PyObject* _binding_language(PyObject *Py_UNUSED(self), PyObject *Py_UNUSED(args)) {
-    return PyCapsule_New(tree_sitter_markdown(), "tree_sitter.Language", NULL);
+    return PyCapsule_New(tree_sitter_markdown_sveltex(), "tree_sitter.Language", NULL);
 }
 
 static PyObject* _binding_inline_language(PyObject *Py_UNUSED(self), PyObject *Py_UNUSED(args)) {
-    return PyCapsule_New(tree_sitter_markdown_inline(), "tree_sitter.Language", NULL);
+    return PyCapsule_New(tree_sitter_markdown_inline_sveltex(), "tree_sitter.Language", NULL);
 }
 
 static PyMethodDef methods[] = {

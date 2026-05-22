@@ -10,5 +10,5 @@ import "unsafe"
 
 // Get the tree-sitter Language for the block grammar.
 func Language() unsafe.Pointer {
-	return unsafe.Pointer(C.tree_sitter_markdown())
+	return unsafe.Pointer(C.tree_sitter_markdown_sveltex())
 }

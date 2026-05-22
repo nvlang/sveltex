@@ -393,7 +393,17 @@ function classifyTmMarkdownScopes(scopes) {
 
     // Strikethrough (GFM) before emphasis.
     if (has(/\bmarkup\.strikethrough\b/)) return 'strikethrough';
-    // Strong before italic (bold scope is distinct).
+    // Strong before italic (the bold scope is distinct).
+    //
+    // KNOWN ARTIFACT (`***x***` / `___x___`): TextMate applies BOTH
+    // `markup.bold` and `markup.italic` to a triple-delimiter run, but this
+    // classifier collapses each scope set to a single kind and checks bold
+    // first, so it reports only `strong`. tree-sitter instead nests a
+    // `strong_emphasis` with a child `emphasis`, so that inner `emphasis`
+    // surfaces as a spurious `tsOnly` divergence in the report. It is unbiased
+    // between the fork and clean upstream (both nest identically), so it never
+    // skews the fork-vs-upstream delta — it only inflates the absolute
+    // `emphasis` counts.
     if (has(/\bmarkup\.bold\b/)) return 'strong';
     if (has(/\bmarkup\.italic\b/)) return 'emphasis';
 
