@@ -93,7 +93,7 @@ const UPSTREAM_FETCH_BRANCH = 'split_parser';
 //     support and tree-sitter's pipe_table decompose very differently and would
 //     swamp the signal; out of scope for this bench.
 
-const KINDS = /** @type {const} */ ([
+export const KINDS = /** @type {const} */ ([
     'emphasis',
     'strong',
     'code-inline',
@@ -119,7 +119,7 @@ const KINDS = /** @type {const} */ ([
 // fork pins `tree-sitter@^0.21` in its peerDeps, which only speaks ABI ≤14 and
 // segfaults on the ABI-15 fork parser — so we resolve the 0.25 runtime that the
 // `sveltex` grammar already depends on, and feed every language to it.
-function loadParserClass() {
+export function loadParserClass() {
     const TreeSitter = require(
         require.resolve('tree-sitter', { paths: [PACKAGE_ROOT] }),
     );
@@ -133,7 +133,7 @@ function loadParserClass() {
  * `bindings/node` entry exports the block language directly and the inline
  * language as `.inline`).
  */
-function loadForkGrammars() {
+export function loadForkGrammars() {
     let binding;
     try {
         binding = require('@nvl/tree-sitter-markdown-sveltex');
@@ -152,7 +152,7 @@ function loadForkGrammars() {
  *
  * @returns {{ block: any, inline: any } | null}
  */
-function loadUpstreamGrammars() {
+export function loadUpstreamGrammars() {
     const builtNode = join(
         UPSTREAM_DIR,
         'build',
@@ -269,7 +269,7 @@ function classifyTsInlineNode(type) {
  * @param {string} source
  * @returns {Region[]}
  */
-function tsMarkdownRegions(TreeSitter, grammars, source) {
+export function tsMarkdownRegions(TreeSitter, grammars, source) {
     /** @type {Region[]} */
     const out = [];
 
@@ -413,7 +413,7 @@ function classifyTmMarkdownScopes(scopes) {
  * @param {string} source
  * @returns {Promise<Region[]>}
  */
-async function tmMarkdownRegions(registry, source) {
+export async function tmMarkdownRegions(registry, source) {
     const grammar = await registry.loadGrammar('source.sveltex');
     if (!grammar) throw new Error('Failed to load source.sveltex grammar');
 
@@ -462,7 +462,7 @@ async function tmMarkdownRegions(registry, source) {
  *
  * @returns {Promise<vsctm.Registry>}
  */
-async function loadRegistry() {
+export async function loadRegistry() {
     const wasmBin = readFileSync(
         resolve(PACKAGE_ROOT, 'node_modules/vscode-oniguruma/release/onig.wasm'),
     ).buffer;
@@ -536,7 +536,7 @@ async function loadRegistry() {
  * @param {Region[]} ts
  * @param {Region[]} tm
  */
-function compare(ts, tm) {
+export function compare(ts, tm) {
     const out = { tsOnly: /** @type {Region[]} */ ([]), tmOnly: /** @type {Region[]} */ ([]), matched: /** @type {{ts:Region,tm:Region}[]} */ ([]) };
     const overlaps = (/** @type {Region} */ a, /** @type {Region} */ b) =>
         a.kind === b.kind && a.start < b.end && b.start < a.end;
@@ -663,7 +663,7 @@ function parseArgs() {
     };
 }
 
-const CORPUS_LOADERS = {
+export const CORPUS_LOADERS = {
     commonmark: loadCommonMark,
     gfm: loadGfm,
     fuzzer: () => loadFuzzer({ count: 300 }),
@@ -840,7 +840,16 @@ async function main() {
     console.log(`\nReport written to ${relative(process.cwd(), REPORT_PATH)}`);
 }
 
-main().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+// Only run the full bench when executed directly (`node parity-markdown.mjs`),
+// not when imported for its tokenizer/classifier exports (e.g. by
+// `parity-markdown-html.mjs`, which reuses the shared pieces above so the
+// coloured HTML report and the numeric report can never disagree on kinds).
+if (
+    process.argv[1] &&
+    fileURLToPath(import.meta.url) === resolve(process.argv[1])
+) {
+    main().catch((e) => {
+        console.error(e);
+        process.exit(1);
+    });
+}
