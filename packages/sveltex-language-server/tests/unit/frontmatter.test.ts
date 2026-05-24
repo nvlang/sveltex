@@ -212,6 +212,88 @@ describe('computeFrontmatterHover', () => {
         ).toContain('<link href>');
     });
 
+    it('resolves the block from a TOML `[meta]` table header', () => {
+        // The enclosing TOML table decides the context: `description` under a
+        // `[meta]` table is a `<meta name>`, not a top-level key.
+        const source = [
+            '+++',
+            '[meta]',
+            'description = "A summary"',
+            '+++',
+        ].join('\n');
+        expect(
+            bodyOf(computeFrontmatterHover(source, { line: 2, character: 2 })),
+        ).toContain('<meta name="description">');
+    });
+
+    it('treats a non-meta/base/link TOML table as the top level', () => {
+        // A `[server]`-style table is not one SvelTeX maps, so the context
+        // resolves to the top level — where `title` is documented.
+        const source = ['+++', '[server]', 'title = "x"', '+++'].join('\n');
+        const body = bodyOf(
+            computeFrontmatterHover(source, { line: 2, character: 1 }),
+        );
+        expect(body).toContain('<title>');
+    });
+
+    it('skips blank and comment lines when resolving the block', () => {
+        // The `meta:` ancestor sits several lines up, past a blank line and a
+        // `#` comment — both must be skipped while walking up to it.
+        const source = [
+            '---',
+            'meta:',
+            '',
+            '  # a comment',
+            '  description: A summary',
+            '---',
+        ].join('\n');
+        expect(
+            bodyOf(computeFrontmatterHover(source, { line: 4, character: 6 })),
+        ).toContain('<meta name="description">');
+    });
+
+    it('hovers the `charset` top-level key, rendering `<meta charset>`', () => {
+        // Exercises the `<meta charset>` template branch via a real hover.
+        const source = ['---', 'charset: utf-8', '---'].join('\n');
+        const body = bodyOf(
+            computeFrontmatterHover(source, { line: 1, character: 3 }),
+        );
+        expect(body).toContain('renders `<meta charset="〈value〉">`');
+        expect(body).toContain('Inserts `<meta charset="〈value〉">`');
+    });
+
+    it('returns null on a value whose key is neither name nor http-equiv', () => {
+        // `title: My Doc` — caret on the value. `title` has no value schema, so
+        // no value hover is produced.
+        const source = ['---', 'title: My Doc', '---'].join('\n');
+        expect(
+            computeFrontmatterHover(source, { line: 1, character: 10 }),
+        ).toBeNull();
+    });
+
+    it('returns null on an unknown key carrying a value, caret on the value', () => {
+        // The key parses but is unrecognised, and its value matches no schema.
+        const source = ['---', 'custom: somevalue', '---'].join('\n');
+        expect(
+            computeFrontmatterHover(source, { line: 1, character: 11 }),
+        ).toBeNull();
+    });
+
+    it('skips equally-indented siblings when walking up to the block key', () => {
+        // Walking up from `keywords` passes its sibling `description` (same
+        // indent — not an ancestor) before reaching the `meta:` key.
+        const source = [
+            '---',
+            'meta:',
+            '  description: A',
+            '  keywords: B',
+            '---',
+        ].join('\n');
+        expect(
+            bodyOf(computeFrontmatterHover(source, { line: 3, character: 4 })),
+        ).toContain('<meta name="keywords">');
+    });
+
     // The hover of a top-level key is followed by per-effect sections —
     // one per frontmatter-processing step the key takes part in — each
     // naming the `frontmatter: { … }` toggle that switches it off.
@@ -348,6 +430,18 @@ describe('computeFrontmatterCompletion', () => {
             character: 16,
         }).items.map((i) => i.label);
         expect(labels).toContain('content-security-policy');
+    });
+
+    it('still completes keys when the caret is before the `:` of a pair', () => {
+        // The line is a full `title: x` pair, but the caret sits inside the
+        // key (before the separator), so keys — not values — are offered.
+        const source = ['---', 'title: x', '---'].join('\n');
+        const labels = computeFrontmatterCompletion(source, {
+            line: 1,
+            character: 2,
+        }).items.map((i) => i.label);
+        expect(labels).toContain('title');
+        expect(labels).toContain('meta');
     });
 
     it('suggests nothing for a free-form value', () => {

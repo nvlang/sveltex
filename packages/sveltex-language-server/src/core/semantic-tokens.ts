@@ -70,9 +70,15 @@ const TOKEN_TYPE_STRING = SEMANTIC_TOKEN_TYPES.indexOf('string');
  * the region's slice doesn't start with a recognisable `<tag>` opener.
  */
 function tagNameOf(source: string, region: Region): string | null {
+    /* v8 ignore next -- defensive: the sole caller (computeSemanticTokens)
+       already filters to `region.kind === 'verbatim'`, so this guard never
+       fires; kept so the helper is safe to reuse. */
     if (region.kind !== 'verbatim') return null;
     const slice = source.slice(region.sourceStart, region.sourceEnd);
     const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(slice);
+    /* v8 ignore next -- the `?? ''` arm is unreachable: capture group 1 is
+       `[a-zA-Z][-.:0-9_a-zA-Z]*`, so whenever `tagMatch` is non-null group 1
+       has matched at least one character and is never `undefined`. */
     return tagMatch ? (tagMatch[1] ?? '').toLowerCase() : null;
 }
 
@@ -126,6 +132,9 @@ function pushLineSplitTokens(
     start: number,
     end: number,
 ): void {
+    /* v8 ignore next -- defensive: the sole caller passes
+       `verbatimBodyOffsets(...)`, which returns `null` (skipped earlier)
+       rather than an empty span, so `end > start` always holds here. */
     if (end <= start) return;
     const startPos = doc.positionAt(start);
     const endPos = doc.positionAt(end);

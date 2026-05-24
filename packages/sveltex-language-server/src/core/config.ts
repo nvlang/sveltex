@@ -237,6 +237,8 @@ export function collectConfigDependencies(configPath: string): string[] {
     const queue = [configPath];
     while (queue.length > 0) {
         const next = queue.pop();
+        /* v8 ignore next -- defensive: the `while (queue.length > 0)` guard
+           means `pop()` always returns a string here, never undefined. */
         if (next === undefined) break;
         const resolved = resolveModuleFile(next);
         if (resolved === undefined || seen.has(resolved)) continue;
@@ -250,6 +252,8 @@ export function collectConfigDependencies(configPath: string): string[] {
         const dir = dirname(resolved);
         for (const match of source.matchAll(RELATIVE_IMPORT_RE)) {
             const specifier = match[1];
+            /* v8 ignore next -- defensive: the regex's `(\.[^'"\n]+)` group
+               only matches a non-empty specifier, so this is always truthy. */
             if (specifier) queue.push(join(dir, specifier));
         }
     }
@@ -304,6 +308,9 @@ function readTagsOfType(
     type: 'tex' | 'escape' | 'code' | 'noop',
 ): string[] | undefined {
     const verbatim = config['verbatim'];
+    /* v8 ignore next -- unreachable via the public API: the only caller
+       (loadConfigSnapshot) invokes this solely when readVerbatimTags already
+       confirmed `verbatim` is an object. */
     if (!isObject(verbatim)) return undefined;
     const tags = new Set<string>();
     for (const [name, entry] of Object.entries(verbatim)) {
@@ -561,6 +568,9 @@ function summarizeStderr(stderr: string): string {
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
     const errorLine = lines.find((line) => /[A-Za-z]*Error\b/u.test(line));
+    /* v8 ignore next -- the `?? 'unknown error'` arm is unreachable: the only
+       caller guards this with `stderr.trim()`, so `lines` always has an entry
+       and `lines[0]` is defined. */
     return (errorLine ?? lines[0] ?? 'unknown error').slice(0, 300);
 }
 
@@ -662,11 +672,16 @@ async function loadConfigViaChild(
                 );
                 resolve(isObject(parsed) ? parsed : {});
             } catch (error) {
+                // The `: new Error(...)` arm is unreachable — the only throwers
+                // in the `try` (JSON.parse, Buffer.concat) raise Error
+                // subclasses, so `error` is always an Error.
+                /* v8 ignore start */
                 reject(
                     error instanceof Error
                         ? error
                         : new Error('config loader: invalid JSON output'),
                 );
+                /* v8 ignore stop */
             }
         });
     });

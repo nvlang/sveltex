@@ -200,6 +200,13 @@ jobs:
           directory: packages/sveltex/coverage/
           flags: sveltex
 
+      - name: Upload coverage reports for `packages/sveltex-language-server` to Codecov
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sveltex-language-server/coverage/
+          flags: sveltex-language-server
+
       - name: Upload Vitest report for `packages/sveltex` to GitHub
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

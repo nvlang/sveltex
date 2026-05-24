@@ -256,6 +256,8 @@ export function createServer(connection: Connection): void {
             doc.text,
         );
         const offset = textDoc.offsetAt(position);
+        /* v8 ignore next -- defensive: TextDocument.offsetAt clamps to
+           [0, text.length], so this out-of-range guard is unreachable. */
         if (offset < 0 || offset > doc.text.length) return undefined;
         for (const region of doc.regions) {
             if (offset >= region.sourceStart && offset < region.sourceEnd) {
@@ -542,6 +544,9 @@ export function createServer(connection: Connection): void {
             while (configReloadQueued) {
                 configReloadQueued = false;
                 const root = workspaceRoot;
+                /* v8 ignore next -- defensive: the pump is only ever scheduled
+                   once `workspaceRoot` is set (in `onInitialize`), and it is
+                   never cleared, so `!root` here is unreachable. */
                 if (!root) break;
                 config = await loadConfigSnapshot(root, logInfo);
                 // The dependency graph can change between reloads (an import
@@ -658,7 +663,7 @@ export function createServer(connection: Connection): void {
             try {
                 const watcher = fsWatch(dir, (_event, filename) => {
                     // `filename` is null on some platforms — reload to be safe.
-                    if (filename === null || names.has(filename.toString())) {
+                    if (filename === null || names.has(filename)) {
                         scheduleConfigReload();
                     }
                 });

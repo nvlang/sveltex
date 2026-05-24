@@ -290,6 +290,9 @@ export function remapCodeActions(
         const action = entry;
         const next: CodeAction = { ...action };
         if (action.edit) {
+            /* v8 ignore next -- the `?? action.edit` fallback is unreachable:
+               `remapWorkspaceEdit` only returns null for a falsy input, but
+               `action.edit` is truthy inside this guard. */
             next.edit = remapWorkspaceEdit(action.edit, ctx) ?? action.edit;
         }
         if (action.diagnostics) {

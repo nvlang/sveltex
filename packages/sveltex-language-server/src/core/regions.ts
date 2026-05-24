@@ -107,6 +107,10 @@ function snippetTypeToRegionKind(type: string): RegionKind {
         case 'verbatim':
         case 'frontmatter':
             return type;
+        /* v8 ignore next 4 -- defensive: SvelTeX only ever emits the six
+           snippet types enumerated above (code/math/svelte/mustacheTag/
+           verbatim/frontmatter), so the unknown-type fallback is unreachable
+           through `computeRegions`. */
         default:
             // Defensive: an unknown snippet type is treated as opaque verbatim
             // so that it is never mistakenly delegated.
@@ -361,6 +365,12 @@ function fillGaps(tagged: TaggedRange[], length: number): Region[] {
     // but verbatim ranges were appended afterwards and could overlap a snippet
     // (e.g. a verbatim tag that also looks like an HTML element). Re-run the
     // outermost filter over the combined set, sorted by start offset.
+    // The `b.end - a.end` tie-break below is unreachable: no two tagged ranges
+    // share a start offset. `outermostRanges` removes overlap among the
+    // detector snippets, and `maskRanges` blanks those snippets before the
+    // verbatim scan, so an appended verbatim range can never begin at the same
+    // offset as another range.
+    /* v8 ignore next 2 */
     const sorted = [...tagged].sort((a, b) =>
         a.start !== b.start ? a.start - b.start : b.end - a.end,
     );
@@ -370,9 +380,16 @@ function fillGaps(tagged: TaggedRange[], length: number): Region[] {
 
     for (const range of sorted) {
         // Skip ranges that overlap something we already emitted.
+        /* v8 ignore next -- unreachable: tagged ranges never overlap (see the
+           sort comment above), so a range never starts before the cursor. */
         if (range.start < cursor) continue;
+        /* v8 ignore next -- unreachable: every detected range lies within the
+           document, so none starts at or past its length. */
         if (range.start >= length) break;
         const end = Math.min(range.end, length);
+        /* v8 ignore next -- unreachable: detectors never report a zero- or
+           negative-width range, so `end` (>= range.start here) never collapses
+           onto the start. */
         if (end <= range.start) continue;
         // Fill the gap before this range with plain Markdown.
         if (range.start > cursor) {

@@ -128,6 +128,34 @@ describe('emits nothing for cases handled elsewhere', () => {
         };
         expect(tokensFor('a <MyEscape /> b', cfg).data).toEqual([]);
     });
+
+    it('skips a verbatim region whose tag is not an escape/code target', () => {
+        // With a non-native escape target present (so the encoder does NOT take
+        // the empty-targets early return), a `<tex>` region is verbatim-kinded
+        // but its tag is not in the target set — the `!targets.has(tag)` guard
+        // skips it without emitting a token.
+        const cfg: SveltexConfigSnapshot = {
+            ...defaultConfig,
+            verbatimTags: [...defaultConfig.verbatimTags, 'MyEscape'],
+            escapeTags: [...defaultConfig.escapeTags, 'MyEscape'],
+        };
+        expect(tokensFor('<tex>\\alpha</tex>', cfg).data).toEqual([]);
+    });
+
+    it('skips a noop wrapper region whose slice opens with `</`', () => {
+        // A `noop` env is split into wrapper/body/wrapper pieces; the closing
+        // wrapper `</MyNoop>` is a `verbatim` region whose slice begins with
+        // `</`, so `tagNameOf` finds no opening tag and returns `null` — the
+        // region is skipped. A non-native escape target keeps the encoder past
+        // its empty-targets early return so this region is actually visited.
+        const cfg: SveltexConfigSnapshot = {
+            ...defaultConfig,
+            verbatimTags: [...defaultConfig.verbatimTags, 'MyNoop', 'MyEscape'],
+            noopTags: ['MyNoop'],
+            escapeTags: [...defaultConfig.escapeTags, 'MyEscape'],
+        };
+        expect(tokensFor('<MyNoop><C /></MyNoop>', cfg).data).toEqual([]);
+    });
 });
 
 describe('emits flat `string` tokens for custom escape/code envs', () => {
@@ -174,6 +202,16 @@ describe('emits flat `string` tokens for custom escape/code envs', () => {
 
     it('does not include the trailing newline in a token', () => {
         const source = '<MyEscape>\nabc\n</MyEscape>';
+        const tokens = decode(tokensFor(source, configWithCustom()).data);
+        expect(tokens).toHaveLength(1);
+        expect(tokens[0]?.length).toBe('abc'.length);
+    });
+
+    it('trims a trailing CRLF (both `\\r` and `\\n`) from a token', () => {
+        // With Windows line endings the body line is `abc\r\n`; the encoder
+        // must strip BOTH the `\n` and the `\r` so the `string` colour does not
+        // bleed past the visible text onto the next line.
+        const source = '<MyEscape>\r\nabc\r\n</MyEscape>';
         const tokens = decode(tokensFor(source, configWithCustom()).data);
         expect(tokens).toHaveLength(1);
         expect(tokens[0]?.length).toBe('abc'.length);
