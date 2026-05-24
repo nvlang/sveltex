@@ -1087,7 +1087,13 @@ static bool scan_markdown_chunk(TSLexer *lexer) {
             // Classify the tag. `mark_end` first so the boundary (the `<`) is
             // the token end if the run must stop here.
             lexer->mark_end(lexer);
-            char name[32];
+            // Fixed stack buffer (no heap allocation in the scanner hot path)
+            // that holds the tag name for classification. 64 covers every
+            // realistic verbatim / element / component name; a longer name
+            // overruns the capacity, fails the "char after the name" check in
+            // `classify_tag_at_lt`, and is safely treated as ordinary text
+            // (TAG_NONE) rather than misclassified.
+            char name[64];
             enum TagKind kind = classify_tag_at_lt(lexer, name, sizeof(name));
             if (kind == TAG_VERBATIM || kind == TAG_ELEMENT ||
                 kind == TAG_ELEMENT_CLOSE) {
@@ -1193,7 +1199,9 @@ static bool scan_verbatim_body(TSLexer *lexer, enum TokenType result) {
             advance(lexer);
             if (lexer->lookahead == '/') {
                 advance(lexer);
-                char name[32];
+                // See the element-tag scan above: fixed buffer sized well past
+                // any verbatim tag; an over-long name simply won't match one.
+                char name[64];
                 unsigned len = 0;
                 while (len + 1 < sizeof(name) &&
                        is_tag_name_char(lexer->lookahead)) {
