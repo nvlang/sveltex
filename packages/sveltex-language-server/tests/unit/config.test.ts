@@ -36,7 +36,8 @@ vi.mock('node:child_process', async (importOriginal) => {
     return {
         ...actual,
         spawn: (...args: unknown[]) =>
-            (spawnControl.impl ?? actual.spawn)(...args),
+            (spawnControl.impl ??
+                (actual.spawn as (...a: unknown[]) => unknown))(...args),
     };
 });
 
@@ -398,11 +399,11 @@ describe('config file location and loading', () => {
         );
         const snapshot = await loadConfigSnapshot(dir);
         // The non-string option (7) is filtered out.
-        expect(snapshot.texScaffolds['tex'].documentClass).toBe(
+        expect(snapshot.texScaffolds['tex']?.documentClass).toBe(
             '\\documentclass[12pt,a4paper]{article}',
         );
         // No `preamble` declared → SvelTeX's default preamble.
-        expect(snapshot.texScaffolds['tex'].preamble).toContain(
+        expect(snapshot.texScaffolds['tex']?.preamble).toContain(
             '\\usepackage{microtype}',
         );
     });
@@ -419,7 +420,7 @@ describe('config file location and loading', () => {
             ].join('\n'),
         );
         const snapshot = await loadConfigSnapshot(dir);
-        expect(snapshot.texScaffolds['tex'].documentClass).toBe(
+        expect(snapshot.texScaffolds['tex']?.documentClass).toBe(
             '\\documentclass{book}',
         );
     });
@@ -438,7 +439,7 @@ describe('config file location and loading', () => {
             ].join('\n'),
         );
         const snapshot = await loadConfigSnapshot(dir);
-        expect(snapshot.texScaffolds['tex'].documentClass).toBe(
+        expect(snapshot.texScaffolds['tex']?.documentClass).toBe(
             '\\documentclass{standalone}',
         );
     });
@@ -457,7 +458,7 @@ describe('config file location and loading', () => {
             ].join('\n'),
         );
         const snapshot = await loadConfigSnapshot(dir);
-        expect(snapshot.texScaffolds['tex'].documentClass).toBe(
+        expect(snapshot.texScaffolds['tex']?.documentClass).toBe(
             '\\documentclass[draft]{standalone}',
         );
     });
@@ -476,7 +477,7 @@ describe('config file location and loading', () => {
             ].join('\n'),
         );
         const snapshot = await loadConfigSnapshot(dir);
-        expect(snapshot.texScaffolds['tex'].documentClass).toBe(
+        expect(snapshot.texScaffolds['tex']?.documentClass).toBe(
             '\\documentclass{memoir}',
         );
     });

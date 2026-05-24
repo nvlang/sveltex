@@ -35,7 +35,13 @@ describe('DEFAULT_SVELTEX_EXTENSION', () => {
 
 describe('pickDefined', () => {
     it('returns an empty object when source is undefined', () => {
-        expect(pickDefined(undefined, ['a', 'b'] as const)).toEqual({});
+        // `source` is `undefined`; both type args are explicit because `T`
+        // cannot be inferred from an `undefined` argument.
+        const result = pickDefined<{ a: number; b: number }, 'a' | 'b'>(
+            undefined,
+            ['a', 'b'] as const,
+        );
+        expect(result).toEqual({});
     });
 
     it('keeps defined keys and omits undefined / unlisted ones', () => {

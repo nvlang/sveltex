@@ -1227,14 +1227,14 @@ describe('native Markdown features', () => {
                     workspaceFolders: [{ uri: `file://${dir}`, name: 'ws' }],
                 });
             open(h, URI, '<verb>literal</verb>\n');
-            const tokens = h.invoke<{ data: number[] }>('semanticTokens', {
+            const tokens = h.invoke('semanticTokens', {
                 textDocument: { uri: URI },
-            });
+            }) as { data: number[] };
             expect(tokens.data).toBeInstanceOf(Array);
             // Unknown doc → empty token set, not null.
-            const empty = h.invoke<{ data: number[] }>('semanticTokens', {
+            const empty = h.invoke('semanticTokens', {
                 textDocument: { uri: 'file:///nope.sveltex' },
-            });
+            }) as { data: number[] };
             expect(empty).toEqual({ data: [] });
         } finally {
             rmSync(dir, { recursive: true, force: true });
@@ -1296,7 +1296,7 @@ describe('child notification handling', () => {
             string,
             unknown
         >;
-        expect(call.uri).toBe(URI);
+        expect(call['uri']).toBe(URI);
         expect('version' in call).toBe(false);
     });
 
