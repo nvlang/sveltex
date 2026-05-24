@@ -1,82 +1,88 @@
-# tree-sitter-markdown
+# @nvl/tree-sitter-markdown-sveltex
 
-[![CI][ci]](https://github.com/tree-sitter-grammars/tree-sitter-markdown/actions)
-[![discord][discord]](https://discord.gg/w7nTvsVJhm)
-[![matrix][matrix]](https://matrix.to/#/#tree-sitter-chat:matrix.org)
-[![npm][npm]](https://www.npmjs.com/package/@tree-sitter-grammars/tree-sitter-markdown)
-[![crates][crates]](https://crates.io/crates/tree-sitter-md)
-[![pypi][pypi]](https://pypi.org/project/tree-sitter-markdown/)
+A **SvelTeX fork** of the [tree-sitter Markdown grammar][upstream] — the split
+(block + inline) [tree-sitter] grammar by [MDeiml] now maintained under
+[tree-sitter-grammars]. It is vendored here, at upstream rev
+[`9a23c1a`][upstream] (the same revision Zed pins for its built-in Markdown),
+with two deliberate deviations from CommonMark and renamed grammars so it can
+be injected by [`@nvl/tree-sitter-sveltex`](../tree-sitter-sveltex) in place of
+the editor's built-in CommonMark grammar.
 
-A Markdown parser for [tree-sitter].
+> [!WARNING]
+> **This package is in alpha** and exists to serve SvelTeX's editor tooling.
+> It is not a general-purpose Markdown grammar; if you want one, use
+> [upstream][upstream] directly.
 
-![screenshot](https://github.com/MDeiml/tree-sitter-markdown/blob/split_parser/contrib/screenshot.png)
+## Why a fork?
 
-The parser is designed to read markdown according to the [CommonMark Spec],
-but some extensions to the spec from different sources such as [Github flavored
-markdown] are also included. These can be toggled on or off at compile time.
-For specifics see [Extensions](#extensions)
+SvelTeX's Markdown processing differs from CommonMark in two small but
+user-visible ways, and the editor grammar has to match so that highlighting
+reflects what SvelTeX will actually compile:
 
-## Goals
+- **Indented code blocks are disabled.** Four-space-indented prose stays a
+  paragraph (and its inline markup keeps being highlighted) instead of becoming
+  an indented code block. Use fenced code blocks (```` ``` ````) for code.
+- **Underscore emphasis ending in a digit is recognised.** `_italic 1_` /
+  `_italic1_` parse as emphasis, while intraword underscores between
+  alphanumerics (`snake_case`, `1_2`) stay non-emphasis, per CommonMark's
+  intraword rule.
 
-Even though this parser has existed for some while and obvious issues are
-mostly solved, there are still lots of inaccuarcies in the output. These stem
-from restricting a complex format such as markdown to the quite restricting
-tree-sitter parsing rules.
+Everything else — HTML blocks (`<script>` / `<style>` / `<pre>` and comments),
+fenced code, and the GFM extensions (task lists, strikethrough, pipe tables,
+front-matter) — is unchanged from upstream.
 
-As such it is not recommended to use this parser where correctness is
-important. The main goal for this parser is to provide syntactical information
-for syntax highlighting in parsers such as [neovim] and [helix].
+## Renamed grammars
 
-## Contributing
+The two grammars are renamed from `markdown` / `markdown_inline` to
+**`markdown_sveltex`** / **`markdown_inline_sveltex`** so they do not clash
+with an editor's built-in `markdown` / `markdown-inline` grammars when both are
+installed. The exported C symbols, the Node binding, and the directory names
+are renamed to match; consumers inject `markdown_sveltex` (see
+`../tree-sitter-sveltex/queries/injections.scm`).
 
-All contributions are welcome. For details refer to [CONTRIBUTING.md].
+## The two-grammar parse model
+
+Like upstream, this is **two** grammars. Parse a document with the block
+grammar first, then run the inline grammar over the ranges the block grammar
+marked as `inline` nodes (via `ts_parser_set_included_ranges`). See the
+upstream [standalone-usage notes][upstream-standalone] and the `bindings/`
+folder for an example.
 
 ## Extensions
 
-Extensions can be enabled at compile time through environment variables. Some
-of them are on by default, these can be disabled with the environment variable
-`NO_DEFAULT_EXTENSIONS`.
+Upstream's compile-time extension flags (environment variables, toggled at
+`tree-sitter generate` time) are preserved. The SvelTeX build uses the
+defaults: GFM (task lists, strikethrough, pipe tables) and YAML/TOML
+front-matter are **on**; the optional Obsidian-style **tags** (`#tag`) and
+**wiki-link** (`[[…]]`) extensions are **off** (SvelTeX does not enable them).
 
-| Name | Environment variable | Specification | Default | Also enables |
-|:----:|:--------------------:|:-------------:|:-------:|:------------:|
-| Github flavored markdown | `EXTENSION_GFM` | [link](https://github.github.com/gfm/) | ✓ | Task lists, strikethrough, pipe tables |
-| Task lists | `EXTENSION_TASK_LIST` | [link](https://github.github.com/gfm/#task-list-items-extension-) | ✓ |  |
-| Strikethrough | `EXTENSION_STRIKETHROUGH` | [link](https://github.github.com/gfm/#strikethrough-extension-) | ✓ |  |
-| Pipe tables | `EXTENSION_PIPE_TABLE` | [link](https://github.github.com/gfm/#tables-extension-) | ✓ |  |
-| YAML metadata | `EXTENSION_MINUS_METADATA` | [link](https://gohugo.io/content-management/front-matter/) | ✓ |  |
-| TOML metadata | `EXTENSION_PLUS_METADATA` | [link](https://gohugo.io/content-management/front-matter/) | ✓ |  |
-| Tags | `EXTENSION_TAGS` | [link](https://help.obsidian.md/Editing+and+formatting/Tags#Tag+format) |  |  |
-| Wiki Link | `EXTENSION_WIKI_LINK` | [link](https://help.obsidian.md/Linking+notes+and+files/Internal+links) |  |  |
+## Layout
 
-## Usage in Editors
+```
+tree-sitter-markdown/         the block grammar (grammar.js, src/, test/)
+tree-sitter-markdown-inline/  the inline grammar (grammar.js, src/, test/)
+common/common.js              shared rules + the extension flags
+bindings/                     Node / Rust / … language bindings
+scripts/test.js               runs `tree-sitter test` over both grammars
+```
 
-For guides on how to use this parser in a specific editor, refer to that
-editor's specific documentation, e.g.
-* [neovim](https://github.com/nvim-treesitter/nvim-treesitter)
-* [helix](https://docs.helix-editor.com/guides/adding_languages.html)
+## Development
 
-## Standalone usage
+```sh
+pnpm install
+pnpm test          # tree-sitter test, both grammars
+# regenerate after editing a grammar.js:
+cd tree-sitter-markdown        && npx tree-sitter generate
+cd tree-sitter-markdown-inline && npx tree-sitter generate
+```
 
-To use the two grammars, first parse the document with the block
-grammar. Then perform a second parse with the inline grammar using
-`ts_parser_set_included_ranges` to specify which parts are inline content.
-These parts are marked as `inline` nodes. Children of those inline nodes should
-be excluded from these ranges. For an example implementation see `lib.rs` in
-the `bindings` folder.
+## Credits & license
 
-### Usage with WASM
+Forked from [`tree-sitter-grammars/tree-sitter-markdown`][upstream] by
+[MDeiml] and contributors. MIT licensed, as upstream.
 
-Unfortunately using this parser with WASM/web-tree-sitter does not work out of the box at the moment. This is because the parser uses some C functions that are not exported by tree-sitter by default. To fix this you can statically link the parser to tree-sitter. See also https://github.com/tree-sitter/tree-sitter/issues/949, https://github.com/MDeiml/tree-sitter-markdown/issues/126, and https://github.com/MDeiml/tree-sitter-markdown/issues/93
-
-[CommonMark Spec]: https://spec.commonmark.org/
-[Github flavored markdown]: https://github.github.com/gfm/
 [tree-sitter]: https://tree-sitter.github.io/tree-sitter/
-[neovim]: https://neovim.io/
-[helix]: https://helix-editor.com/
-[CONTRIBUTING.md]: https://github.com/MDeiml/tree-sitter-markdown/blob/split_parser/CONTRIBUTING.md
-[ci]: https://img.shields.io/github/actions/workflow/status/tree-sitter-grammars/tree-sitter-markdown/ci.yml?logo=github&label=CI
-[discord]: https://img.shields.io/discord/1063097320771698699?logo=discord&label=discord
-[matrix]: https://img.shields.io/matrix/tree-sitter-chat%3Amatrix.org?logo=matrix&label=matrix
-[npm]: https://img.shields.io/npm/v/%40tree-sitter-grammars%2Ftree-sitter-markdown?logo=npm
-[crates]: https://img.shields.io/crates/v/tree-sitter-md?logo=rust
-[pypi]: https://img.shields.io/pypi/v/tree-sitter-markdown?logo=pypi&logoColor=ffd242
+[upstream]: https://github.com/tree-sitter-grammars/tree-sitter-markdown
+[upstream-standalone]: https://github.com/tree-sitter-grammars/tree-sitter-markdown#standalone-usage
+[tree-sitter-grammars]: https://github.com/tree-sitter-grammars
+[MDeiml]: https://github.com/MDeiml

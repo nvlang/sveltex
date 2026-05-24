@@ -26,9 +26,12 @@ package gives each region the treatment it deserves.
     actions, rename, signature help, and document links — all
     forwarded to the upstream
     [`svelte-language-server`](https://www.npmjs.com/package/svelte-language-server),
-    fully position-mapped to the source `.sveltex` file. Anything
-    that lands in a verbatim region is suppressed so you don't see
-    spurious "unexpected `$`" diagnostics inside a math block.
+    fully position-mapped to the source `.sveltex` file. Most
+    verbatim regions are suppressed so you don't see spurious
+    "unexpected `$`" diagnostics inside a math block — the exception
+    is `noop`-typed environments, whose bodies pass straight through
+    to Svelte at build time and so are forwarded to
+    `svelte-language-server` for full Svelte tooling.
 
 -   <PhCursorText color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
@@ -70,6 +73,16 @@ package gives each region the treatment it deserves.
     and live-reloads when the config or one of its imports changes.
 
 </div>
+
+::: info Highlighting custom verbatim envs in non-VS-Code editors
+
+For LSP clients other than VS Code (Zed, Neovim, …), the server also emits
+**semantic tokens** that flat-colour the bodies of your custom `escape`- and
+`code`-typed verbatim environments. VS Code achieves the same through its
+generated TextMate grammar instead, so the server skips semantic tokens there.
+See [Verbatim › Editor syntax highlighting](/docs/verbatim#editor-syntax-highlighting).
+
+:::
 
 ## Installation
 
