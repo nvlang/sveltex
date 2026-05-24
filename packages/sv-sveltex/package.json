@@ -59,7 +59,7 @@
     "@types/node": "^24.12.4",
     "@vitest/coverage-v8": "^4.1.7",
     "sv": "^0.15.3",
-    "tsdown": "^0.21.10",
+    "tsdown": "^0.22.0",
     "vitest": "^4.1.7"
   }
 }
