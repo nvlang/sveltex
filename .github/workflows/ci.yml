@@ -207,6 +207,27 @@ jobs:
           directory: packages/sveltex-language-server/coverage/
           flags: sveltex-language-server
 
+      - name: Upload coverage reports for `packages/sveltex-math-language-server` to Codecov
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sveltex-math-language-server/coverage/
+          flags: sveltex-math-language-server
+
+      - name: Upload coverage reports for `packages/sv-sveltex` to Codecov
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sv-sveltex/coverage/
+          flags: sv-sveltex
+
+      - name: Upload coverage reports for `packages/vscode-sveltex` to Codecov
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/vscode-sveltex/coverage/
+          flags: vscode-sveltex
+
       - name: Upload Vitest report for `packages/sveltex` to GitHub
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

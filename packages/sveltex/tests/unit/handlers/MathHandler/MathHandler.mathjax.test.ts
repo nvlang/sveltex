@@ -25,6 +25,7 @@ import { spy } from '../../fixtures.js';
 import type { SupportedCdn } from '../../../../src/types/handlers/Css.js';
 import type { PossibleMathCssApproach } from '../../../../src/types/handlers/Math.js';
 import { sveltex } from '../../../../src/base/Sveltex.js';
+import { missingDeps } from '../../../../src/utils/env.js';
 
 function fixture() {
     beforeEach(() => {
@@ -145,6 +146,25 @@ describe("MathHandler<'mathjax'>", () => {
                 ),
             );
             expect(writeFileEnsureDirSync).toHaveBeenCalledTimes(3);
+        });
+    });
+
+    describe('missing dependencies', () => {
+        fixture();
+        it('surfaces a missing non-default font package and rethrows', async () => {
+            // `@mathjax/src` (and its default `newcm` font) are installed, so
+            // the `@mathjax/src` import succeeds; but `@mathjax/mathjax-tex-
+            // font` is *not* installed. Selecting `font: 'tex'` therefore makes
+            // the `import.meta.resolve` font probe throw, which records the
+            // font package as a missing dependency and rethrows rather than
+            // letting MathJax fail opaquely later in the pipeline.
+            missingDeps.length = 0;
+            await expect(
+                MathHandler.create('mathjax', { font: 'tex' }),
+            ).rejects.toThrow();
+            expect(missingDeps).toContain('@mathjax/mathjax-tex-font');
+            expect(log).not.toHaveBeenCalled();
+            missingDeps.length = 0;
         });
     });
 

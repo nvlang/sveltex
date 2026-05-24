@@ -66,6 +66,7 @@
   "devDependencies": {
     "@mathjax/src": "^4.1.2",
     "@types/node": "^24.12.4",
+    "@vitest/coverage-v8": "^4.1.7",
     "katex": "^0.16.47",
     "tslib": "^2.8.1",
     "tsx": "^4.22.3",

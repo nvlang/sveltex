@@ -47,6 +47,7 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rimraf dist",
+    "lint": "eslint . && tsc -p tsconfig.json --noEmit",
     "prepublishOnly": "pnpm run build",
     "test": "vitest run"
   },
@@ -56,6 +57,7 @@
   "devDependencies": {
     "@sveltejs/sv-utils": "^0.2.2",
     "@types/node": "^24.12.4",
+    "@vitest/coverage-v8": "^4.1.7",
     "sv": "^0.15.3",
     "tsdown": "^0.21.10",
     "vitest": "^4.1.7"

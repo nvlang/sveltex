@@ -117,6 +117,18 @@ describe('commandAtCaret', () => {
         expect(commandAtCaret('a\\\\b', 2)).toBeUndefined();
     });
 
+    it('returns undefined when the caret follows a bare `\\\\` line break', () => {
+        // `\\` (two backslashes) is an escaped backslash / line break, not a
+        // command: counting the run finds an even number, so it is rejected.
+        expect(commandAtCaret('\\\\', 2)).toBeUndefined();
+    });
+
+    it('returns undefined for a letter sitting after an escaped `\\\\`', () => {
+        // `\\b` — the `b` is read as a control word opened by the second
+        // backslash, but that backslash is escaped (even run), so no command.
+        expect(commandAtCaret('\\\\b', 3)).toBeUndefined();
+    });
+
     it('locates a command the caret sits just before', () => {
         // caret at offset 4, just before `\beta`
         const found = commandAtCaret('\\a \\beta', 3);
