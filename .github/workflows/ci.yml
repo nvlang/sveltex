@@ -139,15 +139,15 @@ jobs:
       # Audit outbound traffic during the build (TeX Live mirror, apt, npm,
       # the pnpm registry). Same posture as the release job below --
       # catches drift before it reaches the credentialed publish.
-      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
       - name: Checkout Code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up TeX Live
-        uses: TeX-Live/setup-texlive-action@5ead3060cb9c2d6bf985c23b38a30669a13a3f3c # v3
+        uses: TeX-Live/setup-texlive-action@eb78d21f41941476d9121e3a0abcab73265c876f # v4.1.1
         with:
           packages: |
             scheme-basic
@@ -163,7 +163,7 @@ jobs:
             lipsum
             xcolor
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
         with:
           run_install: false
@@ -194,42 +194,42 @@ jobs:
         run: pnpm test
 
       - name: Upload coverage reports for `packages/sveltex` to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/sveltex/coverage/
           flags: sveltex
 
       - name: Upload coverage reports for `packages/sveltex-language-server` to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/sveltex-language-server/coverage/
           flags: sveltex-language-server
 
       - name: Upload coverage reports for `packages/sveltex-math-language-server` to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/sveltex-math-language-server/coverage/
           flags: sveltex-math-language-server
 
       - name: Upload coverage reports for `packages/sv-sveltex` to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/sv-sveltex/coverage/
           flags: sv-sveltex
 
       - name: Upload coverage reports for `packages/vscode-sveltex` to Codecov
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/vscode-sveltex/coverage/
           flags: vscode-sveltex
 
       - name: Upload Vitest report for `packages/sveltex` to GitHub
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: vitest-report
@@ -257,14 +257,14 @@ jobs:
       # Audit egress: this job fetches Playwright browsers, Deno, TeX Live,
       # MuPDF/Poppler, npm, and runs the showcase site build. Largest
       # external-asset surface in the repo.
-      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up TeX Live
-        uses: TeX-Live/setup-texlive-action@5ead3060cb9c2d6bf985c23b38a30669a13a3f3c # v3
+        uses: TeX-Live/setup-texlive-action@eb78d21f41941476d9121e3a0abcab73265c876f # v4.1.1
         with:
           packages: |
             scheme-basic
@@ -280,7 +280,7 @@ jobs:
             lipsum
             xcolor
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
         with:
           run_install: false
@@ -316,7 +316,7 @@ jobs:
 
       - name: Cache Playwright Browsers for Playwright's Version
         id: cache-playwright-browsers
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ env.PLAYWRIGHT_VERSION }}
@@ -357,7 +357,7 @@ jobs:
         working-directory: packages/sveltex
 
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: playwright-report
@@ -369,7 +369,7 @@ jobs:
         # outcome -- `--update-snapshots` can still exit non-zero when
         # snapshots changed.
         if: ${{ always() && inputs.update_snapshots }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: e2e-golden-snapshots
           path: packages/sveltex/tests/e2e/snapshots/
@@ -427,7 +427,7 @@ jobs:
       # in the workflow's StepSecurity Insights report. This is the highest-
       # value job to harden: it mints an app-installation token, holds
       # npm credentials via OIDC, and holds vsce publish credentials.
-      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
@@ -452,12 +452,12 @@ jobs:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
         with:
           run_install: false
