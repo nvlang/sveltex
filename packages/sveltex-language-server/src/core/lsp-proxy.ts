@@ -164,13 +164,64 @@ export class LspProxy {
 
         connection.listen();
 
-        const result = await connection.sendRequest(
-            InitializeRequest.type,
-            initializeParams,
-        );
-        this.#initializeResult = result;
-        await connection.sendNotification(InitializedNotification.type, {});
-        return result;
+        // Complete the `initialize` handshake, but reject if the child dies
+        // first: a child that crashes on startup must surface an error instead
+        // of hanging forever on a response that will never arrive. The promise
+        // settles on whichever happens first — the `initialize` response (via
+        // `.then`, so its rejection is always observed) or a child `error` /
+        // `exit`. The child listeners are removed in `finally`, so a later
+        // (normal) exit cannot reject this already-settled promise.
+        let onChildError!: (error: Error) => void;
+        let onChildExit!: (
+            code: number | null,
+            signal: NodeJS.Signals | null,
+        ) => void;
+        try {
+            const result = await new Promise<InitializeResult>(
+                (resolve, reject) => {
+                    onChildError = (error): void => {
+                        reject(
+                            new Error(
+                                `${this.#label} child process failed during ` +
+                                    `startup: ${error.message}`,
+                            ),
+                        );
+                    };
+                    onChildExit = (code, signal): void => {
+                        reject(
+                            new Error(
+                                `${this.#label} child process exited during ` +
+                                    `startup (code ${String(code)}, signal ` +
+                                    `${String(signal)}).`,
+                            ),
+                        );
+                    };
+                    child.once('error', onChildError);
+                    child.once('exit', onChildExit);
+                    void connection
+                        .sendRequest(InitializeRequest.type, initializeParams)
+                        .then(resolve, reject);
+                },
+            );
+            this.#initializeResult = result;
+            await connection.sendNotification(
+                InitializedNotification.type,
+                {},
+            );
+            return result;
+        } catch (error) {
+            // Startup failed (the child died, or `initialize` rejected). Tear
+            // down so the proxy reports as not-running rather than holding a
+            // dead connection. `kill()` on an already-exited child is a no-op.
+            this.#connection = undefined;
+            this.#child = undefined;
+            connection.dispose();
+            child.kill();
+            throw error;
+        } finally {
+            child.removeListener('error', onChildError);
+            child.removeListener('exit', onChildExit);
+        }
     }
 
     /** Spawns the child process per {@link LspSpawnSpec}. */

@@ -192,11 +192,10 @@ describe('remapDefinition', () => {
         expect(remapDefinition([link], ctx())).toEqual([]);
     });
 
-    it('keeps the link when its originSelectionRange fails to map', () => {
-        // When `originSelectionRange` does not map, the remapped object omits
-        // the freshly-computed value — but `...link` has already spread the
-        // original (generated-coordinate) one, so it is retained as-is. The
-        // link itself is still produced (target ranges mapped fine).
+    it('drops the originSelectionRange when it fails to map', () => {
+        // When `originSelectionRange` does not map, it must be dropped — never
+        // leaked through in generated (virtual-document) coordinates. The link
+        // itself is still produced (its target ranges mapped fine).
         const link: LocationLink = {
             targetUri: VIRTUAL_URI,
             targetRange: MAPPED,
@@ -209,7 +208,7 @@ describe('remapDefinition', () => {
                 targetUri: SOURCE_URI,
                 targetRange: MAPPED,
                 targetSelectionRange: MAPPED,
-                originSelectionRange: UNMAPPED, // carried over from `...link`
+                // originSelectionRange dropped — not carried over.
             },
         ]);
     });

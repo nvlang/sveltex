@@ -216,10 +216,15 @@ interface FakeChild {
  * answers `initialize` (so `start()` can be awaited).
  */
 function makeFakeChild(
-    options: { stdout?: boolean; stdin?: boolean } = {},
+    options: {
+        stdout?: boolean;
+        stdin?: boolean;
+        respondInitialize?: boolean;
+    } = {},
 ): FakeChild {
     const hasStdout = options.stdout ?? true;
     const hasStdin = options.stdin ?? true;
+    const respondInitialize = options.respondInitialize ?? true;
     // `childStdin` carries client→server bytes (proxy writes, server reads);
     // `childStdout` carries server→client bytes (server writes, proxy reads).
     const childStdin = new PassThrough();
@@ -245,8 +250,11 @@ function makeFakeChild(
         new StreamMessageReader(childStdin),
         new StreamMessageWriter(childStdout),
     ) as unknown as MessageConnection;
-    // Answer the handshake so the proxy's `start()` resolves.
-    server.onRequest(InitializeRequest.type, () => ({ capabilities: {} }));
+    // Answer the handshake so the proxy's `start()` resolves — unless the test
+    // wants the child to die before the handshake completes.
+    if (respondInitialize) {
+        server.onRequest(InitializeRequest.type, () => ({ capabilities: {} }));
+    }
     server.listen();
 
     return {
@@ -271,6 +279,46 @@ describe('LspProxy — child-originated traffic (fake child)', () => {
         for (const fn of stopFns) fn();
         stopFns = [];
         vi.restoreAllMocks();
+    });
+
+    it('rejects start() if the child errors during the handshake', async () => {
+        const fake = makeFakeChild({ respondInitialize: false });
+        stopFns.push(() => {
+            fake.server.dispose();
+        });
+        mockedFork.mockReturnValueOnce(fake.child);
+
+        const proxy = new LspProxy(
+            { kind: 'fork', module: '/fake/server.js' },
+            'fakelabel',
+        );
+        const started = proxy.start(initParams);
+        fake.child.emit('error', new Error('spawn boom'));
+        await expect(started).rejects.toThrow(
+            /failed during startup: spawn boom/u,
+        );
+        // A failed startup leaves the proxy not-running, not holding a dead
+        // connection.
+        expect(proxy.isRunning).toBe(false);
+    });
+
+    it('rejects start() if the child exits during the handshake', async () => {
+        const fake = makeFakeChild({ respondInitialize: false });
+        stopFns.push(() => {
+            fake.server.dispose();
+        });
+        mockedFork.mockReturnValueOnce(fake.child);
+
+        const proxy = new LspProxy(
+            { kind: 'fork', module: '/fake/server.js' },
+            'fakelabel',
+        );
+        const started = proxy.start(initParams);
+        fake.child.emit('exit', 1, null);
+        await expect(started).rejects.toThrow(
+            /exited during startup \(code 1, signal null\)/u,
+        );
+        expect(proxy.isRunning).toBe(false);
     });
 
     it('surfaces the child stderr to the host stderr', async () => {
