@@ -2,7 +2,7 @@
 '@nvl/sveltex-language-server': patch
 ---
 
-Two region-detection improvements:
+Region-detection and reload improvements:
 
 - **Recognise verbatim `aliases`.** The resolved verbatim-tag set now includes
   each environment's `aliases`, not just the record keys — so an aliased env
@@ -14,3 +14,8 @@ Two region-detection improvements:
   `sveltex.config.js`, a shared helper module), via a server-side watcher —
   which also brings live reload to clients (Zed, standalone) that register no
   file watcher of their own.
+- **Don't resurrect closed documents during reload.** The config-reload
+  resync now re-checks each document's liveness around its async proxy
+  close/open, so a document the editor closes mid-reload is no longer
+  re-opened in the Svelte proxy as a phantom virtual document with stale
+  diagnostics.

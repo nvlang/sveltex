@@ -1,0 +1,16 @@
+{
+  "filewatcher.commands": [
+    {
+      "match": "sveltex.tmLanguage.yaml",
+      "isAsync": false,
+      "cmd": "cd \"${fileDirname}/..\" && node \"scripts/build.mjs\"",
+      "event": "onFileChange"
+    },
+    {
+      "match": "sveltex.tmLanguage.yaml",
+      "isAsync": false,
+      "vscodeTask": ["workbench.action.debug.restart"],
+      "event": "onFileChange"
+    }
+  ]
+}

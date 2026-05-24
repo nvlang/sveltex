@@ -575,13 +575,21 @@ export function createServer(connection: Connection): void {
      * of LSP version bookkeeping).
      */
     async function resyncOpenDocuments(): Promise<void> {
-        // Snapshot first: `rebuild` rewrites the `documents` map entry.
-        for (const existing of [...documents.values()]) {
+        // Snapshot the URIs, not the document objects: `rebuild` rewrites each
+        // map entry, and a `didClose` can arrive at one of the `await`s below
+        // and remove an entry mid-loop. Re-fetch each iteration, and re-check
+        // liveness around the awaits, so a document the editor closed during
+        // the resync is not resurrected and re-opened in the proxy — which
+        // would leave a phantom virtual document (with stale diagnostics) that
+        // no later edit or close would clear.
+        for (const uri of [...documents.keys()]) {
+            const existing = documents.get(uri);
+            if (!existing) continue; // closed before we reached it
             const doc = rebuild(existing.uri, existing.text, existing.version);
-            if (proxy.isRunning) {
-                await proxyDidClose(doc.uri);
-                await proxyDidOpen(doc);
-            }
+            if (!proxy.isRunning) continue;
+            await proxyDidClose(doc.uri);
+            if (!documents.has(doc.uri)) continue; // closed during the await
+            await proxyDidOpen(doc);
         }
     }
 
