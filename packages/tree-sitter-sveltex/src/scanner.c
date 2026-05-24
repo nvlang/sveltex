@@ -23,15 +23,19 @@
 //   * `_snippet_params`        — `{#snippet name(PARAMS)}` inside parens,
 //   * `_await_promise`         — `{#await PROMISE[ then|catch BINDING]}`.
 //
-// The scanner is stateless between tokens (no `serialize`/`deserialize`
-// payload), which keeps it trivially correct under tree-sitter's speculative
-// parsing: every decision is recomputed from the input. tree-sitter only
-// marks `_frontmatter_start` valid in the document's initial parse state, so
-// the scanner need not separately verify that it sits at byte offset 0.
+// The scanner carries one small piece of state — the name of the verbatim
+// environment whose body is currently being scanned (see `Scanner`) — so the
+// body scanner can require a *matching* `</tag>` to close it, the way
+// SvelTeX's own back-referenced `</\1>` does. That state is serialized and
+// deserialized so tree-sitter's speculative parsing stays correct; every other
+// decision is recomputed from the input. tree-sitter only marks
+// `_frontmatter_start` valid in the document's initial parse state, so the
+// scanner need not separately verify that it sits at byte offset 0.
 
 #include "tree_sitter/parser.h"
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Token ids — must match the order of the `externals` array in `grammar.js`.
@@ -51,18 +55,33 @@ enum TokenType {
     EACH_KEY,
     SNIPPET_PARAMS,
     AWAIT_PROMISE,
+    VERBATIM_TEX_OPEN_NAME,
+    VERBATIM_PLAIN_OPEN_NAME,
     ERROR_SENTINEL,
 };
+
+// The scanner's serialized state: the name of the verbatim environment whose
+// body is currently being scanned, captured when the open tag name is emitted
+// (see `scan_verbatim_open_name`) and consulted by `scan_verbatim_body` so the
+// body stops only at the *matching* `</name>`. Empty ('\0') between
+// environments. 64 bytes matches the tag-name buffers elsewhere in this file.
+typedef struct {
+    char open_verbatim_tag[64];
+} Scanner;
 
 // Verbatim environment tag names. Kept in sync with `grammar.js`'s
 // `TEX_VERBATIM_TAGS` / `PLAIN_VERBATIM_TAGS`. Matching is case-sensitive
 // here; the listed capitalised variants cover the common spellings.
-static const char *const VERBATIM_TAGS[] = {
-    "tex",  "latex",    "tikz", "TeX",      "LaTeX", "TikZ",
+static const char *const TEX_VERBATIM_TAGS[] = {
+    "tex", "latex", "tikz", "TeX", "LaTeX", "TikZ",
+};
+static const char *const PLAIN_VERBATIM_TAGS[] = {
     "verb", "verbatim", "Verb", "Verbatim",
 };
-static const unsigned VERBATIM_TAG_COUNT =
-    sizeof(VERBATIM_TAGS) / sizeof(VERBATIM_TAGS[0]);
+static const unsigned TEX_VERBATIM_TAG_COUNT =
+    sizeof(TEX_VERBATIM_TAGS) / sizeof(TEX_VERBATIM_TAGS[0]);
+static const unsigned PLAIN_VERBATIM_TAG_COUNT =
+    sizeof(PLAIN_VERBATIM_TAGS) / sizeof(PLAIN_VERBATIM_TAGS[0]);
 
 // ── Low-level helpers ────────────────────────────────────────────────────
 
@@ -98,12 +117,36 @@ static bool consume_line_ending(TSLexer *lexer) {
     return false;
 }
 
-// Returns whether `name` is one of the configured verbatim tags.
-static bool is_verbatim_tag(const char *name) {
-    for (unsigned i = 0; i < VERBATIM_TAG_COUNT; i++) {
-        if (strcmp(name, VERBATIM_TAGS[i]) == 0) return true;
+static bool in_tag_list(const char *name, const char *const *list,
+                        unsigned count) {
+    for (unsigned i = 0; i < count; i++) {
+        if (strcmp(name, list[i]) == 0) return true;
     }
     return false;
+}
+
+// Whether `name` is a TeX-body / plain-body / any verbatim tag (case-sensitive
+// — the listed capitalised variants cover the common spellings).
+static bool is_tex_verbatim_tag(const char *name) {
+    return in_tag_list(name, TEX_VERBATIM_TAGS, TEX_VERBATIM_TAG_COUNT);
+}
+static bool is_plain_verbatim_tag(const char *name) {
+    return in_tag_list(name, PLAIN_VERBATIM_TAGS, PLAIN_VERBATIM_TAG_COUNT);
+}
+static bool is_verbatim_tag(const char *name) {
+    return is_tex_verbatim_tag(name) || is_plain_verbatim_tag(name);
+}
+
+// Case-insensitive equality of two NUL-terminated tag names. Matches a verbatim
+// close tag against the recorded open tag, mirroring the `i` flag on SvelTeX's
+// `</\1>` back-reference (so `<TeX>…</tex>` still closes correctly).
+static bool eq_ci(const char *a, const char *b) {
+    for (; *a && *b; a++, b++) {
+        int ca = (*a >= 'A' && *a <= 'Z') ? *a + 32 : *a;
+        int cb = (*b >= 'A' && *b <= 'Z') ? *b + 32 : *b;
+        if (ca != cb) return false;
+    }
+    return *a == '\0' && *b == '\0';
 }
 
 // Forward declaration: case-insensitive equality of an already-read tag name
@@ -1180,12 +1223,50 @@ static bool scan_markdown_chunk(TSLexer *lexer) {
 
 // ── Verbatim body scanners ───────────────────────────────────────────────
 //
-// Consume everything up to (but excluding) the matching `</tag>`. The closing
-// tag is matched by the LR grammar. An unterminated environment consumes to
-// EOF and still yields a (non-empty) body so the partial tree is stable.
+// Reads a verbatim *open* tag name — the cursor is just past the `<` — checks
+// it belongs to a requested bucket (TeX or plain), records it in `scanner` so
+// `scan_verbatim_body` can require a matching `</name>`, and emits the bucket's
+// token. Declines (the cursor resets) for any other name, leaving the `<` to
+// the element / Markdown paths.
+static bool scan_verbatim_open_name(Scanner *scanner, TSLexer *lexer,
+                                    const bool *valid_symbols) {
+    char name[64];
+    unsigned len = 0;
+    while (len + 1 < sizeof(name) && is_tag_name_char(lexer->lookahead)) {
+        name[len++] = (char)lexer->lookahead;
+        advance(lexer);
+    }
+    name[len] = '\0';
+    if (len == 0) return false;
+
+    enum TokenType result;
+    if (valid_symbols[VERBATIM_TEX_OPEN_NAME] && is_tex_verbatim_tag(name)) {
+        result = VERBATIM_TEX_OPEN_NAME;
+    } else if (valid_symbols[VERBATIM_PLAIN_OPEN_NAME] &&
+               is_plain_verbatim_tag(name)) {
+        result = VERBATIM_PLAIN_OPEN_NAME;
+    } else {
+        return false;
+    }
+
+    // Record the name (NUL included) for the matching-close check.
+    memcpy(scanner->open_verbatim_tag, name, (size_t)len + 1);
+    lexer->mark_end(lexer);
+    lexer->result_symbol = result;
+    return true;
+}
+
+// Consume everything up to (but excluding) the matching `</tag>` — *matching*
+// meaning the close tag name equals the recorded open tag name
+// (`scanner->open_verbatim_tag`), case-insensitively. A non-matching `</other>`
+// is part of the body, exactly as SvelTeX's back-referenced `</\1>` treats it.
+// The close tag itself is matched by the LR grammar. An unterminated
+// environment consumes to EOF and still yields a (non-empty) body so the
+// partial tree is stable.
 //
 // `lexer` starts right after the opening tag's `>`.
-static bool scan_verbatim_body(TSLexer *lexer, enum TokenType result) {
+static bool scan_verbatim_body(Scanner *scanner, TSLexer *lexer,
+                               enum TokenType result) {
     lexer->result_symbol = result;
     bool consumed = false;
 
@@ -1210,8 +1291,9 @@ static bool scan_verbatim_body(TSLexer *lexer, enum TokenType result) {
                 }
                 name[len] = '\0';
                 if (len > 0 && lexer->lookahead == '>' &&
-                    is_verbatim_tag(name)) {
-                    // A real `</tag>` — stop, body excludes it.
+                    is_verbatim_tag(name) &&
+                    eq_ci(name, scanner->open_verbatim_tag)) {
+                    // The *matching* `</tag>` — stop, body excludes it.
                     if (consumed) return true;
                     // Zero-width body: let the grammar's `optional` body
                     // handle it by failing this token.
@@ -1289,36 +1371,52 @@ static bool scan_math_body(TSLexer *lexer, enum TokenType result,
 
 // ── tree-sitter entry points ─────────────────────────────────────────────
 
-void *tree_sitter_sveltex_external_scanner_create(void) { return NULL; }
+void *tree_sitter_sveltex_external_scanner_create(void) {
+    return calloc(1, sizeof(Scanner));
+}
 
 void tree_sitter_sveltex_external_scanner_destroy(void *payload) {
-    (void)payload;
+    free(payload);
 }
 
 unsigned tree_sitter_sveltex_external_scanner_serialize(void *payload,
                                                         char *buffer) {
-    (void)payload;
-    (void)buffer;
-    return 0;  // stateless
+    Scanner *scanner = (Scanner *)payload;
+    size_t length = strlen(scanner->open_verbatim_tag);
+    memcpy(buffer, scanner->open_verbatim_tag, length);
+    return (unsigned)length;
 }
 
 void tree_sitter_sveltex_external_scanner_deserialize(void *payload,
                                                       const char *buffer,
                                                       unsigned length) {
-    (void)payload;
-    (void)buffer;
-    (void)length;
+    Scanner *scanner = (Scanner *)payload;
+    // tree-sitter resets the scanner by deserializing a zero-length buffer.
+    if (length >= sizeof(scanner->open_verbatim_tag)) {
+        length = (unsigned)sizeof(scanner->open_verbatim_tag) - 1;
+    }
+    memcpy(scanner->open_verbatim_tag, buffer, length);
+    scanner->open_verbatim_tag[length] = '\0';
 }
 
 bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
                                                const bool *valid_symbols) {
-    (void)payload;
+    Scanner *scanner = (Scanner *)payload;
 
     // tree-sitter sets the error-sentinel slot while recovering from a parse
     // error. The scanner has nothing useful to contribute then; declining
     // lets the LR error recovery proceed.
     if (valid_symbols[ERROR_SENTINEL]) {
         return false;
+    }
+
+    // A verbatim *open* tag name (`<tex>`, `<verbatim>`, …). Recorded so the
+    // body scanner below can require a matching `</name>` to close it.
+    if (valid_symbols[VERBATIM_TEX_OPEN_NAME] ||
+        valid_symbols[VERBATIM_PLAIN_OPEN_NAME]) {
+        if (scan_verbatim_open_name(scanner, lexer, valid_symbols)) {
+            return true;
+        }
     }
 
     // Frontmatter fences. `_frontmatter_start` is only valid in the document's
@@ -1346,10 +1444,10 @@ bool tree_sitter_sveltex_external_scanner_scan(void *payload, TSLexer *lexer,
     // position, so the order of these checks does not matter for correctness —
     // tree-sitter only marks the symbols valid in the current parse state.
     if (valid_symbols[VERBATIM_TEX_CONTENT]) {
-        return scan_verbatim_body(lexer, VERBATIM_TEX_CONTENT);
+        return scan_verbatim_body(scanner, lexer, VERBATIM_TEX_CONTENT);
     }
     if (valid_symbols[VERBATIM_PLAIN_CONTENT]) {
-        return scan_verbatim_body(lexer, VERBATIM_PLAIN_CONTENT);
+        return scan_verbatim_body(scanner, lexer, VERBATIM_PLAIN_CONTENT);
     }
     if (valid_symbols[DISPLAY_MATH_CONTENT]) {
         return scan_math_body(lexer, DISPLAY_MATH_CONTENT, true);

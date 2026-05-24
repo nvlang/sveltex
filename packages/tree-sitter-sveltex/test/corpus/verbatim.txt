@@ -133,3 +133,57 @@ A paragraph with <strong>bold</strong> and a <Counter /> component.
     (tag_name)
     (element_attributes))
   (markdown_chunk))
+
+================================================================================
+A mismatched close tag does not close the environment
+================================================================================
+<tex>a</latex>
+--------------------------------------------------------------------------------
+
+(document
+  (ERROR
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)))
+
+================================================================================
+A non-matching close tag is part of the body
+================================================================================
+<tex>a</latex>b</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+A close tag matches the open tag case-insensitively
+================================================================================
+<TeX>a</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))
+
+================================================================================
+A cross-type close tag is part of the body
+================================================================================
+<tex>a</verbatim>c</tex>
+--------------------------------------------------------------------------------
+
+(document
+  (verbatim_environment
+    (verbatim_tex_open_tag
+      (tag_name))
+    (tex_verbatim_body)
+    (verbatim_close_tag
+      (tag_name))))

@@ -62,6 +62,12 @@ module.exports = grammar({
         $._each_key, // `… (KEY)}` — key expression inside the parens
         $._snippet_params, // `{#snippet name(PARAMS)}` — params inside parens
         $._await_promise, // `{#await PROMISE[ then|catch BINDING]}` — promise
+        // Verbatim *open* tag names. The scanner records the matched name so
+        // the body scanner can require the *same* name to close (mirroring
+        // SvelTeX's own back-referenced `</\1>` matching). Two tokens keep the
+        // TeX vs. plain arm distinction the body tokens rely on.
+        $._verbatim_tex_open_name, // `<tex>`/`<latex>`/`<tikz>` open tag name
+        $._verbatim_plain_open_name, // `<verb>`/`<verbatim>` open tag name
         $._error_sentinel, // tree-sitter's invalid-input sentinel
     ],
 
@@ -440,13 +446,16 @@ module.exports = grammar({
         //
         // `<tex …>…</tex>`, `<verbatim>…</verbatim>`, etc. The body never
         // participates in Markdown/Svelte parsing. The external scanner reads
-        // up to (but not including) the matching `</tag>`; for TeX tags the
-        // body is `latex`, otherwise it is opaque text.
+        // up to (but not including) the matching `</tag>` — *matching* meaning
+        // the close tag name equals the open tag name (case-insensitively, as
+        // SvelTeX's own `</\1>` back-reference does); for TeX tags the body is
+        // `latex`, otherwise it is opaque text.
         // Two arms keep the TeX vs. plain distinction: the opening tag's name
-        // token (`_tex_tag_name` / `_plain_tag_name`) is distinct, so the
-        // parser commits to the right arm at the tag, and the body's external
-        // token (`_verbatim_tex_content` / `_verbatim_plain_content`) is
-        // therefore unambiguous.
+        // token (`_verbatim_tex_open_name` / `_verbatim_plain_open_name`, both
+        // external — the scanner records the name for the close match) is
+        // distinct, so the parser commits to the right arm at the tag, and the
+        // body's external token (`_verbatim_tex_content` /
+        // `_verbatim_plain_content`) is therefore unambiguous.
         verbatim_environment: ($) =>
             choice($._verbatim_tex, $._verbatim_plain),
 
@@ -470,7 +479,7 @@ module.exports = grammar({
         verbatim_tex_open_tag: ($) =>
             seq(
                 '<',
-                field('name', alias($._tex_tag_name, $.tag_name)),
+                field('name', alias($._verbatim_tex_open_name, $.tag_name)),
                 optional(field('attributes', $.verbatim_attributes)),
                 token.immediate('>'),
             ),
@@ -478,7 +487,7 @@ module.exports = grammar({
         verbatim_plain_open_tag: ($) =>
             seq(
                 '<',
-                field('name', alias($._plain_tag_name, $.tag_name)),
+                field('name', alias($._verbatim_plain_open_name, $.tag_name)),
                 optional(field('attributes', $.verbatim_attributes)),
                 token.immediate('>'),
             ),
@@ -490,10 +499,6 @@ module.exports = grammar({
                 token.immediate('>'),
             ),
 
-        _tex_tag_name: () =>
-            token.immediate(choiceOfStrings(TEX_VERBATIM_TAGS)),
-        _plain_tag_name: () =>
-            token.immediate(choiceOfStrings(PLAIN_VERBATIM_TAGS)),
         _verbatim_tag_name: () =>
             token.immediate(
                 choiceOfStrings([

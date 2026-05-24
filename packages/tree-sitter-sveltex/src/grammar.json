@@ -1684,7 +1684,7 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
-              "name": "_tex_tag_name"
+              "name": "_verbatim_tex_open_name"
             },
             "named": true,
             "value": "tag_name"
@@ -1729,7 +1729,7 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
-              "name": "_plain_tag_name"
+              "name": "_verbatim_plain_open_name"
             },
             "named": true,
             "value": "tag_name"
@@ -1788,62 +1788,6 @@
           }
         }
       ]
-    },
-    "_tex_tag_name": {
-      "type": "IMMEDIATE_TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
-            "type": "STRING",
-            "value": "tex"
-          },
-          {
-            "type": "STRING",
-            "value": "latex"
-          },
-          {
-            "type": "STRING",
-            "value": "tikz"
-          },
-          {
-            "type": "STRING",
-            "value": "TeX"
-          },
-          {
-            "type": "STRING",
-            "value": "LaTeX"
-          },
-          {
-            "type": "STRING",
-            "value": "TikZ"
-          }
-        ]
-      }
-    },
-    "_plain_tag_name": {
-      "type": "IMMEDIATE_TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
-            "type": "STRING",
-            "value": "verb"
-          },
-          {
-            "type": "STRING",
-            "value": "verbatim"
-          },
-          {
-            "type": "STRING",
-            "value": "Verb"
-          },
-          {
-            "type": "STRING",
-            "value": "Verbatim"
-          }
-        ]
-      }
     },
     "_verbatim_tag_name": {
       "type": "IMMEDIATE_TOKEN",
@@ -2336,6 +2280,14 @@
     {
       "type": "SYMBOL",
       "name": "_await_promise"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_verbatim_tex_open_name"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_verbatim_plain_open_name"
     },
     {
       "type": "SYMBOL",
