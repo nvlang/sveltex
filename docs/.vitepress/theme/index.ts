@@ -1,5 +1,4 @@
 // https://vitepress.dev/guide/custom-theme
-import { h } from 'vue';
 import type { Theme } from 'vitepress';
 
 import TwoslashFloatingVue from '@shikijs/vitepress-twoslash/client';
@@ -23,11 +22,6 @@ import ApiCallout from './components/ApiCallout.vue';
 
 export default {
     extends: DefaultTheme,
-    Layout: () => {
-        return h(DefaultTheme.Layout, null, {
-            // https://vitepress.dev/guide/extending-default-theme#layout-slots
-        });
-    },
     enhanceApp({ app }) {
         app.use(TwoslashFloatingVue);
         app.use(FloatingVue, { boundary: 'body' });
@@ -38,11 +32,5 @@ export default {
         app.component('ApiField', ApiField);
         app.component('ApiSig', ApiSig);
         app.component('ApiCallout', ApiCallout);
-        // app.component('PhLightning', PhLightning);
-        // app.component('PhHammer', PhHammer);
-        // app.component('PhTextT', PhTextT);
-        // app.component('PhDatabase', PhDatabase);
-        // app.component('PhPalette', PhPalette);
-        // app.component('PhBird', PhBird);
     },
 } satisfies Theme;

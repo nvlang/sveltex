@@ -141,36 +141,19 @@ export default defineConfig({
                 multiline: true,
                 rowspan: true,
             });
-            // Custom callouts: `::: info` / `::: warning` / `::: danger`.
-            // Each renders an icon + a title row, then the content. The
-            // title defaults to the callout type ("Info", "Warning",
-            // "Danger"); any text after the type -- `::: warning Heads up`
-            // -- overrides it, and may contain inline markdown.
-            const calloutIcon: Record<string, string> = {
-                info:
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">' +
-                    '<circle cx="12" cy="12" r="10"/>' +
-                    '<path d="M12 16v-4"/><path d="M12 8h.01"/>' +
-                    '</svg>',
-                warning:
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert">' +
-                    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>' +
-                    '<path d="M12 9v4"/>' +
-                    '<path d="M12 17h.01"/>' +
-                    '</svg>',
-                danger:
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x">' +
-                    '<circle cx="12" cy="12" r="10"/>' +
-                    '<path d="m15 9-6 6"/>' +
-                    '<path d="m9 9 6 6"/>' +
-                    '</svg>',
-            };
+            // Custom callouts: `::: info` / `::: tip` / `::: warning` /
+            // `::: danger`. Override VitePress's built-in containers so all
+            // four share one structure (`.custom-block` > `.custom-block-title`
+            // + `.content`); the icon and inline-title layout are applied in
+            // `theme/api.css`. The title defaults to the callout type and may
+            // be overridden -- `::: warning Heads up` -- with inline markdown.
             const calloutTitle: Record<string, string> = {
                 info: 'Info',
+                tip: 'Tip',
                 warning: 'Warning',
                 danger: 'Danger',
             };
-            for (const name of ['info', 'warning', 'danger'] as const) {
+            for (const name of ['info', 'tip', 'warning', 'danger'] as const) {
                 md.use(container as any, name, {
                     render: (tokens: any, idx: any) => {
                         const token = tokens[idx];
@@ -191,7 +174,6 @@ export default defineConfig({
                         return (
                             `<div class="custom-block ${name}">` +
                             '<div class="custom-block-title">' +
-                            `<div class="icon">${calloutIcon[name]}</div>` +
                             `<span class="custom-block-title-text">${title}</span>` +
                             '</div>' +
                             '<div class="content">'
