@@ -473,16 +473,13 @@ function renderProse(doc, indent = '') {
     // One tight block: each @see keeps its "See:" label (prefixed with a
     // turn-arrow icon), joined by hard line breaks rather than separate
     // (margin-spaced) paragraphs.
+    // Each @see is its own paragraph, starting with markdown so it wraps in a
+    // real <p> (a leading component tag would break that). A trailing marker
+    // span tags it for CSS; external targets get `.api-see-ext` (no arrow).
     if (doc.see.length) {
-        // The turn-arrow implies an in-page/cross-page jump; drop it for @see
-        // entries that point to an external URL.
-        const icon = '<PhArrowUDownRight weight="regular" class="api-see-icon" />';
         const external = (s) => /<https?:\/\//.test(s) || /\]\(https?:\/\//.test(s);
-        push(
-            `${doc.see
-                .map((s) => `${external(s) ? '' : `${icon} `}<span class="api-see-label">See:</span> ${s}`)
-                .join('  \n')}\n\n`,
-        );
+        for (const s of doc.see)
+            push(`**See:** ${s} <span class="api-see${external(s) ? '-ext' : ''}"></span>\n\n`);
     }
     return out;
 }
@@ -577,7 +574,7 @@ function renderField({ name, optional, type, decl, doc, ctx, depth, seen, path }
     let body = '';
     const docTarget = docTargetFor(typeName(unwrapNullish(type).core));
     if (!exp && docTarget)
-        body += `<PhArrowUDownRight weight="regular" class="api-see-icon" /> <span class="api-see-label">See</span> [\`${docTarget}\`](${documented.get(docTarget)}).\n\n`;
+        body += `**See** [\`${docTarget}\`](${documented.get(docTarget)}). <span class="api-see"></span>\n\n`;
     body += renderProse(doc);
     if (exp) {
         const key = exp.getSymbol()?.getFullyQualifiedName?.() ?? '';
