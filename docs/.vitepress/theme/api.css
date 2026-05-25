@@ -1,12 +1,13 @@
 /* ───────────────────────────────────────────────────────────────────────
    API reference styling (pages get `pageClass: api-doc`).
 
-   Monaspace deployment (all five families): Neon = identifiers, Argon = type
-   signatures (matches the site's code blocks), Xenon (slab) = inline prose
-   code, Krypton = tag labels. Radon (handwriting) backs Argon's italics (see
-   monaspace.css), so italic code tokens — comments — read as script. Top-level
-   props are headings (name + inline type + right-aligned
-   source); nested props are hover-glow cards whose name is a permalink.
+   Monaspace: the per-role aliases below name Neon (identifiers), Argon (type
+   signatures / code), Xenon (inline prose code) and Krypton (tag labels), but
+   only Argon is declared in monaspace.css, so today they all resolve to Argon.
+   Argon's italics are Radon (handwriting), so italic code tokens (comments)
+   read as a slanted script. Top-level props are headings (name + inline type +
+   right-aligned source); nested props are hover-glow cards whose name is a
+   permalink.
    ──────────────────────────────────────────────────────────────────────── */
 
 :root {
@@ -477,6 +478,57 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .vp-code-group .blocks {
     border-radius: 11px;
 }
+
+/* ── friendly code-fence language labels ───────────────────────────────────
+   VitePress prints Shiki's short token (ts, sh, …) in `span.lang`. Relabel the
+   languages we use with display names: hide the token (font-size: 0) and draw
+   the name in `::after`. Scoped per language, so any fence not listed keeps its
+   raw token rather than vanishing. Keep the two `:is()` lists in sync. */
+.vp-doc
+    :is(
+        .language-ts, .language-tsx, .language-js, .language-jsx,
+        .language-svelte, .language-sveltex, .language-html, .language-css,
+        .language-scss, .language-sass, .language-postcss, .language-stylus,
+        .language-sh, .language-bash, .language-xml, .language-json,
+        .language-yaml, .language-latex, .language-md, .language-vue,
+        .language-diff
+    )
+    > span.lang {
+    font-size: 0;
+}
+.vp-doc
+    :is(
+        .language-ts, .language-tsx, .language-js, .language-jsx,
+        .language-svelte, .language-sveltex, .language-html, .language-css,
+        .language-scss, .language-sass, .language-postcss, .language-stylus,
+        .language-sh, .language-bash, .language-xml, .language-json,
+        .language-yaml, .language-latex, .language-md, .language-vue,
+        .language-diff
+    )
+    > span.lang::after {
+    font-size: 12px;
+}
+.vp-doc .language-ts > span.lang::after { content: 'TypeScript'; }
+.vp-doc .language-tsx > span.lang::after { content: 'TSX'; }
+.vp-doc .language-js > span.lang::after { content: 'JavaScript'; }
+.vp-doc .language-jsx > span.lang::after { content: 'JSX'; }
+.vp-doc .language-svelte > span.lang::after { content: 'Svelte'; }
+.vp-doc .language-sveltex > span.lang::after { content: 'SvelTeX'; }
+.vp-doc .language-html > span.lang::after { content: 'HTML'; }
+.vp-doc .language-css > span.lang::after { content: 'CSS'; }
+.vp-doc .language-scss > span.lang::after { content: 'SCSS'; }
+.vp-doc .language-sass > span.lang::after { content: 'Sass'; }
+.vp-doc .language-postcss > span.lang::after { content: 'PostCSS'; }
+.vp-doc .language-stylus > span.lang::after { content: 'Stylus'; }
+.vp-doc .language-sh > span.lang::after { content: 'Shell'; }
+.vp-doc .language-bash > span.lang::after { content: 'Bash'; }
+.vp-doc .language-xml > span.lang::after { content: 'XML'; }
+.vp-doc .language-json > span.lang::after { content: 'JSON'; }
+.vp-doc .language-yaml > span.lang::after { content: 'YAML'; }
+.vp-doc .language-latex > span.lang::after { content: 'LaTeX'; }
+.vp-doc .language-md > span.lang::after { content: 'Markdown'; }
+.vp-doc .language-vue > span.lang::after { content: 'Vue'; }
+.vp-doc .language-diff > span.lang::after { content: 'Diff'; }
 
 /* ── squircle corners site-wide where supported (+ a little more radius) ─── */
 

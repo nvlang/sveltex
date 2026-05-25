@@ -1,62 +1,25 @@
 /*
 Monaspace v1.400 (https://github.com/githubnext/monaspace/releases/tag/v1.400)
 
-These are the "Web Variable" woff2 files (one file per family, packing the
-whole weight/width/slant design space). Each family is registered below under
-the stable CSS family name the rest of the site relies on
-(`Monaspace Neon`, `Monaspace Argon`, `Monaspace Xenon`, `Monaspace Radon`,
-`Monaspace Krypton`).
+The site's monospace is Monaspace Argon, shipped here as its "Web Variable"
+woff2 (one file spanning the whole weight/width/slant design space).
 
-Axes carried by every family's variable file:
+Axes carried by the variable file:
   - wght (weight):  200 .. 800   -> `font-weight: 200 800;`
   - wdth (width):   100 .. 125   -> `font-stretch: 100% 125%;` (default 100%)
   - slnt (slant):   -11 .. 0     -> italics, see below.
 
-Italics: there is NO separate italic file and NO `ital` axis. The italic
-("oblique") look comes from the `slnt` axis. OpenType slant is negative for a
-forward/right lean (italicAngle -11deg), so each family declares a second
-`@font-face` with `font-style: italic` that pins `font-variation-settings:
-'slnt' -11;`. This makes `font-style: italic` at usage sites work as expected.
-(The site previously shipped only static Argon and faked its italics with
-Radon. That fake is deliberately kept — Argon's italic @font-face below points
-at the Radon file — so italic code tokens read as handwriting; the other
-families get their own genuine slant-based italic, and Radon is also
-registered as its own family.)
+Italics: there is NO separate italic file and NO `ital` axis; the italic look
+comes from the `slnt` axis. We deliberately "lie" here — Argon's italic
+@font-face points at the Radon (handwriting) variable file, slanted via
+`slnt -11`, so italic code tokens (comments, mainly) render as a slanted
+script. Other Monaspace families are intentionally not declared; everything
+monospace resolves to Argon.
 
 Texture healing: as of Monaspace v1.1 `calt` is exclusively the texture-healing
 toggle and `liga` covers spacing ligatures, so `font-feature-settings: 'calt',
-'liga';` is the correct way to keep texture healing on for web use.
-
-NOTE: the variable files' internal typographic family name is
-`Monaspace <Family> Var` (with a `Var` suffix, changed for the variable
-builds), but because each @font-face sets `font-family:` explicitly, the
-internal name does not affect how the site references these fonts.
+'liga';` keeps texture healing on for web use.
 */
-
-/* ---------------------------------------------------------------- Neon -- */
-
-@font-face {
-    font-family: 'Monaspace Neon';
-    font-style: normal;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    src: url('/fonts/monaspace/MonaspaceNeon-Var.woff2') format('woff2');
-}
-
-@font-face {
-    font-family: 'Monaspace Neon';
-    font-style: italic;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    font-variation-settings: 'slnt' -11;
-    src: url('/fonts/monaspace/MonaspaceNeon-Var.woff2') format('woff2');
-}
-
-/* --------------------------------------------------------------- Argon -- */
 
 @font-face {
     font-family: 'Monaspace Argon';
@@ -68,10 +31,7 @@ internal name does not affect how the site references these fonts.
     src: url('/fonts/monaspace/MonaspaceArgon-Var.woff2') format('woff2');
 }
 
-/* Argon's italic is intentionally Radon (handwriting): code blocks use Argon,
-   so any italic code token — comments, mainly — renders as a slanted script.
-   Doing this at the font level (rather than via a CSS selector on token spans)
-   is robust against how Shiki/twoslash format each span's inline style. */
+/* Argon's italic is intentionally Radon (handwriting) — see note above. */
 @font-face {
     font-family: 'Monaspace Argon';
     font-style: italic;
@@ -81,73 +41,4 @@ internal name does not affect how the site references these fonts.
     font-feature-settings: 'calt', 'liga';
     font-variation-settings: 'slnt' -11;
     src: url('/fonts/monaspace/MonaspaceRadon-Var.woff2') format('woff2');
-}
-
-/* --------------------------------------------------------------- Xenon -- */
-
-@font-face {
-    font-family: 'Monaspace Xenon';
-    font-style: normal;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    src: url('/fonts/monaspace/MonaspaceXenon-Var.woff2') format('woff2');
-}
-
-@font-face {
-    font-family: 'Monaspace Xenon';
-    font-style: italic;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    font-variation-settings: 'slnt' -11;
-    src: url('/fonts/monaspace/MonaspaceXenon-Var.woff2') format('woff2');
-}
-
-/* --------------------------------------------------------------- Radon -- */
-
-@font-face {
-    font-family: 'Monaspace Radon';
-    font-style: normal;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    src: url('/fonts/monaspace/MonaspaceRadon-Var.woff2') format('woff2');
-}
-
-@font-face {
-    font-family: 'Monaspace Radon';
-    font-style: italic;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    font-variation-settings: 'slnt' -11;
-    src: url('/fonts/monaspace/MonaspaceRadon-Var.woff2') format('woff2');
-}
-
-/* ------------------------------------------------------------- Krypton -- */
-
-@font-face {
-    font-family: 'Monaspace Krypton';
-    font-style: normal;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    src: url('/fonts/monaspace/MonaspaceKrypton-Var.woff2') format('woff2');
-}
-
-@font-face {
-    font-family: 'Monaspace Krypton';
-    font-style: italic;
-    font-weight: 200 800;
-    font-stretch: 100% 125%;
-    font-display: swap;
-    font-feature-settings: 'calt', 'liga';
-    font-variation-settings: 'slnt' -11;
-    src: url('/fonts/monaspace/MonaspaceKrypton-Var.woff2') format('woff2');
 }
