@@ -120,6 +120,9 @@ the font package for your chosen [`math.font`](#fonts).
 
 ## Configuration
 
+For every available option and its type, see the
+[`MathConfiguration`](/api/interfaces/MathConfiguration) API reference.
+
 **Hint:** Hover over the different properties in the code block to show some
 IntelliSense.
 

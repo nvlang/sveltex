@@ -114,7 +114,9 @@ preprocessor can take over.
 </div>
 
 [^1]:
-    Lines of code in `src` directory, excluding `src/data` directory. This count
-    excludes comments, blank lines, and markdown.
+    Counted by `cloc` over the `@nvl/sveltex` package's `src` directory
+    (excluding `src/data`): the summed code lines of every language except
+    Markdown — which, being a code count, omits comments and blank lines —
+    rounded up to the nearest thousand.
 
 [VS Code extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex

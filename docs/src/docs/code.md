@@ -72,6 +72,9 @@ and post-process the code.
 
 ## Configuration
 
+For every available option and its type, see the
+[`CodeConfiguration`](/api/interfaces/CodeConfiguration) API reference.
+
 ::: warning
 
 You should _not_ install plugins for your chosen markdown backend to handle the

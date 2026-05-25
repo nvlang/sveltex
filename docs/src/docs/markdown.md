@@ -138,6 +138,9 @@ In order of recommendation:
 
 ## Configuration
 
+For every available option and its type, see the
+[`MarkdownConfiguration`](/api/interfaces/MarkdownConfiguration) API reference.
+
 ::: warning
 
 Don't try to enable MDX syntax in your markdown parser when using SvelTeX, as

@@ -64,6 +64,9 @@ Have SvelTeX compile LaTeX inside your markup and import the result.
 
 ## Configuration
 
+For every available option and its type, see the
+[`TexConfiguration`](/api/interfaces/TexConfiguration) API reference.
+
 SvelTeX's pipeline for LaTeX is essentially split into three steps:
 
 -   **Compilation:** TeX → DVI/PDF/XDV, done by your chosen LaTeX engine.

@@ -23,7 +23,7 @@ SvelTeX preprocesses a document in a few significant stages:
 The tabs below correspond to these stages, with the final **Svelte output**
 selected by default.
 
-::: info Everything runs in your browser
+::: info This playground runs in your browser
 The playground runs entirely client-side: the SvelTeX preprocessor is loaded
 into a Web Worker, and only its text-transformation routine
 (`Sveltex.trace`) is invoked. Your document is never executed, mounted, or
