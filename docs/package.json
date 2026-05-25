@@ -6,11 +6,10 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:api": "node scripts/build-api.mjs",
     "build:playground": "node scripts/build-playground.mjs",
-    "predev": "pnpm run build:api && pnpm run build:playground",
+    "predev": "pnpm run build:playground",
     "dev": "vitepress dev --port 3010",
-    "prebuild": "pnpm run build:api && pnpm run build:playground",
+    "prebuild": "pnpm run build:playground",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },
@@ -30,6 +29,7 @@
     "autoprefixer": "^10.5.0",
     "esbuild": "^0.28.0",
     "js-yaml": "^4.1.1",
+    "markdown-it": "^14.1.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-mathjax3": "^5.2.0",

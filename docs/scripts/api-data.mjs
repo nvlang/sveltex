@@ -1,8 +1,16 @@
-// Generates the VitePress API reference for `@nvl/sveltex` from its TSDoc.
+// Builds the VitePress API-reference model for `@nvl/sveltex` from its TSDoc and
+// exposes it via the memoized, disk-cached `loadApi()` (see bottom of file).
+//
+// Every consumer is a native VitePress hook: the `src/api/{interfaces,functions}/
+// [id].paths.js` dynamic-route loaders (page markdown), `src/api/index.data.js`
+// (the index table), and `.vitepress/config.ts` (the API sidebar). VitePress
+// bundles and runs each of those separately, so the heavy ts-morph pass is
+// shared between them through an on-disk cache keyed by a source fingerprint —
+// not just the in-process memo, which each bundle has its own copy of.
 //
 // Unlike a stock TypeDoc run, this:
 //   - renders the conditional config types (Markdown/Code/Math) as one page
-//     each, with a tab per backend (the backends are read from each type's
+//     each, with a section per backend (the backends are read from each type's
 //     generic constraint, then the type is instantiated per backend so the
 //     resolved properties + their TSDoc can be listed);
 //   - inline-expands nested option objects defined inside the package
@@ -13,15 +21,47 @@
 
 import { Project, Node, ts } from 'ts-morph';
 import { createHighlighter } from 'shiki';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import MarkdownIt from 'markdown-it';
+import {
+    readFileSync,
+    writeFileSync,
+    readdirSync,
+    statSync,
+    existsSync,
+} from 'node:fs';
+import { join, dirname, relative, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 // The site's tweaked github-dark theme, so inline types match code blocks.
 import { githubDarkDefault } from '../.vitepress/theme/code-theme.ts';
 
-const ROOT = resolve(import.meta.dirname, '../..');
+// Locate the repo root by walking up from the working directory (VitePress runs
+// with cwd = the docs project) until the package source is found. This module is
+// inlined into VitePress's separately-bundled config/loaders, where
+// `import.meta.url` points at the bundle, not this file — so don't anchor on it.
+function findRoot() {
+    let dir = process.cwd();
+    for (let i = 0; i < 8; i++) {
+        if (existsSync(join(dir, 'packages/sveltex/src/mod.ts'))) return dir;
+        const up = dirname(dir);
+        if (up === dir) break;
+        dir = up;
+    }
+    return resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+}
+
+const ROOT = findRoot();
 const PKG = `${ROOT}/packages/sveltex`;
 const ENTRY = `${PKG}/src/mod.ts`;
-const OUT = `${ROOT}/docs/src/api`;
+// Absolute path to the package source. The dynamic-route / data loaders declare
+// a `watch` glob over it, but it lives outside the docs project root, so Vite's
+// dev watcher won't pick it up unless explicitly added — `config.ts` registers
+// this with `server.watcher` so TSDoc edits live-regenerate the API pages.
+export const PKG_SRC = `${PKG}/src`;
+// This generator's real source path (stable across bundling), so editing it
+// busts the on-disk cache via the fingerprint below.
+const GEN = `${ROOT}/docs/scripts/api-data.mjs`;
 const GH = 'https://github.com/nvlang/sveltex/blob/main';
 const MAX_DEPTH = 3;
 const MAX_TYPE = 72; // chars before a type string is truncated (full in title)
@@ -34,10 +74,19 @@ const TABBED = new Set([
 ]);
 
 // Shiki highlighter for inline type signatures (dual-theme via CSS vars).
-const highlighter = await createHighlighter({
-    themes: ['github-light-default', githubDarkDefault],
-    langs: ['ts'],
-});
+// Created lazily the first time the (uncached) derivation actually renders, so
+// cache hits — which never highlight — don't pay for it.
+let highlighter = null;
+async function ensureHighlighter() {
+    highlighter ??= await createHighlighter({
+        themes: ['github-light-default', githubDarkDefault],
+        langs: ['ts'],
+    });
+}
+
+// markdown-it for the one-line descriptions in the index table — rendered to
+// inline HTML so their code spans / links survive the table's `v-html`.
+const mdInline = new MarkdownIt();
 
 /** Shiki-highlighted inline HTML (token spans only) for a type string. */
 function highlightType(text) {
@@ -96,8 +145,19 @@ const LANG_MAP = {
     tex: 'latex',
 };
 const SAFE_LANGS = new Set([
-    'ts', 'js', 'html', 'css', 'scss', 'sass', 'postcss', 'stylus', 'sh',
-    'xml', 'latex', 'svelte', 'md',
+    'ts',
+    'js',
+    'html',
+    'css',
+    'scss',
+    'sass',
+    'postcss',
+    'stylus',
+    'sh',
+    'xml',
+    'latex',
+    'svelte',
+    'md',
 ]);
 const normalizeFenceLang = (lang) => {
     const l = LANG_MAP[lang.toLowerCase()] ?? lang.toLowerCase();
@@ -125,7 +185,11 @@ function dedentFences(text) {
         const body = [];
         let close = -1;
         for (let j = i + 1; j < lines.length; j++) {
-            if (new RegExp(`^\\s*\\${marker}{${open[2].length},}\\s*$`).test(lines[j])) {
+            if (
+                new RegExp(`^\\s*\\${marker}{${open[2].length},}\\s*$`).test(
+                    lines[j],
+                )
+            ) {
                 close = j;
                 break;
             }
@@ -138,7 +202,10 @@ function dedentFences(text) {
         let extra = Infinity;
         for (const b of body) {
             if (!b.trim()) continue;
-            extra = Math.min(extra, Math.max(0, b.match(/^(\s*)/)[1].length - fenceIndent));
+            extra = Math.min(
+                extra,
+                Math.max(0, b.match(/^(\s*)/)[1].length - fenceIndent),
+            );
         }
         if (!Number.isFinite(extra)) extra = 0;
         out.push(lines[i]);
@@ -187,9 +254,6 @@ function sanitizeComment(text) {
         .join('\n');
 }
 
-/** Frontmatter shared by every generated API page. */
-const FRONTMATTER = `---\noutline: [2, 3]\npageClass: api-doc\n---\n\n`;
-
 /** Escape a string for use inside a double-quoted HTML/Vue attribute. */
 const escapeAttr = (s) =>
     s
@@ -204,7 +268,8 @@ function ghInfo(node) {
     const sf = node.getSourceFile();
     const full = sf.getFilePath();
     const relRepo = relative(ROOT, full);
-    if (relRepo.startsWith('..') || relRepo.includes('node_modules')) return null;
+    if (relRepo.startsWith('..') || relRepo.includes('node_modules'))
+        return null;
     const start = node.getStartLineNumber();
     const end = node.getEndLineNumber();
     const label = `${relative(`${PKG}/src`, full)}:${end > start ? `${start}-${end}` : start}`;
@@ -216,7 +281,9 @@ function ghInfo(node) {
 function inPackage(node) {
     if (!node) return false;
     const p = node.getSourceFile().getFilePath();
-    return p.includes('/packages/sveltex/src/') && !p.includes('/node_modules/');
+    return (
+        p.includes('/packages/sveltex/src/') && !p.includes('/node_modules/')
+    );
 }
 
 /**
@@ -253,8 +320,10 @@ function processInline(text) {
  * slot as markdown. Any remaining bare ⚠ (e.g. inside a list item) becomes a
  * plain inline icon.
  */
-const WARNING_LEAD = /^⚠️?[ \t]*(?:\*\*[ \t]*Warning[ \t]*:?[ \t]*\*\*[ \t]*:?)?[ \t]*/;
-const NOTE_LEAD = /^(?:\*\*[ \t]*Note[ \t]*:[ \t]*\*\*|\*\*[ \t]*Note[ \t]*\*\*[ \t]*:)[ \t]*/;
+const WARNING_LEAD =
+    /^⚠️?[ \t]*(?:\*\*[ \t]*Warning[ \t]*:?[ \t]*\*\*[ \t]*:?)?[ \t]*/;
+const NOTE_LEAD =
+    /^(?:\*\*[ \t]*Note[ \t]*:[ \t]*\*\*|\*\*[ \t]*Note[ \t]*\*\*[ \t]*:)[ \t]*/;
 const IS_LIST = /^[ \t]*(?:[-*+][ \t]|\d+[.)][ \t])/;
 
 function calloutBlocks(text) {
@@ -268,7 +337,8 @@ function calloutBlocks(text) {
         let type, lead;
         const w = para.match(WARNING_LEAD);
         const n = para.match(NOTE_LEAD);
-        if (w && /^⚠/.test(para)) [type, lead] = ['warning', para.slice(w[0].length)];
+        if (w && /^⚠/.test(para))
+            [type, lead] = ['warning', para.slice(w[0].length)];
         else if (n) [type, lead] = ['note', para.slice(n[0].length)];
         if (!type) {
             out.push(para);
@@ -276,11 +346,20 @@ function calloutBlocks(text) {
         }
         // Absorb immediately-following list blocks (they belong to the callout).
         const parts = [lead];
-        while (i + 1 < blocks.length && IS_LIST.test(blocks[i + 1])) parts.push(blocks[++i]);
-        out.push(wrap(type, type === 'warning' ? 'Warning' : 'Note', parts.join('\n\n')));
+        while (i + 1 < blocks.length && IS_LIST.test(blocks[i + 1]))
+            parts.push(blocks[++i]);
+        out.push(
+            wrap(
+                type,
+                type === 'warning' ? 'Warning' : 'Note',
+                parts.join('\n\n'),
+            ),
+        );
     }
     // Leftover bare warning glyphs (not paragraph-leading) → inline icon.
-    return out.join('\n\n').replace(/⚠️?/g, '<PhWarning weight="fill" class="api-warn-icon" />');
+    return out
+        .join('\n\n')
+        .replace(/⚠️?/g, '<PhWarning weight="fill" class="api-warn-icon" />');
 }
 
 /**
@@ -380,8 +459,8 @@ function readDoc(decl) {
                     : text;
                 // A @see is one reference — collapse soft line wraps to spaces.
                 doc.see.push(joined.replace(/\s*\n\s*/g, ' ').trim());
-            }
-            else if (name === 'returns' || name === 'return') doc.returns = text;
+            } else if (name === 'returns' || name === 'return')
+                doc.returns = text;
             else if (name === 'throws') doc.throws.push(text);
             else if (name === 'param') {
                 const pn = tag.getName?.() ?? '';
@@ -429,7 +508,8 @@ function codeText(raw) {
             .replace(/\r?\n?[ \t]*[`~]+[ \t]*$/, '')
             .trim();
         // Short single-line values (e.g. `[]`, `{}`) read better inline.
-        const inline = !code.includes('\n') && code.length <= 30 && !code.includes('`');
+        const inline =
+            !code.includes('\n') && code.length <= 30 && !code.includes('`');
         return { block: !inline, code };
     }
     // Inline code span (`x` / ``x``) — no language token, so don't strip the
@@ -477,9 +557,12 @@ function renderProse(doc, indent = '') {
     // real <p> (a leading component tag would break that). A trailing marker
     // span tags it for CSS; external targets get `.api-see-ext` (no arrow).
     if (doc.see.length) {
-        const external = (s) => /<https?:\/\//.test(s) || /\]\(https?:\/\//.test(s);
+        const external = (s) =>
+            /<https?:\/\//.test(s) || /\]\(https?:\/\//.test(s);
         for (const s of doc.see)
-            push(`**See:** ${s} <span class="api-see${external(s) ? '-ext' : ''}"></span>\n\n`);
+            push(
+                `**See:** ${s} <span class="api-see${external(s) ? '-ext' : ''}"></span>\n\n`,
+            );
     }
     return out;
 }
@@ -543,7 +626,8 @@ function expandable(type) {
     // upstream-option re-types under `types/utils/` (e.g. MathjaxConfiguration)
     // whose docstrings are copied from the backend's own docs and shouldn't be
     // reproduced here.
-    if (decl && (!inPackage(decl) || path.includes('/types/utils/'))) return null;
+    if (decl && (!inPackage(decl) || path.includes('/types/utils/')))
+        return null;
     return core;
 }
 
@@ -563,7 +647,17 @@ const slugifyId = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
  * types are expanded inline up to MAX_DEPTH; external library types and types
  * that have their own page are linked instead.
  */
-function renderField({ name, optional, type, decl, doc, ctx, depth, seen, path }) {
+function renderField({
+    name,
+    optional,
+    type,
+    decl,
+    doc,
+    ctx,
+    depth,
+    seen,
+    path,
+}) {
     const exp = depth < MAX_DEPTH ? expandable(type) : null;
     const tAttrs = typeAttrs(type, ctx, exp);
     const gh = ghInfo(decl);
@@ -638,7 +732,7 @@ function definedIn(decl) {
 
 function renderInterface(name, decl) {
     const doc = readDoc(decl);
-    let out = `${FRONTMATTER}# ${name}\n\n`;
+    let out = `# ${name}\n\n`;
     out += definedIn(decl);
     out += renderProse(doc);
 
@@ -646,7 +740,13 @@ function renderInterface(name, decl) {
     if (props.length) {
         out += `## Properties\n\n`;
         for (const p of props)
-            out += renderProperty(p, decl, 0, new Set(), slugifyId(p.getName()));
+            out += renderProperty(
+                p,
+                decl,
+                0,
+                new Set(),
+                slugifyId(p.getName()),
+            );
     }
     return out;
 }
@@ -678,7 +778,7 @@ function backendsOf(decl) {
 
 function renderConfig(name, decl, probe) {
     const doc = readDoc(decl);
-    let out = `${FRONTMATTER}# ${name}\n\n`;
+    let out = `# ${name}\n\n`;
     out += definedIn(decl);
     out += renderProse(doc);
 
@@ -745,7 +845,7 @@ function renderConfig(name, decl, probe) {
 
 function renderFunction(name, decl) {
     const doc = readDoc(decl);
-    let out = `${FRONTMATTER}# ${name}()\n\n`;
+    let out = `# ${name}()\n\n`;
     out += definedIn(decl);
 
     const tps = decl.getTypeParameters();
@@ -797,106 +897,174 @@ function renderFunction(name, decl) {
     return out;
 }
 
-// ─────────────────────────────── main ───────────────────────────────
+// ─────────────────────────────── derive ─────────────────────────────
 
-const project = new Project({ tsConfigFilePath: `${PKG}/tsconfig.json` });
-const mod = project.getSourceFileOrThrow(ENTRY);
-const probe = project.createSourceFile(
-    `${PKG}/src/__api_probe__.ts`,
-    `import type {\n    MarkdownConfiguration,\n    CodeConfiguration,\n    MathConfiguration,\n} from './mod.js';\n`,
-    { overwrite: true },
-);
-
-const interfaces = [];
-const functions = [];
-
-for (const [name, decls] of mod.getExportedDeclarations()) {
-    const decl = decls[0];
-    if (Node.isFunctionDeclaration(decl)) {
-        functions.push({ name, decl });
-    } else if (TABBED.has(name)) {
-        interfaces.push({ name, decl, kind: 'config' });
-    } else if (Node.isInterfaceDeclaration(decl) || Node.isClassDeclaration(decl)) {
-        interfaces.push({ name, decl, kind: 'interface' });
-    }
-    // Plain type aliases (the backend unions, TexBackend, …) are intentionally
-    // not given their own pages.
-}
-
-interfaces.sort((a, b) => a.name.localeCompare(b.name));
-functions.sort((a, b) => a.name.localeCompare(b.name));
-
-for (const { name } of interfaces)
-    documented.set(name, `/api/interfaces/${slug(name)}`);
-for (const { name } of functions)
-    documented.set(name, `/api/functions/${slug(name)}`);
-
-rmSync(OUT, { recursive: true, force: true });
-mkdirSync(`${OUT}/interfaces`, { recursive: true });
-mkdirSync(`${OUT}/functions`, { recursive: true });
-
-const write = (rel, content) => {
-    const file = `${OUT}/${rel}`;
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, content);
-};
-
+/** First line of a declaration's summary, whitespace-collapsed. */
 const firstLine = (decl) => {
     const s = readDoc(decl).summary.split('\n\n')[0] ?? '';
     return s.replace(/\s+/g, ' ').trim();
 };
 
-for (const { name, decl, kind } of interfaces) {
-    const md =
+/** The expensive pass: parse the package, render every page + index + sidebar. */
+async function derive() {
+    await ensureHighlighter();
+
+    const project = new Project({ tsConfigFilePath: `${PKG}/tsconfig.json` });
+    const mod = project.getSourceFileOrThrow(ENTRY);
+    const probe = project.createSourceFile(
+        `${PKG}/src/__api_probe__.ts`,
+        `import type {\n    MarkdownConfiguration,\n    CodeConfiguration,\n    MathConfiguration,\n} from './mod.js';\n`,
+        { overwrite: true },
+    );
+
+    const interfaces = [];
+    const functions = [];
+    for (const [name, decls] of mod.getExportedDeclarations()) {
+        const decl = decls[0];
+        if (Node.isFunctionDeclaration(decl)) {
+            functions.push({ name, decl });
+        } else if (TABBED.has(name)) {
+            interfaces.push({ name, decl, kind: 'config' });
+        } else if (
+            Node.isInterfaceDeclaration(decl) ||
+            Node.isClassDeclaration(decl)
+        ) {
+            interfaces.push({ name, decl, kind: 'interface' });
+        }
+        // Plain type aliases (the backend unions, TexBackend, …) get no page.
+    }
+    interfaces.sort((a, b) => a.name.localeCompare(b.name));
+    functions.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Populate the cross-link target map before rendering (links resolve against
+    // it). Cleared first so a re-derive after source edits starts clean.
+    documented.clear();
+    for (const { name } of interfaces)
+        documented.set(name, `/api/interfaces/${slug(name)}`);
+    for (const { name } of functions)
+        documented.set(name, `/api/functions/${slug(name)}`);
+
+    // Page markdown keyed by route param (the slug); no frontmatter — the
+    // dynamic-route templates (`[id].md`) supply it.
+    const interfacePages = interfaces.map(({ name, decl, kind }) => [
+        slug(name),
         kind === 'config'
             ? renderConfig(name, decl, probe)
-            : renderInterface(name, decl);
-    write(`interfaces/${slug(name)}.md`, md);
-}
-for (const { name, decl } of functions) {
-    write(`functions/${slug(name)}.md`, renderFunction(name, decl));
+            : renderInterface(name, decl),
+    ]);
+    const functionPages = functions.map(({ name, decl }) => [
+        slug(name),
+        renderFunction(name, decl),
+    ]);
+
+    // Index-table rows; description rendered to inline HTML for `v-html`.
+    const entry = ({ name, decl }) => ({
+        name,
+        link: documented.get(name),
+        desc: mdInline.renderInline(firstLine(decl)),
+    });
+    const index = {
+        intro:
+            firstLine(mod) ||
+            'A flexible Svelte preprocessor with extensive LaTeX support.',
+        interfaces: interfaces.map(entry),
+        functions: functions.map(entry),
+    };
+
+    // Sidebar. The two key entry points stay in their own sections but are
+    // pinned first (and bolded via CSS); `getDefault*` helpers are faded via CSS.
+    const linkItem = ({ name }) => ({ text: name, link: documented.get(name) });
+    const pinFirst = (arr, name) => [
+        ...arr.filter((x) => x.name === name),
+        ...arr.filter((x) => x.name !== name),
+    ];
+    const sidebar = [
+        { text: 'Overview', link: '/api/' },
+        {
+            text: 'Interfaces',
+            collapsed: false,
+            items: pinFirst(interfaces, 'SveltexConfiguration').map(linkItem),
+        },
+        {
+            text: 'Functions',
+            collapsed: false,
+            items: pinFirst(functions, 'sveltex').map(linkItem),
+        },
+    ];
+
+    return {
+        interfaces: interfacePages,
+        functions: functionPages,
+        index,
+        sidebar,
+    };
 }
 
-// Index page.
-let index = `${FRONTMATTER}# API reference\n\n`;
-index += `${firstLine(mod) || 'A flexible Svelte preprocessor with extensive LaTeX support.'}\n\n`;
-if (interfaces.length) {
-    index += `## Interfaces\n\n| Interface | Description |\n| --- | --- |\n`;
-    for (const { name, decl } of interfaces)
-        index += `| [${name}](interfaces/${slug(name)}) | ${firstLine(decl)} |\n`;
-    index += '\n';
-}
-if (functions.length) {
-    index += `## Functions\n\n| Function | Description |\n| --- | --- |\n`;
-    for (const { name, decl } of functions)
-        index += `| [${name}](functions/${slug(name)}) | ${firstLine(decl)} |\n`;
-    index += '\n';
-}
-write('index.md', index);
+// ─────────────────────────── cached entry point ─────────────────────
 
-// Sidebar. The two key entry points stay in their own sections but are pinned
-// first (and bolded via CSS); `getDefault*` helpers are faded via CSS.
-const linkItem = ({ name }) => ({ text: name, link: documented.get(name) });
-const pinFirst = (arr, name) => [
-    ...arr.filter((x) => x.name === name),
-    ...arr.filter((x) => x.name !== name),
-];
-
-const sidebar = [
-    { text: 'Overview', link: '/api/' },
-    {
-        text: 'Interfaces',
-        collapsed: false,
-        items: pinFirst(interfaces, 'SveltexConfiguration').map(linkItem),
-    },
-    {
-        text: 'Functions',
-        collapsed: false,
-        items: pinFirst(functions, 'sveltex').map(linkItem),
-    },
-];
-write('api-sidebar.json', JSON.stringify(sidebar, null, 2) + '\n');
-
-console.log(
-    `[build-api] wrote ${interfaces.length} interfaces + ${functions.length} functions to docs/src/api`,
+// On-disk cache lives in the OS temp dir, namespaced by repo root so separate
+// checkouts / worktrees don't clobber each other's cache.
+const CACHE_FILE = join(
+    tmpdir(),
+    `sveltex-api-${createHash('sha1').update(ROOT).digest('hex').slice(0, 12)}.json`,
 );
+
+/**
+ * Cheap fingerprint of everything that affects the output: every `.ts` under the
+ * package source, plus this generator. Recomputing it (a stat walk, a few ms)
+ * lets {@link loadApi} skip the ~5s ts-morph pass whenever nothing relevant has
+ * changed — including across dev-server restarts, since the cache persists.
+ */
+function fingerprint() {
+    const parts = existsSync(GEN) ? [`${GEN}:${statSync(GEN).mtimeMs}`] : [];
+    const walk = (dir) => {
+        for (const e of readdirSync(dir, { withFileTypes: true })) {
+            const p = join(dir, e.name);
+            if (e.isDirectory()) walk(p);
+            else if (e.name.endsWith('.ts'))
+                parts.push(`${p}:${statSync(p).mtimeMs}`);
+        }
+    };
+    walk(`${PKG}/src`);
+    parts.sort();
+    return createHash('sha1').update(parts.join('\n')).digest('hex');
+}
+
+let memo = null; // { fingerprint, data }
+
+/**
+ * The API-reference model: `{ interfaces, functions, index, sidebar }`, where
+ * `interfaces`/`functions` are `[slug, pageMarkdown]` pairs. Memoized in-process
+ * and cached on disk (keyed by {@link fingerprint}) so the heavy ts-morph
+ * derivation runs once per set of source changes, even though VitePress bundles
+ * and runs each consumer (paths loaders, data loader, config) separately.
+ */
+export async function loadApi() {
+    const fp = fingerprint();
+    if (memo && memo.fingerprint === fp) return memo.data;
+    try {
+        const cached = JSON.parse(readFileSync(CACHE_FILE, 'utf8'));
+        if (cached.fingerprint === fp) {
+            memo = cached;
+            return cached.data;
+        }
+    } catch {
+        // Missing / stale / corrupt cache → fall through and derive.
+    }
+    const data = await derive();
+    memo = { fingerprint: fp, data };
+    try {
+        writeFileSync(CACHE_FILE, JSON.stringify(memo));
+    } catch {
+        // Temp dir not writable — the in-process memo still helps.
+    }
+    return data;
+}
+
+// Allow `node scripts/api-data.mjs` for a quick standalone sanity check.
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+    const { interfaces, functions } = await loadApi();
+    console.log(
+        `[api-data] ${interfaces.length} interfaces + ${functions.length} functions`,
+    );
+}
