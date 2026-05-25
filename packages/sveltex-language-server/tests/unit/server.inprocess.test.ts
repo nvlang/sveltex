@@ -88,18 +88,11 @@ const hoisted = vi.hoisted(() => {
         proxies,
         forwarders,
         loadConfigSnapshot: vi.fn(),
-        // Each real `fs.watch` call records its returned watcher here, so a
-        // test can emit an `'error'` event on it to exercise the watcher's
-        // error handler. Cleared in `beforeEach`.
+        // Records every watcher the server arms — all non-firing stubs (see
+        // the `node:fs` mock below); cleared and closed in `beforeEach`. Tests
+        // drive a watcher's change listener via `fireWatcher`, and its `error`
+        // event via `getWatcher().emit('error')`.
         watchers: [] as import('node:fs').FSWatcher[],
-        // `fs.watch` returns a non-firing stub unless this is true. It defaults
-        // to OFF so no real watcher is ever armed except where explicitly
-        // wanted: a real `fs.watch` left armed on a temp dir delivers
-        // OS-dependent events (Linux inotify vs macOS FSEvents) into *later*
-        // tests — which, via the shared `loadConfigSnapshot` mock, add stray
-        // reloads and make the debounce assertion flaky. Only the
-        // "watcher rearm + real fs.watch" suite opts in.
-        useRealWatch: false,
         // Defaults to the real dependency scan; a test can make it throw to
         // drive the `rearmConfigWatchers` catch fallback.
         collectConfigDependencies: vi.fn(),
@@ -153,26 +146,44 @@ vi.mock('node:fs', async () => {
         await vi.importActual<typeof import('node:fs')>('node:fs');
     return {
         ...actual,
+        // Never a *real* `fs.watch` in these tests. A real watcher delivers
+        // OS-dependent events (Linux inotify vs macOS FSEvents) into later
+        // tests — adding stray reloads through the shared `loadConfigSnapshot`
+        // mock (a flaky debounce) — and makes branch coverage of the watcher
+        // callback platform-dependent (its `filename === null` arm fires on
+        // macOS but never on Linux). Return a non-firing stub that records the
+        // change listener so tests can invoke it deterministically (see
+        // `fireWatcher`), and honours the `error` event the server registers.
         watch: (
             ...args: Parameters<typeof actual.watch>
         ): ReturnType<typeof actual.watch> => {
-            if (!hoisted.useRealWatch) {
-                // A non-firing stub. `server.ts` only calls `.on('error')`,
-                // `.unref()`, and `.close()` on the watcher it arms; the stub
-                // honours those but never emits `change`/`rename`, so no
-                // OS-level fs event can reach `scheduleConfigReload`.
-                const stub = {
-                    on: () => stub,
-                    close: () => undefined,
-                    ref: () => stub,
-                    unref: () => stub,
-                } as unknown as ReturnType<typeof actual.watch>;
-                hoisted.watchers.push(stub);
-                return stub;
-            }
-            const watcher = actual.watch(...args);
-            hoisted.watchers.push(watcher);
-            return watcher;
+            const listener = args.find(
+                (a): a is (event: string, filename: string | null) => void =>
+                    typeof a === 'function',
+            );
+            const errorHandlers: ((err: unknown) => void)[] = [];
+            const stub = {
+                on(event: string, handler: (err: unknown) => void) {
+                    if (event === 'error') errorHandlers.push(handler);
+                    return stub;
+                },
+                emit(event: string, payload?: unknown) {
+                    if (event === 'error')
+                        for (const handler of errorHandlers) handler(payload);
+                    return true;
+                },
+                close: () => undefined,
+                ref: () => stub,
+                unref: () => stub,
+                /** Test hook: invoke the recorded `fs.watch` change listener. */
+                fire(event: string, filename: string | null) {
+                    listener?.(event, filename);
+                },
+            };
+            hoisted.watchers.push(
+                stub as unknown as import('node:fs').FSWatcher,
+            );
+            return stub as unknown as ReturnType<typeof actual.watch>;
         },
     };
 });
@@ -378,6 +389,19 @@ function getWatcher(): import('node:fs').FSWatcher {
     const watcher = watchers[0];
     if (!watcher) throw new Error('no watcher was armed');
     return watcher;
+}
+
+/**
+ * Invoke the change listener of the most recently armed watcher stub — the
+ * deterministic stand-in for a real `fs.watch` event, so the watcher
+ * callback's branches are exercised identically on every platform.
+ */
+function fireWatcher(event: string, filename: string | null): void {
+    const stub = watchers.at(-1) as unknown as {
+        fire: (event: string, filename: string | null) => void;
+    } | undefined;
+    if (!stub) throw new Error('no watcher was armed');
+    stub.fire(event, filename);
 }
 
 beforeEach(() => {
@@ -1552,24 +1576,15 @@ describe('config reload', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Watcher rearm (real fs.watch)
+// Watcher rearm + the watcher callback
 // ---------------------------------------------------------------------------
 
-describe('watcher rearm + real fs.watch', () => {
-    // The one suite that needs a genuine `fs.watch` — it exercises the real
-    // watcher callback and its error handler. Opt into real watchers here; the
-    // top-level `beforeEach` closes them again before the next test.
-    beforeEach(() => {
-        hoisted.useRealWatch = true;
-    });
-    afterEach(() => {
-        hoisted.useRealWatch = false;
-    });
-
-    it('arms a real watcher that fires a reload on a matching filename', async () => {
-        // Real timers + real `fs.watch`: this is the one test that exercises
-        // the genuine watcher callback (`names.has(filename)` → schedule).
-        vi.useRealTimers();
+describe('watcher rearm', () => {
+    it('reloads when the watcher fires for a matching or null filename', async () => {
+        // The watcher's change listener is exercised directly (not via a real
+        // `fs.watch` event), so all three arms of its `filename === null ||
+        // names.has(filename)` guard are covered on every platform.
+        vi.useFakeTimers();
         const dir = mkdtempSync(join(tmpdir(), 'sveltex-watch-'));
         const configPath = join(dir, 'svelte.config.js');
         writeFileSync(configPath, 'export default {};\n');
@@ -1577,31 +1592,34 @@ describe('watcher rearm + real fs.watch', () => {
             ...defaultConfigSnapshot(),
             configPath,
         });
-        const h = makeConnection();
-        createServer(h.connection);
-        await initialize(h, {
-                workspaceFolders: [{ uri: `file://${dir}`, name: 'ws' }],
-            });
-        getProxy().isRunning = true;
-        loadConfigSnapshot.mockClear();
         try {
-            // Touch the watched config file → the real fs watcher schedules a
-            // debounced (200 ms) reload. Poll until it fires.
-            writeFileSync(configPath, 'export default { changed: true };\n');
-            await vi.waitFor(
-                () => {
-                    expect(loadConfigSnapshot).toHaveBeenCalled();
-                },
-                { timeout: 4000, interval: 25 },
-            );
+            const h = makeConnection();
+            createServer(h.connection);
+            await initialize(h, {
+                    workspaceFolders: [{ uri: `file://${dir}`, name: 'ws' }],
+                });
+            getProxy().isRunning = true;
+            expect(watchers.length).toBeGreaterThan(0);
+
+            // A matching filename schedules a (debounced) reload.
+            loadConfigSnapshot.mockClear();
+            fireWatcher('rename', 'svelte.config.js');
+            await vi.advanceTimersByTimeAsync(250);
+            expect(loadConfigSnapshot).toHaveBeenCalledOnce();
+
+            // A null filename (delivered on some platforms) reloads too.
+            loadConfigSnapshot.mockClear();
+            fireWatcher('change', null);
+            await vi.advanceTimersByTimeAsync(250);
+            expect(loadConfigSnapshot).toHaveBeenCalledOnce();
+
+            // An unrelated file in the watched directory is ignored.
+            loadConfigSnapshot.mockClear();
+            fireWatcher('change', 'unrelated.txt');
+            await vi.advanceTimersByTimeAsync(250);
+            expect(loadConfigSnapshot).not.toHaveBeenCalled();
         } finally {
-            // Shut down (clears the debounce timer, closes the watcher) and let
-            // any trailing debounced reload settle, so no async tail survives
-            // into v8 coverage finalization.
-            await h.invoke('onShutdown');
-            await new Promise<void>((r) => {
-                setTimeout(r, 350);
-            });
+            vi.useRealTimers();
             rmSync(dir, { recursive: true, force: true });
         }
     });
