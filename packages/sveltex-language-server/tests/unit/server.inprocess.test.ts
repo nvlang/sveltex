@@ -92,13 +92,14 @@ const hoisted = vi.hoisted(() => {
         // test can emit an `'error'` event on it to exercise the watcher's
         // error handler. Cleared in `beforeEach`.
         watchers: [] as import('node:fs').FSWatcher[],
-        // When false, `fs.watch` returns a non-firing stub instead of a real
-        // watcher. The "config reload" suite flips this off so a real
-        // `fs.watch` on its temp dir can't deliver OS-dependent events (Linux
-        // inotify vs macOS FSEvents) that schedule extra debounced reloads and
-        // make the fake-timer assertions flaky; real watching is covered in
-        // the separate "watcher rearm + real fs.watch" suite.
-        useRealWatch: true,
+        // `fs.watch` returns a non-firing stub unless this is true. It defaults
+        // to OFF so no real watcher is ever armed except where explicitly
+        // wanted: a real `fs.watch` left armed on a temp dir delivers
+        // OS-dependent events (Linux inotify vs macOS FSEvents) into *later*
+        // tests — which, via the shared `loadConfigSnapshot` mock, add stray
+        // reloads and make the debounce assertion flaky. Only the
+        // "watcher rearm + real fs.watch" suite opts in.
+        useRealWatch: false,
         // Defaults to the real dependency scan; a test can make it throw to
         // drive the `rearmConfigWatchers` catch fallback.
         collectConfigDependencies: vi.fn(),
@@ -382,6 +383,16 @@ function getWatcher(): import('node:fs').FSWatcher {
 beforeEach(() => {
     proxies.length = 0;
     forwarders.length = 0;
+    // Close any watcher a prior test armed before dropping the references, so a
+    // leaked real `fs.watch` can't keep delivering events into this test (which
+    // would add stray reloads via the shared `loadConfigSnapshot` mock).
+    for (const w of watchers) {
+        try {
+            w.close();
+        } catch {
+            /* already closed */
+        }
+    }
     watchers.length = 0;
     loadConfigSnapshot.mockReset();
     loadConfigSnapshot.mockResolvedValue(defaultConfigSnapshot());
@@ -1362,15 +1373,9 @@ describe('child notification handling', () => {
 describe('config reload', () => {
     beforeEach(() => {
         vi.useFakeTimers();
-        // This suite drives reloads through `onDidChangeWatchedFiles`
-        // notifications and asserts the debounce coalesces a burst into one
-        // reload. A real `fs.watch` on the temp dir would add OS-dependent
-        // reloads (flaky across Linux/macOS), so use the non-firing stub.
-        hoisted.useRealWatch = false;
     });
     afterEach(() => {
         vi.useRealTimers();
-        hoisted.useRealWatch = true;
     });
 
     /** Boots a server with a real workspace dir + config file. */
@@ -1551,6 +1556,16 @@ describe('config reload', () => {
 // ---------------------------------------------------------------------------
 
 describe('watcher rearm + real fs.watch', () => {
+    // The one suite that needs a genuine `fs.watch` — it exercises the real
+    // watcher callback and its error handler. Opt into real watchers here; the
+    // top-level `beforeEach` closes them again before the next test.
+    beforeEach(() => {
+        hoisted.useRealWatch = true;
+    });
+    afterEach(() => {
+        hoisted.useRealWatch = false;
+    });
+
     it('arms a real watcher that fires a reload on a matching filename', async () => {
         // Real timers + real `fs.watch`: this is the one test that exercises
         // the genuine watcher callback (`names.has(filename)` → schedule).
