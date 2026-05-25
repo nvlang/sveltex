@@ -118,9 +118,12 @@ h4 {
     --vp-c-link: var(--vp-c-text-1);
     --vp-c-link-hover: var(--vp-c-text-0);
 
-    --vp-code-color: var(--vp-c-text-1);
-    --vp-code-link-color: var(--vp-c-text-1);
-    --vp-code-link-hover-color: var(--vp-c-text-0);
+    /* Non-linked inline code inherits the surrounding text color (so it matches
+       tinted contexts like callouts); hyperlinked inline code reads as a link
+       (blue). */
+    --vp-code-color: currentColor;
+    --vp-code-link-color: var(--vp-c-brand-1);
+    --vp-code-link-hover-color: var(--vp-c-brand-2);
 
     --vp-c-yellow-bright: var(--72-50);
     --vp-c-yellow-0: var(--72-150);
