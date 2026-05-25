@@ -95,10 +95,7 @@ export interface ProcessableSnippet<T extends SnippetType> {
               ? {
                     /**
                      * @internal
-                     * @defaultValue
-                     * ```ts
-                     * 'yaml'
-                     * ```
+                     * @defaultValue `'yaml'`
                      */
                     type: 'yaml' | 'toml' | 'json';
                 }
@@ -262,10 +259,7 @@ export interface DirectiveEscapeSettings {
      *
      * @see {@link bracesArePartOfDirective | `bracesArePartOfDirective`}
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enabled?: boolean | undefined;
 
@@ -401,10 +395,7 @@ export interface DirectiveEscapeSettings {
      * $                   # (end of string)
      * ```
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     bracesArePartOfDirective?:
         | ((info: {

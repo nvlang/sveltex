@@ -71,10 +71,7 @@ export interface BackendChoices<
      * ```
      *
      *
-     * @defaultValue
-     * ```ts
-     * 'none'
-     * ```
+     * @defaultValue `'none'`
      */
     markdownBackend?: M | undefined;
 
@@ -113,10 +110,7 @@ export interface BackendChoices<
      *     and curly brackets will _not_ be escaped with this backend, and code
      *     blocks or spans will _not_ be surrounded by any tags. Because SvelTeX
      *
-     * @defaultValue
-     * ```ts
-     * 'none'
-     * ```
+     * @defaultValue `'none'`
      */
     codeBackend?: C | undefined;
 
@@ -273,7 +267,8 @@ export interface SveltexConfiguration<
     /**
      * Configuration options for the **TeX-to-SVG pipeline** — the full
      * TeX toolchain SvelTeX uses to render `tex`-type
-     * [verbatim environments](verbatim) (TikZ diagrams, commutative
+     * [verbatim environments](https://sveltex.dev/docs/verbatim) (TikZ
+     * diagrams, commutative
      * diagrams, anything you would put inside a `standalone` document) to
      * static SVGs at build time. Distinct from the
      * {@link math | `math`} backend, which renders inline / display math
@@ -354,10 +349,7 @@ export interface SveltexConfiguration<
      * { frontmatter: { head: false } }
      * ```
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     frontmatter?: boolean | FrontmatterConfiguration | undefined;
 }

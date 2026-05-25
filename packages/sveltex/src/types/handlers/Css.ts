@@ -42,10 +42,7 @@ export interface HybridCssConfiguration extends HasTimeout, HasDir {
      * The stylesheet will be modified to ensure that all its URLs use the first
      * CDN in the array instead of a relative path.
      *
-     * @defaultValue
-     * ```ts
-     * 'jsdelivr'
-     * ```
+     * @defaultValue `'jsdelivr'`
      */
     cdn?: SupportedCdn | [SupportedCdn, ...SupportedCdn[]] | undefined;
 }
@@ -58,10 +55,7 @@ interface SelfHostedCssConfiguration extends HasTimeout, HasDir {
      * the first CDN is queried, and if it fails, the next one is queried, and
      * so on.
      *
-     * @defaultValue
-     * ```ts
-     * 'jsdelivr'
-     * ```
+     * @defaultValue `'jsdelivr'`
      */
     cdn?: SupportedCdn | [SupportedCdn, ...SupportedCdn[]] | undefined;
 }

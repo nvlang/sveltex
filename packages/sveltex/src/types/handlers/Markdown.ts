@@ -112,7 +112,6 @@ export type MarkdownConfiguration<B extends MarkdownBackend> =
                    * The `allowDangerousHtml` option is not supported here,
                    * since SvelTeX needs it to be `true` to work properly.
                    *
-                   * @remarks
                    * The `extensions` option passed to the `micromark` processor
                    * will always be a (nonempty) array with a custom extension
                    * in its first position (i.e., at index 0) that disables
@@ -392,10 +391,7 @@ export interface ComponentInfo {
      * be imported by Svelte iff this property is set; otherwise, a runtime
      * error will occur.
      *
-     * @defaultValue
-     * ```ts
-     * undefined
-     * ```
+     * @defaultValue `undefined`
      *
      * @example
      * ```ts
@@ -419,10 +415,7 @@ export interface ComponentInfo {
      * -   `'all'`: The component can be placed inside a paragraph and can
      *     contain paragraphs.
      *
-     * @defaultValue
-     * ```ts
-     * 'default'
-     * ```
+     * @defaultValue `'default'`
      *
      * @see https://sveltex.dev/docs/implementation/markdown
      */
@@ -464,10 +457,7 @@ export interface ComponentInfo {
      * `<Example>\n<p>test</p>\n</Example>` after processing by the markdown
      * processor) if `prefersInline` is `false`.
      *
-     * @defaultValue
-     * ```ts
-     * undefined
-     * ```
+     * @defaultValue `undefined`
      */
     prefersInline?: boolean | undefined;
 }
