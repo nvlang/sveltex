@@ -4,3 +4,9 @@
 src/public/playground/sveltex-playground.mjs
 src/public/playground/sveltex-playground.mjs.map
 src/public/playground/editor-grammars.json
+
+# Generated API reference, produced by TypeDoc (`build:api`, runs via
+# predev/prebuild) from `@nvl/sveltex`'s TSDoc comments. The VitePress config
+# imports `src/api/typedoc-sidebar.json`, so generation always precedes the
+# build.
+src/api/
