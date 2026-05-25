@@ -92,6 +92,13 @@ const hoisted = vi.hoisted(() => {
         // test can emit an `'error'` event on it to exercise the watcher's
         // error handler. Cleared in `beforeEach`.
         watchers: [] as import('node:fs').FSWatcher[],
+        // When false, `fs.watch` returns a non-firing stub instead of a real
+        // watcher. The "config reload" suite flips this off so a real
+        // `fs.watch` on its temp dir can't deliver OS-dependent events (Linux
+        // inotify vs macOS FSEvents) that schedule extra debounced reloads and
+        // make the fake-timer assertions flaky; real watching is covered in
+        // the separate "watcher rearm + real fs.watch" suite.
+        useRealWatch: true,
         // Defaults to the real dependency scan; a test can make it throw to
         // drive the `rearmConfigWatchers` catch fallback.
         collectConfigDependencies: vi.fn(),
@@ -148,6 +155,20 @@ vi.mock('node:fs', async () => {
         watch: (
             ...args: Parameters<typeof actual.watch>
         ): ReturnType<typeof actual.watch> => {
+            if (!hoisted.useRealWatch) {
+                // A non-firing stub. `server.ts` only calls `.on('error')`,
+                // `.unref()`, and `.close()` on the watcher it arms; the stub
+                // honours those but never emits `change`/`rename`, so no
+                // OS-level fs event can reach `scheduleConfigReload`.
+                const stub = {
+                    on: () => stub,
+                    close: () => undefined,
+                    ref: () => stub,
+                    unref: () => stub,
+                } as unknown as ReturnType<typeof actual.watch>;
+                hoisted.watchers.push(stub);
+                return stub;
+            }
             const watcher = actual.watch(...args);
             hoisted.watchers.push(watcher);
             return watcher;
@@ -1341,9 +1362,15 @@ describe('child notification handling', () => {
 describe('config reload', () => {
     beforeEach(() => {
         vi.useFakeTimers();
+        // This suite drives reloads through `onDidChangeWatchedFiles`
+        // notifications and asserts the debounce coalesces a burst into one
+        // reload. A real `fs.watch` on the temp dir would add OS-dependent
+        // reloads (flaky across Linux/macOS), so use the non-firing stub.
+        hoisted.useRealWatch = false;
     });
     afterEach(() => {
         vi.useRealTimers();
+        hoisted.useRealWatch = true;
     });
 
     /** Boots a server with a real workspace dir + config file. */
