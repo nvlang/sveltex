@@ -3,8 +3,9 @@
 
    Monaspace deployment (all five families): Neon = identifiers, Argon = type
    signatures (matches the site's code blocks), Xenon (slab) = inline prose
-   code, Krypton = tag labels, Radon (handwriting) = emphasis. Top-level props
-   are headings (name + inline type + right-aligned
+   code, Krypton = tag labels. Radon (handwriting) backs Argon's italics (see
+   monaspace.css), so italic code tokens — comments — read as script. Top-level
+   props are headings (name + inline type + right-aligned
    source); nested props are hover-glow cards whose name is a permalink.
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -13,7 +14,6 @@
     --api-mono-type: 'Monaspace Argon', var(--vp-font-family-mono);
     --api-mono-prose: 'Monaspace Xenon', var(--vp-font-family-mono);
     --api-mono-tag: 'Monaspace Krypton', var(--vp-font-family-mono);
-    --api-mono-script: 'Monaspace Radon', var(--vp-font-family-mono);
 }
 
 .api-doc h1 {
@@ -430,19 +430,12 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-top: 0;
 }
 
-/* ── inline prose code → Xenon (slab); emphasis → Radon (handwriting) ───── */
+/* ── inline prose code → Xenon (slab) ──────────────────────────────────── */
 
 .api-doc .api-field__doc :not(pre) > code,
 .api-doc .vp-doc p :not(pre) > code,
 .api-doc .vp-doc li :not(pre) > code {
     font-family: var(--api-mono-prose);
-}
-
-/* Emphasis reads as a handwritten aside. (Linked vs. plain inline-code colors
-   are handled globally via --vp-code-link-color / --vp-code-color.) */
-.api-doc .vp-doc em {
-    font-family: var(--api-mono-script);
-    font-style: italic;
 }
 
 /* ── bullet lists with a narrow dash marker — API pages only ───────────────
