@@ -172,16 +172,13 @@ the previous set of tags.
 Zed compiles the tree-sitter grammar from a pinned commit and **cannot read
 your config**, so only a fixed set of hard-coded tag names is recognised:
 
--   **LaTeX** body highlighting applies to environments named exactly `tex`,
-    `latex`, or `tikz` — or their canonical capitalisations `TeX`, `LaTeX`,
-    `TikZ`. Matching is **case-sensitive** (`TEX`, `Tikz`, etc. are _not_
-    recognised).
+-   **LaTeX** body highlighting applies to environments named `tex`, `latex`
+    or `tikz`, plus their proper-form (`TeX`, `LaTeX`, `TikZ`) and
+    title-case (`Tex`, `Latex`, `Tikz`) variants. Matching is
+    **case-sensitive** — any other casing (`TEX`, `LATEX`, …) is _not_
+    recognised.
 -   `verb` / `verbatim` (and `Verb` / `Verbatim`) bodies are rendered as plain
     text.
-
-A custom-named LaTeX environment (say, `<Diagram>` aliased to TikZ) therefore
-won't get LaTeX highlighting in Zed — name it `tex`/`latex`/`tikz` (or add one
-of those as an alias) if you want it. The build output is unaffected either way.
 
 ### Semantic highlighting
 
@@ -302,7 +299,7 @@ export default await sveltex({}, {
 
 ```sveltex
 <Verbatim>
-&lt;script&gt; tags, { braces }, and <em>html</em> all kept literal here.
+<script> tags, { braces }, and <em>html</em> all kept literal here.
 </Verbatim>
 ```
 
@@ -324,15 +321,4 @@ export default await sveltex({}, {
 The point of `noop` is to **switch SvelTeX off for the region**: the `Raw`
 tag is recognised so the region is carved out, but then *no* processing runs
 on its body — no Markdown, no math, no code or TeX handling. The body is
-passed through to the Svelte compiler exactly as written. Use it for
-hand-written Svelte (or raw HTML) fragments you want left completely alone,
-where the markdown processor would otherwise touch them.
-
-## Hover for the IntelliSense
-
-When the [SvelTeX language server](editor-integration) is set up, hovering
-the configuration keys in your `sveltex.config.js` shows the same
-information as this page, with per-option descriptions. The verbatim
-section of the config has the densest TSDoc of any SvelTeX surface;
-prefer the in-editor hover for option-level reference, and use this
-page for the conceptual overview.
+passed through to the Svelte compiler exactly as written.

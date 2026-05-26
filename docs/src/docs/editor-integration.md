@@ -61,10 +61,9 @@ package gives each region the treatment it deserves.
 
     **LaTeX features in `tex` verbatim:** When
     [TexLab](https://github.com/latex-lsp/texlab) is on `PATH`,
-    hover and completion inside `<tex>` / `<latex>` / `<tikz>`
-    environments (or their `<Tex>` / `<TeX>` / `<LaTeX>` / `<TikZ>`
-    / `<Latex>` / `<Tikz>` casing variants) are forwarded to it. If
-    TexLab isn't installed, these regions are skipped silently.
+    hover and completion inside LaTeX verbatim environments are
+    forwarded to it. If TexLab isn't installed, these regions are
+    skipped silently.
 
 -   <PhArrowClockwise color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
@@ -218,6 +217,17 @@ editors that want math features in plain `.tex` / `.md` files).
     isn't on `PATH`, these regions are silently skipped. Install
     [TexLab](https://github.com/latex-lsp/texlab) (a package manager is
     usually easiest) and restart your editor.
+
+-   **My custom-named LaTeX environment isn't highlighted in Zed.**
+    Zed's grammar only recognises a fixed set of tag names — see
+    [Verbatim › Zed](verbatim#zed) for the exact list. Build output
+    is unaffected.
+
+-   **My custom `escape` / `code` verbatim isn't highlighted in Zed.**
+    Zed needs semantic highlighting turned on for those bodies to be
+    coloured. See [Verbatim › Semantic
+    highlighting](verbatim#semantic-highlighting) for the one-line
+    setting.
 
 -   **Diagnostics for math / LaTeX are missing.** Not implemented
     yet — math and LaTeX verbatim regions get completion and hover

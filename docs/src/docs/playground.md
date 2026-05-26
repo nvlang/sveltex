@@ -33,7 +33,7 @@ no server involved.
 
 <Playground />
 
-The playground uses SvelTeX's fuller, recommended backends: the `unified`
+The playground uses SvelTeX's recommended backends: the `unified`
 Markdown backend (powered by remark and rehype), the `shiki` code backend
 (syntax-highlighted code), and the `mathjax` math backend. For the full list of
 available backends and configuration options, see the

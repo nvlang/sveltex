@@ -682,17 +682,18 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .VPSidebar a[href*='/api/functions/'] .text {
     font-family: var(--api-mono-name);
 }
-/* The "Overview" link is bolded to match the "Interfaces" / "Functions" group
-   titles, so the top of the sidebar reads as three peers. The doubled-class
-   selectors (`.VPSidebar.VPSidebar`) bump specificity past VitePress's
-   scoped component CSS so we can drop `!important` from these rules. */
+/* The "Overview" link is bolded and uses primary text colour to match the
+   "Interfaces" / "Functions" group titles, so the top of the sidebar reads
+   as three peers. The doubled-class selectors (`.VPSidebar.VPSidebar`)
+   bump specificity past VitePress's scoped component CSS so we can drop
+   `!important` from these rules. */
 .VPSidebar.VPSidebar a[href$='/api/'] .text {
     font-weight: 700;
+    color: var(--vp-c-text-1);
 }
-/* The two key entry points get a Phosphor pushpin marker to their left,
-   tinted with the brand colour, so they read as primary entries rather
-   than just bold list items. (The previous brand-tinted pill background
-   read as too "selected".) */
+/* The two key entry points get a Phosphor "push-pin" marker (fill weight)
+   to their left, in a slightly faint text colour, so they read as primary
+   entries without competing with the surrounding section labels. */
 .VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text::before,
 .VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text::before {
     content: '';
@@ -701,22 +702,25 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     height: 0.9em;
     margin-right: 0.4em;
     vertical-align: -0.13em;
-    background-color: var(--vp-c-brand-1);
+    background-color: var(--vp-c-text-2);
     mask-repeat: no-repeat;
     mask-position: center;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-position: center;
     -webkit-mask-size: contain;
-    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.69,107.31l-88-88a16,16,0,0,0-22.62,0L75.21,70.16a32,32,0,0,0-7.43,33.91l-31.2,31.2a8,8,0,0,0,0,11.32l38.84,38.84L26.34,234.34a8,8,0,0,0,11.32,11.32l49.05-49.06,38.85,38.84a8,8,0,0,0,11.31,0l31.2-31.19a32,32,0,0,0,33.91-7.44l50.85-50.85a16,16,0,0,0,0-22.62Z'/></svg>");
-    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.69,107.31l-88-88a16,16,0,0,0-22.62,0L75.21,70.16a32,32,0,0,0-7.43,33.91l-31.2,31.2a8,8,0,0,0,0,11.32l38.84,38.84L26.34,234.34a8,8,0,0,0,11.32,11.32l49.05-49.06,38.85,38.84a8,8,0,0,0,11.31,0l31.2-31.19a32,32,0,0,0,33.91-7.44l50.85-50.85a16,16,0,0,0,0-22.62Z'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16,16,0,0,1-11.32-4.69L96.29,171,53.66,213.66a8,8,0,0,1-11.32-11.32L85,159.71l-48.3-48.3A16,16,0,0,1,38,87.63c25.42-20.51,49.75-16.48,60.4-13.14L152,20.7a16,16,0,0,1,22.63,0l60.69,60.68A16,16,0,0,1,235.33,104Z'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16,16,0,0,1-11.32-4.69L96.29,171,53.66,213.66a8,8,0,0,1-11.32-11.32L85,159.71l-48.3-48.3A16,16,0,0,1,38,87.63c25.42-20.51,49.75-16.48,60.4-13.14L152,20.7a16,16,0,0,1,22.63,0l60.69,60.68A16,16,0,0,1,235.33,104Z'/></svg>");
 }
 .VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text,
 .VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text {
     font-weight: 700;
     color: var(--vp-c-text-1);
 }
-.VPSidebar.VPSidebar a[href*='/api/functions/getDefault'] .text {
+/* Fade the "get-default"-style helpers — both `getDefault*` (singular) and
+   `getTexPresetDefaults` (plural). They're auxiliary surface, not the
+   primary API. */
+.VPSidebar.VPSidebar a[href*='/api/functions/get'][href*='Default'] .text {
     color: var(--vp-c-text-3);
 }
 

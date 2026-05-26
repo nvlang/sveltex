@@ -37,10 +37,6 @@ import { data } from './index.data.js'
 
 ## Inspecting defaults programmatically
 
-If you're building tooling around SvelTeX — a config wizard, a custom
-preprocessor that extends SvelTeX, or anything that needs to know what the
-implicit defaults actually are — you can ask for them directly:
-
 ```ts twoslash
 import {
     getDefaultSveltexConfig,
