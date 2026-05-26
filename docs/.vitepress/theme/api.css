@@ -22,6 +22,11 @@
     font-weight: 600;
     letter-spacing: -0.01em;
 }
+/* The overview/index page title is prose ("API reference"), not a symbol
+   name, so it reads better sans-serif. */
+.api-index h1 {
+    font-family: var(--vp-font-family-base);
+}
 
 /* No hover `#` on API pages (it wrapped awkwardly with inline types). */
 .api-doc .vp-doc .header-anchor {
@@ -290,6 +295,15 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     background: color-mix(in srgb, var(--cl-color) 7%, var(--vp-code-block-bg));
 }
 
+/* Inline code inside callouts: take the callout's (tinted) text colour rather
+   than VitePress's fixed brand/colour, and a subtle tint of the callout colour
+   for the background instead of its strong `*-code-bg`. */
+.api-cl :not(pre) > code,
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) :not(pre) > code {
+    color: inherit;
+    background: color-mix(in srgb, var(--cl-color) 12%, transparent);
+}
+
 /* ── docs-side callouts (VitePress custom blocks) → match the API look ───── */
 
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) {
@@ -370,16 +384,19 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .api-doc .vp-doc p,
 .api-doc .vp-doc li {
     line-height: 1.6;
-    /* Conservative hyphenation: only long words, with a decent stub each side. */
+}
+/* Conservative hyphenation for prose, site-wide: only long words, with a decent
+   stub each side. Never hyphenate code (inline or block), kbd, or links. */
+.vp-doc p,
+.vp-doc li {
     hyphens: auto;
     -webkit-hyphens: auto;
     hyphenate-limit-chars: 8 4 4;
 }
-/* Never hyphenate code (inline or block) or links. */
-.api-doc .vp-doc code,
-.api-doc .vp-doc pre,
-.api-doc .vp-doc kbd,
-.api-doc .vp-doc a {
+.vp-doc code,
+.vp-doc pre,
+.vp-doc kbd,
+.vp-doc a {
     hyphens: none;
     -webkit-hyphens: none;
 }
@@ -465,11 +482,18 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-top: 0.3rem;
 }
 
-/* ── footnotes: a touch smaller and fainter than body text ─────────────── */
+/* ── footnotes: a touch smaller and fainter; line-height is a multiple of the
+   (reduced) font size, not the fixed list line-height (which looked oversized
+   once the text shrank) ────────────────────────────────────────────────── */
 
 .vp-doc .footnotes {
     font-size: 0.86em;
     color: var(--vp-c-text-2);
+    line-height: 1.6;
+}
+.vp-doc .footnotes li,
+.vp-doc .footnotes p {
+    line-height: 1.6;
 }
 
 /* ── code blocks share the callouts' corner radius ─────────────────────── */
@@ -477,6 +501,11 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .vp-code-group,
 .vp-doc .vp-code-group .blocks {
     border-radius: 11px;
+}
+
+/* Inline code never wraps across lines. */
+.vp-doc :not(pre) > code {
+    white-space: nowrap;
 }
 
 /* ── friendly code-fence language labels ───────────────────────────────────
@@ -553,6 +582,21 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     .api-tag,
     .api-callout {
         border-radius: 8px;
+    }
+    /* Make the squircle visible on smaller rounded UI too. */
+    .vp-doc :not(pre) > code {
+        border-radius: 6px;
+    }
+    .VPNavBarSearch button.VPNavBarSearchButton {
+        border-radius: 12px;
+    }
+    .pager a.pager-link {
+        border-radius: 14px;
+    }
+    /* …but the appearance toggle stays truly round, not a squircle. */
+    .VPSwitchAppearance,
+    .VPSwitchAppearance * {
+        corner-shape: round;
     }
 }
 

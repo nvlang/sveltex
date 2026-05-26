@@ -165,7 +165,7 @@ emits no SvelTeX semantic tokens, so the editor's
 `editor.semanticHighlighting.enabled` (default `configuredByTheme`) doesn't
 change `.sveltex` highlighting either way.
 
-::: info Highlighting mirrors SvelTeX's parsing, not CommonMark
+::: warning Highlighting mirrors SvelTeX's parsing, not CommonMark
 
 The editor highlighting (in both extensions) intentionally diverges from
 CommonMark/GFM in the same ways SvelTeX's own Markdown parsing does — see

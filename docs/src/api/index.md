@@ -1,6 +1,6 @@
 ---
 outline: [2, 3]
-pageClass: api-doc
+pageClass: api-doc api-index
 ---
 
 <script setup>
