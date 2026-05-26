@@ -242,32 +242,34 @@ div.VPLocalSearchBox {
     }
     .features-list ul {
         list-style: none;
-        /* Narrow viewports: the absolute-positioned icon (translated 100% +
-           12px left of its anchor) sits ~40px to the left of the li's start,
-           so without extra padding the icon sticks out past the viewport
-           edge. Bump the UL's own left padding so the icon lands inside the
-           viewport with some breathing room. On `md` and up, the surrounding
-           `.vp-doc` container has plenty of margin and we reset to flush. */
-        padding-left: 3rem;
         li {
-            padding-left: 1rem;
             > p {
                 margin: 0;
                 line-height: var(--li-line-height);
             }
+            /* On `md` and up, the icon sits in the left gutter (positioned
+               absolutely, translated 100% + 12px to the left of its anchor).
+               On narrow viewports the gutter doesn't exist, so the absolute
+               positioning would push the icon off the left edge of the
+               screen. Drop to inline flow there — the icon renders on its
+               own line above the label, which reads as a small marker. */
             svg {
                 color: var(--vp-c-brand-2);
-                position: absolute;
-                translate: calc(-100% - 12px);
+                display: block;
+                margin-bottom: 0.25rem;
+            }
+            @media (min-width: 768px) {
+                svg {
+                    display: inline;
+                    margin: 0;
+                    position: absolute;
+                    translate: calc(-100% - 12px);
+                }
             }
             &::marker {
                 content: none;
             }
             line-height: var(--li-line-height);
-        }
-        @media (min-width: 768px) {
-            padding-left: 0;
-            li { padding-left: 0; }
         }
     }
     ul li {
