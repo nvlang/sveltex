@@ -2,6 +2,7 @@
 title: Markdown
 description: Use unified, markdown-it, micromark, or marked with SvelTeX.
 outline: deep
+pageClass: docs-md
 ---
 
 <script lang="ts" setup>

@@ -188,10 +188,6 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     /* iOS-style squircle corners (experimental; degrades to plain round). */
     corner-shape: superellipse(2);
     background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
-    transition: border-color 0.15s ease;
-}
-.api-field--nested:hover:not(:has(.api-field--nested:hover)) {
-    border-color: color-mix(in srgb, var(--vp-c-brand-1) 45%, var(--vp-c-divider));
 }
 /* Outermost cards (not nested inside another card) get a slightly larger radius. */
 /* Outermost cards: a generous squircle radius where supported; a tighter plain
@@ -311,7 +307,9 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .api-cl a:hover,
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) a,
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) a:hover {
-    color: var(--cl-color);
+    /* `!important` keeps the per-page accent (set on `.docs-*`) out of
+       callouts — callout links always take the callout's `--cl-color`. */
+    color: var(--cl-color) !important;
 }
 
 /* ── docs-side callouts (VitePress custom blocks) → match the API look ───── */
@@ -663,10 +661,23 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 
 /* ── sidebar: emphasize entry points, fade helpers (beat scoped rules) ─── */
 
-/* API symbol entries → monospace (the "Overview" index link stays default). */
+/* API symbol entries → monospace. */
 .VPSidebar a[href*='/api/interfaces/'] .text,
 .VPSidebar a[href*='/api/functions/'] .text {
     font-family: var(--api-mono-name);
+}
+/* The "Overview" link is bolded to match the "Interfaces" / "Functions" group
+   titles, so the top of the sidebar reads as three peers. */
+.VPSidebar a[href$='/api/'] .text {
+    font-weight: 700 !important;
+}
+/* Two key entry points sit on a subtle brand-tinted "pill" so they read as
+   primary entries rather than just bold list items. */
+.VPSidebar a[href$='/api/functions/sveltex'],
+.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] {
+    background: color-mix(in srgb, var(--vp-c-brand-1) 9%, transparent);
+    border-radius: 8px;
+    corner-shape: superellipse(2);
 }
 .VPSidebar a[href$='/api/functions/sveltex'] .text,
 .VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text {
@@ -739,4 +750,87 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 /* Phosphor icon on the logo-free editor tabs (Open VSX, Others). */
 .editor-tabs__icon {
     flex: 0 0 auto;
+}
+
+/* ── local search popup: superellipse where supported ──────────────────── */
+
+/* VitePress ships a scoped `corner-shape: squircle` with small radii (6px on
+   the shell, 4px on the bar). When the browser supports `superellipse(2)`
+   we use a fuller curve and slightly larger radii so the shape reads as
+   intentional rather than ambiguous. Bumped to `.VPLocalSearchBox.VPLocalSearchBox`
+   to outrank VitePress's scoped component styles. */
+@supports (corner-shape: superellipse(2)) {
+    .VPLocalSearchBox.VPLocalSearchBox .shell {
+        border-radius: 18px;
+        corner-shape: superellipse(2);
+    }
+    .VPLocalSearchBox.VPLocalSearchBox .search-bar {
+        border-radius: 10px;
+        corner-shape: superellipse(2);
+    }
+    .VPLocalSearchBox.VPLocalSearchBox .result {
+        corner-shape: superellipse(2);
+    }
+}
+
+/* ── <kbd> in prose: borrow VitePress's search-popup key styling ─────────── */
+
+/* VitePress only styles `.search-keyboard-shortcuts kbd` (used in the local
+   search popup). Mirror that look for any `<kbd>` in the docs so a heading
+   like "press Cmd+Shift+P" reads as actual keys, not styled-prose. */
+.vp-doc kbd {
+    display: inline-block;
+    min-width: 24px;
+    padding: 1px 6px;
+    border: 1px solid rgba(128, 128, 128, 0.15);
+    border-radius: 4px;
+    background: rgba(128, 128, 128, 0.1);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+    font-family: var(--vp-font-family-mono);
+    font-size: 0.85em;
+    line-height: 1.4;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* ── per-page accent (usage docs each pick up a "theme" colour) ────────── */
+
+/* Each top-level usage page gets a characteristic colour; body links on that
+   page inherit it. Callouts are exempt via the `!important` on `.api-cl a`
+   above, so the callout-local colour wins there. Code-links inherit from
+   their `<a>` (the existing `.vp-doc a > code` rule handles this). */
+.docs-md       { --page-color: #3b82f6; } /* markdown      — blue       */
+.docs-code     { --page-color: #8b5cf6; } /* code          — purple     */
+.docs-math     { --page-color: #10b981; } /* math          — green      */
+.docs-tex      { --page-color: #ef6c4d; } /* tex           — red-orange */
+.docs-verbatim { --page-color: #0891b2; } /* verbatim      — teal       */
+.docs-editor   { --page-color: #d97706; } /* editor setup  — amber      */
+
+.dark .docs-md       { --page-color: #60a5fa; }
+.dark .docs-code     { --page-color: #a78bfa; }
+.dark .docs-math     { --page-color: #34d399; }
+.dark .docs-tex      { --page-color: #fb8c66; }
+.dark .docs-verbatim { --page-color: #22d3ee; }
+.dark .docs-editor   { --page-color: #f59e0b; }
+
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a {
+    color: var(--page-color);
+}
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a:hover {
+    color: color-mix(in srgb, var(--page-color) 75%, var(--vp-c-text-1));
+}
+/* Code-links pick up the page colour too (otherwise the green inline-code
+   tint dominates). Excludes API pages (which have their own scheme) and the
+   callout-link rule already wins via `!important`. */
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a > code {
+    color: inherit;
+}
+
+/* ── badges (`<Badge>`): monospaced so "MathJax" / "KaTeX" tags in math
+       headings read as labels, not prose. ───────────────────────────────── */
+.VPBadge {
+    font-family: var(--vp-font-family-mono);
 }

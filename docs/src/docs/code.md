@@ -1,3 +1,6 @@
+---
+pageClass: docs-code
+---
 
 <script lang="ts" setup>
 import PipelineImage from './PipelineImage.vue';

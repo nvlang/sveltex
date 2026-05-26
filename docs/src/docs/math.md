@@ -1,6 +1,7 @@
 ---
 title: Math
 description: Use MathJax or KaTeX with SvelTeX.
+pageClass: docs-math
 ---
 
 <script lang="ts" setup>

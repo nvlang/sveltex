@@ -73,7 +73,8 @@ Similar works to SvelTeX, which also inspired it:
 ### Typography
 
 -   **[Inter]:** An extremely high-quality sans-serif.
--   **[Monaspace]:** Advanced superfamily of monospaced fonts by GitHub Next.
+-   **[Cascadia Code]:** Microsoft's open-source monospaced family with
+    programming ligatures and a beautiful cursive italic.
 
 
 ## And so much more
@@ -105,4 +106,4 @@ pursuit.
 
 [Phosphor icons]: https://phosphoricons.com/
 [Inter]: https://rsms.me/inter/
-[Monaspace]: https://monaspace.githubnext.com/
+[Cascadia Code]: https://github.com/microsoft/cascadia-code

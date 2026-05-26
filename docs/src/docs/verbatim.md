@@ -1,3 +1,7 @@
+---
+pageClass: docs-verbatim
+---
+
 # Verbatim environments
 
 <p class="text-lg py-2">

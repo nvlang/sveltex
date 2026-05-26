@@ -1,3 +1,7 @@
+---
+pageClass: docs-editor
+---
+
 <script lang="ts" setup>
 import { PhCursorText, PhEye, PhListMagnifyingGlass, PhPuzzlePiece, PhTreeStructure, PhGear, PhBookmarksSimple } from '@phosphor-icons/vue';
 </script>

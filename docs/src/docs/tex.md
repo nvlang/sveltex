@@ -1,3 +1,7 @@
+---
+pageClass: docs-tex
+---
+
 <script lang="ts" setup>
 import { PhLightning, PhHammer, PhTextT, PhDatabase, PhPalette, PhBird, PhGear, PhTerminal } from '@phosphor-icons/vue';
 </script>
