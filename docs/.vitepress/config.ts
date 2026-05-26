@@ -139,6 +139,11 @@ export default defineConfig({
                 async () => (await import('shiki/langs/sass.mjs')).default,
                 async () => (await import('shiki/langs/postcss.mjs')).default,
                 async () => (await import('shiki/langs/stylus.mjs')).default,
+                // `yaml` — the sveltex grammar's frontmatter block embeds
+                // `source.yaml`. Without it that include is unresolved, the
+                // frontmatter isn't tokenized as YAML, and the math (`$…$`)
+                // rule leaks into `$lib/...` import keys.
+                async () => (await import('shiki/langs/yaml.mjs')).default,
             );
         },
         theme: {
