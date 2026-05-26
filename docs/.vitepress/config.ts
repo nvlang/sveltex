@@ -248,7 +248,10 @@ export default defineConfig({
                         { text: 'Math', link: '/math' },
                         { text: 'TeX', link: '/tex' },
                         { text: 'Verbatim', link: '/verbatim' },
-                        { text: 'Language server', link: '/language-server' },
+                        {
+                            text: 'Editor integration',
+                            link: '/editor-integration',
+                        },
                     ],
                 },
                 // {

@@ -300,7 +300,7 @@ where the markdown processor would otherwise touch them.
 
 ## Hover for the IntelliSense
 
-When the [SvelTeX language server](language-server) is set up, hovering
+When the [SvelTeX language server](editor-integration) is set up, hovering
 the configuration keys in your `sveltex.config.js` shows the same
 information as this page, with per-option descriptions. The verbatim
 section of the config has the densest TSDoc of any SvelTeX surface;

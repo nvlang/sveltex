@@ -651,3 +651,71 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .VPSidebar a[href*='/api/functions/getDefault'] .text {
     color: var(--vp-c-text-3) !important;
 }
+
+/* ── editor setup tabs (logo buttons) — editor-integration page ─────────── */
+
+.editor-tabs {
+    margin: 1.3rem 0;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 14px;
+    corner-shape: superellipse(2);
+    overflow: hidden;
+    background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
+}
+.editor-tabs__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    background: var(--vp-c-bg-soft);
+    border-bottom: 1px solid var(--vp-c-divider);
+}
+.editor-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    corner-shape: superellipse(2);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--vp-c-text-2);
+    background: transparent;
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+.editor-tabs__tab:hover {
+    color: var(--vp-c-text-1);
+    background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
+}
+.editor-tabs__tab.is-active {
+    color: var(--vp-c-text-1);
+    background: var(--vp-c-bg);
+    border-color: var(--vp-c-divider);
+}
+/* Logos shown as provided (brand guidelines): fixed height, intrinsic width,
+   never recoloured or distorted; ~8px of clear space from the label/edges. */
+.editor-tabs__logo {
+    height: 20px;
+    width: auto;
+    flex: 0 0 auto;
+}
+.editor-tabs__panel {
+    padding: 0.2rem 1.15rem 0.4rem;
+}
+.editor-tabs__panel > :first-child {
+    margin-top: 0.9rem;
+}
+
+/* Inline "try out these icon weights" comparison (e.g. in a callout). */
+.icon-tryout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 0.82em;
+    opacity: 0.85;
+}

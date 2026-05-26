@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { PhCursorText, PhEye, PhListMagnifyingGlass, PhPuzzlePiece, PhTreeStructure, PhGear } from '@phosphor-icons/vue';
+import { PhCursorText, PhEye, PhListMagnifyingGlass, PhPuzzlePiece, PhTreeStructure, PhGear, PhBookmarksSimple } from '@phosphor-icons/vue';
 </script>
 
-# Language server
+# Editor integration
 
 <p class="text-lg py-2">
 Editor features for <code>.sveltex</code> files — hover, completion,
@@ -84,35 +84,66 @@ See [Verbatim › Editor syntax highlighting](/docs/verbatim#editor-syntax-highl
 
 :::
 
-## Installation
+## Setup
 
-### VS Code
+Pick your editor. The official extension bundles the language server, so
+there's nothing extra to install — it activates on any `.sveltex` file.
 
-Install the official extension from the Marketplace:
+<EditorTabs>
+<template #vscode>
+
+Install from the **VS Code Marketplace** — search **"SvelTeX"** in the
+Extensions view, or from a terminal:
 
 ```sh
 code --install-extension sveltex-preprocessor.sveltex
 ```
 
-(or search **"SvelTeX"** in the Extensions sidebar — the extension is
-published as `sveltex-preprocessor.sveltex` and bundles the language
-server, so there's no separate setup step.)
+The first activation spawns the language server in the background; its output
+goes to the **SvelTeX Language Server** output channel if you need to debug.
 
-The extension activates for any `.sveltex` file. The first activation
-spawns the language server in the background; output goes to the
-**SvelTeX Language Server** output channel if you need to debug.
+</template>
+<template #cursor>
 
-### Zed
+Cursor is a VS Code fork, so the same extension works. Search **"SvelTeX"** in
+the Extensions view, or:
 
-A Zed extension lives at
-[`editors/zed`](https://github.com/nvlang/sveltex/tree/main/editors/zed)
-in the SvelTeX repo and is published to the Zed extension registry as
-**"SvelTeX"** — install it from Zed's extensions panel
-(<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> → search "SvelTeX"). The
-extension launches the same `@nvl/sveltex-language-server` and speaks
-LSP over stdio.
+```sh
+cursor --install-extension sveltex-preprocessor.sveltex
+```
+
+The extension is published to both the VS Code Marketplace and **Open VSX**, so
+it resolves from whichever registry Cursor is pointed at.
+
+</template>
+<template #vscodium>
+
+VSCodium installs from **Open VSX**, where the extension is published alongside
+the Marketplace. Search **"SvelTeX"** in the Extensions view, or:
+
+```sh
+codium --install-extension sveltex-preprocessor.sveltex
+```
+
+</template>
+<template #theia>
+
+Theia installs extensions from **Open VSX**. Open the Extensions view, search
+**"SvelTeX"**, and install — the bundled language server starts automatically
+for `.sveltex` files.
+
+</template>
+<template #zed>
+
+A native Zed extension is published to the Zed extension registry. Open the
+extensions panel (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>), search
+**"SvelTeX"**, and install. It launches the same
+`@nvl/sveltex-language-server` over stdio. (Source:
+[`editors/zed`](https://github.com/nvlang/sveltex/tree/main/editors/zed).)
 
 ::: tip Enable the heading outline in Zed
+
+<span class="icon-tryout"><PhBookmarksSimple weight="duotone" :size="30" /> duotone&ensp;·&ensp;<PhBookmarksSimple weight="fill" :size="30" /> fill</span>
 
 Zed's outline panel and breadcrumbs default to its tree-sitter queries, which
 can't see the Markdown headings (they're delegated to an injected grammar). To
@@ -129,11 +160,14 @@ server's symbols for the `SvelTeX` language in your `settings.json`:
 
 :::
 
-### Other editors
+</template>
+</EditorTabs>
 
-The language server is editor-agnostic. Any LSP-aware editor (Neovim,
-Emacs `lsp-mode`, Sublime LSP, Helix, …) can launch it as a child
-process that speaks LSP over stdio:
+## Any other editor
+
+The language server is editor-agnostic. Any LSP-aware editor (Neovim, Emacs
+`lsp-mode`, Sublime LSP, Helix, …) can launch it as a child process that speaks
+LSP over stdio:
 
 1.  Install the server:
 
@@ -141,13 +175,12 @@ process that speaks LSP over stdio:
     npm install -g @nvl/sveltex-language-server
     ```
 
-2.  Configure your editor's LSP client to spawn
-    `sveltex-language-server` (or, if `npm` didn't add it to your
-    `PATH`, the `bin/server.js` it ships) for files matching
-    `**/*.sveltex`.
+2.  Configure your editor's LSP client to spawn `sveltex-language-server` (or,
+    if `npm` didn't add it to your `PATH`, the `bin/server.js` it ships) for
+    files matching `**/*.sveltex`.
 
-For a worked example of how a third-party editor launches the server,
-see the [Zed extension's manifest](https://github.com/nvlang/sveltex/blob/main/editors/zed/extension.toml)
+For a worked example of how a third-party editor launches the server, see the
+[Zed extension's manifest](https://github.com/nvlang/sveltex/blob/main/editors/zed/extension.toml)
 and `editors/zed/src/lib.rs` — both spawn `bin/server.js` over stdio.
 
 ## Configuration

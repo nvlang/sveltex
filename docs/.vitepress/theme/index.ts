@@ -19,6 +19,7 @@ import Playground from './playground/Playground.vue';
 import ApiField from './components/ApiField.vue';
 import ApiSig from './components/ApiSig.vue';
 import ApiCallout from './components/ApiCallout.vue';
+import EditorTabs from './components/EditorTabs.vue';
 
 export default {
     extends: DefaultTheme,
@@ -32,5 +33,6 @@ export default {
         app.component('ApiField', ApiField);
         app.component('ApiSig', ApiSig);
         app.component('ApiCallout', ApiCallout);
+        app.component('EditorTabs', EditorTabs);
     },
 } satisfies Theme;
