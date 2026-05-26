@@ -179,14 +179,14 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-top: 0;
 }
 
-/* Nested fields: cards whose whole border glows on hover (innermost only). */
+/* Nested fields: cards whose whole border glows on hover (innermost only).
+   `corner-shape: superellipse(2)` is set site-wide in the `@supports` block
+   further down — no need to repeat it on each rounded element. */
 .api-field--nested {
     margin: 0.5rem 0;
     padding: 0.62rem 0.85rem 0.35rem;
     border: 1px solid var(--vp-c-divider);
     border-radius: 8px;
-    /* iOS-style squircle corners (experimental; degrades to plain round). */
-    corner-shape: superellipse(2);
     background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
 }
 /* Outermost cards (not nested inside another card) get a slightly larger radius. */
@@ -216,7 +216,6 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     letter-spacing: 0.04em;
     padding: 4px 8px 3px;
     border-radius: 6px;
-    corner-shape: superellipse(2);
 }
 .api-tag--default {
     color: var(--vp-c-brand-1);
@@ -250,7 +249,6 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin: 0.7rem 0;
     padding: 0.5rem 0.7rem;
     border-radius: 11px;
-    corner-shape: superellipse(2);
     font-size: 0.92em;
     background: color-mix(in srgb, var(--cl-color) 9%, transparent);
 }
@@ -302,14 +300,15 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 
 /* Callout links take the callout's own colour (so a link, the icon, and the
    per-type tint all sit in the same hue). Code-links inherit from their `<a>`
-   via the rule above, so they match without a separate rule. */
-.api-cl a,
-.api-cl a:hover,
-.vp-doc .custom-block:is(.tip, .warning, .danger, .info) a,
-.vp-doc .custom-block:is(.tip, .warning, .danger, .info) a:hover {
-    /* `!important` keeps the per-page accent (set on `.docs-*`) out of
-       callouts — callout links always take the callout's `--cl-color`. */
-    color: var(--cl-color) !important;
+   via the rule above, so they match without a separate rule.
+
+   Specificity is bumped (doubled `.api-cl` / `.custom-block`) so this beats
+   the per-page accent rule (`.docs-* .vp-doc a`) without needing `!important`. */
+.api-cl.api-cl a,
+.api-cl.api-cl a:hover,
+.vp-doc .custom-block.custom-block:is(.tip, .warning, .danger, .info) a,
+.vp-doc .custom-block.custom-block:is(.tip, .warning, .danger, .info) a:hover {
+    color: var(--cl-color);
 }
 
 /* ── docs-side callouts (VitePress custom blocks) → match the API look ───── */
@@ -321,7 +320,6 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     padding: 0.7rem 0.9rem 0.7rem 2.15rem;
     border: 0;
     border-radius: 11px;
-    corner-shape: superellipse(2);
     background: color-mix(in srgb, var(--cl-color) 9%, transparent);
     color: color-mix(in srgb, var(--cl-color) 13%, var(--vp-c-text-1));
     font-size: 0.95em;
@@ -343,8 +341,11 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     content: '';
     position: absolute;
     left: 0.7rem;
-    /* Padding-top, plus a small em nudge to center on the title's cap height. */
-    top: calc(0.7rem + 0.22em);
+    /* Padding-top, plus an em nudge to center on the small-caps title baseline.
+       The +0.32em pulls the icon down so its visual centre aligns with the
+       title's cap height (the title's `font-size: 0.82em` + uppercase makes it
+       sit lower than a default 1em line). */
+    top: calc(0.7rem + 0.32em);
     width: 1.15em;
     height: 1.15em;
     background-color: var(--cl-color);
@@ -371,8 +372,10 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .custom-block .cb-icon {
     position: absolute;
     left: 0.7rem;
-    /* Match the default mask icon's size + vertical centre on the title line. */
-    top: calc(0.7rem + 0.16em);
+    /* Match the default mask icon's vertical centre on the small-caps title.
+       Slightly less nudge than the default-mask rule above because the
+       Phosphor glyphs (1.2em vs 1.15em) already extend further down. */
+    top: calc(0.7rem + 0.26em);
     width: 1.2em;
     height: 1.2em;
     color: var(--cl-color);
@@ -381,7 +384,9 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 /* Inline the label with the first body paragraph (like the API callout). */
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) .custom-block-title {
     display: inline;
-    margin: 0 0.4em 0 0;
+    /* A little extra space (≈ 2px at the base font size) after the title so the
+       label doesn't sit flush against the first body word. */
+    margin: 0 0.55em 0 0;
     font-family: var(--api-mono-tag);
     font-weight: 700;
     font-size: 0.82em;
@@ -488,7 +493,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     list-style: none;
 }
 .api-doc .vp-doc li::marker {
-    content: none !important;
+    content: none;
 }
 .api-doc .vp-doc ul > li {
     position: relative;
@@ -582,7 +587,10 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .language-vue > span.lang::after { content: 'Vue'; }
 .vp-doc .language-diff > span.lang::after { content: 'Diff'; }
 
-/* ── squircle corners site-wide where supported (+ a little more radius) ─── */
+/* ── squircle corners site-wide where supported (+ a little more radius) ───
+   Top-level rule: anything with a `border-radius > 0` picks up the squircle.
+   Per-element radius bumps live below so prominent panels don't look gummy
+   under the fuller corner curve. */
 
 @supports (corner-shape: superellipse(2)) {
     *,
@@ -615,6 +623,14 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     }
     .pager a.pager-link {
         border-radius: 14px;
+    }
+    /* "On this page" outline popup (mobile / narrow viewports) — VitePress
+       defaults are tight; bump them so the squircle reads as intentional. */
+    .VPLocalNavOutlineDropdown .items {
+        border-radius: 14px;
+    }
+    .VPLocalNavOutlineDropdown button.open .icon {
+        border-radius: 4px;
     }
     /* …but the appearance toggle stays truly round, not a squircle. */
     .VPSwitchAppearance,
@@ -667,25 +683,41 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     font-family: var(--api-mono-name);
 }
 /* The "Overview" link is bolded to match the "Interfaces" / "Functions" group
-   titles, so the top of the sidebar reads as three peers. */
-.VPSidebar a[href$='/api/'] .text {
-    font-weight: 700 !important;
+   titles, so the top of the sidebar reads as three peers. The doubled-class
+   selectors (`.VPSidebar.VPSidebar`) bump specificity past VitePress's
+   scoped component CSS so we can drop `!important` from these rules. */
+.VPSidebar.VPSidebar a[href$='/api/'] .text {
+    font-weight: 700;
 }
-/* Two key entry points sit on a subtle brand-tinted "pill" so they read as
-   primary entries rather than just bold list items. */
-.VPSidebar a[href$='/api/functions/sveltex'],
-.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] {
-    background: color-mix(in srgb, var(--vp-c-brand-1) 9%, transparent);
-    border-radius: 8px;
-    corner-shape: superellipse(2);
+/* The two key entry points get a Phosphor pushpin marker to their left,
+   tinted with the brand colour, so they read as primary entries rather
+   than just bold list items. (The previous brand-tinted pill background
+   read as too "selected".) */
+.VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text::before,
+.VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text::before {
+    content: '';
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.4em;
+    vertical-align: -0.13em;
+    background-color: var(--vp-c-brand-1);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.69,107.31l-88-88a16,16,0,0,0-22.62,0L75.21,70.16a32,32,0,0,0-7.43,33.91l-31.2,31.2a8,8,0,0,0,0,11.32l38.84,38.84L26.34,234.34a8,8,0,0,0,11.32,11.32l49.05-49.06,38.85,38.84a8,8,0,0,0,11.31,0l31.2-31.19a32,32,0,0,0,33.91-7.44l50.85-50.85a16,16,0,0,0,0-22.62Z'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.69,107.31l-88-88a16,16,0,0,0-22.62,0L75.21,70.16a32,32,0,0,0-7.43,33.91l-31.2,31.2a8,8,0,0,0,0,11.32l38.84,38.84L26.34,234.34a8,8,0,0,0,11.32,11.32l49.05-49.06,38.85,38.84a8,8,0,0,0,11.31,0l31.2-31.19a32,32,0,0,0,33.91-7.44l50.85-50.85a16,16,0,0,0,0-22.62Z'/></svg>");
 }
-.VPSidebar a[href$='/api/functions/sveltex'] .text,
-.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text {
-    font-weight: 700 !important;
-    color: var(--vp-c-text-1) !important;
+.VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text,
+.VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text {
+    font-weight: 700;
+    color: var(--vp-c-text-1);
 }
-.VPSidebar a[href*='/api/functions/getDefault'] .text {
-    color: var(--vp-c-text-3) !important;
+.VPSidebar.VPSidebar a[href*='/api/functions/getDefault'] .text {
+    color: var(--vp-c-text-3);
 }
 
 /* ── editor setup tabs (logo buttons) — editor-integration page ─────────── */
@@ -694,7 +726,6 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin: 1.3rem 0;
     border: 1px solid var(--vp-c-divider);
     border-radius: 14px;
-    corner-shape: superellipse(2);
     overflow: hidden;
     background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
 }
@@ -702,20 +733,22 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 8px;
+    padding: 6px 8px;
     background: var(--vp-c-bg-soft);
     border-bottom: 1px solid var(--vp-c-divider);
 }
+/* Tabs hug their content vertically (the 20px logo / line-height sets the
+   row height); horizontal padding gives the label some breathing room. */
 .editor-tabs__tab {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 3px 13px;
+    padding: 0 13px;
     border: 1px solid transparent;
     border-radius: 10px;
-    corner-shape: superellipse(2);
     font-size: 0.9rem;
     font-weight: 500;
+    line-height: 1.5;
     color: var(--vp-c-text-2);
     background: transparent;
     cursor: pointer;
@@ -734,10 +767,14 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     border-color: var(--vp-c-divider);
 }
 /* Logos shown as provided (brand guidelines): fixed height, intrinsic width,
-   never recoloured or distorted; ~8px of clear space from the label/edges. */
-.editor-tabs__logo {
+   never recoloured or distorted; ~8px of clear space from the label/edges.
+   Scoped `.vp-doc` selector beats VitePress's default `.vp-doc img {
+   margin: 16px 0 }` (spec 0,1,1), which would otherwise force each tab
+   to ~52px tall regardless of padding. */
+.vp-doc .editor-tabs__logo {
     height: 20px;
     width: auto;
+    margin: 0;
     flex: 0 0 auto;
 }
 .editor-tabs__panel {
@@ -752,24 +789,19 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     flex: 0 0 auto;
 }
 
-/* ── local search popup: superellipse where supported ──────────────────── */
+/* ── local search popup: bump radii where superellipse is supported ─────
 
-/* VitePress ships a scoped `corner-shape: squircle` with small radii (6px on
-   the shell, 4px on the bar). When the browser supports `superellipse(2)`
-   we use a fuller curve and slightly larger radii so the shape reads as
-   intentional rather than ambiguous. Bumped to `.VPLocalSearchBox.VPLocalSearchBox`
-   to outrank VitePress's scoped component styles. */
+   VitePress ships a scoped `corner-shape: squircle` with tight radii (6px on
+   the shell, 4px on the bar). The site-wide `@supports` block above sets
+   `corner-shape: superellipse(2)` universally; here we just bump the radii
+   so the fuller curve reads as intentional. The doubled class outranks
+   VitePress's scoped component styles. */
 @supports (corner-shape: superellipse(2)) {
     .VPLocalSearchBox.VPLocalSearchBox .shell {
         border-radius: 18px;
-        corner-shape: superellipse(2);
     }
     .VPLocalSearchBox.VPLocalSearchBox .search-bar {
         border-radius: 10px;
-        corner-shape: superellipse(2);
-    }
-    .VPLocalSearchBox.VPLocalSearchBox .result {
-        corner-shape: superellipse(2);
     }
 }
 
@@ -795,23 +827,20 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 
 /* ── per-page accent (usage docs each pick up a "theme" colour) ────────── */
 
-/* Each top-level usage page gets a characteristic colour; body links on that
-   page inherit it. Callouts are exempt via the `!important` on `.api-cl a`
-   above, so the callout-local colour wins there. Code-links inherit from
-   their `<a>` (the existing `.vp-doc a > code` rule handles this). */
-.docs-md       { --page-color: #3b82f6; } /* markdown      — blue       */
-.docs-code     { --page-color: #8b5cf6; } /* code          — purple     */
-.docs-math     { --page-color: #10b981; } /* math          — green      */
-.docs-tex      { --page-color: #ef6c4d; } /* tex           — red-orange */
-.docs-verbatim { --page-color: #0891b2; } /* verbatim      — teal       */
-.docs-editor   { --page-color: #d97706; } /* editor setup  — amber      */
+/* Each top-level usage page gets a characteristic colour, picked to match the
+   in-page Phosphor icon hues so the accent and the iconography sit in the
+   same key. The `--hig-*` family already adapts light↔dark in colors.pcss,
+   so we don't need an explicit `.dark` override block here.
 
-.dark .docs-md       { --page-color: #60a5fa; }
-.dark .docs-code     { --page-color: #a78bfa; }
-.dark .docs-math     { --page-color: #34d399; }
-.dark .docs-tex      { --page-color: #fb8c66; }
-.dark .docs-verbatim { --page-color: #22d3ee; }
-.dark .docs-editor   { --page-color: #f59e0b; }
+   Verbatim has no inline icons (yet); brown reads as "raw material" / "as-is",
+   distinct from code's purple. Editor-integration uses the brand blue because
+   that's the colour its setup-card icons share. */
+.docs-md       { --page-color: var(--hig-pink); }
+.docs-code     { --page-color: var(--hig-purple); }
+.docs-math     { --page-color: var(--hig-orange); }
+.docs-tex      { --page-color: var(--168-700); }
+.docs-verbatim { --page-color: var(--hig-brown); }
+.docs-editor   { --page-color: var(--vp-c-brand-1); }
 
 :is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
     .vp-doc a {
@@ -822,8 +851,9 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     color: color-mix(in srgb, var(--page-color) 75%, var(--vp-c-text-1));
 }
 /* Code-links pick up the page colour too (otherwise the green inline-code
-   tint dominates). Excludes API pages (which have their own scheme) and the
-   callout-link rule already wins via `!important`. */
+   tint dominates). Excludes API pages (which have their own scheme); the
+   callout-link rule above wins via bumped specificity, so callout code-links
+   keep the callout's `--cl-color`. */
 :is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
     .vp-doc a > code {
     color: inherit;

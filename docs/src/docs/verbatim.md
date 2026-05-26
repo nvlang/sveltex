@@ -96,9 +96,10 @@ These apply to every verbatim type:
     decide which of the tag's attributes flow through to the rendered
     output. The allowlist defaults to `'all'`; the blocklist applies on
     top of it.
--   `respectSelfClosing` — when `true` (default), `<Tag />` is treated as
-    self-closing; when `false`, SvelTeX expects an opening + closing
-    pair.
+-   `respectSelfClosing` — when `true` (the default for `code`, `escape`
+    and `noop` types), `<Tag />` is treated as self-closing; when `false`
+    (the default for `tex`, since a TeX snippet always needs a body),
+    SvelTeX expects an opening + closing pair.
 -   `selfCloseOutputWith` — `'auto'` | `' />'` | `'/>'`: controls
     whether the rendered output emits a self-closing tag (` />` or
     `/>`) or omits the slash; `'auto'` mirrors whatever the source

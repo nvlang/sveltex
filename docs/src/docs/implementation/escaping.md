@@ -60,7 +60,7 @@ value in a map indexed by the UUIDs.
     visual aid for comparing the starting and ending points of different ranges.
     </p>
 
-    <figure class="flex justify-center my-4 py-6 bg-[var(--vp-code-block-bg)] rounded-xl"><EscapingRanges class="max-w-sm" /></figure>
+    <figure class="flex justify-center my-8 py-10 bg-[var(--vp-code-block-bg)] rounded-xl"><EscapingRanges class="max-w-sm" /></figure>
 
     <p class="pt-3">
     Consider the following, more concrete example. Here, each group of

@@ -139,7 +139,10 @@ export default await sveltex({
     math: {
         css: {
             type: 'hybrid',
-            cdn: 'jsdelivr'
+            // Either a single CDN name, or an ordered fallback list. The
+            // default is to try them in this order, picking the first one
+            // that's reachable at build time.
+            cdn: ['jsdelivr', 'esm.sh', 'cdnjs', 'unpkg'],
         },
         mathjax: {
             // Options passed to MathJax; note that some of the

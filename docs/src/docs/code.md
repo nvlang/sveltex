@@ -188,7 +188,7 @@ import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ codeBackend: 'none' }, {
     code: {
-        addLanguageClass: 'language-',
+        addLanguageClass: false,
         appendNewline: true,
         inlineMeta: undefined, // See IntelliSense for default
         transformers: {

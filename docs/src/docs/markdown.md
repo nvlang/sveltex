@@ -215,10 +215,10 @@ export default await sveltex(
         markdown: {
             options: {
                 // micromark options
+                allowDangerousHtml: true,
+                allowDangerousProtocol: false,
                 extensions: [],
                 htmlExtensions: [],
-                allowDangerousProtocol: false,
-                defaultLineEnding: undefined,
             },
             // Common options
             components: [],

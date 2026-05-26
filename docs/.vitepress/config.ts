@@ -271,6 +271,7 @@ export default defineConfig({
                     base: '/docs/implementation',
                     collapsed: false,
                     items: [
+                        { text: 'Architecture', link: '/architecture' },
                         { text: 'Escaping', link: '/escaping' },
                         { text: 'Markdown', link: '/markdown' },
                         { text: 'Testing', link: '/testing' },
