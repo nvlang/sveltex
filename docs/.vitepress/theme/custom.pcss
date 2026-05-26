@@ -242,8 +242,15 @@ div.VPLocalSearchBox {
     }
     .features-list ul {
         list-style: none;
+        /* Narrow viewports: the absolute-positioned icon (translated 100% +
+           12px left of its anchor) sits ~40px to the left of the li's start,
+           so without extra padding the icon sticks out past the viewport
+           edge. Bump the UL's own left padding so the icon lands inside the
+           viewport with some breathing room. On `md` and up, the surrounding
+           `.vp-doc` container has plenty of margin and we reset to flush. */
+        padding-left: 3rem;
         li {
-            @apply pl-4 md:pl-0;
+            padding-left: 1rem;
             > p {
                 margin: 0;
                 line-height: var(--li-line-height);
@@ -257,6 +264,10 @@ div.VPLocalSearchBox {
                 content: none;
             }
             line-height: var(--li-line-height);
+        }
+        @media (min-width: 768px) {
+            padding-left: 0;
+            li { padding-left: 0; }
         }
     }
     ul li {

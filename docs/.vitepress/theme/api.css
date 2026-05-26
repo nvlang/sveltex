@@ -737,14 +737,13 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     background: var(--vp-c-bg-soft);
     border-bottom: 1px solid var(--vp-c-divider);
 }
-/* Tabs hug their content vertically (the 20px logo / line-height sets the
-   row height); a couple of px y-padding give the label some breathing room
-   without making the bar feel tall. */
+/* Tabs read as actual buttons rather than flush labels: a generous-ish
+   y-padding gives the logo + label some breathing room above and below. */
 .editor-tabs__tab {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 2px 13px;
+    padding: 7px 13px;
     border: 1px solid transparent;
     border-radius: 10px;
     font-size: 0.9rem;
