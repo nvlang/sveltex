@@ -304,6 +304,16 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     background: color-mix(in srgb, var(--cl-color) 12%, transparent);
 }
 
+/* Callout links take the callout's own colour (so a link, the icon, and the
+   per-type tint all sit in the same hue). Code-links inherit from their `<a>`
+   via the rule above, so they match without a separate rule. */
+.api-cl a,
+.api-cl a:hover,
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) a,
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) a:hover {
+    color: var(--cl-color);
+}
+
 /* ── docs-side callouts (VitePress custom blocks) → match the API look ───── */
 
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) {

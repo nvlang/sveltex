@@ -4,7 +4,7 @@ description: Some highlights from SvelTeX's features.
 ---
 
 <script lang="ts" setup>
-import { PhGear, PhLightning, PhShieldCheck, PhPackage, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple, PhTextAlignLeft } from '@phosphor-icons/vue';
+import { PhGear, PhLightning, PhShieldCheck, PhBatteryCharging, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple, PhTextAlignLeft } from '@phosphor-icons/vue';
 </script>
 
 # Overview
@@ -45,9 +45,9 @@ preprocessor can take over.
     generate highly optimized SVGs for complex graphics using familiar syntax,
     all without leaving your Svelte files.
 
--   <PhPackage :size="28" weight="duotone"/>
+-   <PhBatteryCharging :size="28" weight="duotone"/>
 
-    **Out-of-the-box:** Sensible defaults and helpful features such as automatic
+    **Batteries included:** Sensible defaults and helpful features such as automatic
     CSS injection for MathJax and KaTeX make it easy to get started with
     SvelTeX.
 
