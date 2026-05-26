@@ -44,6 +44,7 @@ const { sidebar: apiSidebar } = await loadApi();
 export default defineConfig({
     title: 'SvelTeX',
     description: 'Flexible Svelte preprocessor with extensive LaTeX support.',
+    head: [['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }]],
     vite: {
         plugins: [
             tailwindcss() as any,
@@ -227,8 +228,8 @@ export default defineConfig({
         search: { provider: 'local' },
         notFound: {},
         logo: {
-            light: '/light/logo.svg',
-            dark: '/dark/logo.svg',
+            light: '/logos/sveltex-light-monochrome.svg',
+            dark: '/logos/sveltex-dark-monochrome.svg',
         },
         sidebar: {
             '/docs/': [
