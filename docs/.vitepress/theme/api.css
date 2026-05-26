@@ -842,17 +842,18 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
    in-page Phosphor icon hues so the accent and the iconography sit in the
    same key. The `--hig-*` family already adapts light↔dark in colors.pcss.
 
-   In light mode the raw HIG hues are a touch too saturated for body links
-   (esp. purple), so we blend ~15 % of `--vp-c-text-1` in. The dark-mode
-   tones are already restrained, so we leave them alone. Verbatim has no
-   inline icons (yet); brown reads as "raw material" / "as-is", distinct
-   from code's purple. Editor-integration uses the brand blue because
-   that's the colour its setup-card icons share. */
-.docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 85%, var(--vp-c-text-1)); }
-.docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 78%, var(--vp-c-text-1)); }
-.docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 88%, var(--vp-c-text-1)); }
-.docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 82%, var(--vp-c-text-1)); }
-.docs-verbatim { --page-color: color-mix(in srgb, var(--hig-brown) 92%, var(--vp-c-text-1)); }
+   In light mode the raw HIG hues read as too saturated for body links —
+   the eye should land on the prose, not on every link. We blend a fair
+   amount of `--vp-c-text-1` in for the bright hues (pink, purple, orange)
+   and a lighter touch for the already-restrained ones (green, brown).
+   The dark-mode tones are already calmer against the dark background, so
+   they keep the raw HIG values. Editor-integration uses the brand blue
+   because that's the colour its setup-card icons share. */
+.docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 60%, var(--vp-c-text-1)); }
+.docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 55%, var(--vp-c-text-1)); }
+.docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 65%, var(--vp-c-text-1)); }
+.docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 78%, var(--vp-c-text-1)); }
+.docs-verbatim { --page-color: color-mix(in srgb, var(--hig-brown) 90%, var(--vp-c-text-1)); }
 .docs-editor   { --page-color: var(--vp-c-brand-1); } /* brand-1 is already calibrated */
 
 /* Dark mode: drop the text-mix so the accents stay vivid against the dark
