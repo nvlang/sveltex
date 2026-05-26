@@ -738,12 +738,13 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     border-bottom: 1px solid var(--vp-c-divider);
 }
 /* Tabs hug their content vertically (the 20px logo / line-height sets the
-   row height); horizontal padding gives the label some breathing room. */
+   row height); a couple of px y-padding give the label some breathing room
+   without making the bar feel tall. */
 .editor-tabs__tab {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 0 13px;
+    padding: 2px 13px;
     border: 1px solid transparent;
     border-radius: 10px;
     font-size: 0.9rem;
@@ -756,6 +757,17 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
         color 0.15s ease,
         background 0.15s ease,
         border-color 0.15s ease;
+}
+/* Phosphor-icon variants (currently just "Others") sit closer to the label
+   than the proper brand logos do — VS Code / Zed marks carry their own
+   clear-space, so they want a bit more breathing room than a bare icon. */
+.editor-tabs__tab:has(.editor-tabs__icon) {
+    gap: 5px;
+}
+/* The Open VSX wordmark has no internal padding around its glyph, so it
+   reads as too far from the label at the default gap. */
+.editor-tabs__tab:has(img[src*='open-vsx']) {
+    gap: 6px;
 }
 .editor-tabs__tab:hover {
     color: var(--vp-c-text-1);
@@ -829,18 +841,28 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 
 /* Each top-level usage page gets a characteristic colour, picked to match the
    in-page Phosphor icon hues so the accent and the iconography sit in the
-   same key. The `--hig-*` family already adapts light↔dark in colors.pcss,
-   so we don't need an explicit `.dark` override block here.
+   same key. The `--hig-*` family already adapts light↔dark in colors.pcss.
 
-   Verbatim has no inline icons (yet); brown reads as "raw material" / "as-is",
-   distinct from code's purple. Editor-integration uses the brand blue because
+   In light mode the raw HIG hues are a touch too saturated for body links
+   (esp. purple), so we blend ~15 % of `--vp-c-text-1` in. The dark-mode
+   tones are already restrained, so we leave them alone. Verbatim has no
+   inline icons (yet); brown reads as "raw material" / "as-is", distinct
+   from code's purple. Editor-integration uses the brand blue because
    that's the colour its setup-card icons share. */
-.docs-md       { --page-color: var(--hig-pink); }
-.docs-code     { --page-color: var(--hig-purple); }
-.docs-math     { --page-color: var(--hig-orange); }
-.docs-tex      { --page-color: var(--168-700); }
-.docs-verbatim { --page-color: var(--hig-brown); }
-.docs-editor   { --page-color: var(--vp-c-brand-1); }
+.docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 85%, var(--vp-c-text-1)); }
+.docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 78%, var(--vp-c-text-1)); }
+.docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 88%, var(--vp-c-text-1)); }
+.docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 82%, var(--vp-c-text-1)); }
+.docs-verbatim { --page-color: color-mix(in srgb, var(--hig-brown) 92%, var(--vp-c-text-1)); }
+.docs-editor   { --page-color: var(--vp-c-brand-1); } /* brand-1 is already calibrated */
+
+/* Dark mode: drop the text-mix so the accents stay vivid against the dark
+   background. The HIG light/dark swap is already doing the right thing here. */
+.dark .docs-md       { --page-color: var(--hig-pink); }
+.dark .docs-code     { --page-color: var(--hig-purple); }
+.dark .docs-math     { --page-color: var(--hig-orange); }
+.dark .docs-tex      { --page-color: var(--168-700); }
+.dark .docs-verbatim { --page-color: var(--hig-brown); }
 
 :is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
     .vp-doc a {

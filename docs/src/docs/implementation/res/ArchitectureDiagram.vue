@@ -10,7 +10,7 @@
 <template>
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 820 360"
+        viewBox="0 0 820 250"
         width="100%"
         height="auto"
         role="img"
@@ -58,40 +58,33 @@
 
             <!-- 3. Markdown processing -->
             <g class="node">
-                <rect x="300" y="30" width="140" height="56" rx="10" ry="10" />
-                <text x="370" y="58" text-anchor="middle">Markdown</text>
-                <text x="370" y="74" text-anchor="middle" class="sub">micromark / md-it / unified</text>
+                <rect x="300" y="30" width="150" height="56" rx="10" ry="10" />
+                <text x="375" y="58" text-anchor="middle">Markdown</text>
+                <text x="375" y="74" text-anchor="middle" class="sub">micromark / md-it / unified / marked</text>
             </g>
 
             <!-- 4. Re-insert (dispatch hub) -->
             <g class="node node--hub">
-                <rect x="470" y="30" width="130" height="56" rx="10" ry="10" />
-                <text x="535" y="58" text-anchor="middle">Re-insert</text>
-                <text x="535" y="74" text-anchor="middle" class="sub">dispatch to handlers</text>
+                <rect x="475" y="30" width="135" height="56" rx="10" ry="10" />
+                <text x="542" y="58" text-anchor="middle">Re-insert UUIDs</text>
+                <text x="542" y="74" text-anchor="middle" class="sub">dispatch to handlers</text>
             </g>
 
-            <!-- 5. Svelte source -->
-            <g class="node">
-                <rect x="630" y="30" width="120" height="56" rx="10" ry="10" />
-                <text x="690" y="58" text-anchor="middle">Svelte source</text>
-                <text x="690" y="74" text-anchor="middle" class="sub">processed output</text>
-            </g>
-
-            <!-- 6. Svelte compiler (terminal) -->
+            <!-- 5. Svelte source (terminal — this is what SvelTeX outputs;
+                 the Svelte compiler downstream isn't part of SvelTeX itself
+                 and is described in the prose, not the diagram). -->
             <g class="node node--terminal">
-                <rect x="630" y="278" width="120" height="56" rx="10" ry="10" />
-                <text x="690" y="306" text-anchor="middle">Svelte compiler</text>
-                <text x="690" y="322" text-anchor="middle" class="sub">your build pipeline</text>
+                <rect x="640" y="30" width="160" height="56" rx="10" ry="10" />
+                <text x="720" y="58" text-anchor="middle">Svelte source</text>
+                <text x="720" y="74" text-anchor="middle" class="sub">→ Svelte compiler</text>
             </g>
 
             <!-- Arrows along the main pipeline -->
             <g class="connector connector--main">
                 <path d="M 130 58 L 158 58" marker-end="url(#arch-arrow)" />
                 <path d="M 270 58 L 298 58" marker-end="url(#arch-arrow)" />
-                <path d="M 440 58 L 468 58" marker-end="url(#arch-arrow)" />
-                <path d="M 600 58 L 628 58" marker-end="url(#arch-arrow)" />
-                <!-- Svelte source ↓ Svelte compiler -->
-                <path d="M 690 86 L 690 276" marker-end="url(#arch-arrow)" />
+                <path d="M 450 58 L 473 58" marker-end="url(#arch-arrow)" />
+                <path d="M 610 58 L 638 58" marker-end="url(#arch-arrow)" />
             </g>
         </g>
 
@@ -118,20 +111,16 @@
                 <text x="660" y="216" text-anchor="middle" class="sub">escape / noop</text>
             </g>
 
-            <!-- Dashed dispatch lines from the Re-insert hub down to each handler -->
+            <!-- Dispatch lines: hub → handlers. Arrowheads make the
+                 downstream direction explicit; the handlers process the UUID
+                 contents and return them to the hub for re-insertion (the
+                 return path is implicit — keeping it on the diagram clutters
+                 things). -->
             <g class="connector connector--dispatch">
-                <path d="M 535 88 L 535 150 L 90  150 L 90  178" />
-                <path d="M 535 88 L 535 150 L 265 150 L 265 178" />
-                <path d="M 535 88 L 535 150 L 465 150 L 465 178" />
-                <path d="M 535 88 L 535 150 L 660 150 L 660 178" />
-            </g>
-
-            <!-- Return arrows from each handler back up into Svelte source -->
-            <g class="connector connector--return">
-                <path d="M 90  226 L 90  254 L 690 254 L 690 145" marker-end="url(#arch-arrow)" />
-                <path d="M 265 226 L 265 254" />
-                <path d="M 465 226 L 465 254" />
-                <path d="M 660 226 L 660 254" />
+                <path d="M 542 88 L 542 150 L 90  150 L 90  178" marker-end="url(#arch-arrow)" />
+                <path d="M 542 88 L 542 150 L 265 150 L 265 178" marker-end="url(#arch-arrow)" />
+                <path d="M 542 88 L 542 150 L 465 150 L 465 178" marker-end="url(#arch-arrow)" />
+                <path d="M 542 88 L 542 150 L 660 150 L 660 178" marker-end="url(#arch-arrow)" />
             </g>
         </g>
     </svg>
@@ -190,9 +179,5 @@
 .connector--dispatch path {
     stroke-dasharray: 5 3;
     opacity: 0.7;
-}
-.connector--return path {
-    stroke-dasharray: 3 4;
-    opacity: 0.55;
 }
 </style>
