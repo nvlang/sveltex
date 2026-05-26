@@ -862,7 +862,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
    saturation and nudges the colour toward the prose tone. */
 .dark .docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 70%, var(--vp-c-text-1)); }
 .dark .docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 65%, var(--vp-c-text-1)); }
-.dark .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 72%, var(--vp-c-text-1)); }
+.dark .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 60%, var(--vp-c-text-1)); }
 .dark .docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 85%, var(--vp-c-text-1)); }
 .dark .docs-verbatim { --page-color: var(--hig-brown); } /* brown is already restrained */
 
