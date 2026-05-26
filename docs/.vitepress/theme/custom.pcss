@@ -243,28 +243,15 @@ div.VPLocalSearchBox {
     .features-list ul {
         list-style: none;
         li {
+            @apply pl-4 md:pl-0;
             > p {
                 margin: 0;
                 line-height: var(--li-line-height);
             }
-            /* On `md` and up, the icon sits in the left gutter (positioned
-               absolutely, translated 100% + 12px to the left of its anchor).
-               On narrow viewports the gutter doesn't exist, so the absolute
-               positioning would push the icon off the left edge of the
-               screen. Drop to inline flow there — the icon renders on its
-               own line above the label, which reads as a small marker. */
             svg {
                 color: var(--vp-c-brand-2);
-                display: block;
-                margin-bottom: 0.25rem;
-            }
-            @media (min-width: 768px) {
-                svg {
-                    display: inline;
-                    margin: 0;
-                    position: absolute;
-                    translate: calc(-100% - 12px);
-                }
+                position: absolute;
+                translate: calc(-100% - 12px);
             }
             &::marker {
                 content: none;
