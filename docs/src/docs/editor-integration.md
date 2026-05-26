@@ -105,8 +105,8 @@ goes to the **SvelTeX Language Server** output channel if you need to debug.
 </template>
 <template #openvsx>
 
-Cursor, VSCodium, Theia, and other VS Code-compatible editors install the same
-extension from [**Open VSX**](https://open-vsx.org/extension/sveltex-preprocessor/sveltex).
+Cursor, VSCodium, Theia, and other VS Code-compatible editors can install the
+same extension from [**Open VSX**](https://open-vsx.org/extension/sveltex-preprocessor/sveltex).
 Search **"SvelTeX"** in the editor's Extensions view, or open the
 [Open VSX page](https://open-vsx.org/extension/sveltex-preprocessor/sveltex)
 directly.
@@ -215,8 +215,8 @@ editors that want math features in plain `.tex` / `.md` files).
 -   **No completion inside `<tex>` / `<latex>` / `<tikz>`.** The
     server forwards LaTeX-verbatim regions to TexLab; if `texlab`
     isn't on `PATH`, these regions are silently skipped. Install
-    [TexLab](https://github.com/latex-lsp/texlab/releases) and
-    restart your editor.
+    [TexLab](https://github.com/latex-lsp/texlab) (a package manager is
+    usually easiest) and restart your editor.
 
 -   **Diagnostics for math / LaTeX are missing.** Not implemented
     yet — math and LaTeX verbatim regions get completion and hover

@@ -686,7 +686,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 7px 13px;
+    padding: 5px 13px;
     border: 1px solid transparent;
     border-radius: 10px;
     corner-shape: superellipse(2);
