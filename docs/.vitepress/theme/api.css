@@ -852,8 +852,11 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 60%, var(--vp-c-text-1)); }
 .docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 55%, var(--vp-c-text-1)); }
 .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 65%, var(--vp-c-text-1)); }
-.docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 78%, var(--vp-c-text-1)); }
-.docs-verbatim { --page-color: color-mix(in srgb, var(--hig-brown) 90%, var(--vp-c-text-1)); }
+/* Tex green and verbatim brown read slightly bright in light mode — wrap
+   the base mix in an `oklab` blend with black to nudge the lightness down
+   a touch without touching chroma (i.e. saturation stays put). */
+.docs-tex      { --page-color: color-mix(in oklab, color-mix(in srgb, var(--168-700) 78%, var(--vp-c-text-1)) 92%, black); }
+.docs-verbatim { --page-color: color-mix(in oklab, color-mix(in srgb, var(--hig-brown) 90%, var(--vp-c-text-1)) 92%, black); }
 .docs-editor   { --page-color: var(--vp-c-brand-1); } /* brand-1 is already calibrated */
 
 /* Dark mode: the HIG dark hues (esp. pink, purple, orange) still read as
@@ -863,8 +866,11 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .dark .docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 70%, var(--vp-c-text-1)); }
 .dark .docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 65%, var(--vp-c-text-1)); }
 .dark .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 60%, var(--vp-c-text-1)); }
-.dark .docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 85%, var(--vp-c-text-1)); }
-.dark .docs-verbatim { --page-color: var(--hig-brown); } /* brown is already restrained */
+/* Tex green and verbatim brown read slightly dim in dark mode — wrap the
+   base in an `oklab` blend with white to nudge the lightness up a touch
+   without touching chroma. */
+.dark .docs-tex      { --page-color: color-mix(in oklab, color-mix(in srgb, var(--168-700) 85%, var(--vp-c-text-1)) 92%, white); }
+.dark .docs-verbatim { --page-color: color-mix(in oklab, var(--hig-brown) 92%, white); }
 
 :is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
     .vp-doc a {

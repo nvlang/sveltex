@@ -62,8 +62,9 @@ package gives each region the treatment it deserves.
     **LaTeX features in `tex` verbatim:** When
     [TexLab](https://github.com/latex-lsp/texlab) is on `PATH`,
     hover and completion inside `<tex>` / `<latex>` / `<tikz>`
-    environments are forwarded to it. If TexLab isn't installed,
-    these regions are skipped silently.
+    environments (or their `<Tex>` / `<TeX>` / `<LaTeX>` / `<TikZ>`
+    / `<Latex>` / `<Tikz>` casing variants) are forwarded to it. If
+    TexLab isn't installed, these regions are skipped silently.
 
 -   <PhArrowClockwise color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 

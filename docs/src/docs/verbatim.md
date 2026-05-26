@@ -46,12 +46,12 @@ verbatim covers four processing modes in total.
 
 ## The four processing types
 
-| `type` | Behaviour | Typical tag names |
-| --- | --- | --- |
-| `'tex'` | Compile the contents as a LaTeX document, convert the output to SVG, and import the SVG as a Svelte component. See the [TeX page](tex) for the full pipeline. | `<Tex>`, `<tex>`, `<tikz>` |
-| `'code'` | Run the contents through the configured [code](code) backend (Shiki, starry-night, highlight.js, or escape-only) and wrap the result. | `<Code>`, `<Highlight>` |
-| `'escape'` | HTML- and brace-escape the contents (so curly braces don't get interpreted as Svelte mustache tags) and emit them verbatim. | `<Verbatim>` |
-| `'noop'` | Don't process the body at all — no Markdown, math, code, or TeX handling. SvelTeX is effectively switched off for the region; the body passes through to Svelte unchanged. | `<Raw>` |
+| `type` | Behaviour |
+| --- | --- |
+| `'tex'` | Compile the contents as a LaTeX document, convert the output to SVG, and import the SVG as a Svelte component. See the [TeX page](tex) for the full pipeline. |
+| `'code'` | Run the contents through the configured [code](code) backend (Shiki, starry-night, highlight.js, or escape-only) and wrap the result. |
+| `'escape'` | HTML- and brace-escape the contents (so curly braces don't get interpreted as Svelte mustache tags) and emit them verbatim. |
+| `'noop'` | Don't process the body at all — no Markdown, math, code, or TeX handling. SvelTeX is effectively switched off for the region; the body passes through to Svelte unchanged. |
 
 ## Configuration
 

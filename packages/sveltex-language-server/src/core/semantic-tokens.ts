@@ -44,6 +44,10 @@ import { verbatimBodyOffsets, type Region } from './regions.js';
  * `PLAIN_VERBATIM_TAGS`, the TextMate grammar's `tex|latex|tikz` and
  * `verb|verbatim` patterns). Skipping these here keeps us from
  * overwriting the editor grammar's richer colouring.
+ *
+ * Compared case-insensitively against the source tag — the editor
+ * grammars accept lowercase / proper-form (`TeX`, `LaTeX`, `TikZ`) and
+ * title-case (`Tex`, `Latex`, `Tikz`) spellings interchangeably.
  */
 const NATIVELY_HIGHLIGHTED_TAGS: ReadonlySet<string> = new Set([
     'tex',

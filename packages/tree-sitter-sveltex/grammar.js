@@ -33,7 +33,14 @@
 // Verbatim environment tag names whose body is LaTeX. SvelTeX's default
 // `verbatim` config registers `tex`, `latex` and `tikz` as TeX environments
 // (see `defaultConfigSnapshot()` in the language server's `config.ts`).
-const TEX_VERBATIM_TAGS = ['tex', 'latex', 'tikz', 'TeX', 'LaTeX', 'TikZ'];
+// The capitalised variants (`TeX`/`LaTeX`/`TikZ` for the proper forms and
+// `Tex`/`Latex`/`Tikz` for title-case Svelte-style component names) cover
+// the names users are likely to reach for in a `.sveltex` file.
+const TEX_VERBATIM_TAGS = [
+    'tex', 'latex', 'tikz',
+    'TeX', 'LaTeX', 'TikZ',
+    'Tex', 'Latex', 'Tikz',
+];
 
 // Verbatim environment tag names whose body is treated as opaque/escaped text
 // (no embedded language). SvelTeX's defaults register `verb` and `verbatim`.
