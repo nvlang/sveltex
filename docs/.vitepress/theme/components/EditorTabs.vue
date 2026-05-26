@@ -48,7 +48,7 @@ const logoSrc = (e: (typeof editors)[number]) =>
                     v-else
                     class="editor-tabs__icon"
                     :size="20"
-                    weight="duotone"
+                    weight="fill"
                 />
                 <span class="editor-tabs__name">{{ e.name }}</span>
             </button>

@@ -363,7 +363,10 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .custom-block .cb-icon {
     position: absolute;
     left: 0.7rem;
-    top: 0.58rem;
+    /* Match the default mask icon's size + vertical centre on the title line. */
+    top: calc(0.7rem + 0.16em);
+    width: 1.2em;
+    height: 1.2em;
     color: var(--cl-color);
 }
 
@@ -383,7 +386,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) .content {
     display: contents;
 }
-.vp-doc .custom-block:is(.tip, .warning, .danger, .info) .content > p:first-child {
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) .content > p:first-of-type {
     display: inline;
     margin: 0;
 }
@@ -686,7 +689,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 5px 13px;
+    padding: 3px 13px;
     border: 1px solid transparent;
     border-radius: 10px;
     corner-shape: superellipse(2);
