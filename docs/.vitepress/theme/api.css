@@ -856,13 +856,15 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .docs-verbatim { --page-color: color-mix(in srgb, var(--hig-brown) 90%, var(--vp-c-text-1)); }
 .docs-editor   { --page-color: var(--vp-c-brand-1); } /* brand-1 is already calibrated */
 
-/* Dark mode: drop the text-mix so the accents stay vivid against the dark
-   background. The HIG light/dark swap is already doing the right thing here. */
-.dark .docs-md       { --page-color: var(--hig-pink); }
-.dark .docs-code     { --page-color: var(--hig-purple); }
-.dark .docs-math     { --page-color: var(--hig-orange); }
-.dark .docs-tex      { --page-color: var(--168-700); }
-.dark .docs-verbatim { --page-color: var(--hig-brown); }
+/* Dark mode: the HIG dark hues (esp. pink, purple, orange) still read as
+   eye-grabbing against the dark background, so apply a similar mix — this
+   time with the dark-mode `--vp-c-text-1` (a light grey), which mutes the
+   saturation and nudges the colour toward the prose tone. */
+.dark .docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 70%, var(--vp-c-text-1)); }
+.dark .docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 65%, var(--vp-c-text-1)); }
+.dark .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 72%, var(--vp-c-text-1)); }
+.dark .docs-tex      { --page-color: color-mix(in srgb, var(--168-700) 85%, var(--vp-c-text-1)); }
+.dark .docs-verbatim { --page-color: var(--hig-brown); } /* brown is already restrained */
 
 :is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
     .vp-doc a {
