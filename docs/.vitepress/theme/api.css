@@ -310,7 +310,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     display: block; /* override VitePress's flex so the title can flow inline */
     position: relative;
     margin: 1rem 0;
-    padding: 0.7rem 0.9rem 0.7rem 2.4rem;
+    padding: 0.7rem 0.9rem 0.7rem 2.15rem;
     border: 0;
     border-radius: 11px;
     corner-shape: superellipse(2);
@@ -334,7 +334,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info)::before {
     content: '';
     position: absolute;
-    left: 0.95rem;
+    left: 0.7rem;
     /* Padding-top, plus a small em nudge to center on the title's cap height. */
     top: calc(0.7rem + 0.22em);
     width: 1.15em;
@@ -355,6 +355,18 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z'/></svg>");
     -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z'/></svg>");
 }
+/* A callout whose body opens with a `.cb-icon` (a Phosphor icon) uses that as
+   its icon, in the callout's colour, instead of the default mask. */
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info):has(.cb-icon)::before {
+    display: none;
+}
+.vp-doc .custom-block .cb-icon {
+    position: absolute;
+    left: 0.7rem;
+    top: 0.58rem;
+    color: var(--cl-color);
+}
+
 /* Inline the label with the first body paragraph (like the API callout). */
 .vp-doc .custom-block:is(.tip, .warning, .danger, .info) .custom-block-title {
     display: inline;
@@ -711,11 +723,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-top: 0.9rem;
 }
 
-/* Inline "try out these icon weights" comparison (e.g. in a callout). */
-.icon-tryout {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    font-size: 0.82em;
-    opacity: 0.85;
+/* Phosphor icon on the logo-free editor tabs (Open VSX, Others). */
+.editor-tabs__icon {
+    flex: 0 0 auto;
 }

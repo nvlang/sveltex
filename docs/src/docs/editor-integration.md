@@ -92,8 +92,8 @@ there's nothing extra to install — it activates on any `.sveltex` file.
 <EditorTabs>
 <template #vscode>
 
-Install from the **VS Code Marketplace** — search **"SvelTeX"** in the
-Extensions view, or from a terminal:
+Install from the [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex)
+— search **"SvelTeX"** in the Extensions view, or from a terminal:
 
 ```sh
 code --install-extension sveltex-preprocessor.sveltex
@@ -103,34 +103,13 @@ The first activation spawns the language server in the background; its output
 goes to the **SvelTeX Language Server** output channel if you need to debug.
 
 </template>
-<template #cursor>
+<template #openvsx>
 
-Cursor is a VS Code fork, so the same extension works. Search **"SvelTeX"** in
-the Extensions view, or:
-
-```sh
-cursor --install-extension sveltex-preprocessor.sveltex
-```
-
-The extension is published to both the VS Code Marketplace and **Open VSX**, so
-it resolves from whichever registry Cursor is pointed at.
-
-</template>
-<template #vscodium>
-
-VSCodium installs from **Open VSX**, where the extension is published alongside
-the Marketplace. Search **"SvelTeX"** in the Extensions view, or:
-
-```sh
-codium --install-extension sveltex-preprocessor.sveltex
-```
-
-</template>
-<template #theia>
-
-Theia installs extensions from **Open VSX**. Open the Extensions view, search
-**"SvelTeX"**, and install — the bundled language server starts automatically
-for `.sveltex` files.
+Cursor, VSCodium, Theia, and other VS Code-compatible editors install the same
+extension from [**Open VSX**](https://open-vsx.org/extension/sveltex-preprocessor/sveltex).
+Search **"SvelTeX"** in the editor's Extensions view, or open the
+[Open VSX page](https://open-vsx.org/extension/sveltex-preprocessor/sveltex)
+directly.
 
 </template>
 <template #zed>
@@ -143,7 +122,7 @@ extensions panel (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>), search
 
 ::: tip Enable the heading outline in Zed
 
-<span class="icon-tryout"><PhBookmarksSimple weight="duotone" :size="30" /> duotone&ensp;·&ensp;<PhBookmarksSimple weight="fill" :size="30" /> fill</span>
+<PhBookmarksSimple weight="fill" class="cb-icon" :size="20" />
 
 Zed's outline panel and breadcrumbs default to its tree-sitter queries, which
 can't see the Markdown headings (they're delegated to an injected grammar). To
@@ -161,9 +140,7 @@ server's symbols for the `SvelTeX` language in your `settings.json`:
 :::
 
 </template>
-</EditorTabs>
-
-## Any other editor
+<template #others>
 
 The language server is editor-agnostic. Any LSP-aware editor (Neovim, Emacs
 `lsp-mode`, Sublime LSP, Helix, …) can launch it as a child process that speaks
@@ -182,6 +159,9 @@ LSP over stdio:
 For a worked example of how a third-party editor launches the server, see the
 [Zed extension's manifest](https://github.com/nvlang/sveltex/blob/main/editors/zed/extension.toml)
 and `editors/zed/src/lib.rs` — both spawn `bin/server.js` over stdio.
+
+</template>
+</EditorTabs>
 
 ## Configuration
 

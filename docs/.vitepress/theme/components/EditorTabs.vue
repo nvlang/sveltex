@@ -1,24 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useData, withBase } from 'vitepress';
+import { PhStorefront, PhDotsThreeOutline } from '@phosphor-icons/vue';
 
-// Editor setup tabs for the "Editor integration" page. Each editor's logo is
-// used as provided (no recolouring or distortion), per the respective brand
-// guidelines; Theia and Zed ship light/dark marks, so we swap to the legible
-// one for the active theme.
+// Editor setup tabs for the "Editor integration" page. Editor logos are used as
+// provided (no recolouring or distortion), per each project's brand guidelines:
+// VS Code permits its icon in documentation and as a link to its site; Zed
+// permits its full-black / full-white marks, so `zed-light` / `zed-dark` are
+// swapped for the active theme. The VS-Code-compatible editors are grouped
+// under a logo-free Open VSX tab, and other editors under "Others".
 const { isDark } = useData();
 
 const editors = [
     { id: 'vscode', name: 'VS Code', logo: 'vscode.svg' },
-    { id: 'cursor', name: 'Cursor', logo: 'cursor.svg' },
-    { id: 'vscodium', name: 'VSCodium', logo: 'vscodium.svg' },
-    {
-        id: 'theia',
-        name: 'Theia',
-        logo: 'theia-light.svg',
-        logoDark: 'theia-dark.svg',
-    },
+    { id: 'openvsx', name: 'Open VSX', icon: PhStorefront },
     { id: 'zed', name: 'Zed', logo: 'zed-light.svg', logoDark: 'zed-dark.svg' },
+    { id: 'others', name: 'Others', icon: PhDotsThreeOutline },
 ];
 
 const active = ref(editors[0].id);
@@ -39,10 +36,18 @@ const logoSrc = (e: (typeof editors)[number]) =>
                 @click="active = e.id"
             >
                 <img
+                    v-if="e.logo"
                     class="editor-tabs__logo"
                     :src="logoSrc(e)"
                     :alt="`${e.name} logo`"
                     loading="lazy"
+                />
+                <component
+                    :is="e.icon"
+                    v-else
+                    class="editor-tabs__icon"
+                    :size="20"
+                    weight="duotone"
                 />
                 <span class="editor-tabs__name">{{ e.name }}</span>
             </button>
