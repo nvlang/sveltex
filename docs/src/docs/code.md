@@ -4,7 +4,7 @@ pageClass: docs-code
 
 <script lang="ts" setup>
 import PipelineImage from './PipelineImage.vue';
-import { PhFileCss, PhHighlighter, PhGear, PhArrowUDownRight } from '@phosphor-icons/vue';
+import { PhFileCss, PhHighlighter, PhGear, PhShuffle } from '@phosphor-icons/vue';
 </script>
 
 # Code
@@ -33,7 +33,7 @@ backends.
     **Custom transformers:** Inject custom transformers to pre- and post-process
     the in- and output of the syntax highlighter, respectively.
 
--   <PhArrowUDownRight color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
+-   <PhShuffle color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Language Aliases:** Define custom aliases for languages.
 

@@ -3,7 +3,7 @@ pageClass: docs-verbatim
 ---
 
 <script lang="ts" setup>
-import { PhTag, PhSquareSplitHorizontal, PhBracketsAngle, PhArrowsLeftRight } from '@phosphor-icons/vue';
+import { PhHammer, PhFunnelX, PhShuffle } from '@phosphor-icons/vue';
 </script>
 
 # Verbatim environments
@@ -15,27 +15,21 @@ the Svelte compiler ever sees it.
 
 <div class="features-list mt-8">
 
--   <PhTag color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
-
-    **Custom tags:** Register any tag name (`<tikz>`, `<Code>`, `<Diagram>`,
-    …) as a verbatim environment. The name is yours to pick; SvelTeX
-    matches the source character-for-character.
-
--   <PhSquareSplitHorizontal color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
+-   <PhHammer color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Four processing modes:** `'tex'` compiles a LaTeX snippet to SVG,
     `'code'` runs the body through the [code](code) backend, `'escape'`
     HTML- and brace-escapes the body so Svelte leaves it alone, `'noop'`
     skips SvelTeX entirely and passes the body straight to Svelte.
 
--   <PhArrowsLeftRight color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
+-   <PhFunnelX color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Attribute forwarding:** Allowlist or blocklist which attributes flow
     from the source tag through to the rendered component, so build-time
     options (`preamble`, `caption`, …) can sit alongside runtime props
     without leaking.
 
--   <PhBracketsAngle color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
+-   <PhShuffle color="var(--hig-brown)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Aliases:** Several tag names can resolve to the same environment —
     handy for keeping `<tex>` / `<latex>` / `<tikz>` interchangeable in
@@ -44,10 +38,7 @@ the Svelte compiler ever sees it.
 </div>
 
 A **verbatim environment** is a Svelte-style element whose contents
-SvelTeX recognises by name and hands off to a dedicated handler. Inside
-the tag, neither the markdown processor nor (typically) the Svelte
-compiler parses the body — the verbatim handler decides what to do with
-it.
+SvelTeX recognises by name and hands off to a dedicated handler.
 
 The canonical use is `tex`-type environments that compile a LaTeX
 snippet to an SVG at build time (e.g. for [TikZ](tex) diagrams), but

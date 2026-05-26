@@ -3,7 +3,7 @@ pageClass: docs-editor
 ---
 
 <script lang="ts" setup>
-import { PhCursorText, PhEye, PhListMagnifyingGlass, PhPuzzlePiece, PhTreeStructure, PhGear, PhBookmarksSimple } from '@phosphor-icons/vue';
+import { PhFastForward, PhPi, PhListDashes, PhBookmarksSimple, PhBracketsCurly, PhArrowClockwise } from '@phosphor-icons/vue';
 </script>
 
 # Editor integration
@@ -23,58 +23,54 @@ package gives each region the treatment it deserves.
 
 <div class="features-list mt-8">
 
--   <PhPuzzlePiece color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhFastForward color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
-    **Full Svelte tooling, proxied:** Diagnostics, hover, completion,
+    **Full Svelte tooling, forwarded:** Diagnostics, hover, completion,
     go-to-definition, find references, document highlight, code
     actions, rename, signature help, and document links — all
     forwarded to the upstream
     [`svelte-language-server`](https://www.npmjs.com/package/svelte-language-server),
-    fully position-mapped to the source `.sveltex` file. Most
-    verbatim regions are suppressed so you don't see spurious
-    "unexpected `$`" diagnostics inside a math block — the exception
-    is `noop`-typed environments, whose bodies pass straight through
-    to Svelte at build time and so are forwarded to
-    `svelte-language-server` for full Svelte tooling.
+    fully position-mapped to the source `.sveltex` file.
 
--   <PhCursorText color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhPi color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
     **TeX command completion in math:** Type `\al` inside `$…$` and
-    get `\alpha` and friends, with rich hover showing each command's
-    signature, the Unicode symbol it renders, and a description. The
-    offered commands match the project's `mathBackend` (KaTeX vs
-    MathJax), via the bundled
+    get `\alpha` and friends, with hover showing each command's Unicode
+    symbol and signature. Completions match your `mathBackend` (KaTeX
+    or MathJax), via the bundled
     [`@nvl/sveltex-math-language-server`](https://www.npmjs.com/package/@nvl/sveltex-math-language-server).
 
--   <PhEye color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhListDashes color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
     **Frontmatter hover & completion:** Every recognised frontmatter
     key (`title`, `meta`, `base`, `link`, `imports`, …) and every
     standard [`<meta>`](markdown#meta) name documents itself on
-    hover, with a link to MDN. Completion offers the right keys for
-    the block the caret sits in.
+    hover, with a link to MDN. Completion only offers keys valid at
+    the cursor's nesting depth — `name` / `content` inside a `meta:`
+    entry, the standard `<link>` attributes inside a `link:` entry,
+    and so on.
 
--   <PhListMagnifyingGlass color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhBookmarksSimple color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
     **Heading outline & folding:** The Markdown headings of a
     `.sveltex` file populate the editor's outline view; folding
     ranges and structured selection ranges match the source's
     heading and block structure.
 
--   <PhTreeStructure color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhBracketsCurly color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
-    **LaTeX features in `tex` verbatim** _(optional)_: When
+    **LaTeX features in `tex` verbatim:** When
     [TexLab](https://github.com/latex-lsp/texlab) is on `PATH`,
     hover and completion inside `<tex>` / `<latex>` / `<tikz>`
     environments are forwarded to it. If TexLab isn't installed,
     these regions are skipped silently.
 
--   <PhGear color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
+-   <PhArrowClockwise color="var(--vp-c-brand-1)" :size="28" weight="duotone"/>
 
-    **Auto-configured:** Reads `svelte.config.{js,mjs,cjs,ts,mts,cts}`
-    from the workspace root to discover your SvelTeX configuration
-    (verbatim environment names, math delimiters, math backend, …)
-    and live-reloads when the config or one of its imports changes.
+    **Picks up your SvelTeX config:** Reads
+    `svelte.config.{js,mjs,cjs,ts,mts,cts}` from the workspace root
+    to discover your SvelTeX setup, and live-reloads when that file
+    (or one of its imports) changes.
 
 </div>
 
