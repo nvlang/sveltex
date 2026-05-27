@@ -492,7 +492,12 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
 .api-doc .vp-doc ul {
     list-style: none;
 }
-.api-doc .vp-doc li::marker {
+/* Suppress VitePress's em-dash `::marker`. `custom.pcss` defines that
+   rule at `.VPDoc .vp-doc ul li::marker` (spec 0,2,3); the doubled
+   `.api-doc.api-doc` here (0,3,3) is what guarantees we win regardless
+   of source-load order. Without this the em-dash and our `::before`
+   en-dash render on top of each other. */
+.api-doc.api-doc .vp-doc ul li::marker {
     content: none;
 }
 .api-doc .vp-doc ul > li {
