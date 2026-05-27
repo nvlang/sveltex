@@ -9,6 +9,12 @@ import { readFile } from 'fs/promises';
 import jsYaml from 'js-yaml';
 import tailwindcss from '@tailwindcss/vite';
 
+// The API sidebar is derived from `@nvl/sveltex`'s TSDoc at config-load time by
+// `loadApi()` (cached on disk; see `scripts/api-data.mjs`) — the same source the
+// `src/api/**/[id].paths.js` dynamic routes and `index.data.js` consume — so
+// there's no generated sidebar file to import and keep in sync.
+import { loadApi, PKG_SRC } from '../scripts/api-data.mjs';
+
 /**
  * Reads a TextMate grammar from a YAML source file under
  * `packages/vscode-sveltex/syntaxes/`. The YAMLs are the hand-authored
@@ -33,11 +39,26 @@ export const ESBUILD_MODULES_TARGET = [
 ];
 
 // https://vitepress.dev/reference/site-config
+const { sidebar: apiSidebar } = await loadApi();
+
 export default defineConfig({
     title: 'SvelTeX',
     description: 'Flexible Svelte preprocessor with extensive LaTeX support.',
+    head: [['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }]],
     vite: {
-        plugins: [tailwindcss() as any],
+        plugins: [
+            tailwindcss() as any,
+            // The API pages are derived from `@nvl/sveltex`'s source (via the
+            // `src/api/**` loaders). That source sits outside the docs root, so
+            // Vite's dev watcher ignores it by default; add it explicitly so
+            // TSDoc edits live-regenerate the dynamic routes + index table.
+            {
+                name: 'sveltex-watch-api-source',
+                configureServer(server) {
+                    server.watcher.add(PKG_SRC);
+                },
+            },
+        ],
         optimizeDeps: {
             exclude: ['@nvl/sveltex'],
             esbuildOptions: { target: ESBUILD_MODULES_TARGET },
@@ -119,6 +140,11 @@ export default defineConfig({
                 async () => (await import('shiki/langs/sass.mjs')).default,
                 async () => (await import('shiki/langs/postcss.mjs')).default,
                 async () => (await import('shiki/langs/stylus.mjs')).default,
+                // `yaml` — the sveltex grammar's frontmatter block embeds
+                // `source.yaml`. Without it that include is unresolved, the
+                // frontmatter isn't tokenized as YAML, and the math (`$…$`)
+                // rule leaks into `$lib/...` import keys.
+                async () => (await import('shiki/langs/yaml.mjs')).default,
             );
         },
         theme: {
@@ -136,71 +162,46 @@ export default defineConfig({
                 multiline: true,
                 rowspan: true,
             });
-            md.use(container as any, 'info', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
+            // Custom callouts: `::: info` / `::: tip` / `::: warning` /
+            // `::: danger`. Override VitePress's built-in containers so all
+            // four share one structure (`.custom-block` > `.custom-block-title`
+            // + `.content`); the icon and inline-title layout are applied in
+            // `theme/api.css`. The title defaults to the callout type and may
+            // be overridden -- `::: warning Heads up` -- with inline markdown.
+            const calloutTitle: Record<string, string> = {
+                info: 'Info',
+                tip: 'Tip',
+                warning: 'Warning',
+                danger: 'Danger',
+            };
+            for (const name of ['info', 'tip', 'warning', 'danger'] as const) {
+                md.use(container as any, name, {
+                    render: (tokens: any, idx: any) => {
+                        const token = tokens[idx];
+                        if (token.nesting !== 1) {
+                            // Closing: end `.content`, then `.custom-block`.
+                            return '</div></div>\n';
+                        }
+                        // `token.info` is the full `:::` params, e.g.
+                        // "warning Heads up". Strip the type name to get an
+                        // optional custom title; fall back to the default.
+                        const custom = token.info
+                            .trim()
+                            .slice(name.length)
+                            .trim();
+                        const title = custom
+                            ? md.renderInline(custom)
+                            : calloutTitle[name];
                         return (
-                            '<div class="custom-block info">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">' +
-                            '<circle cx="12" cy="12" r="10"/>' +
-                            '<path d="M12 16v-4"/><path d="M12 8h.01"/>' +
-                            '</svg>' +
+                            `<div class="custom-block ${name}">` +
+                            '<div class="custom-block-title">' +
+                            `<span class="custom-block-title-text">${title}</span>` +
                             '</div>' +
                             '<div class="content">'
                         );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
-            md.use(container as any, 'warning', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
-                        return (
-                            '<div class="custom-block warning">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert">' +
-                            '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>' +
-                            '<path d="M12 9v4"/>' +
-                            '<path d="M12 17h.01"/>' +
-                            '</svg>' +
-                            '</div>' +
-                            '<div class="content">'
-                        );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
-            md.use(container as any, 'danger', {
-                render: (tokens: any, idx: any) => {
-                    const token = tokens[idx];
-                    if (token.nesting === 1) {
-                        // Opening tag
-                        return (
-                            '<div class="custom-block danger">' +
-                            '<div class="icon">' +
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x">' +
-                            '<circle cx="12" cy="12" r="10"/>' +
-                            '<path d="m15 9-6 6"/>' +
-                            '<path d="m9 9 6 6"/>' +
-                            '</svg>' +
-                            '</div>' +
-                            '<div class="content">'
-                        );
-                    } else {
-                        // Closing tag
-                        return '</div>' + '</div>\n';
-                    }
-                },
-            });
+                    },
+                });
+            }
         },
     },
     vue: {},
@@ -211,6 +212,7 @@ export default defineConfig({
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Docs', link: '/docs' },
+            { text: 'API', link: '/api/' },
             { text: 'Playground', link: '/docs/playground' },
         ],
         editLink: {
@@ -226,73 +228,83 @@ export default defineConfig({
         search: { provider: 'local' },
         notFound: {},
         logo: {
-            light: '/light/logo.svg',
-            dark: '/dark/logo.svg',
+            light: '/logos/sveltex-light-monochrome.svg',
+            dark: '/logos/sveltex-dark-monochrome.svg',
         },
-        sidebar: [
-            {
-                text: 'Introduction',
-                base: '/docs',
-                collapsed: false,
-                items: [
-                    { text: 'Overview', link: '/' },
-                    { text: 'Getting Started', link: '/getting-started' },
-                    { text: 'Playground', link: '/playground' },
-                    { text: 'Acknowledgments', link: '/acknowledgments' },
-                ],
-            },
-            {
-                text: 'Usage',
-                base: '/docs',
-                collapsed: false,
-                items: [
-                    { text: 'Markdown', link: '/markdown' },
-                    { text: 'Code', link: '/code' },
-                    { text: 'Math', link: '/math' },
-                    { text: 'TeX', link: '/tex' },
-                    { text: 'Verbatim', link: '/verbatim' },
-                    { text: 'Language server', link: '/language-server' },
-                ],
-            },
-            // {
-            //     text: 'Examples',
-            //     base: '/docs/examples',
-            //     collapsed: false,
-            //     items: [{ text: 'Basic', link: '/basic' }],
-            // },
-            {
-                text: 'Implementation',
-                base: '/docs/implementation',
-                collapsed: false,
-                items: [
-                    { text: 'Escaping', link: '/escaping' },
-                    { text: 'Markdown', link: '/markdown' },
-                    { text: 'Testing', link: '/testing' },
-                    {
-                        text: 'TeX',
-                        collapsed: false,
-                        base: '/docs/implementation/tex',
-                        items: [
-                            { text: 'Overview', link: '/' },
-                            {
-                                text: 'Compilation: TeX → DVI/PDF/XDV',
-                                link: '/compilation',
-                            },
-                            {
-                                text: 'Conversion: DVI → SVG',
-                                link: '/conversion',
-                            },
-                            {
-                                text: 'Optimization: SVG → Svelte',
-                                link: '/optimization',
-                            },
-                            { text: 'Caching', link: '/caching' },
-                            { text: 'Benchmarks', link: '/benchmarks' },
-                        ],
-                    },
-                ],
-            },
-        ],
+        sidebar: {
+            '/docs/': [
+                {
+                    text: 'Introduction',
+                    base: '/docs',
+                    collapsed: false,
+                    items: [
+                        { text: 'Overview', link: '/' },
+                        { text: 'Getting Started', link: '/getting-started' },
+                        { text: 'Playground', link: '/playground' },
+                        { text: 'Acknowledgments', link: '/acknowledgments' },
+                    ],
+                },
+                {
+                    text: 'Usage',
+                    base: '/docs',
+                    collapsed: false,
+                    items: [
+                        { text: 'Markdown', link: '/markdown' },
+                        { text: 'Code', link: '/code' },
+                        { text: 'Math', link: '/math' },
+                        { text: 'TeX', link: '/tex' },
+                        { text: 'Verbatim', link: '/verbatim' },
+                        {
+                            text: 'Editor integration',
+                            link: '/editor-integration',
+                        },
+                    ],
+                },
+                // {
+                //     text: 'Examples',
+                //     base: '/docs/examples',
+                //     collapsed: false,
+                //     items: [{ text: 'Basic', link: '/basic' }],
+                // },
+                {
+                    text: 'Implementation',
+                    base: '/docs/implementation',
+                    collapsed: false,
+                    items: [
+                        { text: 'Architecture', link: '/architecture' },
+                        { text: 'Escaping', link: '/escaping' },
+                        { text: 'Markdown', link: '/markdown' },
+                        { text: 'Testing', link: '/testing' },
+                        {
+                            text: 'TeX',
+                            collapsed: false,
+                            base: '/docs/implementation/tex',
+                            items: [
+                                { text: 'Overview', link: '/' },
+                                {
+                                    text: 'Compilation: TeX → DVI/PDF/XDV',
+                                    link: '/compilation',
+                                },
+                                {
+                                    text: 'Conversion: DVI → SVG',
+                                    link: '/conversion',
+                                },
+                                {
+                                    text: 'Optimization: SVG → Svelte',
+                                    link: '/optimization',
+                                },
+                                { text: 'Caching', link: '/caching' },
+                                { text: 'Benchmarks', link: '/benchmarks' },
+                            ],
+                        },
+                    ],
+                },
+            ],
+            // The API reference is generated into `src/api/` by
+            // `scripts/build-api.mjs`; the sidebar (Overview + Interfaces +
+            // Functions) comes from its `api-sidebar.json`.
+            '/api/': apiSidebar,
+        },
 
         socialLinks: [
             { icon: 'github', link: 'https://github.com/nvlang/sveltex' },

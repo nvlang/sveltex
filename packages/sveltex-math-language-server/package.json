@@ -65,11 +65,12 @@
   },
   "devDependencies": {
     "@mathjax/src": "^4.1.2",
-    "@types/node": "^24.10.15",
-    "katex": "^0.16.47",
+    "@types/node": "^24.12.4",
+    "@vitest/coverage-v8": "^4.1.7",
+    "katex": "^0.17.0",
     "tslib": "^2.8.1",
-    "tsx": "^4.22.0",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }

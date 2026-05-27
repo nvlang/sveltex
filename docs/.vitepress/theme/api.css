@@ -1,0 +1,927 @@
+/* ───────────────────────────────────────────────────────────────────────
+   API reference styling (pages get `pageClass: api-doc`).
+
+   The four `--api-mono-*` aliases are kept for semantic grouping — names
+   (identifiers), types (signatures / code), prose (inline prose code) and
+   tags (small uppercase labels). All four point at the site monospace
+   family (`--vp-font-family-mono`, currently Cascadia Code); the aliases
+   are kept so we can re-introduce per-role mono families later without
+   touching every callsite. Top-level props are headings (name + inline
+   type + right-aligned source); nested props are hover-glow cards whose
+   name is a permalink.
+   ──────────────────────────────────────────────────────────────────────── */
+
+:root {
+    --api-mono-name: var(--vp-font-family-mono);
+    --api-mono-type: var(--vp-font-family-mono);
+    --api-mono-prose: var(--vp-font-family-mono);
+    --api-mono-tag: var(--vp-font-family-mono);
+}
+
+.api-doc h1 {
+    font-family: var(--api-mono-name);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+/* The overview/index page title is prose ("API reference"), not a symbol
+   name, so it reads better sans-serif. */
+.api-index h1 {
+    font-family: var(--vp-font-family-base);
+}
+
+/* No hover `#` on API pages (it wrapped awkwardly with inline types). */
+.api-doc .vp-doc .header-anchor {
+    display: none;
+}
+
+/* ── property heading: name + inline type + right-aligned source ───────── */
+
+.api-doc h3 {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
+    gap: 0.55rem;
+    min-width: 0;
+    margin-top: 2.5rem;
+    margin-bottom: 0.2rem;
+}
+/* Tighten the gap between a non-card prop heading and its description. */
+.api-doc .vp-doc h3 + * {
+    margin-top: 0.3rem;
+}
+/* Name is a permalink to its own heading (clickable, like the card fields). */
+.api-doc h3 > a:not(.header-anchor) {
+    flex: 0 0 auto;
+    text-decoration: none;
+}
+.api-doc h3 > a:not(.header-anchor) > code,
+.api-doc h3 > code {
+    font-family: var(--api-mono-name);
+    font-weight: 650;
+    font-size: 1.05rem;
+    color: var(--vp-c-text-1);
+    background: none;
+    border: 0;
+    padding: 0;
+}
+.api-doc h3 > a:not(.header-anchor):hover > code {
+    color: var(--vp-c-brand-1);
+}
+.api-sig {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 400;
+}
+
+/* ── inline type (Shiki dual-theme via CSS vars; matches code blocks) ──── */
+
+.api-doc code.api-type {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-family: var(--api-mono-type);
+    font-size: 0.82rem;
+    font-weight: 450;
+    background: none;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.api-doc code.api-type span {
+    color: var(--shiki-light);
+}
+html.dark .api-doc code.api-type span {
+    color: var(--shiki-dark);
+}
+/* Quiet only the shiki *default-foreground* tokens (type names / primitives) in
+   inline type annotations, so the type reads a touch fainter than the prop
+   name. Matched by the theme's base hex in the inline style (colored tokens —
+   keywords, generics — keep their shiki color). */
+.api-doc code.api-type span[style*='#1F2328'] {
+    color: #3c4249;
+}
+html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
+    color: #c8cfd7;
+}
+
+/* ── muted source links (right-aligned on headings & field rows) ───────── */
+
+.api-doc .api-defined {
+    margin: -0.25rem 0 1.5rem;
+}
+.api-doc .api-defined a,
+.api-doc .api-field__src {
+    flex: 0 0 auto;
+    font-family: var(--api-mono-type);
+    font-size: 0.72rem;
+    color: var(--vp-c-text-3);
+    text-decoration: underline;
+    text-decoration-color: var(--vp-c-divider);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+}
+.api-sig .api-field__src,
+.api-field__sig .api-field__src {
+    margin-left: auto;
+}
+.api-doc .api-defined a:hover,
+.api-doc .api-field__src:hover {
+    color: var(--vp-c-text-2);
+}
+
+/* ── fields ────────────────────────────────────────────────────────────── */
+
+.api-field {
+    margin: 0.6rem 0 1.1rem;
+}
+.api-field__sig {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    min-width: 0;
+    margin-bottom: 0.3rem;
+}
+/* `.api-doc .vp-doc` prefix beats VitePress's `.vp-doc a` link color. */
+.api-doc .vp-doc .api-field__name {
+    flex: 0 0 auto;
+    font-family: var(--api-mono-name);
+    font-weight: 650;
+    font-size: 0.95rem;
+    color: var(--vp-c-text-1);
+    background: none;
+    border: 0;
+    padding: 0;
+    text-decoration: none;
+}
+.api-doc .vp-doc a.api-field__name:hover {
+    color: var(--vp-c-brand-1);
+}
+.api-field__opt {
+    color: var(--vp-c-text-3);
+    font-weight: 400;
+}
+/* `?` on a non-card heading: monospace + faint like the card version, pulled
+   back to hug the name (cancel the h3 flex `gap`). */
+.api-doc h3 > .api-field__opt {
+    margin-left: -0.55rem;
+    font-family: var(--api-mono-name);
+    font-size: 1.05rem;
+    font-weight: 400;
+}
+.api-field__doc {
+    color: var(--vp-c-text-2);
+}
+.api-field__doc > :first-child {
+    margin-top: 0;
+}
+
+/* Nested fields: cards whose whole border glows on hover (innermost only).
+   `corner-shape: superellipse(2)` is set site-wide in the `@supports` block
+   further down — no need to repeat it on each rounded element. */
+.api-field--nested {
+    margin: 0.5rem 0;
+    padding: 0.62rem 0.85rem 0.35rem;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
+}
+/* Outermost cards (not nested inside another card) get a slightly larger radius. */
+/* Outermost cards: a generous squircle radius where supported; a tighter plain
+   radius otherwise (a large plain border-radius reads too bubbly). */
+.api-field--nested:not(:where(.api-field--nested *)) {
+    border-radius: 10px;
+}
+@supports (corner-shape: superellipse(2)) {
+    .api-field--nested:not(:where(.api-field--nested *)) {
+        border-radius: 18px;
+    }
+}
+/* A touch of breathing room around a card's signature line. */
+.api-field--nested > .api-field__sig {
+    margin-top: 1px;
+    margin-bottom: 0.5rem;
+}
+
+/* ── api-page h4 (TSDoc section labels) → small uppercase labels ────────
+   The TSDoc section markers ("Example", "Parameters", "Returns", "See", …)
+   come through as `h4`. At VitePress's default (18 px / 600) they read as
+   *competing* with the prop's `h3` heading (20 px / 600). Restyle them as
+   tight uppercase labels in the mono tag family — same key as `.api-tag`
+   so they sit visually below the prop heading and above the body. The
+   header-anchor is already hidden on api pages by the `.api-doc .vp-doc
+   .header-anchor` rule near the top of this file. */
+.api-doc .vp-doc h4 {
+    margin-top: 1.4rem;
+    margin-bottom: 0.35rem;
+    padding-top: 0;
+    border-top: 0;
+    font-family: var(--api-mono-tag);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--vp-c-text-2);
+}
+
+/* ── tag labels (mono, uppercase) ──────────────────────────────────────── */
+
+.api-tag {
+    font-family: var(--api-mono-tag);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 8px 3px;
+    border-radius: 6px;
+}
+.api-tag--default {
+    color: var(--vp-c-brand-1);
+    background: var(--vp-c-brand-soft);
+}
+/* Tighten the gap between a Default tag and the code block under it. */
+.api-doc .vp-doc p:has(> .api-tag--default) {
+    margin-bottom: 0.3rem;
+}
+.api-doc .vp-doc p:has(> .api-tag--default) + div[class*='language-'] {
+    margin-top: 0.3rem;
+}
+
+/* ── inline Phosphor icons (See arrow, bare Warning) ───────────────────── */
+
+.api-warn-icon {
+    display: inline-block;
+    vertical-align: -0.15em;
+    color: var(--vp-c-warning-1, #d99b25);
+}
+
+/* ── callout boxes (API <ApiCallout> + docs custom blocks share a look) ─────
+   `--cl-color` drives the icon, label, tinted body text, faint background and
+   tinted in-callout code blocks; each variant only sets that one variable. */
+
+.api-cl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.55rem;
+    align-items: start;
+    margin: 0.7rem 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 11px;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--cl-color) 9%, transparent);
+}
+.api-cl--warning {
+    --cl-color: var(--vp-c-warning-1, #d99b25);
+}
+.api-cl--note {
+    --cl-color: var(--vp-c-tip-1, #3b82f6);
+}
+.api-cl__icon {
+    margin-top: 0.3em;
+    font-size: 1.2em;
+    color: var(--cl-color);
+}
+.api-cl__body {
+    color: color-mix(in srgb, var(--cl-color) 14%, var(--vp-c-text-1));
+}
+.api-cl__body > :first-child {
+    margin-top: 0;
+}
+.api-cl__body > :last-child {
+    margin-bottom: 0;
+}
+/* The inlined "WARNING"/"NOTE" label at the start of the body. */
+.api-cl__label {
+    font-family: var(--api-mono-tag);
+    font-weight: 700;
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 0.35em;
+    color: var(--cl-color);
+}
+
+/* Code blocks inside any callout get a faint tint of the callout color. */
+.api-cl div[class*='language-'],
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) div[class*='language-'] {
+    background: color-mix(in srgb, var(--cl-color) 7%, var(--vp-code-block-bg));
+}
+
+/* Inline code inside callouts: take the callout's (tinted) text colour rather
+   than VitePress's fixed brand/colour, and a subtle tint of the callout colour
+   for the background instead of its strong `*-code-bg`. */
+.api-cl :not(pre) > code,
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) :not(pre) > code {
+    color: inherit;
+    background: color-mix(in srgb, var(--cl-color) 12%, transparent);
+}
+
+/* Callout links take the callout's own colour (so a link, the icon, and the
+   per-type tint all sit in the same hue). Code-links inherit from their `<a>`
+   via the rule above, so they match without a separate rule.
+
+   Specificity is bumped (doubled `.api-cl` / `.custom-block`) so this beats
+   the per-page accent rule (`.docs-* .vp-doc a`) without needing `!important`. */
+.api-cl.api-cl a,
+.api-cl.api-cl a:hover,
+.vp-doc .custom-block.custom-block:is(.tip, .warning, .danger, .info) a,
+.vp-doc .custom-block.custom-block:is(.tip, .warning, .danger, .info) a:hover {
+    color: var(--cl-color);
+}
+
+/* ── docs-side callouts (VitePress custom blocks) → match the API look ───── */
+
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) {
+    display: block; /* override VitePress's flex so the title can flow inline */
+    position: relative;
+    margin: 1rem 0;
+    padding: 0.7rem 0.9rem 0.7rem 2.15rem;
+    border: 0;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--cl-color) 9%, transparent);
+    color: color-mix(in srgb, var(--cl-color) 13%, var(--vp-c-text-1));
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+.vp-doc .custom-block.tip {
+    --cl-color: var(--vp-c-green-1, #3dd68c);
+}
+.vp-doc .custom-block.info {
+    --cl-color: var(--vp-c-tip-1, #3b82f6);
+}
+.vp-doc .custom-block.warning {
+    --cl-color: var(--vp-c-warning-1, #d99b25);
+}
+.vp-doc .custom-block.danger {
+    --cl-color: var(--vp-c-danger-1, #e5484d);
+}
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info)::before {
+    content: '';
+    position: absolute;
+    left: 0.7rem;
+    /* Padding-top, plus an em nudge to center on the small-caps title baseline.
+       The +0.32em pulls the icon down so its visual centre aligns with the
+       title's cap height (the title's `font-size: 0.82em` + uppercase makes it
+       sit lower than a default 1em line). */
+    top: calc(0.7rem + 0.32em);
+    width: 1.15em;
+    height: 1.15em;
+    background-color: var(--cl-color);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+.vp-doc .custom-block:is(.warning, .danger)::before {
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z'/></svg>");
+}
+.vp-doc .custom-block:is(.tip, .info)::before {
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z'/></svg>");
+}
+/* A callout whose body opens with a `.cb-icon` (a Phosphor icon) uses that as
+   its icon, in the callout's colour, instead of the default mask. */
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info):has(.cb-icon)::before {
+    display: none;
+}
+.vp-doc .custom-block .cb-icon {
+    position: absolute;
+    left: 0.7rem;
+    /* Match the default mask icon's vertical centre on the small-caps title.
+       Slightly less nudge than the default-mask rule above because the
+       Phosphor glyphs (1.2em vs 1.15em) already extend further down. */
+    top: calc(0.7rem + 0.26em);
+    width: 1.2em;
+    height: 1.2em;
+    color: var(--cl-color);
+}
+
+/* Inline the label with the first body paragraph (like the API callout). */
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) .custom-block-title {
+    display: inline;
+    /* A little extra space (≈ 2px at the base font size) after the title so the
+       label doesn't sit flush against the first body word. */
+    margin: 0 0.55em 0 0;
+    font-family: var(--api-mono-tag);
+    font-weight: 700;
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--cl-color);
+}
+/* VitePress wraps the body in `.content`; unwrap it so the first paragraph can
+   sit on the title's line. */
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) .content {
+    display: contents;
+}
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) .content > p:first-of-type {
+    display: inline;
+    margin: 0;
+}
+.vp-doc .custom-block:is(.tip, .warning, .danger, .info) > :last-child {
+    margin-bottom: 0;
+}
+
+/* ── slightly tighter line spacing in prose ────────────────────────────── */
+
+.api-doc .vp-doc p,
+.api-doc .vp-doc li {
+    line-height: 1.6;
+}
+/* Conservative hyphenation for prose, site-wide: only long words, with a decent
+   stub each side. Never hyphenate code (inline or block), kbd, or links. */
+.vp-doc p,
+.vp-doc li {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    hyphenate-limit-chars: 8 4 4;
+}
+.vp-doc code,
+.vp-doc pre,
+.vp-doc kbd,
+.vp-doc a {
+    hyphens: none;
+    -webkit-hyphens: none;
+}
+
+/* Consecutive prose paragraphs: drop the vertical gap, indent instead (book
+   style). Chip/callout/See paragraphs are excluded so they stay flush, and the
+   first prose paragraph after one resets to flush with a small gap. */
+.api-doc .vp-doc p + p:not(:has(.api-tag, .api-see, .api-see-ext)) {
+    margin-top: 0;
+    text-indent: 2.2em;
+}
+/* Zero the *preceding* prose paragraph's bottom margin too, or it survives the
+   margin-collapse and reintroduces the gap. (`:has()` can't be nested inside
+   `:has()`, so the next-sibling check stays a plain `+ p`.) */
+.api-doc .vp-doc p:not(:has(.api-tag, .api-see, .api-see-ext)):has(+ p) {
+    margin-bottom: 0;
+}
+.api-doc .vp-doc p:has(.api-tag, .api-see, .api-see-ext) + p {
+    margin-top: 0.5rem;
+    text-indent: 0;
+}
+
+/* "See:" lines: tagged by an (invisible) trailing marker span so the paragraph
+   still starts with markdown and wraps in a real <p>. Never indented; a little
+   space above when following prose, tight when consecutive. Internal targets
+   get a turn-arrow before the label; external ones (`.api-see-ext`) don't. */
+.api-see,
+.api-see-ext {
+    display: none;
+}
+.api-doc .vp-doc p:has(.api-see, .api-see-ext) {
+    text-indent: 0;
+}
+.api-doc .vp-doc p:has(.api-see)::before {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    margin-right: 0.3em;
+    background-color: var(--vp-c-text-3);
+    mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M229.66,173.66l-48,48a8,8,0,0,1-11.32-11.32L204.69,176H88A64,64,0,0,1,88,48h88a8,8,0,0,1,0,16H88a48,48,0,0,0,0,96H204.69l-34.35-34.34a8,8,0,0,1,11.32-11.32l48,48A8,8,0,0,1,229.66,173.66Z'/></svg>") center / contain no-repeat;
+    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M229.66,173.66l-48,48a8,8,0,0,1-11.32-11.32L204.69,176H88A64,64,0,0,1,88,48h88a8,8,0,0,1,0,16H88a48,48,0,0,0,0,96H204.69l-34.35-34.34a8,8,0,0,1,11.32-11.32l48,48A8,8,0,0,1,229.66,173.66Z'/></svg>") center / contain no-repeat;
+}
+.api-doc .vp-doc p + p:has(.api-see, .api-see-ext) {
+    margin-top: 0.9rem;
+}
+.api-doc .vp-doc p:has(.api-see, .api-see-ext) + p:has(.api-see, .api-see-ext) {
+    margin-top: 0;
+}
+
+/* ── inline prose code → api-prose mono family ─────────────────────────── */
+
+.api-doc .api-field__doc :not(pre) > code,
+.api-doc .vp-doc p :not(pre) > code,
+.api-doc .vp-doc li :not(pre) > code {
+    font-family: var(--api-mono-prose);
+}
+
+/* ── bullet lists with a narrow dash marker — API pages only ───────────────
+   VitePress forces an em-dash via `::marker { content }`, which keeps painting
+   even under `list-style: none`; we suppress it and draw our own narrow dash
+   with `::before` (nested lists keep a clear indent step for hierarchy). */
+
+.api-doc .vp-doc ul {
+    list-style: none;
+}
+/* Suppress VitePress's em-dash `::marker`. `custom.pcss` defines that
+   rule at `.VPDoc .vp-doc ul li::marker` (spec 0,2,3); the doubled
+   `.api-doc.api-doc` here (0,3,3) is what guarantees we win regardless
+   of source-load order. Without this the em-dash and our `::before`
+   en-dash render on top of each other. */
+.api-doc.api-doc .vp-doc ul li::marker {
+    content: none;
+}
+.api-doc .vp-doc ul > li {
+    position: relative;
+}
+.api-doc .vp-doc ul > li::before {
+    content: '–';
+    position: absolute;
+    left: -0.85rem;
+    font-weight: 700;
+    color: var(--vp-c-text-3);
+}
+/* Tighter gap between list items (still clearly more than line leading). */
+.api-doc .vp-doc li + li {
+    margin-top: 0.3rem;
+}
+
+/* ── footnotes: a touch smaller and fainter; line-height is a multiple of the
+   (reduced) font size, not the fixed list line-height (which looked oversized
+   once the text shrank) ────────────────────────────────────────────────── */
+
+.vp-doc .footnotes {
+    font-size: 0.86em;
+    color: var(--vp-c-text-2);
+    line-height: 1.6;
+}
+.vp-doc .footnotes li,
+.vp-doc .footnotes p {
+    line-height: 1.6;
+}
+
+/* ── code blocks share the callouts' corner radius ─────────────────────── */
+.vp-doc div[class*='language-'],
+.vp-doc .vp-code-group,
+.vp-doc .vp-code-group .blocks {
+    border-radius: 11px;
+}
+
+/* Inline code never wraps across lines. */
+.vp-doc :not(pre) > code {
+    white-space: nowrap;
+}
+
+/* ── friendly code-fence language labels ───────────────────────────────────
+   VitePress prints Shiki's short token (ts, sh, …) in `span.lang`. Relabel the
+   languages we use with display names: hide the token (font-size: 0) and draw
+   the name in `::after`. Scoped per language, so any fence not listed keeps its
+   raw token rather than vanishing. Keep the two `:is()` lists in sync. */
+.vp-doc
+    :is(
+        .language-ts, .language-tsx, .language-js, .language-jsx,
+        .language-svelte, .language-sveltex, .language-html, .language-css,
+        .language-scss, .language-sass, .language-postcss, .language-stylus,
+        .language-sh, .language-bash, .language-xml, .language-json,
+        .language-yaml, .language-latex, .language-md, .language-vue,
+        .language-diff
+    )
+    > span.lang {
+    font-size: 0;
+}
+.vp-doc
+    :is(
+        .language-ts, .language-tsx, .language-js, .language-jsx,
+        .language-svelte, .language-sveltex, .language-html, .language-css,
+        .language-scss, .language-sass, .language-postcss, .language-stylus,
+        .language-sh, .language-bash, .language-xml, .language-json,
+        .language-yaml, .language-latex, .language-md, .language-vue,
+        .language-diff
+    )
+    > span.lang::after {
+    font-size: 12px;
+}
+.vp-doc .language-ts > span.lang::after { content: 'TypeScript'; }
+.vp-doc .language-tsx > span.lang::after { content: 'TSX'; }
+.vp-doc .language-js > span.lang::after { content: 'JavaScript'; }
+.vp-doc .language-jsx > span.lang::after { content: 'JSX'; }
+.vp-doc .language-svelte > span.lang::after { content: 'Svelte'; }
+.vp-doc .language-sveltex > span.lang::after { content: 'SvelTeX'; }
+.vp-doc .language-html > span.lang::after { content: 'HTML'; }
+.vp-doc .language-css > span.lang::after { content: 'CSS'; }
+.vp-doc .language-scss > span.lang::after { content: 'SCSS'; }
+.vp-doc .language-sass > span.lang::after { content: 'Sass'; }
+.vp-doc .language-postcss > span.lang::after { content: 'PostCSS'; }
+.vp-doc .language-stylus > span.lang::after { content: 'Stylus'; }
+.vp-doc .language-sh > span.lang::after { content: 'Shell'; }
+.vp-doc .language-bash > span.lang::after { content: 'Bash'; }
+.vp-doc .language-xml > span.lang::after { content: 'XML'; }
+.vp-doc .language-json > span.lang::after { content: 'JSON'; }
+.vp-doc .language-yaml > span.lang::after { content: 'YAML'; }
+.vp-doc .language-latex > span.lang::after { content: 'LaTeX'; }
+.vp-doc .language-md > span.lang::after { content: 'Markdown'; }
+.vp-doc .language-vue > span.lang::after { content: 'Vue'; }
+.vp-doc .language-diff > span.lang::after { content: 'Diff'; }
+
+/* ── squircle corners site-wide where supported (+ a little more radius) ───
+   Top-level rule: anything with a `border-radius > 0` picks up the squircle.
+   Per-element radius bumps live below so prominent panels don't look gummy
+   under the fuller corner curve. */
+
+@supports (corner-shape: superellipse(2)) {
+    *,
+    *::before,
+    *::after {
+        corner-shape: superellipse(2);
+    }
+    /* A squircle reads better a touch rounder, so bump the prominent radii. */
+    .vp-doc div[class*='language-'],
+    .vp-doc .vp-code-group,
+    .vp-doc .vp-code-group .blocks {
+        border-radius: 14px;
+    }
+    .api-cl {
+        border-radius: 14px;
+    }
+    .vp-doc .custom-block:is(.tip, .warning, .danger, .info) {
+        border-radius: 14px;
+    }
+    .api-tag,
+    .api-callout {
+        border-radius: 8px;
+    }
+    /* Make the squircle visible on smaller rounded UI too. */
+    .vp-doc :not(pre) > code {
+        border-radius: 6px;
+    }
+    .VPNavBarSearch button.VPNavBarSearchButton {
+        border-radius: 12px;
+    }
+    .pager a.pager-link {
+        border-radius: 14px;
+    }
+    /* "On this page" outline popup (mobile / narrow viewports) — VitePress
+       defaults are tight; bump them so the squircle reads as intentional. */
+    .VPLocalNavOutlineDropdown .items {
+        border-radius: 14px;
+    }
+    .VPLocalNavOutlineDropdown button.open .icon {
+        border-radius: 4px;
+    }
+    /* …but the appearance toggle stays truly round, not a squircle. */
+    .VPSwitchAppearance,
+    .VPSwitchAppearance * {
+        corner-shape: round;
+    }
+}
+
+/* ── global: subtler, descender-aware link underlines ──────────────────── */
+
+.vp-doc a {
+    text-decoration-skip-ink: auto;
+    text-decoration-color: color-mix(in srgb, currentColor 28%, transparent);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+}
+
+/* ── overview tables: no link underlines ───────────────────────────────── */
+
+.api-doc .vp-doc td a,
+.api-doc .vp-doc th a {
+    text-decoration: none;
+    font-family: var(--api-mono-name);
+    font-weight: 600;
+}
+.api-doc .vp-doc td a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── ToC (right rail): match heading typography (monospace prop names) ──── */
+
+/* Slightly tighter vertical rhythm in the outline (but not cramped). */
+.api-doc .VPDocAsideOutline .outline-link {
+    line-height: 1.7;
+    padding: 2px 0;
+}
+/* Only the nested (prop-name) entries are monospace; section titles like
+   "Properties" keep the default font. */
+.api-doc .VPDocAsideOutline .nested .outline-link {
+    font-family: var(--api-mono-name);
+    font-size: 13px;
+}
+
+/* ── sidebar: emphasize entry points, fade helpers (beat scoped rules) ─── */
+
+/* API symbol entries → monospace. */
+.VPSidebar a[href*='/api/interfaces/'] .text,
+.VPSidebar a[href*='/api/functions/'] .text {
+    font-family: var(--api-mono-name);
+}
+/* The "Overview" link is bolded and uses primary text colour to match the
+   "Interfaces" / "Functions" group titles, so the top of the sidebar reads
+   as three peers. The doubled-class selectors (`.VPSidebar.VPSidebar`)
+   bump specificity past VitePress's scoped component CSS so we can drop
+   `!important` from these rules. */
+.VPSidebar.VPSidebar a[href$='/api/'] .text {
+    font-weight: 700;
+    color: var(--vp-c-text-1);
+}
+/* The two key entry points get a Phosphor "push-pin" marker (fill weight)
+   to their left, in a slightly faint text colour, so they read as primary
+   entries without competing with the surrounding section labels. */
+.VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text::before,
+.VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text::before {
+    content: '';
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.4em;
+    vertical-align: -0.13em;
+    background-color: var(--vp-c-text-2);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16,16,0,0,1-11.32-4.69L96.29,171,53.66,213.66a8,8,0,0,1-11.32-11.32L85,159.71l-48.3-48.3A16,16,0,0,1,38,87.63c25.42-20.51,49.75-16.48,60.4-13.14L152,20.7a16,16,0,0,1,22.63,0l60.69,60.68A16,16,0,0,1,235.33,104Z'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path d='M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16,16,0,0,1-11.32-4.69L96.29,171,53.66,213.66a8,8,0,0,1-11.32-11.32L85,159.71l-48.3-48.3A16,16,0,0,1,38,87.63c25.42-20.51,49.75-16.48,60.4-13.14L152,20.7a16,16,0,0,1,22.63,0l60.69,60.68A16,16,0,0,1,235.33,104Z'/></svg>");
+}
+.VPSidebar.VPSidebar a[href$='/api/functions/sveltex'] .text,
+.VPSidebar.VPSidebar a[href$='/api/interfaces/SveltexConfiguration'] .text {
+    font-weight: 700;
+    color: var(--vp-c-text-1);
+}
+/* Fade the "get-default"-style helpers — both `getDefault*` (singular) and
+   `getTexPresetDefaults` (plural). They're auxiliary surface, not the
+   primary API. */
+.VPSidebar.VPSidebar a[href*='/api/functions/get'][href*='Default'] .text {
+    color: var(--vp-c-text-3);
+}
+
+/* ── editor setup tabs (logo buttons) — editor-integration page ─────────── */
+
+.editor-tabs {
+    margin: 1.3rem 0;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 14px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--vp-c-bg-soft) 45%, transparent);
+}
+.editor-tabs__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+    background: var(--vp-c-bg-soft);
+    border-bottom: 1px solid var(--vp-c-divider);
+}
+/* Tabs read as actual buttons rather than flush labels: a generous-ish
+   y-padding gives the logo + label some breathing room above and below. */
+.editor-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--vp-c-text-2);
+    background: transparent;
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+/* Phosphor-icon variants (currently just "Others") sit closer to the label
+   than the proper brand logos do — VS Code / Zed marks carry their own
+   clear-space, so they want a bit more breathing room than a bare icon. */
+.editor-tabs__tab:has(.editor-tabs__icon) {
+    gap: 5px;
+}
+/* The Open VSX wordmark has no internal padding around its glyph, so it
+   reads as too far from the label at the default gap. */
+.editor-tabs__tab:has(img[src*='open-vsx']) {
+    gap: 6px;
+}
+.editor-tabs__tab:hover {
+    color: var(--vp-c-text-1);
+    background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
+}
+.editor-tabs__tab.is-active {
+    color: var(--vp-c-text-1);
+    background: var(--vp-c-bg);
+    border-color: var(--vp-c-divider);
+}
+/* Logos shown as provided (brand guidelines): fixed height, intrinsic width,
+   never recoloured or distorted; ~8px of clear space from the label/edges.
+   Scoped `.vp-doc` selector beats VitePress's default `.vp-doc img {
+   margin: 16px 0 }` (spec 0,1,1), which would otherwise force each tab
+   to ~52px tall regardless of padding. */
+.vp-doc .editor-tabs__logo {
+    height: 20px;
+    width: auto;
+    margin: 0;
+    flex: 0 0 auto;
+}
+.editor-tabs__panel {
+    padding: 0.2rem 1.15rem 0.4rem;
+}
+.editor-tabs__panel > :first-child {
+    margin-top: 0.9rem;
+}
+
+/* Phosphor icon on the logo-free editor tabs (Open VSX, Others). */
+.editor-tabs__icon {
+    flex: 0 0 auto;
+}
+
+/* ── local search popup: bump radii where superellipse is supported ─────
+
+   VitePress ships a scoped `corner-shape: squircle` with tight radii (6px on
+   the shell, 4px on the bar). The site-wide `@supports` block above sets
+   `corner-shape: superellipse(2)` universally; here we just bump the radii
+   so the fuller curve reads as intentional. The doubled class outranks
+   VitePress's scoped component styles. */
+@supports (corner-shape: superellipse(2)) {
+    .VPLocalSearchBox.VPLocalSearchBox .shell {
+        border-radius: 18px;
+    }
+    .VPLocalSearchBox.VPLocalSearchBox .search-bar {
+        border-radius: 10px;
+    }
+}
+
+/* ── <kbd> in prose: borrow VitePress's search-popup key styling ─────────── */
+
+/* VitePress only styles `.search-keyboard-shortcuts kbd` (used in the local
+   search popup). Mirror that look for any `<kbd>` in the docs so a heading
+   like "press Cmd+Shift+P" reads as actual keys, not styled-prose. */
+.vp-doc kbd {
+    display: inline-block;
+    min-width: 24px;
+    padding: 1px 6px;
+    border: 1px solid rgba(128, 128, 128, 0.15);
+    border-radius: 4px;
+    background: rgba(128, 128, 128, 0.1);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+    font-family: var(--vp-font-family-mono);
+    font-size: 0.85em;
+    line-height: 1.4;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* ── per-page accent (usage docs each pick up a "theme" colour) ────────── */
+
+/* Each top-level usage page gets a characteristic colour, picked to match the
+   in-page Phosphor icon hues so the accent and the iconography sit in the
+   same key. The `--hig-*` family already adapts light↔dark in colors.pcss.
+
+   In light mode the raw HIG hues read as too saturated for body links —
+   the eye should land on the prose, not on every link. We blend a fair
+   amount of `--vp-c-text-1` in for the bright hues (pink, purple, orange)
+   and a lighter touch for the already-restrained ones (green, brown).
+   The dark-mode tones are already calmer against the dark background, so
+   they keep the raw HIG values. Editor-integration uses the brand blue
+   because that's the colour its setup-card icons share. */
+.docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 60%, var(--vp-c-text-1)); }
+.docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 55%, var(--vp-c-text-1)); }
+.docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 65%, var(--vp-c-text-1)); }
+/* Tex green and verbatim brown read slightly bright in light mode — wrap
+   the base mix in an `oklab` blend with black to nudge the lightness down
+   a touch without touching chroma (i.e. saturation stays put). */
+.docs-tex      { --page-color: color-mix(in oklab, color-mix(in srgb, var(--168-700) 78%, var(--vp-c-text-1)) 92%, black); }
+.docs-verbatim { --page-color: color-mix(in oklab, color-mix(in srgb, var(--hig-brown) 90%, var(--vp-c-text-1)) 92%, black); }
+.docs-editor   { --page-color: var(--vp-c-brand-1); } /* brand-1 is already calibrated */
+
+/* Dark mode: the HIG dark hues (esp. pink, purple, orange) still read as
+   eye-grabbing against the dark background, so apply a similar mix — this
+   time with the dark-mode `--vp-c-text-1` (a light grey), which mutes the
+   saturation and nudges the colour toward the prose tone. */
+.dark .docs-md       { --page-color: color-mix(in srgb, var(--hig-pink) 70%, var(--vp-c-text-1)); }
+.dark .docs-code     { --page-color: color-mix(in srgb, var(--hig-purple) 65%, var(--vp-c-text-1)); }
+.dark .docs-math     { --page-color: color-mix(in srgb, var(--hig-orange) 60%, var(--vp-c-text-1)); }
+/* Tex green and verbatim brown read slightly dim in dark mode — wrap the
+   base in an `oklab` blend with white to nudge the lightness up a touch
+   without touching chroma. */
+.dark .docs-tex      { --page-color: color-mix(in oklab, color-mix(in srgb, var(--168-700) 85%, var(--vp-c-text-1)) 92%, white); }
+.dark .docs-verbatim { --page-color: color-mix(in oklab, var(--hig-brown) 92%, white); }
+
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a {
+    color: var(--page-color);
+}
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a:hover {
+    color: color-mix(in srgb, var(--page-color) 75%, var(--vp-c-text-1));
+}
+/* Code-links pick up the page colour too (otherwise the green inline-code
+   tint dominates). Excludes API pages (which have their own scheme); the
+   callout-link rule above wins via bumped specificity, so callout code-links
+   keep the callout's `--cl-color`. */
+:is(.docs-md, .docs-code, .docs-math, .docs-tex, .docs-verbatim, .docs-editor)
+    .vp-doc a > code {
+    color: inherit;
+}
+
+/* ── badges (`<Badge>`): monospaced so "MathJax" / "KaTeX" tags in math
+       headings read as labels, not prose. ───────────────────────────────── */
+.VPBadge {
+    font-family: var(--vp-font-family-mono);
+}

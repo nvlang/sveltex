@@ -8,6 +8,11 @@ export default defineConfig(
     {
         ignores: [
             '.DS_Store',
+            // Claude Code session state and the transient git worktrees it
+            // spins up for background agents. Never source to lint, and each
+            // such worktree carries its own `eslint.config.js` that would
+            // otherwise be loaded here with an unresolved plugin path.
+            '**/.claude/**',
             '**/node_modules/**',
             '**/dist/**',
             '**/coverage/**',
@@ -22,6 +27,16 @@ export default defineConfig(
             // tree-sitter grammar DSL (not a TypeScript-checked module) and
             // the native binding glue is not part of the type-checked source.
             'packages/tree-sitter-sveltex/**',
+            // The vendored fork of tree-sitter-markdown (block + inline
+            // grammars): grammar DSL, generated C parsers and multi-language
+            // bindings, none of which is part of the type-checked source.
+            'packages/tree-sitter-markdown-sveltex/**',
+            // Vendored Microsoft "embedded language request forwarding" LSP
+            // sample: not a workspace package (no package.json; only its
+            // `.vscode/` files are tracked) and its CommonJS `client/` +
+            // `server/` build output is generated on disk, not first-party
+            // source.
+            'packages/lsp-embedded-request-forwarding/**',
             // The Zed extension is a standalone Rust crate, not a JS package.
             'editors/**',
         ],
@@ -273,6 +288,16 @@ export default defineConfig(
                 tsconfigRootDir: import.meta.dirname,
                 projectService: {
                     defaultProject: 'tsconfig.json',
+                    // `vscode-sveltex` is a CommonJS package, so its ESM-
+                    // authored test files and `vitest.config.ts` are excluded
+                    // from the monorepo `tsconfig.json` (they cannot compile
+                    // under its Node16 settings). Lint them with the default
+                    // project's options rather than erroring that they belong
+                    // to no project.
+                    allowDefaultProject: [
+                        'packages/vscode-sveltex/vitest.config.ts',
+                        'packages/vscode-sveltex/tests/*.ts',
+                    ],
                 },
                 ecmaVersion: 'latest',
                 sourceType: 'module',

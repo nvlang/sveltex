@@ -282,6 +282,8 @@ function findContaining(
     while (lo <= hi) {
         const mid = (lo + hi) >> 1;
         const m = sorted[mid];
+        /* v8 ignore next -- defensive: `sorted` is dense and mid is always in
+           [lo, hi] ⊆ [0, length-1], so this index is never out of bounds. */
         if (!m) break;
         const start = getStart(m);
         const end = start + getLength(m);

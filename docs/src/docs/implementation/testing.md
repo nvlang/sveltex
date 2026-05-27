@@ -10,12 +10,6 @@ and every branch is either tested, or includes a comment explaining why the line
 is unreachable (such code is sometimes included for redundancy in
 error-checking).
 
-Keeping coverage at 100% is a medium-priority goal. Though the relatively small
-size of the project's codebase makes it a perfectly feasible goal, a strict 100%
-coverage requirement can have many negative unintended consequences, including
-decreased developer productivity, a false sense of security, and premature
-rigidity in the codebase.
-
 ### CommonMark (non-)compliance
 
 Each of the four supported markdown backends is tested against a substantial

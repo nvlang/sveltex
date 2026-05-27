@@ -107,6 +107,10 @@ function snippetTypeToRegionKind(type: string): RegionKind {
         case 'verbatim':
         case 'frontmatter':
             return type;
+        /* v8 ignore next 4 -- defensive: SvelTeX only ever emits the six
+           snippet types enumerated above (code/math/svelte/mustacheTag/
+           verbatim/frontmatter), so the unknown-type fallback is unreachable
+           through `computeRegions`. */
         default:
             // Defensive: an unknown snippet type is treated as opaque verbatim
             // so that it is never mistakenly delegated.
@@ -148,6 +152,92 @@ function detectVerbatimRanges(
         });
     }
     return ranges;
+}
+
+/**
+ * Inner body offsets of a verbatim element occupying `[start, end)` of
+ * `source` — the half-open range between the opening `<tag …>` and the closing
+ * `</tag …>`. Returns `null` for a self-closing `<tag … />` or an unrecognised
+ * wrapper (no body either way).
+ *
+ * Shared by the noop region splitter ({@link splitNoopRanges}) and the
+ * semantic-tokens body painter, so both agree on exactly which span is "the
+ * body" versus "the wrapper tags".
+ */
+export function verbatimBodyOffsets(
+    source: string,
+    start: number,
+    end: number,
+): readonly [number, number] | null {
+    const slice = source.slice(start, end);
+    // Self-closing: no body.
+    if (/\/\s*>\s*$/u.test(slice) && !/<\/\s*[a-zA-Z]/u.test(slice)) {
+        return null;
+    }
+    const open = /^<[a-zA-Z][^>]*>/u.exec(slice);
+    const close = /<\/\s*[a-zA-Z][^>]*>\s*$/u.exec(slice);
+    if (!open || !close) return null;
+    const innerStart = start + open[0].length;
+    const innerEnd = end - close[0].length;
+    if (innerEnd <= innerStart) return null;
+    return [innerStart, innerEnd] as const;
+}
+
+/**
+ * Splits every `verbatim`-kinded range whose opening tag is one of `noopTags`
+ * into three pieces — opening tag (`verbatim`), body (`svelte`), closing tag
+ * (`verbatim`) — and returns the rewritten range list.
+ *
+ * `type: 'noop'` verbatim envs pass their BODY to the Svelte compiler
+ * unchanged, so `svelte-language-server` must see that body. But the WRAPPER
+ * tags are SvelTeX constructs: SvelTeX renames or removes them at build time
+ * (the `component` option — `<MyNoop>` may become `<br>` or an imported
+ * component, or vanish), so they never reach Svelte as written. Delegating the
+ * literal `<MyNoop>` would make svelte-language-server report it as an
+ * undefined component and mis-map hover/definition on it. So only the body is
+ * relabelled `svelte` (a {@link DELEGATED_KINDS} member, copied into the
+ * virtual document); the wrapper tags stay `verbatim` (blanked out). A
+ * self-closing or body-less noop env stays fully `verbatim` — there is nothing
+ * to delegate.
+ *
+ * Operates over the full tagged set rather than a single detector's output
+ * because a noop element can be classified `verbatim` by the mdast pass
+ * (`snippetTypeToRegionKind`) or by the verbatim regex scan, depending on the
+ * surrounding document. Comparison is case-insensitive, matching SvelTeX's own
+ * tag handling.
+ */
+function splitNoopRanges(
+    ranges: TaggedRange[],
+    document: string,
+    noopTags: readonly string[],
+): TaggedRange[] {
+    if (noopTags.length === 0) return ranges;
+    const noopTagsLower = new Set(noopTags.map((t) => t.toLowerCase()));
+    const result: TaggedRange[] = [];
+    for (const range of ranges) {
+        if (range.kind !== 'verbatim') {
+            result.push(range);
+            continue;
+        }
+        const tagName = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u
+            .exec(document.slice(range.start, range.end))?.[1]
+            ?.toLowerCase();
+        if (!tagName || !noopTagsLower.has(tagName)) {
+            result.push(range);
+            continue;
+        }
+        const body = verbatimBodyOffsets(document, range.start, range.end);
+        if (!body) {
+            // Self-closing / body-less noop env: nothing to delegate.
+            result.push(range);
+            continue;
+        }
+        const [innerStart, innerEnd] = body;
+        result.push({ kind: 'verbatim', start: range.start, end: innerStart });
+        result.push({ kind: 'svelte', start: innerStart, end: innerEnd });
+        result.push({ kind: 'verbatim', start: innerEnd, end: range.end });
+    }
+    return result;
 }
 
 /**
@@ -194,7 +284,7 @@ export function computeRegions(
     document: string,
     config: SveltexConfigSnapshot,
 ): Region[] {
-    const tagged: TaggedRange[] = [];
+    let tagged: TaggedRange[] = [];
 
     try {
         const verbatimTags = config.verbatimTags;
@@ -242,6 +332,18 @@ export function computeRegions(
         tagged.push(
             ...detectVerbatimRanges(maskRanges(document, tagged), verbatimTags),
         );
+
+        // `noop`-typed envs pass their BODY to Svelte unchanged — so the
+        // body should travel INTO the virtual `.svelte` document handed to
+        // `svelte-language-server`, while the wrapper tags (SvelTeX
+        // constructs, rewritten at build time) must stay blanked. Split any
+        // `verbatim`-kinded range whose opening tag is a noop env into
+        // wrapper/body/wrapper pieces. This runs over the WHOLE tagged set,
+        // not just the `detectVerbatimRanges` output, because a noop element
+        // can be classified `verbatim` by either detector (the mdast pass via
+        // `snippetTypeToRegionKind`, or the verbatim scan) depending on the
+        // surrounding document.
+        tagged = splitNoopRanges(tagged, document, config.noopTags);
     } catch {
         // If SvelTeX's parser throws (malformed input mid-edit is common), fall
         // back to treating the whole document as delegated Markdown. The Svelte
@@ -263,6 +365,12 @@ function fillGaps(tagged: TaggedRange[], length: number): Region[] {
     // but verbatim ranges were appended afterwards and could overlap a snippet
     // (e.g. a verbatim tag that also looks like an HTML element). Re-run the
     // outermost filter over the combined set, sorted by start offset.
+    // The `b.end - a.end` tie-break below is unreachable: no two tagged ranges
+    // share a start offset. `outermostRanges` removes overlap among the
+    // detector snippets, and `maskRanges` blanks those snippets before the
+    // verbatim scan, so an appended verbatim range can never begin at the same
+    // offset as another range.
+    /* v8 ignore next 2 */
     const sorted = [...tagged].sort((a, b) =>
         a.start !== b.start ? a.start - b.start : b.end - a.end,
     );
@@ -272,9 +380,16 @@ function fillGaps(tagged: TaggedRange[], length: number): Region[] {
 
     for (const range of sorted) {
         // Skip ranges that overlap something we already emitted.
+        /* v8 ignore next -- unreachable: tagged ranges never overlap (see the
+           sort comment above), so a range never starts before the cursor. */
         if (range.start < cursor) continue;
+        /* v8 ignore next -- unreachable: every detected range lies within the
+           document, so none starts at or past its length. */
         if (range.start >= length) break;
         const end = Math.min(range.end, length);
+        /* v8 ignore next -- unreachable: detectors never report a zero- or
+           negative-width range, so `end` (>= range.start here) never collapses
+           onto the start. */
         if (end <= range.start) continue;
         // Fill the gap before this range with plain Markdown.
         if (range.start > cursor) {

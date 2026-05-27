@@ -9,3 +9,17 @@
 allowBuilds:
   core-js-pure: true
   esbuild: true
+
+# Force-bump transitive packages with known advisories that Dependabot flags
+# here. The first five are dragged in by the published `@nvl/sveltex@0.4.4`
+# (pinned in `package.json` as `latest`) and become redundant once `latest`
+# resolves to 0.5.0+, whose own dependency tree already uses these versions.
+# `cookie` is dragged in by `@sveltejs/kit` and stays needed until SvelteKit
+# bumps its own `cookie` dep past 0.7.0.
+overrides:
+  svgo@<3.3.3: ^3.3.3
+  glob@<11.1.0: ^11.1.0
+  minimatch@<10.2.3: ^10.2.3
+  js-yaml@<4.1.1: ^4.1.1
+  katex@<0.16.21: ^0.16.21
+  cookie@<0.7.0: ^0.7.0

@@ -5,18 +5,26 @@
             "name": "Run Extension",
             "type": "extensionHost",
             "request": "launch",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-sveltex"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/packages/vscode-sveltex/dist/**/*.js"
-            ],
+            // `${workspaceFolder}` resolves to the folder VS Code has open as
+            // its workspace root. Because this `launch.json` lives at
+            // `packages/vscode-sveltex/.vscode/launch.json`, VS Code only
+            // surfaces it when `packages/vscode-sveltex` itself is open as
+            // the workspace — at which point `${workspaceFolder}` IS the
+            // extension directory. The previous `${workspaceFolder}/packages/
+            // vscode-sveltex` doubled the suffix, so VS Code looked for the
+            // extension at `…/packages/vscode-sveltex/packages/vscode-sveltex`
+            // and silently scanned nothing — symptoms were the `sveltex`
+            // language disappearing from the picker and the language server
+            // never starting.
+            "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             // Always run a full workspace build before launching. The extension
             // bundles `@nvl/sveltex-language-server/bin/server.js` and the math
             // LSP via esbuild, so a code change in either of those packages
             // needs them rebuilt *before* the extension bundle picks the
             // change up. `pnpm --recursive build` from the repo root does both
-            // in dependency order.
+            // in dependency order (the task's `cwd` is `${workspaceFolder}/
+            // ../..`).
             "preLaunchTask": "build extension"
         }
     ]

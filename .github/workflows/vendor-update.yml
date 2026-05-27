@@ -16,26 +16,34 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+# Top-level token is read-only; the job that actually opens the PR grants
+# itself the writes it needs. Scorecard's Token-Permissions check prefers
+# per-job grants over top-level writes.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   vendor-update:
     name: Refresh vendored upstream files
     runs-on: ubuntu-latest
+    # `pnpm vendor:update` makes one HTTP fetch per `VENDORED` entry; a
+    # stuck upstream shouldn't tie up a runner for the 6-hour default.
+    timeout-minutes: 20
+    permissions:
+      contents: write # for the chore/vendor-update branch the PR opens against
+      pull-requests: write # for `peter-evans/create-pull-request` to open the PR
     steps:
       # Audit outbound traffic — this workflow opens PRs against the repo
       # and fetches arbitrary upstream URLs (one per `VENDORED` entry in
       # `scripts/vendor.ts`); the audit trail catches any drift between
       # what `vendor.ts` declares and what the job actually contacts.
-      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
         with:
           run_install: false
@@ -53,9 +61,27 @@ jobs:
       - name: Refresh vendored files
         run: pnpm vendor:update
 
+      # PRs opened with the default `GITHUB_TOKEN` do NOT trigger
+      # `pull_request`-driven workflows (a documented GitHub guard against
+      # recursion). That would leave the weekly vendor PR with zero CI
+      # signal. Open it as the `sveltex-release` App instead -- same
+      # credentials as `ci.yml`'s release job -- so `ci.yml` and
+      # `dependency-review.yml` fire on the PR as they would for a human.
+      - name: Mint a GitHub-App installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - name: Open PR if anything changed
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          token: ${{ steps.app-token.outputs.token }}
+          # Vendor refreshes go through the same `develop` -> `main` flow as
+          # everything else; the default base (the repo's default branch)
+          # would otherwise target `main` directly.
+          base: develop
           branch: chore/vendor-update
           commit-message: 'chore(vendor): refresh upstream files'
           title: 'chore(vendor): refresh vendored upstream files'

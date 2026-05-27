@@ -241,3 +241,27 @@ export function readServerPaths(
         mathLanguageServer: asPath(record['mathLanguageServer']),
     };
 }
+
+/**
+ * Reads `initializationOptions.client` — a short identifier the host
+ * uses to opt into / out of client-specific server behaviour.
+ *
+ * The only consumer today is the semantic-tokens provider: VS Code
+ * passes `client: 'vscode'` because it regenerates its TextMate grammar
+ * from `sveltex/resolvedTags` and would only see its own colouring
+ * overridden by any semantic tokens we emit. Other editors (Zed,
+ * Helix, Neovim, …) pass nothing and get the provider.
+ *
+ * @returns The lowercased client identifier, or `undefined` if absent.
+ */
+export function readClientName(
+    initializationOptions: unknown,
+): string | undefined {
+    if (typeof initializationOptions !== 'object' || !initializationOptions) {
+        return undefined;
+    }
+    const value = (initializationOptions as Record<string, unknown>)['client'];
+    return typeof value === 'string' && value.length > 0
+        ? value.toLowerCase()
+        : undefined;
+}

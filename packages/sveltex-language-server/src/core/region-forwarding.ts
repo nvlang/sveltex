@@ -78,6 +78,9 @@ export function isLatexVerbatimRegion(
     const slice = source.slice(region.sourceStart, region.sourceEnd);
     const tagMatch = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(slice);
     if (!tagMatch) return false;
+    /* v8 ignore next -- @preserve the `?? ''` fallback is unreachable: the
+       regex's capture group is mandatory, so a successful match always has a
+       string at index 1. */
     const tag = (tagMatch[1] ?? '').toLowerCase();
     return latexTags.some((t) => t.toLowerCase() === tag);
 }
@@ -388,6 +391,9 @@ export class RegionForwarder {
         if (region.kind !== 'verbatim') return undefined;
         const slice = source.slice(region.sourceStart, region.sourceEnd);
         const tag = /^<\s*([a-zA-Z][-.:0-9_a-zA-Z]*)/u.exec(slice)?.[1];
+        /* v8 ignore next -- @preserve unreachable: this method is only reached
+           (via #forward → #proxyForRegion) for a region that already matched
+           isLatexVerbatimRegion's identical tag regex, so `tag` is defined. */
         if (!tag) return undefined;
         const scaffold = this.#config.texScaffolds[tag.toLowerCase()];
         if (!scaffold) return undefined;

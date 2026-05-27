@@ -1,0 +1,29 @@
+/*
+Cascadia Code (Microsoft, OFL-licensed). Variable webfonts hosted locally
+under `src/public/fonts/cascadia/`:
+  - `CascadiaCode.woff2`       — normal, `wght` axis 200..700.
+  - `CascadiaCodeItalic.woff2` — italic (its own file; Cascadia ships italic as
+    a separate face, not via a `slnt`/`ital` axis on the upright family).
+
+Declared straight as `Cascadia Code` — the family `--vp-font-family-mono` in
+`custom.pcss` resolves to. The stale `'Monaspace *'` first-choice names left
+in `api.css`'s `--api-mono-*` fallback stacks all fall through to this.
+*/
+
+@font-face {
+    font-family: 'Cascadia Code';
+    font-style: normal;
+    font-weight: 200 700;
+    font-display: swap;
+    font-feature-settings: 'calt', 'liga';
+    src: url('/fonts/cascadia/CascadiaCode.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Cascadia Code';
+    font-style: italic;
+    font-weight: 200 700;
+    font-display: swap;
+    font-feature-settings: 'calt', 'liga';
+    src: url('/fonts/cascadia/CascadiaCodeItalic.woff2') format('woff2');
+}

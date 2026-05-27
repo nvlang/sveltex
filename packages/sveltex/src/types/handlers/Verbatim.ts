@@ -65,10 +65,7 @@ export interface SimpleEscapeInstruction {
      * - `{` → `&lbrace;`
      * - `}` → `&rbrace;`
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     braces?: boolean | undefined;
 
@@ -81,10 +78,7 @@ export interface SimpleEscapeInstruction {
      * - `"` → `&quot;`
      * - `'` → `&apos;`
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     html?: boolean | undefined;
 }
@@ -1358,10 +1352,7 @@ export interface VerbEnvConfigBase {
      *   tags.
      * - `'auto'`: Add a space iff the user did so in the input.
      *
-     * @defaultValue
-     * ```ts
-     * 'auto'
-     * ```
+     * @defaultValue `'auto'`
      *
      * @see {@link respectSelfClosing | `respectSelfClosing`}
      *

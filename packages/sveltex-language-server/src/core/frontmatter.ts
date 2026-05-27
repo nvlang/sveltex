@@ -124,9 +124,17 @@ function frontmatterContext(
     lines: readonly string[],
     lineIndex: number,
 ): string | undefined {
+    // `/^\s*/u` matches at offset 0 of any string, so `.exec(...)?.[0]` is
+    // never nullish — the `?? ''` is an unreachable type-level fallback.
+    /* v8 ignore next */
     const indentOf = (s: string): number => (/^\s*/u.exec(s)?.[0] ?? '').length;
+    // Callers guard `lines[position.line] === undefined` before reaching here,
+    // so `lines[lineIndex]` is always defined.
+    /* v8 ignore next */
     let minIndent = indentOf(lines[lineIndex] ?? '');
     for (let i = lineIndex - 1; i >= 0; i -= 1) {
+        // `i` ranges over valid indices, so `lines[i]` is always defined.
+        /* v8 ignore next */
         const raw = lines[i] ?? '';
         const trimmed = raw.trim();
         if (trimmed === '' || trimmed.startsWith('#')) continue;
@@ -420,6 +428,9 @@ export function computeFrontmatterCompletion(
     const range = {
         start: {
             line: position.line,
+            // `/[A-Za-z0-9_-]*$/u` always matches (it may match the empty
+            // string), so `typed?.[0]` is never nullish.
+            /* v8 ignore next */
             character: position.character - (typed?.[0] ?? '').length,
         },
         end: { line: position.line, character: position.character },

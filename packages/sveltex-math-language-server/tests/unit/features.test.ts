@@ -5,7 +5,12 @@
 import { describe, expect, it } from 'vitest';
 import { CompletionItemKind } from 'vscode-languageserver-protocol';
 import { computeCompletion, computeHover } from '../../src/core/features.js';
-import { createCommandTable } from '../../src/core/commands.js';
+import {
+    CommandTable,
+    createCommandTable,
+    type CommandCategory,
+    type MathCommand,
+} from '../../src/core/commands.js';
 
 const katex = createCommandTable('katex');
 const mathjax = createCommandTable('mathjax');
@@ -210,5 +215,30 @@ describe('computeHover', () => {
             'katex',
         );
         expect(hover).toBeNull();
+    });
+});
+
+describe('completion item building — defensive category fallback', () => {
+    // `completionKind` and `sortPrefix` each have a `default` arm guarding
+    // against a category outside the four-member `CommandCategory` union. The
+    // typed API never produces such a command, but the generated data could in
+    // principle drift, so the fallback exists — and is exercised here with a
+    // deliberately out-of-union category (cast past the type) to confirm it
+    // yields the generic `Text` kind and the last sort group.
+    const bogusCategory = 'unknown' as CommandCategory;
+    const command: MathCommand = { name: 'aaa', category: bogusCategory };
+    const table = CommandTable.create([command]);
+
+    it('falls back to the Text kind and the last sort group', () => {
+        const result = computeCompletion(
+            '\\aa',
+            { line: 0, character: 3 },
+            table,
+        );
+        const item = result.items.find((i) => i.label === '\\aaa');
+        expect(item).toBeDefined();
+        expect(item?.kind).toBe(CompletionItemKind.Text);
+        // `sortPrefix` returns '4' for an unknown category; the name follows.
+        expect(item?.sortText).toBe('4aaa');
     });
 });

@@ -31,13 +31,22 @@ languages/sveltex/
 
 ## How the grammar is wired
 
-`extension.toml`'s `[grammars.sveltex]` block points Zed at this monorepo and
-the grammar's subdirectory (`packages/tree-sitter-sveltex`). Zed clones the
-repository at the pinned `rev` and compiles the grammar itself.
+`extension.toml` declares three tree-sitter grammars, all built from this
+monorepo:
 
-> **Maintainers:** the `rev` in `extension.toml` must be a *pushed* commit SHA
-> of `nvlang/sveltex` — Zed builds the grammar from the remote, not the
-> working tree. Bump it whenever the grammar changes.
+- `[grammars.sveltex]` — the `.sveltex` grammar itself, from
+  `packages/tree-sitter-sveltex`.
+- `[grammars.markdown_sveltex]` and `[grammars.markdown_inline_sveltex]` — the
+  forked Markdown block/inline grammars, from
+  `packages/tree-sitter-markdown-sveltex`, injected into every Markdown chunk
+  in place of Zed's built-in `markdown`/`markdown-inline`.
+
+Zed clones the repository at each block's pinned `rev` and compiles the
+grammars itself.
+
+> **Maintainers:** every `rev` in `extension.toml` must be a *pushed* commit
+> SHA of `nvlang/sveltex` — Zed builds the grammars from the remote, not the
+> working tree. Bump the relevant `rev`(s) whenever a grammar changes.
 
 ## How the language server is wired
 
@@ -65,6 +74,29 @@ It then launches `node …/bin/server.js --stdio`.
 
 Recommended companion language extensions for full injection highlighting:
 **LaTeX**, **Svelte**, and **TOML** (Markdown, YAML and JSON are built in).
+
+## Recommended settings
+
+**Document outline.** The `.sveltex` outline (and breadcrumbs) is best sourced
+from the language server, which lists the document's **Markdown headings** —
+matching the VS Code extension. Zed otherwise uses the tree-sitter
+`outline.scm`, which can't see Markdown headings (they're delegated to an
+injected grammar) and so only lists the frontmatter block. Enable the language
+server's symbols for the `SvelTeX` language in your Zed `settings.json`:
+
+```json
+{
+  "languages": {
+    "SvelTeX": { "document_symbols": "on" }
+  }
+}
+```
+
+**Semantic highlighting.** Zed has `semantic_tokens` **off by default** — set it
+to `"combined"` so the language server can colour `escape`/`code` verbatim
+bodies, which the static grammar can't (it only recognises the hard-coded
+`tex`/`latex`/`tikz` and `verb`/`verbatim` tag names — see the
+[verbatim docs](https://sveltex.dev/docs/verbatim#editor-syntax-highlighting)).
 
 ## License
 

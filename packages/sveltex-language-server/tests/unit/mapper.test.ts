@@ -158,6 +158,227 @@ describe('SourceMap — feature flags', () => {
     });
 });
 
+describe('SourceMap — text accessors', () => {
+    it('exposes the source and generated full texts', () => {
+        const map = SourceMap.create(
+            [identityMapping(0, 0, 4)],
+            'AAAA----',
+            'AAAA    ',
+        );
+        expect(map.sourceText).toBe('AAAA----');
+        expect(map.generatedText).toBe('AAAA    ');
+    });
+});
+
+describe('SourceMap — generated→source range translation', () => {
+    // line 0: "hello world"   (delegated)
+    // line 1: "xx----yy"      ("xx"/"yy" delegated, "----" blanked)
+    const source = 'hello world\nxx----yy';
+    const generated = 'hello world\nxx    yy';
+    const mappings: Mapping[] = [
+        identityMapping(0, 0, 12), // "hello world\n"
+        identityMapping(12, 12, 2), // "xx"
+        identityMapping(18, 18, 2), // "yy"
+    ];
+    const map = SourceMap.create(mappings, source, generated);
+
+    it('maps a Range whose endpoints are both mapped', () => {
+        const range = map.generatedRangeToSource({
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 5 },
+        });
+        expect(range).toEqual({
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 5 },
+        });
+    });
+
+    it('returns undefined when the start endpoint is unmapped', () => {
+        const range = map.generatedRangeToSource({
+            start: { line: 1, character: 4 }, // unmapped (blanked gap)
+            end: { line: 1, character: 7 }, // mapped ("yy")
+        });
+        expect(range).toBeUndefined();
+    });
+
+    it('returns undefined when the end endpoint is unmapped', () => {
+        const range = map.generatedRangeToSource({
+            start: { line: 1, character: 0 }, // mapped ("xx")
+            end: { line: 1, character: 4 }, // unmapped (blanked gap)
+        });
+        expect(range).toBeUndefined();
+    });
+});
+
+describe('SourceMap — non-affine span clamping (translate)', () => {
+    // A length-changing mapping (source 6 chars → generated 3 chars). This is
+    // the future non-identity case: `translate` must clamp interior offsets to
+    // the shorter destination span rather than overrunning it.
+    //   source:    "<<<<<<"  offsets 0..5
+    //   generated: ">>>"     offsets 0..2
+    const map = SourceMap.create(
+        [
+            {
+                sourceOffset: 0,
+                sourceLength: 6,
+                generatedOffset: 0,
+                generatedLength: 3,
+                features: allFeatures(),
+            },
+        ],
+        '<<<<<<',
+        '>>>',
+    );
+
+    it('clamps an interior source offset to the shorter generated span', () => {
+        // delta = 5 (interior, 0 < 5 < 6) but generatedLength is only 3, so the
+        // result is clamped: toOffset + min(delta, toLength) = 0 + min(5,3) = 3.
+        expect(map.sourceOffsetToGenerated(5)).toBe(3);
+    });
+
+    it('clamps an interior generated offset to the shorter source span', () => {
+        // Reverse direction: delta = 2 (interior, 0 < 2 < 3), and the source
+        // span is longer (6), so min(delta, toLength) = min(2, 6) = 2.
+        expect(map.generatedOffsetToSource(2)).toBe(2);
+    });
+
+    it('returns the destination start for the span start offset', () => {
+        expect(map.sourceOffsetToGenerated(0)).toBe(0);
+    });
+
+    it('returns the destination end for the span end offset', () => {
+        // delta = 6 >= fromLength (6) → toOffset + toLength = 0 + 3 = 3.
+        expect(map.sourceOffsetToGenerated(6)).toBe(3);
+    });
+});
+
+describe('SourceMap — span end with a non-adjacent next span', () => {
+    // Two mapped spans separated by a blanked gap: "AAAA----BBBB". Probing the
+    // end of span A (offset 4) must return span A, because the next span (B)
+    // does not start at offset 4 — exercising the `return m` branch of the
+    // end-of-span boundary handling.
+    const source = 'AAAA----BBBB';
+    const generated = 'AAAA    BBBB';
+    const map = SourceMap.create(
+        [identityMapping(0, 0, 4), identityMapping(8, 8, 4)],
+        source,
+        generated,
+    );
+
+    it('maps the end of a span that is not immediately followed by another', () => {
+        // Offset 4 is the end of span A; span B starts at 8, not 4.
+        expect(map.sourceOffsetToGenerated(4)).toBe(4);
+    });
+});
+
+describe('SourceMap — empty mapping list', () => {
+    const map = SourceMap.create([], 'abc', 'abc');
+
+    it('maps nothing forward', () => {
+        expect(map.sourceOffsetToGenerated(0)).toBeUndefined();
+        expect(map.sourceOffsetToGenerated(1)).toBeUndefined();
+    });
+
+    it('maps nothing in reverse', () => {
+        expect(map.generatedOffsetToSource(0)).toBeUndefined();
+    });
+
+    it('has no features anywhere', () => {
+        expect(map.featuresAt(0, 'toGenerated')).toBeUndefined();
+        expect(map.featuresAt(0, 'toSource')).toBeUndefined();
+    });
+
+    it('returns undefined for positions and ranges', () => {
+        expect(
+            map.sourcePositionToGenerated({ line: 0, character: 0 }),
+        ).toBeUndefined();
+        expect(
+            map.generatedPositionToSource({ line: 0, character: 0 }),
+        ).toBeUndefined();
+        expect(
+            map.sourceRangeToGenerated({
+                start: { line: 0, character: 0 },
+                end: { line: 0, character: 1 },
+            }),
+        ).toBeUndefined();
+        expect(
+            map.generatedRangeToSource({
+                start: { line: 0, character: 0 },
+                end: { line: 0, character: 1 },
+            }),
+        ).toBeUndefined();
+    });
+});
+
+describe('SourceMap — before the first / after the last mapping', () => {
+    // A single mapping in the middle of the document: offsets 4..7 ("MMMM").
+    //   source:    "----MMMM----"
+    const map = SourceMap.create(
+        [identityMapping(4, 4, 4)],
+        '----MMMM----',
+        '    MMMM    ',
+    );
+
+    it('returns undefined before the first mapping', () => {
+        // hi walks below lo (offset < start) → loop exits with undefined.
+        expect(map.sourceOffsetToGenerated(2)).toBeUndefined();
+    });
+
+    it('returns undefined after the last mapping', () => {
+        // lo walks above hi (offset > end) → loop exits with undefined.
+        expect(map.sourceOffsetToGenerated(10)).toBeUndefined();
+    });
+
+    it('maps inside the single mapping', () => {
+        expect(map.sourceOffsetToGenerated(5)).toBe(5);
+    });
+});
+
+describe('SourceMap — multi-line span translation', () => {
+    // A delegated region spanning several lines, then a blanked tail.
+    //   source line 0: "<script>"
+    //   source line 1: "  let x = 1;"
+    //   source line 2: "</script>"
+    const source = '<script>\n  let x = 1;\n</script>';
+    const map = SourceMap.create(
+        [identityMapping(0, 0, source.length)],
+        source,
+        source,
+    );
+
+    it('maps a position on a later line of a multi-line span', () => {
+        const generated = map.sourcePositionToGenerated({
+            line: 1,
+            character: 6,
+        });
+        expect(generated).toEqual({ line: 1, character: 6 });
+    });
+
+    it('maps a multi-line range', () => {
+        const range = map.sourceRangeToGenerated({
+            start: { line: 0, character: 0 },
+            end: { line: 2, character: 9 },
+        });
+        expect(range).toEqual({
+            start: { line: 0, character: 0 },
+            end: { line: 2, character: 9 },
+        });
+    });
+
+    it('round-trips a multi-line position back to source', () => {
+        const generated = map.sourcePositionToGenerated({
+            line: 2,
+            character: 0,
+        });
+        expect(generated).toBeDefined();
+        if (!generated) return;
+        expect(map.generatedPositionToSource(generated)).toEqual({
+            line: 2,
+            character: 0,
+        });
+    });
+});
+
 describe('SourceMap — integration with the region pipeline', () => {
     const config = defaultConfigSnapshot();
 

@@ -14,7 +14,7 @@
     "test": "pnpm --recursive --workspace-concurrency=1 test",
     "format": "prettier --write .",
     "vendor:update": "tsx scripts/vendor.ts",
-    "ci:version": "changeset version && pnpm exec tsx scripts/update-jsr-versions.ts && pnpm install --no-frozen-lockfile && pnpm run format",
+    "ci:version": "changeset version && pnpm exec tsx scripts/update-jsr-versions.ts && pnpm install --no-frozen-lockfile && pnpm exec prettier --write 'packages/*/package.json' 'packages/*/jsr.json'",
     "ci:publish": "pnpm --filter=\\!./packages/vscode-sveltex publish --provenance --access public --no-git-checks && pnpm --filter \"@nvl/sveltex\" exec deno publish --unstable-sloppy-imports --allow-dirty && changeset tag"
   },
   "devDependencies": {
@@ -29,16 +29,16 @@
     "commitlint": "^21.0.1",
     "deno": "^2.7.14",
     "eslint": "^10.4.0",
-    "eslint-plugin-playwright": "^2.10.2",
+    "eslint-plugin-playwright": "^2.10.4",
     "glob": "^13.0.6",
     "husky": "^9.1.7",
     "js-yaml": "^4.1.1",
-    "knip": "^6.14.1",
+    "knip": "^6.14.2",
     "prettier": "^3.8.3",
     "publint": "^0.3.21",
     "rimraf": "^6.1.3",
-    "tsx": "^4.22.1",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.59.4"
   }
 }

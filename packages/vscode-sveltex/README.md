@@ -9,8 +9,9 @@ combine markdown, Svelte, and (some) LaTeX.
 -   Svelte + Markdown syntax highlighting (incl. fenced code blocks, though only with ~50 languages).
 -   Syntax highlighting for math expressions in `$...$`, `$$...$$`, `\(...\)`, and
     `\[...\]` delimiters.
--   LaTeX syntax highlighting in "LaTeX tags" (configurable).
--   Turn off highlighting in "Escape tags" (configurable).
+-   Per-type verbatim highlighting — LaTeX in `tex`-type tags, plain text in
+    `escape`/`code` tags, and Svelte in `noop` tags — driven by your
+    `sveltex.config.js` (custom tag names included).
 -   `<script>` languages: JavaScript, TypeScript
 -   `<style>` languages: CSS, SCSS, SASS, PostCSS, Stylus
 
@@ -47,19 +48,19 @@ This extension requires the `svelte.svelte-vscode` VS Code extension to be insta
 This is because the TextMate grammar for SvelTeX depends on Svelte's TextMate
 grammar.
 
-## Extension Settings
+## Verbatim tags
 
-This extension contributes the following settings:
+This extension contributes no settings of its own. Instead, it highlights the
+body of each verbatim environment according to its configured `type` —
+`tex`-typed tags as LaTeX, `escape`/`code` as a plain fenced-code block, `noop`
+as Svelte — reading the tag names (and their aliases) directly from your
+project's `sveltex.config.js` / `svelte.config.js` via the language server. So
+custom tag names work automatically, with nothing to configure here.
 
--   `sveltex.latexTags`: Tags to use for LaTeX components. In effect, this will
-    just modify this extension's TextMate grammar so that the contents of these
-    tags are highlighted as LaTeX.
--   `sveltex.escapeTags`: Tags to use for non-TeX verbatim components. In
-    effect, this will just modify this extension's TextMate grammar so that the
-    contents of these tags are highlighted the same way as a plaintext fenced
-    code block would in markdown.
-
-⚠ **Note:** You might need to reload the window for the changes to take effect.
+⚠ **Note:** the TextMate grammar is regenerated when the language server reports
+your resolved tags. After you add, remove, or rename a verbatim environment in
+your config, run **Developer: Reload Window** so the regenerated grammar takes
+effect.
 
 ## Limitations
 

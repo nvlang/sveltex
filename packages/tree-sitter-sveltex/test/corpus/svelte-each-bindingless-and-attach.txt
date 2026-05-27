@@ -1,0 +1,118 @@
+================================================================================
+{#each} without a binding — plain N-times iteration
+================================================================================
+{#each items}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} without a binding — with index only
+================================================================================
+{#each items, i}{i}{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_index)
+    (svelte_block_content
+      (svelte_expression
+        (svelte_expression_body)))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} without a binding — chess-board pattern from the Svelte docs
+================================================================================
+{#each { length: 8 }, rank}
+  {#each { length: 8 }, file}
+    cell
+  {/each}
+{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_index)
+    (svelte_block_content
+      (markdown_chunk)
+      (svelte_block_each
+        (svelte_block_tag)
+        (svelte_each_iterable)
+        (svelte_each_index)
+        (svelte_block_content
+          (markdown_chunk))
+        (svelte_block_tag))
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+; NOTE: with the element-aware grammar, `{@attach …}` written *as an element
+; attribute* is now absorbed into the surrounding `html_open_tag`'s opaque
+; `element_attributes` blob rather than surfaced as a standalone
+; `svelte_at_attach` node. (A bare `{@attach …}` not inside a tag still parses
+; as `svelte_at_attach`.) This is a known limitation of treating attributes as
+; opaque: the `{@attach}` body no longer gets its own JS injection.
+
+================================================================================
+{@attach} as an attribute — simple identifier reference
+================================================================================
+<div {@attach myAttachment}>foo</div>
+--------------------------------------------------------------------------------
+
+(document
+  (html_open_tag
+    (tag_name)
+    (element_attributes))
+  (markdown_chunk)
+  (html_close_tag
+    (tag_name)))
+
+================================================================================
+{@attach} as an attribute — factory call
+================================================================================
+<button {@attach tooltip(content)}>Hover me</button>
+--------------------------------------------------------------------------------
+
+(document
+  (html_open_tag
+    (tag_name)
+    (element_attributes))
+  (markdown_chunk)
+  (html_close_tag
+    (tag_name)))
+
+================================================================================
+{@attach} as an attribute — inline arrow function (`>` and `/` inside braces)
+================================================================================
+<canvas {@attach (canvas) => { ctx.fillRect(0,0,1,1); }}></canvas>
+--------------------------------------------------------------------------------
+
+(document
+  (html_open_tag
+    (tag_name)
+    (element_attributes))
+  (html_close_tag
+    (tag_name)))
+
+================================================================================
+{@attach} as an attribute — conditional `enabled && attachment` form
+================================================================================
+<div {@attach enabled && myAttachment}>x</div>
+--------------------------------------------------------------------------------
+
+(document
+  (html_open_tag
+    (tag_name)
+    (element_attributes))
+  (markdown_chunk)
+  (html_close_tag
+    (tag_name)))

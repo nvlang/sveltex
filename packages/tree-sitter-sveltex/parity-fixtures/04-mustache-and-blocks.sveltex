@@ -1,0 +1,16 @@
+Hello {name}!
+
+{#if loaded}
+  {@const summary = items.length}
+  We have {summary} items: {items.join(', ')}.
+{:else}
+  Loading...
+{/if}
+
+{#each items as item, i (item.id)}
+  - {i}: {item.name}
+{:else}
+  No items.
+{/each}
+
+{@html sanitize(description)}

@@ -92,10 +92,7 @@ export interface MathjaxConversionOptions {
     /**
      * Specifies whether the math is in display-mode or not (for TeX input).
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      *
      * @see
      * https://docs.mathjax.org/en/v4.0/server/direct.html#mathDocument.convert
@@ -105,10 +102,7 @@ export interface MathjaxConversionOptions {
     /**
      * Number of pixels in an em for the surrounding font.
      *
-     * @defaultValue
-     * ```ts
-     * 16
-     * ```
+     * @defaultValue `16`
      *
      * @see
      * https://docs.mathjax.org/en/v4.0/server/direct.html#mathDocument.convert
@@ -118,10 +112,7 @@ export interface MathjaxConversionOptions {
     /**
      * Number of pixels in an ex for the surrounding font.
      *
-     * @defaultValue
-     * ```ts
-     * 8
-     * ```
+     * @defaultValue `8`
      *
      * @see
      * https://docs.mathjax.org/en/v4.0/server/direct.html#mathDocument.convert
@@ -132,10 +123,7 @@ export interface MathjaxConversionOptions {
      * Width of the container, in pixels. If set to `null`, the container is
      * considered to be infinitely wide.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      *
      * @see
      * https://docs.mathjax.org/en/v4.0/server/direct.html#mathDocument.convert
@@ -146,20 +134,14 @@ export interface MathjaxConversionOptions {
      * A number giving the line-breaking width in em units. Default is a very
      * large number, so effectively no line breaking.
      *
-     * @defaultValue
-     * ```
-     * 100000
-     * ```
+     * @defaultValue `100000`
      */
     lineWidth?: number | undefined;
 
     /**
      * Scaling factor to apply to the output.
      *
-     * @defaultValue
-     * ```ts
-     * 1
-     * ```
+     * @defaultValue `1`
      *
      * @see
      * https://docs.mathjax.org/en/v4.0/server/direct.html#mathDocument.convert
@@ -256,10 +238,7 @@ interface MathjaxMathmlInputProcessorOptions extends MathjaxCommonInputProcessor
         /**
          * Check if number of children is correct.
          *
-         * @defaultValue
-         * ```ts
-         * true
-         * ```
+         * @defaultValue `true`
          *
          * This specifies whether the number of children is verified or not. The
          * default is to check for the correct number of children. If the number
@@ -303,10 +282,7 @@ interface MathjaxMathmlInputProcessorOptions extends MathjaxCommonInputProcessor
         /**
          * Fix unbalanced mmultiscripts.
          *
-         * @defaultValue
-         * ```ts
-         * true
-         * ```
+         * @defaultValue `true`
          *
          * This specifies whether extra `<none/>` entries are added to
          * `<mmultiscripts>` elements to balance the super- and subscripts, as
@@ -318,10 +294,7 @@ interface MathjaxMathmlInputProcessorOptions extends MathjaxCommonInputProcessor
         /**
          * Fix incorrect nesting in mtables.
          *
-         * @defaultValue
-         * ```ts
-         * true
-         * ```
+         * @defaultValue `true`
          *
          * This specifies whether missing `<mtable>`, `<mtr>` and `<mtd>`
          * elements are placed around cells or not. When true, MathJax will
@@ -534,10 +507,7 @@ interface MathjaxTexInputProcessorOptions extends MathjaxCommonInputProcessorOpt
     /**
      * Use `$` to produce a literal dollar sign.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      *
      * When set to `true`, you may use `\$` to represent a literal dollar sign,
      * rather than using it as a math delimiter, and `\\` to represent a literal
@@ -555,10 +525,7 @@ interface MathjaxTexInputProcessorOptions extends MathjaxCommonInputProcessorOpt
     /**
      * Process `\begin{xxx}...\end{xxx}` outside math mode.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      *
      * When `true`, `tex2jax` looks not only for the in-line and display math
      * delimiters, but also for LaTeX environments (`\begin{something} ...
@@ -574,10 +541,7 @@ interface MathjaxTexInputProcessorOptions extends MathjaxCommonInputProcessorOpt
      * When set to `true`, MathJax will process `\ref{...}` outside of math
      * mode.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     processRefs?: boolean;
 
@@ -639,10 +603,7 @@ interface MathjaxTexInputProcessorOptions extends MathjaxCommonInputProcessorOpt
     /**
      * Use label name rather than tag for ids.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      *
      * This controls whether element IDs for tags use the `\label` name or the
      * equation number. When `true`, use the label, when `false`, use the
@@ -754,10 +715,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > to suit your situation. The user can also adjust this value using the
      * > contextual menu item associated with the typeset mathematics.
      *
-     * @defaultValue
-     * ```ts
-     * 1
-     * ```
+     * @defaultValue `1`
      */
     scale?: number;
 
@@ -769,10 +727,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > match the equation to the surrounding text. This will prevent MathJax
      * > from making the mathematics too small.
      *
-     * @defaultValue
-     * ```ts
-     * 0.5
-     * ```
+     * @defaultValue `0.5`
      */
     minScale?: number;
 
@@ -789,10 +744,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > `mathvariant` for the element (some math variants, such as `fraktur`
      * > can’t be inherited from the surroundings).
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     mtextInheritFont?: boolean;
 
@@ -809,10 +761,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > element (some math variants, such as `fraktur` can’t be inherited from
      * > the surroundings).
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     merrorInheritFont?: boolean;
 
@@ -826,10 +775,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > comma-separated list of font-family names. If it is empty, then the
      * > math fonts are used, as they are with other token elements.
      *
-     * @defaultValue
-     * ```ts
-     * ''
-     * ```
+     * @defaultValue `''`
      */
     mtextFont?: string;
 
@@ -843,10 +789,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > comma-separated list of font-family names. If it is empty, then the
      * > math fonts are used, as they are with other token elements.
      *
-     * @defaultValue
-     * ```ts
-     * 'serif'
-     * ```
+     * @defaultValue `'serif'`
      */
     merrorFont?: string;
 
@@ -859,10 +802,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > directly, these may not be in MathJax’s font, and so they will be taken
      * > from the font or fonts specified here.
      *
-     * @defaultValue
-     * ```ts
-     * 'serif'
-     * ```
+     * @defaultValue `'serif'`
      */
     unknownFamily?: string;
 
@@ -874,10 +814,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > typesetting the math. When `true`, MathML spacing rules are used; when
      * > `false`, the TeX rules are used.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     mathmlSpacing?: boolean;
 
@@ -915,10 +852,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > the ex-size can’t be determined (e.g., when running in a Node
      * > application, where the size of DOM elements can’t be determined).
      *
-     * @defaultValue
-     * ```ts
-     * 0.5
-     * ```
+     * @defaultValue `0.5`
      */
     exFactor?: number;
 
@@ -929,10 +863,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > This determines how displayed equations will be aligned (left, center,
      * > or right). The default is 'center'.
      *
-     * @defaultValue
-     * ```ts
-     * 'center'
-     * ```
+     * @defaultValue `'center'`
      */
     displayAlign?: string;
 
@@ -946,10 +877,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > aligned to, or an offset from the center position if the expression is
      * > centered. Note that negative values are allowed.
      *
-     * @defaultValue
-     * ```ts
-     * '0'
-     * ```
+     * @defaultValue `'0'`
      */
     displayIndent?: string;
 
@@ -976,10 +904,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > The user can change this value globally using the MathJax contextual
      * > menu.
      *
-     * @defaultValue
-     * ```ts
-     * 'overflow'
-     * ```
+     * @defaultValue `'overflow'`
      */
     displayOverflow?:
         | 'scroll'
@@ -1037,10 +962,7 @@ interface MathjaxCommonOutputProcessorOptions {
                * > then break the mathematics when needed, if the expression extends
                * > beyond the container’s width.
                *
-               * @defaultValue
-               * ```ts
-               * true
-               * ```
+               * @defaultValue `true`
                */
               inline?: boolean;
 
@@ -1053,10 +975,7 @@ interface MathjaxCommonOutputProcessorOptions {
                * > percentage of the container’s width (e.g., the default value of
                * > `'100%'`).
                *
-               * @defaultValue
-               * ```ts
-               * '100%'
-               * ```
+               * @defaultValue `'100%'`
                */
               width?: string;
 
@@ -1068,10 +987,7 @@ interface MathjaxCommonOutputProcessorOptions {
                * > inserted between the lines of a displayed equation when it is
                * > broken.
                *
-               * @defaultValue
-               * ```ts
-               * 0.2
-               * ```
+               * @defaultValue `0.2`
                */
               lineleading?: number;
 
@@ -1085,10 +1001,7 @@ interface MathjaxCommonOutputProcessorOptions {
                * > of the usual one. MathJax will make an instance of the class you
                * > pass it, or of its default class if this value is `null`.
                *
-               * @defaultValue
-               * ```ts
-               * null
-               * ```
+               * @defaultValue `null`
                */
               LinebreakVisitor?: object | null;
           }
@@ -1112,10 +1025,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * SvelTeX only supports specifying a font with the format
      * `'mathjax-<font>'` (e.g., `'mathjax-newcm'`).
      *
-     * @defaultValue
-     * ```ts
-     * 'mathjax-newcm'
-     * ```
+     * @defaultValue `'mathjax-newcm'`
      */
     font?: `mathjax-${MathjaxFont}` | undefined;
 
@@ -1169,10 +1079,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * > for more information, and for a tool for computing the values to use
      * > for the `data-mjx-hdw` attributes.
      *
-     * @defaultValue
-     * ```ts
-     * 'auto'
-     * ```
+     * @defaultValue `'auto'`
      */
     htmlHDW?: 'ignore' | 'force' | 'use' | 'auto';
 
@@ -1251,10 +1158,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * @remarks This is a "developer option", i.e., a low-level option intended
      * for developers.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     wrapperFactory?: WrapperFactory<
         Node<Node<any, any>, NodeClass<any, any>>,
@@ -1287,10 +1191,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * @remarks This is a "developer option", i.e., a low-level option intended
      * for developers.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     fontData?: FontData<
         CharOptions,
@@ -1312,10 +1213,7 @@ interface MathjaxCommonOutputProcessorOptions {
      * @remarks This is a "developer option", i.e., a low-level option intended
      * for developers.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     cssStyles?: unknown;
 }
@@ -1334,10 +1232,7 @@ interface MathjaxSvgOutputProcessorOptions extends MathjaxCommonOutputProcessorO
      * > begin to overlap and become unreadable. You probably don’t want to go
      * > above 20 or so.
      *
-     * @defaultValue
-     * ```ts
-     * 3
-     * ```
+     * @defaultValue `3`
      */
     blacker?: number;
 
@@ -1359,10 +1254,7 @@ interface MathjaxSvgOutputProcessorOptions extends MathjaxCommonOutputProcessorO
      * > elements of the page. When set to `'none'`, no caching is done and
      * > explicit paths are used for every character in the expression.
      *
-     * @defaultValue
-     * ```ts
-     * 'local'
-     * ```
+     * @defaultValue `'local'`
      */
     fontCache?: 'local' | 'global' | 'none';
 
@@ -1378,10 +1270,7 @@ interface MathjaxSvgOutputProcessorOptions extends MathjaxCommonOutputProcessorO
      * > `useXlink` attribute determines whether the `xlink` namespace should be
      * > included in the `href` attributes or not.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     useXlink?: boolean;
 
@@ -1398,10 +1287,7 @@ interface MathjaxSvgOutputProcessorOptions extends MathjaxCommonOutputProcessorO
      * @remarks This is a "developer option", i.e., a low-level option intended
      * for developers.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     localID?: string | null;
 }
@@ -1434,10 +1320,7 @@ interface MathjaxChtmlOutputProcessorOptions extends MathjaxCommonOutputProcesso
      * > require the font height and ex-height to have the same ratio in the
      * > surrounding text as in the math fonts, which is unlikely).
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     matchFontHeight?: boolean;
 
@@ -1460,10 +1343,7 @@ interface MathjaxChtmlOutputProcessorOptions extends MathjaxCommonOutputProcesso
      * > may want to include your own copy of the fonts, and so may need to set
      * > this value accordingly.
      *
-     * @defaultValue
-     * ```ts
-     * 'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/woff2'
-     * ```
+     * @defaultValue `'https://cdn.jsdelivr.net/npm/@mathjax/mathjax-newcm-font@latest/chtml/woff2'`
      */
     fontURL?: string;
 
@@ -1502,10 +1382,7 @@ interface MathjaxChtmlOutputProcessorOptions extends MathjaxCommonOutputProcesso
      * >
      * > to clear the font cache.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     adaptiveCSS?: boolean;
 }
@@ -1575,10 +1452,7 @@ interface MathjaxDocumentOptions {
      * > `ignoreHtmlClass: 'class[12]'`, which matches `class` followed by
      * > either a `1` or a `2`.
      *
-     * @defaultValue
-     * ```ts
-     * 'mathjax_ignore'
-     * ```
+     * @defaultValue `'mathjax_ignore'`
      */
     ignoreHtmlClass?: string;
 
@@ -1602,10 +1476,7 @@ interface MathjaxDocumentOptions {
      * > by `processHtmlClass: 'class[12]'`, which matches `class` followed by
      * > either a `1` or a `2`.
      *
-     * @defaultValue
-     * ```ts
-     * 'mathjax_process'
-     * ```
+     * @defaultValue `'mathjax_process'`
      */
     processHtmlClass?: string;
 
@@ -1773,10 +1644,7 @@ interface MathjaxSemanticEnrichOptions {
      * extension and turn semantic enrichment on. If this option is `false`,
      * SvelTeX won't load the `semantic-enrich` extension to begin with.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     enableEnrichment?: boolean | undefined;
 
@@ -1823,10 +1691,7 @@ interface MathjaxSpeechOptions {
      * {@link enableBraille | `enableBraille`} are `false`, SvelTeX won't load
      * the `speech` extension.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enableSpeech?: boolean | undefined;
 
@@ -1848,10 +1713,7 @@ interface MathjaxSpeechOptions {
      * {@link enableSpeech | `enableSpeech`} are `false`, SvelTeX won't load the
      * `speech` extension.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enableBraille?: boolean | undefined;
 
@@ -1890,10 +1752,7 @@ interface MathjaxSpeechOptions {
               /**
                * Speech rule set, i.e., domain or subject area of speech rules.
                *
-               * @defaultValue
-               * ```ts
-               * 'mathspeak'
-               * ```
+               * @defaultValue `'mathspeak'`
                */
               domain?:
                   | 'chromevox'
@@ -1925,10 +1784,7 @@ interface MathjaxSpeechOptions {
                * Language locale (some ISO 639-1 codes and `'euro'` (Braille) and
                * `'nemeth'`).
                *
-               * @defaultValue
-               * ```ts
-               * 'en'
-               * ```
+               * @defaultValue `'en'`
                */
               locale?:
                   | 'en'
@@ -1972,10 +1828,7 @@ interface MathjaxSpeechOptions {
          *
          * > _`switch on speech output when enabled`_
          *
-         * @defaultValue
-         * ```ts
-         * true
-         * ```
+         * @defaultValue `true`
          */
         speech?: boolean | undefined;
 
@@ -1985,10 +1838,7 @@ interface MathjaxSpeechOptions {
          *
          * > _`switch on Braille output when enabled`_
          *
-         * @defaultValue
-         * ```ts
-         * true
-         * ```
+         * @defaultValue `true`
          */
         braille?: boolean | undefined;
     };
@@ -2006,10 +1856,7 @@ interface MathjaxSpeechOptions {
          *
          * > _`full path to bundle/a11y/sre (set automatically)`_
          *
-         * @defaultValue
-         * ```ts
-         * 'path-to-bundle/a11y/sre'
-         * ```
+         * @defaultValue `'path-to-bundle/a11y/sre'`
          */
         path?: string | undefined;
 
@@ -2019,10 +1866,7 @@ interface MathjaxSpeechOptions {
          *
          * > _`name of worker-pool file to load in an iframe`_
          *
-         * @defaultValue
-         * ```ts
-         * 'speech-workerpool.html'
-         * ```
+         * @defaultValue `'speech-workerpool.html'`
          */
         pool?: string | undefined;
 
@@ -2032,10 +1876,7 @@ interface MathjaxSpeechOptions {
          *
          * > _`name of worker script to load as a webworker`_
          *
-         * @defaultValue
-         * ```ts
-         * 'speech-worker.js'
-         * ```
+         * @defaultValue `'speech-worker.js'`
          */
         worker?: string | undefined;
 
@@ -2046,10 +1887,7 @@ interface MathjaxSpeechOptions {
          * > _`true to include debugging messages in the browser console about
          * > the communications between the page, worker pool, and workers.`_
          *
-         * @defaultValue
-         * ```ts
-         * false
-         * ```
+         * @defaultValue `false`
          */
         debug?: boolean | undefined;
     };
@@ -2087,10 +1925,7 @@ interface MathjaxAssistiveMmlOptions {
      * and turn assistive MML on. If this option is `false`, SvelTeX won't load
      * the `assistive-mml` extension.
      *
-     * @defaultValue
-     * ```
-     * true
-     * ```
+     * @defaultValue `true`
      */
     enableAssistiveMml?: boolean | undefined;
 }
@@ -2106,10 +1941,7 @@ interface MathjaxExplorerOptions {
      * `explorer` extension, since this would require running MathJax in the
      * browser.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enableExplorer?: false | undefined;
 }
@@ -2137,10 +1969,7 @@ interface MathjaxComplexityOptions {
      * and turn it on. If this option is `false`, SvelTeX won't load the
      * `complexity` extension.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enableComplexity?: boolean | undefined;
 }
@@ -2151,10 +1980,7 @@ interface MathjaxContextualMenuOptions {
      * functionality), SvelTeX's MathJax integration doesn't support MathJax's
      * contextual menu, since this would require running MathJax in the browser.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     enableMenu?: false | undefined;
 

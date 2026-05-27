@@ -66,6 +66,31 @@ describe('buildRegionVirtualDocument — math regions', () => {
         expect(v.innerEnd).toBeGreaterThanOrEqual(v.innerStart);
     });
 
+    it('strips nothing from an unrecognised math slice (over-include)', () => {
+        // A `math` region whose slice carries no recognised delimiter pair
+        // falls through `mathWrapper` to `[0, 0]` — nothing stripped, the whole
+        // slice is treated as inner content (better than mis-mapping).
+        const source = 'bare';
+        const v = buildRegionVirtualDocument(
+            source,
+            wholeRegion(source, 'math'),
+        );
+        expect(v.text).toBe('bare');
+        expect(v.innerStart).toBe(0);
+        expect(v.innerEnd).toBe(source.length);
+    });
+
+    it('strips nothing from a single-`$` slice too short to be a pair', () => {
+        // `$` alone fails the `length >= 2` guard of the `$…$` arm and every
+        // other arm — exercising the trailing `[0, 0]` fall-through.
+        const source = '$';
+        const v = buildRegionVirtualDocument(
+            source,
+            wholeRegion(source, 'math'),
+        );
+        expect(v.text).toBe('$');
+    });
+
     it('maps an inner position back to the source, across the delimiter', () => {
         // `$\alpha$` — caret at virtual offset 1 (`\a|`) is source offset 2.
         const source = '$\\alpha$';
@@ -176,6 +201,37 @@ describe('buildRegionVirtualDocument — verbatim regions', () => {
             scaffold,
         );
         expect(v.text).toBe(`${scaffold.prefix}\\R${scaffold.suffix}`);
+    });
+
+    it('strips nothing from a verbatim slice with no open/close tags', () => {
+        // A `verbatim` region whose slice is not a well-formed `<tag>…</tag>`
+        // (no opener, or no closer) falls through `verbatimWrapper` to `[0, 0]`:
+        // the body is the entire slice, embedded as-is in the scaffold.
+        const source = 'no tags here';
+        const v = buildRegionVirtualDocument(
+            source,
+            wholeRegion(source, 'verbatim'),
+        );
+        expect(v.text).toBe(scaffolded('no tags here'));
+        expect(v.innerStart).toBe(0);
+        expect(v.innerEnd).toBe(source.length);
+    });
+});
+
+describe('buildRegionVirtualDocument — other region kinds', () => {
+    it('treats a non-math / non-verbatim region as bare inner content', () => {
+        // For any kind other than `math` or `verbatim`, nothing is stripped and
+        // no scaffold is applied: the virtual text is the verbatim slice.
+        const source = 'const a = 1;';
+        const region: Region = {
+            kind: 'code',
+            sourceStart: 0,
+            sourceEnd: source.length,
+        };
+        const v = buildRegionVirtualDocument(source, region);
+        expect(v.text).toBe(source);
+        expect(v.innerStart).toBe(0);
+        expect(v.innerEnd).toBe(source.length);
     });
 });
 

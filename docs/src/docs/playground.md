@@ -23,7 +23,7 @@ SvelTeX preprocesses a document in a few significant stages:
 The tabs below correspond to these stages, with the final **Svelte output**
 selected by default.
 
-::: info Everything runs in your browser
+::: info This playground runs in your browser
 The playground runs entirely client-side: the SvelTeX preprocessor is loaded
 into a Web Worker, and only its text-transformation routine
 (`Sveltex.trace`) is invoked. Your document is never executed, mounted, or
@@ -33,7 +33,7 @@ no server involved.
 
 <Playground />
 
-The playground uses SvelTeX's fuller, recommended backends: the `unified`
+The playground uses SvelTeX's recommended backends: the `unified`
 Markdown backend (powered by remark and rehype), the `shiki` code backend
 (syntax-highlighted code), and the `mathjax` math backend. For the full list of
 available backends and configuration options, see the

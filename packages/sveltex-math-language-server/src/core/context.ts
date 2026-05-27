@@ -73,9 +73,14 @@ export function completionContextAt(
     const beforeCaret = text.slice(0, offset);
     const envMatch = /\\(?:begin|end)\{([a-zA-Z*]*)$/u.exec(beforeCaret);
     if (envMatch) {
+        // Capture group 1 (`[a-zA-Z*]*`) always participates when the regex
+        // matches, so `envMatch[1]` is always a string; the `?? ''` is
+        // unreachable defence and excluded from coverage.
+        /* v8 ignore next */
+        const envName = envMatch[1] ?? '';
         return {
-            prefix: envMatch[1] ?? '',
-            backslashOffset: offset - (envMatch[1] ?? '').length,
+            prefix: envName,
+            backslashOffset: offset - envName.length,
             isEnvironmentName: true,
         };
     }
@@ -146,13 +151,21 @@ export function commandAtCaret(
         !isControlWordChar(text.charAt(offset - 1))
     ) {
         backslashOffset = offset - 2;
-    } else if (
-        // Caret sits on the backslash itself or just before a single-char cmd.
-        offset >= 1 &&
-        text.charAt(offset - 1) === '\\'
-    ) {
+    }
+    // Caret sits on the backslash itself or just before a single-char command.
+    // This arm is unreachable: when `charAt(offset - 1)` is a backslash the
+    // left-scan stops at `offset` (a backslash is not a control-word char), so
+    // `left === offset` and the very first arm above
+    // (`left > 0 && charAt(left - 1) === '\\'`) always fires first. The
+    // caret-on-the-backslash case is handled by the *next* arm instead. It is
+    // kept as defence in depth, and ignored for coverage because no input can
+    // reach it.
+    /* v8 ignore start */
+    else if (offset >= 1 && text.charAt(offset - 1) === '\\') {
         backslashOffset = offset - 1;
-    } else if (offset < text.length && text.charAt(offset) === '\\') {
+    }
+    /* v8 ignore stop */
+    else if (offset < text.length && text.charAt(offset) === '\\') {
         backslashOffset = offset;
     }
 
@@ -191,7 +204,11 @@ export function commandAtCaret(
 
     const name = text.slice(backslashOffset + 1, end);
     if (name.length === 0) return undefined;
-    // The caret must actually be within `[backslashOffset, end]`.
+    // The caret must actually be within `[backslashOffset, end]`. This guard is
+    // unreachable in practice — every arm that sets `backslashOffset` does so at
+    // or before `offset`, and `end` is always grown to at least `offset` — but
+    // it is kept as a self-documenting invariant and excluded from coverage.
+    /* v8 ignore next 2 */
     if (offset < backslashOffset || offset > end) return undefined;
     return { name, start: backslashOffset, end };
 }

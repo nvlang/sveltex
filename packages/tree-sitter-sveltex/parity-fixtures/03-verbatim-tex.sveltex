@@ -1,0 +1,13 @@
+Figure below:
+
+<tex ref="diagram">
+\begin{tikzpicture}
+  \node {Hello};
+\end{tikzpicture}
+</tex>
+
+And a plain verbatim:
+
+<verbatim>
+Raw &<>literal text.
+</verbatim>

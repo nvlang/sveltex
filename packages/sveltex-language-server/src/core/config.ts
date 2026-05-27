@@ -4,7 +4,7 @@
 // that the region detector ({@link computeRegions}) needs.
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Readable } from 'node:stream';
 import { getDefaultMathConfig } from '@nvl/sveltex';
@@ -75,6 +75,25 @@ export interface SveltexConfigSnapshot {
      * inside one of these are forwarded to TexLab when it is available.
      */
     latexTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'escape'`. Their
+     * bodies are escaped (HTML and braces) and emitted as literal text — the
+     * editor should colour them as plain content.
+     */
+    escapeTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'code'`. Their
+     * bodies are handed to the configured code highlighter at build time;
+     * in the editor they're plain literal text (the syntax of the embedded
+     * language is decided at build time by the user's `lang` attribute).
+     */
+    codeTags: string[];
+    /**
+     * The subset of {@link verbatimTags} whose `type` is `'noop'`. Their
+     * bodies pass through unchanged to the Svelte compiler, so the editor
+     * should treat them as plain Svelte markup.
+     */
+    noopTags: string[];
     /** File extensions handled by SvelTeX (e.g. `['.sveltex']`). */
     extensions: string[];
     /** Math-delimiter settings. */
@@ -108,9 +127,13 @@ export interface SveltexConfigSnapshot {
 export function defaultConfigSnapshot(): SveltexConfigSnapshot {
     return {
         verbatimTags: ['tex', 'latex', 'tikz', 'verb', 'verbatim'],
-        // The VS Code extension's `sveltex.latexTags` setting defaults to the
-        // same three; keep them in step.
+        // The TextMate grammar template hard-codes these as the LaTeX-
+        // injection and plain-fenced-code buckets respectively; keep them
+        // in step.
         latexTags: ['tex', 'latex', 'tikz'],
+        escapeTags: ['verb', 'verbatim'],
+        codeTags: [],
+        noopTags: [],
         extensions: ['.sveltex'],
         mathDelims: getDefaultMathConfig('mathjax').delims,
         mathBackend: 'mathjax',
@@ -151,6 +174,92 @@ export function findSvelteConfigFile(
     return undefined;
 }
 
+/** Extensions tried, in order, when resolving an extensionless import. */
+const RESOLVE_EXTENSIONS = [
+    '.js',
+    '.mjs',
+    '.cjs',
+    '.ts',
+    '.mts',
+    '.cts',
+    '.json',
+] as const;
+
+/**
+ * Resolves a (possibly extensionless or directory) module path to a concrete
+ * file, mimicking Node's relative-import resolution closely enough for the
+ * dependency scan: the path itself, then with each known extension, then an
+ * `index.*` inside it.
+ *
+ * @returns The resolved file path, or `undefined` if nothing matches.
+ */
+function resolveModuleFile(modulePath: string): string | undefined {
+    const candidates = [
+        modulePath,
+        ...RESOLVE_EXTENSIONS.map((ext) => modulePath + ext),
+        ...RESOLVE_EXTENSIONS.map((ext) => join(modulePath, `index${ext}`)),
+    ];
+    for (const candidate of candidates) {
+        try {
+            if (statSync(candidate).isFile()) return candidate;
+        } catch {
+            // Not a file (or inaccessible) — try the next candidate.
+        }
+    }
+    return undefined;
+}
+
+/** Matches a *relative* specifier in an `import` / `export … from` / `require`. */
+const RELATIVE_IMPORT_RE =
+    /(?:from|import|require)\s*\(?\s*['"](\.[^'"\n]+)['"]/gu;
+
+/**
+ * Statically collects the files a `svelte.config.*` depends on for its SvelTeX
+ * settings: the config itself plus every file it (transitively) pulls in via a
+ * *relative* `import` / `export … from` / `require` specifier — a separate
+ * `sveltex.config.js`, a shared `verbatim-tags.js`, and so on.
+ *
+ * The live config reload ({@link loadConfigSnapshot}) already re-reads the whole
+ * graph; this lets the host *watch* that graph so an edit to a helper module —
+ * not just to the fixed `*.config.*` filenames — actually triggers a reload.
+ *
+ * It is a deliberately conservative **static** scan: it never executes the
+ * config (that is the loader child's job), so it follows only literal relative
+ * specifiers, not dynamic/computed paths or bare package specifiers. A missed
+ * dependency only narrows the watch set; an over-match only widens it. Either
+ * way it never throws — an unreadable file is simply skipped.
+ *
+ * @param configPath - Absolute path of the entry `svelte.config.*`.
+ * @returns Absolute paths of the entry and its transitive relative imports.
+ */
+export function collectConfigDependencies(configPath: string): string[] {
+    const seen = new Set<string>();
+    const queue = [configPath];
+    while (queue.length > 0) {
+        const next = queue.pop();
+        /* v8 ignore next -- defensive: the `while (queue.length > 0)` guard
+           means `pop()` always returns a string here, never undefined. */
+        if (next === undefined) break;
+        const resolved = resolveModuleFile(next);
+        if (resolved === undefined || seen.has(resolved)) continue;
+        seen.add(resolved);
+        let source: string;
+        try {
+            source = readFileSync(resolved, 'utf8');
+        } catch {
+            continue;
+        }
+        const dir = dirname(resolved);
+        for (const match of source.matchAll(RELATIVE_IMPORT_RE)) {
+            const specifier = match[1];
+            /* v8 ignore next -- defensive: the regex's `(\.[^'"\n]+)` group
+               only matches a non-empty specifier, so this is always truthy. */
+            if (specifier) queue.push(join(dir, specifier));
+        }
+    }
+    return [...seen];
+}
+
 /**
  * Narrowing helper: `true` for non-null objects.
  */
@@ -159,34 +268,53 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Extracts the verbatim environment names from a user config object.
+ * Extracts the verbatim environment names — and every entry's `aliases` — from
+ * a user config object.
  *
- * A SvelTeX config's `verbatim` field is a record keyed by environment name, so
- * its keys are exactly the verbatim tags.
+ * A SvelTeX config's `verbatim` field is a record keyed by environment name,
+ * and each entry may declare additional `aliases` that are fully interchangeable
+ * with the primary name. SvelTeX recognises a tag written with any of those
+ * names, so the LSP must too: an alias missing here would leave `<MyAlias>…`
+ * undetected as a verbatim region, get it delegated to the Svelte server as
+ * markup, and produce exactly the spurious diagnostics the proxy exists to
+ * suppress (and an aliased `tex` env would never reach TexLab).
  */
 function readVerbatimTags(
     config: Record<string, unknown>,
 ): string[] | undefined {
     const verbatim = config['verbatim'];
     if (!isObject(verbatim)) return undefined;
-    const keys = Object.keys(verbatim);
-    return keys.length > 0 ? keys : undefined;
+    const tags = new Set<string>();
+    for (const [name, entry] of Object.entries(verbatim)) {
+        tags.add(name);
+        if (isObject(entry) && Array.isArray(entry['aliases'])) {
+            for (const alias of entry['aliases']) {
+                if (typeof alias === 'string') tags.add(alias);
+            }
+        }
+    }
+    return tags.size > 0 ? [...tags] : undefined;
 }
 
 /**
- * Extracts the LaTeX / TeX verbatim environment names from a user config
- * object: the names (and aliases) of every `verbatim` entry whose `type` is
- * `'tex'`.
+ * Extracts the names (and aliases) of every `verbatim` entry whose `type`
+ * is `type` from a user config object.
  *
- * @returns The deduplicated tag list, or `undefined` if the config declares no
- * `tex`-typed verbatim environment.
+ * @returns The deduplicated tag list, or `undefined` if the config declares
+ * no verbatim environment of that type.
  */
-function readLatexTags(config: Record<string, unknown>): string[] | undefined {
+function readTagsOfType(
+    config: Record<string, unknown>,
+    type: 'tex' | 'escape' | 'code' | 'noop',
+): string[] | undefined {
     const verbatim = config['verbatim'];
+    /* v8 ignore next -- unreachable via the public API: the only caller
+       (loadConfigSnapshot) invokes this solely when readVerbatimTags already
+       confirmed `verbatim` is an object. */
     if (!isObject(verbatim)) return undefined;
     const tags = new Set<string>();
     for (const [name, entry] of Object.entries(verbatim)) {
-        if (!isObject(entry) || entry['type'] !== 'tex') continue;
+        if (!isObject(entry) || entry['type'] !== type) continue;
         tags.add(name);
         const aliases = entry['aliases'];
         if (Array.isArray(aliases)) {
@@ -440,6 +568,9 @@ function summarizeStderr(stderr: string): string {
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
     const errorLine = lines.find((line) => /[A-Za-z]*Error\b/u.test(line));
+    /* v8 ignore next -- the `?? 'unknown error'` arm is unreachable: the only
+       caller guards this with `stderr.trim()`, so `lines` always has an entry
+       and `lines[0]` is defined. */
     return (errorLine ?? lines[0] ?? 'unknown error').slice(0, 300);
 }
 
@@ -541,11 +672,16 @@ async function loadConfigViaChild(
                 );
                 resolve(isObject(parsed) ? parsed : {});
             } catch (error) {
+                // The `: new Error(...)` arm is unreachable — the only throwers
+                // in the `try` (JSON.parse, Buffer.concat) raise Error
+                // subclasses, so `error` is always an Error.
+                /* v8 ignore start */
                 reject(
                     error instanceof Error
                         ? error
                         : new Error('config loader: invalid JSON output'),
                 );
+                /* v8 ignore stop */
             }
         });
     });
@@ -608,9 +744,30 @@ export async function loadConfigSnapshot(
 
     const { candidate, mathBackend, sveltexInstanceFound } =
         resolveConfigCandidate(mod);
+    // When the user declares ANY verbatim entries, we trust their config
+    // for each type independently — an explicit `verbatim: {}` (or just
+    // entries of one type) shouldn't silently inherit our defaults for
+    // the other types. Hence the `readTagsOfType` calls below fall back
+    // to `[]`, not to `base.<type>Tags`, when the user's config has no
+    // entries of that type. `verbatimTags` keeps its fallback because
+    // SvelTeX's Markdown parser uses it as a "what to treat as opaque"
+    // list and an empty list there would over-process raw HTML.
+    const verbatimTags = readVerbatimTags(candidate);
+    const hasVerbatim = verbatimTags !== undefined;
     const snapshot: SveltexConfigSnapshot = {
-        verbatimTags: readVerbatimTags(candidate) ?? base.verbatimTags,
-        latexTags: readLatexTags(candidate) ?? base.latexTags,
+        verbatimTags: verbatimTags ?? base.verbatimTags,
+        latexTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'tex') ?? [])
+            : base.latexTags,
+        escapeTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'escape') ?? [])
+            : base.escapeTags,
+        codeTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'code') ?? [])
+            : base.codeTags,
+        noopTags: hasVerbatim
+            ? (readTagsOfType(candidate, 'noop') ?? [])
+            : base.noopTags,
         extensions: readExtensions(candidate, base.extensions),
         mathDelims: readMathDelims(candidate, base.mathDelims),
         mathBackend: mathBackend ?? base.mathBackend,
@@ -625,12 +782,14 @@ export async function loadConfigSnapshot(
                 'it — SvelTeX settings fall back to the built-in defaults.',
         );
     } else {
-        const scaffoldTags = Object.keys(snapshot.texScaffolds);
+        const fmt = (tags: string[]): string => tags.join(', ') || 'none';
         log?.(
             `Loaded SvelTeX config from ${configPath} (math backend: ` +
-                `${snapshot.mathBackend}; LaTeX tags: ` +
-                `${snapshot.latexTags.join(', ') || 'none'}; TeX preamble ` +
-                `scaffolds: ${scaffoldTags.join(', ') || 'none'}).`,
+                `${snapshot.mathBackend}; verbatim tags by type — ` +
+                `tex: ${fmt(snapshot.latexTags)}; ` +
+                `escape: ${fmt(snapshot.escapeTags)}; ` +
+                `code: ${fmt(snapshot.codeTags)}; ` +
+                `noop: ${fmt(snapshot.noopTags)}).`,
         );
     }
     return snapshot;

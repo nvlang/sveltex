@@ -12,5 +12,21 @@ export default defineConfig({
         expect: {
             requireAssertions: true,
         },
+        coverage: {
+            provider: 'v8',
+            enabled: true,
+            include: ['src/**/*.ts'],
+            reporter: ['text', 'text-summary', 'json', 'lcov'],
+            reportOnFailure: true,
+            // Every uncovered branch is either tested or carries a justified
+            // `/* v8 ignore */`. The gate fails the run (and CI) if any metric
+            // regresses below 100%.
+            thresholds: {
+                statements: 100,
+                branches: 100,
+                functions: 100,
+                lines: 100,
+            },
+        },
     },
 });

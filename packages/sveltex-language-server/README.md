@@ -171,6 +171,13 @@ inside non-delegated regions:
 - Signature help
 - Document links
 
+A verbatim region's body is normally *blanked* in the virtual `.svelte`
+document, so the features above don't fire inside math, LaTeX, or escaped code.
+The exception is **`noop`-typed** environments: their body passes through to the
+Svelte compiler unchanged at build time, so the body (but not the wrapper tags,
+which aren't real Svelte components) is delegated to `svelte-language-server`
+and gets the full proxied feature set.
+
 **Native** (computed directly from the `.sveltex` source, no proxy, no mapping
 needed):
 
@@ -179,6 +186,12 @@ needed):
 - Selection ranges
 - Frontmatter hover and completion — the frontmatter keys and standard
   `<meta>` names, each documented with a link to MDN
+- **Semantic tokens** — one `string` token per body line of custom `escape`-
+  and `code`-typed verbatim regions, so clients with no TextMate grammar for
+  them (Zed, Neovim, …) still colour them as literal text. Advertised **only
+  when the client is not VS Code** — VS Code colours them via its generated
+  TextMate grammar instead. The standard `tex` / `latex` / `tikz` / `verb` /
+  `verbatim` tags and the `tex` / `noop` types are skipped.
 
 **Forwarded to dedicated child servers** (each non-delegated region becomes its
 own small virtual document; positions and results are mapped back):
@@ -201,11 +214,20 @@ translated into sync of the virtual `.svelte` document. Each change triggers a
 synchronous full re-parse (full-document sync).
 
 **Configuration:** `svelte.config.{js,mjs,cjs,ts,mts,cts}` is loaded on
-`initialize` and live-reloaded on save to pick up verbatim-environment names,
-math delimiters, the math backend, and directive settings. (The user's
-`sveltex.config.*` is loaded indirectly when the Svelte config imports it.)
-The config is evaluated in a child Node process via `--input-type=module
---eval`, so `.ts` / `.mts` / `.cts` configs run natively on Node 22.6+.
+`initialize` and live-reloaded whenever it — or any file it statically imports,
+e.g. a separate `sveltex.config.js` — changes. A server-side watcher tracks
+that import graph, so live reload works even for clients that register no file
+watcher of their own (Zed, standalone editors). It picks up the verbatim
+environment names (**including `aliases`**), math delimiters, math backend, and
+directive settings. The config is evaluated in a child Node process via
+`--input-type=module --eval`, so `.ts` / `.mts` / `.cts` configs run natively
+on Node 22.6+.
+
+**`sveltex/resolvedTags` notification:** on `initialized` and after every
+config reload, the server pushes the live verbatim-tag list to the client,
+keyed by type (`latexTags` / `escapeTags` / `codeTags` / `noopTags`). The VS
+Code extension consumes this to regenerate its TextMate grammar, so custom tags
+get the right editor highlighting with no per-tag setting.
 
 ## Known limitations / stubbed for later
 

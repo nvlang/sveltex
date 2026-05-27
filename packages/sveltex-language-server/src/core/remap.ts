@@ -93,13 +93,19 @@ function remapLocationLink(
     const originSelectionRange = link.originSelectionRange
         ? ctx.sourceMap.generatedRangeToSource(link.originSelectionRange)
         : undefined;
-    return {
-        ...link,
+    // Build the result explicitly rather than spreading `...link`: an
+    // `originSelectionRange` that failed to map must be dropped, not leaked
+    // through in generated (virtual-document) coordinates. `LocationLink` has
+    // no other fields, so nothing is lost by not spreading.
+    const remapped: LocationLink = {
         targetUri: ctx.sourceUri,
         targetRange,
         targetSelectionRange,
-        ...(originSelectionRange ? { originSelectionRange } : {}),
     };
+    if (originSelectionRange) {
+        remapped.originSelectionRange = originSelectionRange;
+    }
+    return remapped;
 }
 
 /**
@@ -290,6 +296,9 @@ export function remapCodeActions(
         const action = entry;
         const next: CodeAction = { ...action };
         if (action.edit) {
+            /* v8 ignore next -- the `?? action.edit` fallback is unreachable:
+               `remapWorkspaceEdit` only returns null for a falsy input, but
+               `action.edit` is truthy inside this guard. */
             next.edit = remapWorkspaceEdit(action.edit, ctx) ?? action.edit;
         }
         if (action.diagnostics) {

@@ -1399,9 +1399,16 @@ repository:
       - include: '#heading-setext'
     while: "(^|\\G)((?=\\s*[-=]{3,}\\s*$)|[ ]{4,}(?=[^ \\t\\n]))"
   raw_block:
-    begin: "(^|\\G)([ ]{4}|\\t)"
-    name: markup.raw.block.markdown
-    while: "(^|\\G)([ ]{4}|\\t)"
+    # SVELTEX DEVIATION: indented code blocks are disabled everywhere — at the
+    # top level and nested inside lists/blockquotes — so 4-space / tab-indented
+    # text is treated as ordinary Markdown prose, not code. This matches the
+    # `@nvl/tree-sitter-markdown-sveltex` fork. `#raw_block` is the only producer
+    # of `markup.raw.block.markdown`, so emptying it here disables indented code
+    # wherever it is included. Upstream behaviour was:
+    #   begin: "(^|\\G)([ ]{4}|\\t)"
+    #   name: markup.raw.block.markdown
+    #   while: "(^|\\G)([ ]{4}|\\t)"
+    patterns: []
   separator:
     match: "(^|\\G)[ ]{0,3}([\\*\\-\\_])([ ]{0,2}\\2){2,}[ \\t]*$\\n?"
     name: meta.separator.markdown

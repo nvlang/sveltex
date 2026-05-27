@@ -30,6 +30,13 @@ export default defineConfig({
                 '**/html/**',
             ],
             reportOnFailure: true,
+            // Held at 100% — the gate fails the run (and CI) on any regression.
+            thresholds: {
+                statements: 100,
+                branches: 100,
+                functions: 100,
+                lines: 100,
+            },
         },
         reporters: [
             'default',

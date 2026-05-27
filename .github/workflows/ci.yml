@@ -1,0 +1,561 @@
+---
+name: CI and Release
+
+# Single workflow covering lint, unit tests, E2E, and release. Jobs:
+#
+#   - `find-changes` -- detects the "Version Packages" PR opened by
+#     `sveltex-release[bot]` and short-circuits the heavy jobs for it.
+#   - `lint-and-test` + `e2e` -- run on PRs (against any base) and on
+#     direct pushes to `develop`. They do NOT run on the post-merge push
+#     to `main`: the PR's test result is the canonical signal. This
+#     assumes PRs are up-to-date with their base at merge time; enable
+#     branch protection on `main` requiring up-to-date branches if you
+#     want a hard guarantee.
+#   - `release` -- only fires on push (or `workflow_dispatch`) to `main`,
+#     gated on the test/e2e results being not-failure. `changesets/action`
+#     is idempotent: if there are no pending changesets, it does nothing.
+#
+# Snapshot regeneration: dispatch this workflow with `update_snapshots:
+# true` to rerun E2E with `--update-snapshots` and upload the
+# regenerated goldens as an artifact. The other jobs skip in that mode.
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: >-
+          Regenerate the E2E golden snapshots instead of comparing against them,
+          and upload them as an artifact for review. Skips lint-and-test and
+          release.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+
+# PR-by-PR for PRs, branch-wise for pushes. Cancel older PR runs and
+# older `develop` runs (rapid iteration); never cancel a `main` push
+# (release path). GitHub coalesces queued runs into just the most recent.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress:
+    ${{ github.event_name == 'pull_request' || github.ref ==
+    'refs/heads/develop' }}
+
+jobs:
+  # The `sveltex-release` GitHub App opens a "Version Packages" PR whenever
+  # there are unreleased changesets on `main`. That PR only bumps versions
+  # and regenerates changelogs -- code identical to what already passed CI
+  # on `main`, so re-running unit tests + E2E on it is pure waste. If the
+  # PR's author, head ref, head repo, title, AND full file set all match
+  # the expected shape, `lint-and-test` and `e2e` short-circuit via
+  # `needs:`/`if:`. Any file outside the allowlist fails this job loudly --
+  # a hijacked release branch can't smuggle arbitrary changes past CI.
+  #
+  # The allowlist mirrors exactly what `ci:version` (in the root
+  # `package.json`) produces: removed `.changeset/*.md`, `package.json`
+  # and `jsr.json` version bumps, regenerated `CHANGELOG.md` files, and a
+  # refreshed root `pnpm-lock.yaml`. If `ci:version` ever touches a
+  # different file set, update the `allowed` regex below.
+  find-changes:
+    name: Detect release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      is-release-pr: ${{ steps.check.outputs.is-release-pr }}
+    steps:
+      - name: Check if release PR
+        id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" != "pull_request" \
+                || "$PR_AUTHOR" != "sveltex-release[bot]" \
+                || "$PR_HEAD_REF" != "changeset-release/main" \
+                || "$PR_HEAD_REPO" != "$REPOSITORY" \
+                || "$PR_TITLE" != "Version Packages" ]]; then
+            echo "is-release-pr=false" >> "$GITHUB_OUTPUT"
+            echo "Not a release PR (author=$PR_AUTHOR head=$PR_HEAD_REF repo=$PR_HEAD_REPO title=$PR_TITLE)"
+            exit 0
+          fi
+
+          changed=$(gh api --paginate \
+            "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" \
+            --jq '.[].filename') || {
+            echo "::error::gh api failed for PR #${PR_NUMBER}"
+            exit 1
+          }
+
+          if [[ -z "$changed" ]]; then
+            echo "::error::gh api returned no files for PR #${PR_NUMBER}"
+            exit 1
+          fi
+
+          echo "Changed files:"
+          printf '%s\n' "$changed" | sed 's/^/  /'
+
+          allowed='^(\.changeset/.+\.md|packages/[^/]+/package\.json|packages/[^/]+/jsr\.json|packages/[^/]+/CHANGELOG\.md|pnpm-lock\.yaml)$'
+          unexpected=$(printf '%s\n' "$changed" | grep -Ev "$allowed" || true)
+
+          if [[ -n "$unexpected" ]]; then
+            echo "::error::Release PR touches files outside the allowlist:"
+            printf '%s\n' "$unexpected" | sed 's/^/  /'
+            exit 1
+          fi
+
+          echo "is-release-pr=true" >> "$GITHUB_OUTPUT"
+          echo "Release PR validated; downstream jobs will skip."
+
+  lint-and-test:
+    name: Lint and unit tests
+    needs: find-changes
+    # PR runs (any base) and direct pushes to `develop`. Skipped on the
+    # post-merge push to `main` (PR-time result is the canonical signal)
+    # and on `workflow_dispatch` with `update_snapshots: true`.
+    if: |
+      needs.find-changes.outputs.is-release-pr != 'true'
+      && (github.event_name != 'push' || github.ref != 'refs/heads/main')
+      && !inputs.update_snapshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # Audit outbound traffic during the build (TeX Live mirror, apt, npm,
+      # the pnpm registry). Same posture as the release job below --
+      # catches drift before it reaches the credentialed publish.
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up TeX Live
+        uses: TeX-Live/setup-texlive-action@eb78d21f41941476d9121e3a0abcab73265c876f # v4.1.1
+        with:
+          packages: |
+            scheme-basic
+            luatex
+            xetex
+            latexmk
+            dvisvgm
+            standalone
+            pgf
+            microtype
+            mathtools
+            luatex85
+            lipsum
+            xcolor
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
+
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run ESLint and TypeScript checks
+        run: pnpm lint
+
+      - name: Run Vitest tests
+        run: pnpm test
+
+      - name: Upload coverage reports for `packages/sveltex` to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sveltex/coverage/
+          flags: sveltex
+
+      - name: Upload coverage reports for `packages/sveltex-language-server` to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sveltex-language-server/coverage/
+          flags: sveltex-language-server
+
+      - name: Upload coverage reports for `packages/sveltex-math-language-server` to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sveltex-math-language-server/coverage/
+          flags: sveltex-math-language-server
+
+      - name: Upload coverage reports for `packages/sv-sveltex` to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/sv-sveltex/coverage/
+          flags: sv-sveltex
+
+      - name: Upload coverage reports for `packages/vscode-sveltex` to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/vscode-sveltex/coverage/
+          flags: vscode-sveltex
+
+      - name: Upload Vitest report for `packages/sveltex` to GitHub
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: vitest-report
+          path: packages/sveltex/html/
+          retention-days: 30
+
+  e2e:
+    name: Playwright E2E
+    needs: find-changes
+    # PR runs (any base) and the snapshot-regeneration `workflow_dispatch`.
+    # Skipped on any `push` event -- the canonical E2E signal is the PR
+    # run, mirroring the lint-and-test trust model. A direct push to
+    # `develop` or `main` bypasses E2E by design; if that's a concern,
+    # require PRs (and "up to date" branches) via branch protection.
+    if: |
+      needs.find-changes.outputs.is-release-pr != 'true'
+      && (
+        inputs.update_snapshots
+        || github.event_name == 'pull_request'
+        || github.event_name == 'workflow_dispatch'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # Audit egress: this job fetches Playwright browsers, Deno, TeX Live,
+      # MuPDF/Poppler, npm, and runs the showcase site build. Largest
+      # external-asset surface in the repo.
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up TeX Live
+        uses: TeX-Live/setup-texlive-action@eb78d21f41941476d9121e3a0abcab73265c876f # v4.1.1
+        with:
+          packages: |
+            scheme-basic
+            luatex
+            xetex
+            latexmk
+            dvisvgm
+            standalone
+            pgf
+            microtype
+            mathtools
+            luatex85
+            lipsum
+            xcolor
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+
+      - name: Install Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Poppler
+        run: sudo apt-get install -y poppler-data poppler-utils
+
+      - name: Install MuPDF
+        run: sudo apt-get install -y mupdf mupdf-tools
+
+      # Playwright caching. Adapted from
+      # https://github.com/microsoft/playwright/issues/7249#issuecomment-1385567519
+      - name: Store Playwright Version
+        run: |
+          PLAYWRIGHT_VERSION=$(pnpm ls @playwright/test | grep @playwright | sed 's|.*playwright/test ||')
+          echo "Playwright Version: $PLAYWRIGHT_VERSION"
+          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_ENV
+
+      - name: Cache Playwright Browsers for Playwright's Version
+        id: cache-playwright-browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Setup Playwright
+        if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps
+        working-directory: packages/sveltex
+
+      - name: Build @nvl/sveltex
+        run: pnpm build
+
+      - name: Install test-project template dependencies
+        run: pnpm install
+        working-directory: packages/sveltex/tests/e2e/_template
+
+      - name: Generate per-combo test projects
+        run: pnpm generate-projects
+        working-directory: packages/sveltex
+
+      - name: Build test projects
+        run: pnpm test:e2e:build
+        working-directory: packages/sveltex
+
+      - name: Build the showcase site (with Deno)
+        run: pnpm test:e2e:build:showcase
+        working-directory: packages/sveltex
+
+      - name: Run Playwright tests
+        # On a manual `update_snapshots` run, regenerate the golden images
+        # (`--update-snapshots`) instead of comparing against them. Invoke
+        # the Playwright binary directly with `pnpm exec`; going through the
+        # `pnpm playwright` script forwards a stray `--`, which Playwright
+        # then reads as a (non-matching) test-file filter.
+        run:
+          pnpm exec playwright test ${{ inputs.update_snapshots &&
+          '--update-snapshots' || '' }}
+        working-directory: packages/sveltex
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: playwright-report
+          path: packages/sveltex/playwright-report/
+          retention-days: 30
+
+      - name: Upload regenerated golden snapshots for review
+        # Only on a manual `update_snapshots` run. Upload regardless of
+        # outcome -- `--update-snapshots` can still exit non-zero when
+        # snapshots changed.
+        if: ${{ always() && inputs.update_snapshots }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-golden-snapshots
+          path: packages/sveltex/tests/e2e/snapshots/
+          retention-days: 14
+
+  release:
+    name: Publish to NPM and JSR
+    needs: [lint-and-test, e2e]
+    # Fires on:
+    #   - push to `main` (after merging a feature PR or the Version PR), or
+    #   - `workflow_dispatch` on `main` (manual re-run after a failed
+    #     publish, with update_snapshots unset).
+    # The upstream jobs are SKIPPED on push:main (their `if:` excludes that
+    # case), so `result == 'skipped'` is fine -- the PR-time test result is
+    # what we're trusting. For `workflow_dispatch`, the jobs RUN, and
+    # `result == 'success'` is required (a failure here halts the publish).
+    # `always()` lets this job evaluate even when its `needs:` were skipped.
+    if: |
+      always()
+      && !inputs.update_snapshots
+      && needs.lint-and-test.result != 'failure'
+      && needs.e2e.result != 'failure'
+      && needs.lint-and-test.result != 'cancelled'
+      && needs.e2e.result != 'cancelled'
+      && github.ref == 'refs/heads/main'
+      && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    # No TeX Live / Poppler / MuPDF / unit tests here -- those ran in
+    # `lint-and-test` on the PR. This job only needs `pnpm build` (for
+    # `publint` / `attw` to see the dist) plus the publish pipeline.
+    timeout-minutes: 30
+    # `changesets/action` commits the version bumps and creates tags
+    # (contents), opens the "Version Packages" PR (pull-requests), and npm
+    # trusted publishing authenticates via OIDC (id-token). Scoped to this
+    # job so the workflow's top-level token stays read-only.
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    # Runs as a deployment to the `release` environment so npm trusted
+    # publishing (OIDC) can match the publish against this environment.
+    environment: release
+    # Cross-workflow serialization with `publish-vscode.yml`: both run
+    # `vsce publish` / `ovsx publish` against the same marketplace
+    # endpoints, and a parallel dispatch would race them on the same
+    # `.vsix`. Same group, never cancel a mid-publish. Job-level
+    # concurrency overrides the workflow-level group (`ci-<ref>`) for
+    # this job only -- other jobs still use the workflow group.
+    concurrency:
+      group: vscode-publish
+      cancel-in-progress: false
+    steps:
+      # Audit (don't block) outbound network calls during the run so any
+      # unexpected egress -- a sign of a supply-chain compromise -- shows up
+      # in the workflow's StepSecurity Insights report. This is the highest-
+      # value job to harden: it mints an app-installation token, holds
+      # npm credentials via OIDC, and holds vsce publish credentials.
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      # `changesets/action` force-pushes the "Version Packages" branch
+      # (`changeset-release/main`); creating it carries the repository's
+      # `.github/workflows/*` files. GitHub refuses any such push when it's
+      # authenticated with the default `GITHUB_TOKEN` (the backing GitHub
+      # App lacks the `workflows` permission, and there's no way to grant
+      # it one). Instead, this job authenticates as a *dedicated GitHub
+      # App* installed on the repo with `contents: write`,
+      # `pull-requests: write` and `workflows: write` permissions, and
+      # mints a short-lived installation token per run. App credentials
+      # are stored as repository secrets:
+      #   - `RELEASE_APP_ID`          -- the App's numeric ID
+      #   - `RELEASE_APP_PRIVATE_KEY` -- the App's .pem private key
+      # Replaces the previous `secrets.RELEASE_PAT` flow, which required
+      # rotating the PAT every time it expired.
+      - name: Mint a GitHub-App installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: ./pnpm-lock.yaml
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      # Pre-publish sanity checks on the packages as they'll be published.
+      # `publint` validates each package's manifest; `@arethetypeswrong/cli`
+      # (`attw`) verifies that consumers can resolve the published types.
+      #
+      # `publint` runs on every npm-published package. `attw` runs only on the
+      # three that expose a typed, importable library surface — it's skipped
+      # for `@nvl/sv-sveltex` and `@nvl/tree-sitter-sveltex` (which ship no types) and
+      # for the deprecated `create-sveltex` CLI. `vscode-sveltex` is excluded
+      # from both: it's published to the extension marketplaces via `vsce`,
+      # not to npm. `--profile esm-only` because these packages intentionally
+      # ship no CommonJS build; `--exclude-entrypoints ./bin/server.js` skips
+      # the language servers' CLI shim, which is launched, not imported.
+      - name: Check package manifests and type resolution
+        run: |
+          for pkg in @nvl/sveltex @nvl/sv-sveltex @nvl/sveltex-language-server \
+                     @nvl/sveltex-math-language-server create-sveltex \
+                     @nvl/tree-sitter-sveltex; do
+            pnpm --filter "$pkg" exec publint
+          done
+          pnpm --filter @nvl/sveltex exec attw --pack . --profile esm-only
+          pnpm --filter @nvl/sveltex-language-server exec attw --pack . \
+            --profile esm-only --exclude-entrypoints ./bin/server.js
+          pnpm --filter @nvl/sveltex-math-language-server exec attw --pack . \
+            --profile esm-only --exclude-entrypoints ./bin/server.js
+
+      # When you push something to main, this action will first create a PR on a
+      # new branch (`changeset-release/main`), where it'll have applied the
+      # version bumps and changelog edits and such. Then, once you merge that
+      # PR, it'll rerun this action, but this time it'll be publishing the
+      # changes instead of creating a PR.
+      - name: Publish to NPM and JSR or create release PR
+        id: changesets
+        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
+        with:
+          branch: main
+          version: pnpm ci:version
+          publish: pnpm ci:publish
+          # `github-api` (changesets/action v1.5+) pushes the "Version
+          # Packages" branch commits and the release tags through the
+          # GitHub REST API rather than the git CLI; the upshot is that
+          # both are GPG-signed with GitHub's built-in key and show up as
+          # "Verified" in the GitHub UI. Attribution is to the GitHub App
+          # whose installation token is used below (e.g.
+          # `<app-name>[bot]`). See
+          # https://github.com/changesets/action/pull/391.
+          commitMode: github-api
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Same app-installation token as the checkout above --
+          # `changesets/action` needs it for both the git push and the
+          # release-PR API calls.
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Publish the VS Code extension
+        # The extension (`packages/vscode-sveltex`) is excluded from the npm
+        # publish above, so it needs its own publish step. `changeset tag`
+        # (run by `ci:publish`) created a `vscode-sveltex@<version>` tag at HEAD
+        # only if the extension's version was bumped this release cycle — when
+        # it was, package the extension once and publish that one `.vsix` to
+        # both the VS Code Marketplace and Open VSX (the registry used by
+        # VSCodium, Cursor, Windsurf, Gitpod, …).
+        if: steps.changesets.outputs.published == 'true'
+        working-directory: packages/vscode-sveltex
+        run: |
+          if git tag --points-at HEAD | grep -q '^vscode-sveltex@'; then
+            echo 'Extension released this cycle — packaging and publishing.'
+            # The workspace package is named `vscode-sveltex` (so its release
+            # tag reads `vscode-sveltex@<version>` rather than the ambiguous
+            # `sveltex@<version>`), but the published extension's identity is
+            # `<publisher>.<name>` = `sveltex-preprocessor.sveltex`. Restore the
+            # marketplace `name` just before packaging; the CI checkout is
+            # ephemeral, so this rewrite is never committed.
+            node -e "const p=require('./package.json');p.name='sveltex';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+            pnpm dlx @vscode/vsce@3 package --no-dependencies -o sveltex.vsix
+            pnpm dlx @vscode/vsce@3 publish --packagePath sveltex.vsix
+            pnpm dlx ovsx publish sveltex.vsix \
+              || echo '::warning::Open VSX publish failed — publish sveltex.vsix manually.'
+          else
+            echo 'Extension version unchanged — nothing to publish.'
+          fi
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}

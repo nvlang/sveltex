@@ -49,3 +49,44 @@
 ; (SvelTeX escapes rather than renders it) and has no injection, so highlight
 ; it as plain raw text.
 (plain_verbatim_body) @markup.raw
+
+; ── Plain HTML / Svelte element tags ───────────────────────────────────────
+;
+; `<div>`, `</div>`, `<br/>`, … carved out of the Markdown stream. The injected
+; `svelte` grammar (see injections.scm) provides the precise highlighting;
+; these captures are the fallback for editors without that grammar.
+(html_open_tag ["<" ">"] @punctuation.bracket)
+(html_self_closing_tag ["<" "/>"] @punctuation.bracket)
+(html_close_tag ["</" ">"] @punctuation.bracket)
+(html_open_tag (tag_name) @tag)
+(html_self_closing_tag (tag_name) @tag)
+(html_close_tag (tag_name) @tag)
+(element_attributes) @attribute
+
+; ── Svelte mustache + block tags ─────────────────────────────────────────
+
+; The bare `{` / `}` of a `{ … }` mustache expression.
+(svelte_expression ["{" "}"] @punctuation.bracket)
+
+; The block-tag tokens — `{@const`, `{#if`, `{:else}`, `{/each}`, … — are
+; all aliased to `svelte_block_tag` in the grammar so a single capture
+; covers every flavour. Coloured as `@keyword.control` so editors using the
+; standard tree-sitter highlight set pick them out from the surrounding
+; prose.
+(svelte_block_tag) @keyword.control
+
+; The ` as ` keyword inside an `{#each}` head and the parameter-list
+; binding/index identifiers. The binding is a Svelte-side pattern (not a
+; JS variable reference), so `@variable.parameter` is the right scope.
+(svelte_each_as) @keyword.control
+(svelte_each_binding) @variable.parameter
+(svelte_each_index) @variable.parameter
+
+; `{#snippet name(...)}` — the name is a snippet declaration (function
+; identifier); decorate as `@function`.
+(svelte_snippet_name) @function
+
+; `{#await promise then|catch binding}` shorthand — the keyword and the
+; binding identifier.
+(svelte_await_keyword) @keyword.control
+(svelte_await_binding) @variable.parameter

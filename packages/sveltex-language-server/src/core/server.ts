@@ -16,6 +16,8 @@
 // virtual document, so the embedded Svelte server never sees them; requests and
 // responses that land there are dropped.
 
+import { watch as fsWatch, type FSWatcher } from 'node:fs';
+import { basename, dirname } from 'node:path';
 import type { Connection } from 'vscode-languageserver';
 import {
     DidChangeTextDocumentNotification,
@@ -55,6 +57,7 @@ import { computeRegions, type Region } from './regions.js';
 import { buildVirtualSvelte } from './virtual-svelte.js';
 import { RegionForwarder, isLatexVerbatimRegion } from './region-forwarding.js';
 import {
+    collectConfigDependencies,
     defaultConfigSnapshot,
     loadConfigSnapshot,
     type SveltexConfigSnapshot,
@@ -68,6 +71,11 @@ import {
     computeFrontmatterCompletion,
     computeFrontmatterHover,
 } from './frontmatter.js';
+import {
+    SEMANTIC_TOKEN_MODIFIERS,
+    SEMANTIC_TOKEN_TYPES,
+    computeSemanticTokens,
+} from './semantic-tokens.js';
 import { mapProxiedDiagnostics, mergeDiagnostics } from './diagnostics.js';
 import {
     remapCodeActions,
@@ -88,6 +96,7 @@ import {
     isNativeCompletionItem,
     markNativeCompletion,
     pickDefined,
+    readClientName,
     readServerPaths,
     withoutPullDiagnostics,
     workspaceRootOf,
@@ -127,6 +136,16 @@ export function createServer(connection: Connection): void {
     let configReloadQueued = false;
 
     /**
+     * Server-side filesystem watchers over the config's dependency graph (the
+     * `svelte.config.*` plus every file it statically imports). Supplements the
+     * client's own file watcher: it makes live reload fire for helper modules
+     * the client's fixed `*.config.*` glob misses, and for clients (Zed,
+     * standalone) that register no watcher at all. Re-armed on every reload —
+     * see {@link rearmConfigWatchers}.
+     */
+    let configWatchers: FSWatcher[] = [];
+
+    /**
      * The embedded Svelte language server. Notifications it emits for a virtual
      * `.svelte` URI are translated and re-emitted by the host on the
      * corresponding `.sveltex` URI.
@@ -152,6 +171,31 @@ export function createServer(connection: Connection): void {
     const logInfo = (message: string): void => {
         connection.console.info(`[sveltex] ${message}`);
     };
+
+    /**
+     * Pushes the live verbatim tag list to the client over the custom
+     * `sveltex/resolvedTags` notification, keyed by verbatim type.
+     *
+     * The VS Code extension uses this to rebuild its TextMate grammar from
+     * the same source of truth the LSP uses — the user's
+     * `sveltex.config.js` — instead of from a separate VS Code user setting
+     * that has to be kept in sync manually. Other clients (Zed, …) can
+     * ignore the notification harmlessly.
+     *
+     * The four type-keyed lists let the client place each tag in the right
+     * grammar bucket: `latexTags` → LaTeX injection; `escapeTags` /
+     * `codeTags` → plain literal-text styling; `noopTags` → Svelte
+     * injection.
+     */
+    function notifyResolvedTags(): void {
+        void connection.sendNotification('sveltex/resolvedTags', {
+            verbatimTags: config.verbatimTags,
+            latexTags: config.latexTags,
+            escapeTags: config.escapeTags,
+            codeTags: config.codeTags,
+            noopTags: config.noopTags,
+        });
+    }
 
     /**
      * Forwards hover/completion in non-delegated regions to dedicated child
@@ -212,6 +256,8 @@ export function createServer(connection: Connection): void {
             doc.text,
         );
         const offset = textDoc.offsetAt(position);
+        /* v8 ignore next -- defensive: TextDocument.offsetAt clamps to
+           [0, text.length], so this out-of-range guard is unreachable. */
         if (offset < 0 || offset > doc.text.length) return undefined;
         for (const region of doc.regions) {
             if (offset >= region.sourceStart && offset < region.sourceEnd) {
@@ -354,6 +400,7 @@ export function createServer(connection: Connection): void {
             workspaceRoot = workspaceRootOf(params);
             if (workspaceRoot) {
                 config = await loadConfigSnapshot(workspaceRoot, logInfo);
+                rearmConfigWatchers();
             }
             // The forwarder needs the resolved config (math backend, LaTeX
             // tags) before any request can be routed.
@@ -368,6 +415,16 @@ export function createServer(connection: Connection): void {
             const serverPaths = readServerPaths(params.initializationOptions);
             proxy.setServerPath(serverPaths.svelteLanguageServer);
             regionForwarder.setMathServerPath(serverPaths.mathLanguageServer);
+
+            // VS Code regenerates its TextMate grammar from
+            // `sveltex/resolvedTags` so it already paints custom escape /
+            // code verbatim bodies via `markup.fenced_code`. Emitting a
+            // `string` semantic token over those would just override the
+            // TM colouring with a different one. Other editors (Zed,
+            // Helix, Neovim, …) can't dynamically extend their static
+            // grammar, so semantic tokens are the only path there.
+            const clientName = readClientName(params.initializationOptions);
+            const shouldAdvertiseSemanticTokens = clientName !== 'vscode';
 
             // Start the embedded Svelte server with the host's own initialize
             // params (so its TypeScript service resolves the real project) —
@@ -435,6 +492,24 @@ export function createServer(connection: Connection): void {
                     documentSymbolProvider: true,
                     foldingRangeProvider: true,
                     selectionRangeProvider: true,
+                    // Native semantic tokens — flat `string` for custom
+                    // escape / code verbatim bodies. Advertised only
+                    // when the client *can't* extend its static grammar
+                    // (anything that isn't VS Code).
+                    ...(shouldAdvertiseSemanticTokens
+                        ? {
+                              semanticTokensProvider: {
+                                  legend: {
+                                      tokenTypes: [...SEMANTIC_TOKEN_TYPES],
+                                      tokenModifiers: [
+                                          ...SEMANTIC_TOKEN_MODIFIERS,
+                                      ],
+                                  },
+                                  full: true,
+                                  range: false,
+                              },
+                          }
+                        : {}),
                     // Proxied — forwarded to `svelte-language-server`; each is
                     // advertised only if that child advertises it.
                     ...pickDefined(childCapabilities, [
@@ -469,12 +544,57 @@ export function createServer(connection: Connection): void {
             while (configReloadQueued) {
                 configReloadQueued = false;
                 const root = workspaceRoot;
+                /* v8 ignore next -- defensive: the pump is only ever scheduled
+                   once `workspaceRoot` is set (in `onInitialize`), and it is
+                   never cleared, so `!root` here is unreachable. */
                 if (!root) break;
                 config = await loadConfigSnapshot(root, logInfo);
+                // The dependency graph can change between reloads (an import
+                // added or removed), so re-arm the watchers each time.
+                rearmConfigWatchers();
                 regionForwarder.updateConfig(config);
+                // Tell the client about the new tag list so it can refresh
+                // any tag-derived state (e.g. the VS Code extension's
+                // TextMate grammar).
+                notifyResolvedTags();
+                // Region kinds depend on the config — which tags are
+                // `noop` (delegated to the Svelte proxy) vs
+                // `tex`/`escape`/`code` (blanked out of the virtual
+                // document), the math delimiters, the directive settings.
+                // So a config change must re-parse every OPEN document;
+                // otherwise its regions, virtual document and source map
+                // stay frozen at the old config until the next keystroke,
+                // and e.g. a freshly-added `noop` env's body keeps being
+                // hidden from `svelte-language-server`.
+                await resyncOpenDocuments();
             }
         } finally {
             configReloadInFlight = false;
+        }
+    }
+
+    /**
+     * Re-parses every open document against the current {@link config} and
+     * re-syncs it to the Svelte proxy (close + re-open so the proxy drops
+     * its stale virtual document and its source map cleanly, independent
+     * of LSP version bookkeeping).
+     */
+    async function resyncOpenDocuments(): Promise<void> {
+        // Snapshot the URIs, not the document objects: `rebuild` rewrites each
+        // map entry, and a `didClose` can arrive at one of the `await`s below
+        // and remove an entry mid-loop. Re-fetch each iteration, and re-check
+        // liveness around the awaits, so a document the editor closed during
+        // the resync is not resurrected and re-opened in the proxy — which
+        // would leave a phantom virtual document (with stale diagnostics) that
+        // no later edit or close would clear.
+        for (const uri of [...documents.keys()]) {
+            const existing = documents.get(uri);
+            if (!existing) continue; // closed before we reached it
+            const doc = rebuild(existing.uri, existing.text, existing.version);
+            if (!proxy.isRunning) continue;
+            await proxyDidClose(doc.uri);
+            if (!documents.has(doc.uri)) continue; // closed during the await
+            await proxyDidOpen(doc);
         }
     }
 
@@ -500,6 +620,76 @@ export function createServer(connection: Connection): void {
         configReloadTimer.unref();
     }
 
+    /**
+     * (Re)arms the server-side config watchers: closes any existing watchers,
+     * then watches the directory of each file in the current config's
+     * dependency graph, filtering events to those files by name. Watching the
+     * containing directory rather than the file itself survives the atomic
+     * write-and-rename many editors use on save. Safe to call repeatedly and
+     * never throws.
+     */
+    function rearmConfigWatchers(): void {
+        for (const watcher of configWatchers) {
+            try {
+                watcher.close();
+            } catch {
+                // Already closed / gone — ignore.
+            }
+        }
+        configWatchers = [];
+
+        const configPath = config.configPath;
+        if (!configPath) return;
+
+        let dependencies: string[];
+        try {
+            dependencies = collectConfigDependencies(configPath);
+        } catch {
+            dependencies = [configPath];
+        }
+
+        // One watcher per directory, with a basename allow-list so unrelated
+        // edits in that directory (likely, when it is the project root) don't
+        // trigger a reload.
+        const namesByDir = new Map<string, Set<string>>();
+        for (const dependency of dependencies) {
+            const dir = dirname(dependency);
+            const names = namesByDir.get(dir) ?? new Set<string>();
+            names.add(basename(dependency));
+            namesByDir.set(dir, names);
+        }
+
+        for (const [dir, names] of namesByDir) {
+            try {
+                const watcher = fsWatch(dir, (_event, filename) => {
+                    // `filename` is null on some platforms — reload to be safe.
+                    if (filename === null || names.has(filename)) {
+                        scheduleConfigReload();
+                    }
+                });
+                // A transient watch error (directory removed, limit hit) must
+                // not crash the server.
+                watcher.on('error', () => {
+                    /* ignore */
+                });
+                // The watcher must not by itself keep the process alive.
+                watcher.unref();
+                configWatchers.push(watcher);
+            } catch {
+                // A directory we cannot watch just isn't covered.
+            }
+        }
+    }
+
+    // The `initialized` notification arrives *after* `initialize` returned
+    // and the client has finished setting up its side. That's the safe
+    // earliest point to push server-initiated notifications — sending one
+    // during `onInitialize` itself races the client's notification
+    // handler registration.
+    connection.onInitialized(() => {
+        notifyResolvedTags();
+    });
+
     // A watched `svelte.config.*` (or a `sveltex.config.*` it imports)
     // changed: schedule a debounced reload so region detection and TexLab
     // forwarding pick the new settings up without an LSP restart.
@@ -510,6 +700,14 @@ export function createServer(connection: Connection): void {
 
     connection.onShutdown(async () => {
         if (configReloadTimer) clearTimeout(configReloadTimer);
+        for (const watcher of configWatchers) {
+            try {
+                watcher.close();
+            } catch {
+                // Already closed / gone — ignore.
+            }
+        }
+        configWatchers = [];
         await Promise.all([proxy.stop(), regionForwarder.stop()]);
     });
 
@@ -752,5 +950,22 @@ export function createServer(connection: Connection): void {
         const doc = documents.get(params.textDocument.uri);
         if (!doc) return null;
         return computeSelectionRanges(doc.text, params.positions, config);
+    });
+
+    // Semantic tokens — flat `string` for custom escape/code verbatim
+    // bodies, nothing else. Registered unconditionally because the
+    // capability is only advertised to non-VS-Code clients (see
+    // `shouldAdvertiseSemanticTokens` above); VS Code therefore never
+    // sends this request. An unknown-document case returns an empty
+    // token set rather than `null` so the wire path stays alive.
+    connection.languages.semanticTokens.on(({ textDocument }) => {
+        const doc = documents.get(textDocument.uri);
+        if (!doc) return { data: [] };
+        return computeSemanticTokens(
+            doc.text,
+            doc.regions,
+            config.escapeTags,
+            config.codeTags,
+        );
     });
 }

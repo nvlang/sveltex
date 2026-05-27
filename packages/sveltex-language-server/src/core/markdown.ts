@@ -106,6 +106,7 @@ export function computeDocumentSymbols(
 
     walk(root, (node) => {
         if (node.type !== 'heading' || !node.position) return;
+        /* v8 ignore next -- parseToMdast always sets `depth` on headings */
         const depth = node.depth ?? 1;
         const range: Range = {
             start: doc.positionAt(node.position.start.offset),
@@ -177,6 +178,7 @@ export function computeFoldingRanges(
 
     // Block-level constructs fold as a whole.
     walk(root, (node) => {
+        /* v8 ignore next -- every parseToMdast node carries a position */
         if (!node.position) return;
         switch (node.type) {
             case 'code':
@@ -206,6 +208,7 @@ export function computeFoldingRanges(
     walk(root, (node) => {
         if (node.type === 'heading' && node.position) {
             headings.push({
+                /* v8 ignore next -- parseToMdast always sets heading `depth` */
                 depth: node.depth ?? 1,
                 startOffset: node.position.start.offset,
             });
@@ -213,6 +216,7 @@ export function computeFoldingRanges(
     });
     for (let i = 0; i < headings.length; i++) {
         const current = headings[i];
+        /* v8 ignore next -- `i` is bounded by `headings.length`, so `current` is defined */
         if (!current) continue;
         let endOffset = document.length;
         for (let j = i + 1; j < headings.length; j++) {
@@ -261,6 +265,7 @@ export function computeSelectionRanges(
         const containing: MdNode[] = [];
         if (root) {
             walk(root, (node) => {
+                /* v8 ignore next -- every parseToMdast node carries a position */
                 if (!node.position) return;
                 const start = node.position.start.offset;
                 const end = node.position.end.offset;
@@ -270,16 +275,21 @@ export function computeSelectionRanges(
             });
         }
         containing.sort((a, b) => {
+            // The `?? 0` fallbacks never fire: only positioned nodes reach
+            // `containing` (the walk above pushes them under `node.position`).
+            /* v8 ignore start */
             const aLen =
                 (a.position?.end.offset ?? 0) - (a.position?.start.offset ?? 0);
             const bLen =
                 (b.position?.end.offset ?? 0) - (b.position?.start.offset ?? 0);
+            /* v8 ignore stop */
             return bLen - aLen; // widest first
         });
 
         // Build the nested chain from widest to narrowest.
         let selectionRange: SelectionRange | undefined;
         for (const node of containing) {
+            /* v8 ignore next -- `containing` holds only positioned nodes */
             if (!node.position) continue;
             const range: Range = {
                 start: doc.positionAt(node.position.start.offset),

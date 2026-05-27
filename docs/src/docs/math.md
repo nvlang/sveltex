@@ -1,6 +1,7 @@
 ---
 title: Math
 description: Use MathJax or KaTeX with SvelTeX.
+pageClass: docs-math
 ---
 
 <script lang="ts" setup>
@@ -120,6 +121,9 @@ the font package for your chosen [`math.font`](#fonts).
 
 ## Configuration
 
+For every available option and its type, see the
+[`MathConfiguration`](/api/interfaces/MathConfiguration) API reference.
+
 **Hint:** Hover over the different properties in the code block to show some
 IntelliSense.
 
@@ -135,7 +139,10 @@ export default await sveltex({
     math: {
         css: {
             type: 'hybrid',
-            cdn: 'jsdelivr'
+            // Either a single CDN name, or an ordered fallback list. The
+            // default is to try them in this order, picking the first one
+            // that's reachable at build time.
+            cdn: ['jsdelivr', 'esm.sh', 'cdnjs', 'unpkg'],
         },
         mathjax: {
             // Options passed to MathJax; note that some of the

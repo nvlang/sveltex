@@ -1,7 +1,10 @@
+---
+pageClass: docs-code
+---
 
 <script lang="ts" setup>
 import PipelineImage from './PipelineImage.vue';
-import { PhFileCss, PhHighlighter, PhGear, PhArrowUDownRight } from '@phosphor-icons/vue';
+import { PhFileCss, PhHighlighter, PhGear, PhShuffle } from '@phosphor-icons/vue';
 </script>
 
 # Code
@@ -30,7 +33,7 @@ backends.
     **Custom transformers:** Inject custom transformers to pre- and post-process
     the in- and output of the syntax highlighter, respectively.
 
--   <PhArrowUDownRight color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
+-   <PhShuffle color="var(--hig-purple)" class="opacity-90" :size="28" weight="duotone"/>
 
     **Language Aliases:** Define custom aliases for languages.
 
@@ -71,6 +74,9 @@ Note that, with both of the above, custom transformers can still be used to pre-
 and post-process the code.
 
 ## Configuration
+
+For every available option and its type, see the
+[`CodeConfiguration`](/api/interfaces/CodeConfiguration) API reference.
 
 ::: warning
 
@@ -182,7 +188,7 @@ import { sveltex } from '@nvl/sveltex';
 
 export default await sveltex({ codeBackend: 'none' }, {
     code: {
-        addLanguageClass: 'language-',
+        addLanguageClass: false,
         appendNewline: true,
         inlineMeta: undefined, // See IntelliSense for default
         transformers: {

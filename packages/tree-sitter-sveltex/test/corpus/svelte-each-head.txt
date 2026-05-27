@@ -1,0 +1,164 @@
+================================================================================
+{#each} head: simple iterable + binding
+================================================================================
+{#each items as item}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: function call as iterable
+================================================================================
+{#each foo() as x}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: complex iterable expression with inner ` as `
+================================================================================
+{#each items.filter(x => x > 0) as item}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: destructuring binding
+================================================================================
+{#each users as { name, age }}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: binding + index (no key)
+================================================================================
+{#each items as item, i}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_each_index)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: binding + key (no index)
+================================================================================
+{#each items as item (item.id)}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_each_key)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: full form — iterable, as, binding, index, key
+================================================================================
+{#each posts as post, i (post.slug)}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_each_index)
+    (svelte_each_key)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: string literal in iterable that contains ` as `
+================================================================================
+{#each parse("name as alias") as token}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: array literal in iterable
+================================================================================
+{#each [1, 2, 3] as n}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))
+
+================================================================================
+{#each} head: key expression with function call
+================================================================================
+{#each items as item (computeKey(item))}body{/each}
+--------------------------------------------------------------------------------
+
+(document
+  (svelte_block_each
+    (svelte_block_tag)
+    (svelte_each_iterable)
+    (svelte_each_as)
+    (svelte_each_binding)
+    (svelte_each_key)
+    (svelte_block_content
+      (markdown_chunk))
+    (svelte_block_tag)))

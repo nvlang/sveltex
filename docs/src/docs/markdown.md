@@ -2,6 +2,7 @@
 title: Markdown
 description: Use unified, markdown-it, micromark, or marked with SvelTeX.
 outline: deep
+pageClass: docs-md
 ---
 
 <script lang="ts" setup>
@@ -57,6 +58,29 @@ and render it at build-time with the Markdown processor of your choice.
     the in- and output of the math renderer, respectively.
 
 </div>
+
+## CommonMark differences
+
+::: info SvelTeX disables some CommonMark syntax
+
+To stay predictable alongside Svelte markup, SvelTeX turns off a couple of
+CommonMark constructs in its Markdown parsing — via
+[`micromark-extension-mdx-md`](https://github.com/micromark/micromark-extension-mdx-md),
+the same approach [MDX](https://mdxjs.com) takes:
+
+-   **Indented code blocks are disabled.** Four-space-indented prose stays a
+    paragraph (its inline markup still rendered) instead of becoming a code
+    block. Use a fenced code block (```` ``` ````) for code.
+-   **Autolinks are disabled.** Write an explicit
+    `[label](https://example.com)` rather than a bare
+    `<https://example.com>`.
+
+Raw HTML is *not* disabled but handled specially — see
+[Markdown implementation](/docs/implementation/markdown). The bundled editor
+support (VS Code, Zed) highlights `.sveltex` files to match these rules, so
+what you see matches what SvelTeX compiles.
+
+:::
 
 ## Backends
 
@@ -114,6 +138,9 @@ In order of recommendation:
     [GFM](https://github.github.com/gfm/) compliance.
 
 ## Configuration
+
+For every available option and its type, see the
+[`MarkdownConfiguration`](/api/interfaces/MarkdownConfiguration) API reference.
 
 ::: warning
 
@@ -188,10 +215,10 @@ export default await sveltex(
         markdown: {
             options: {
                 // micromark options
+                allowDangerousHtml: true,
+                allowDangerousProtocol: false,
                 extensions: [],
                 htmlExtensions: [],
-                allowDangerousProtocol: false,
-                defaultLineEnding: undefined,
             },
             // Common options
             components: [],

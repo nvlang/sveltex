@@ -4,7 +4,7 @@ description: Some highlights from SvelTeX's features.
 ---
 
 <script lang="ts" setup>
-import { PhGear, PhLightning, PhShieldCheck, PhPackage, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple, PhTextAlignLeft } from '@phosphor-icons/vue';
+import { PhGear, PhLightning, PhShieldCheck, PhBatteryCharging, PhFeather, PhBooks, PhVectorTwo, PhMarkdownLogo, PhCube, PhInfo, PhUmbrellaSimple, PhTextAlignLeft } from '@phosphor-icons/vue';
 </script>
 
 # Overview
@@ -45,9 +45,9 @@ preprocessor can take over.
     generate highly optimized SVGs for complex graphics using familiar syntax,
     all without leaving your Svelte files.
 
--   <PhPackage :size="28" weight="duotone"/>
+-   <PhBatteryCharging :size="28" weight="duotone"/>
 
-    **Out-of-the-box:** Sensible defaults and helpful features such as automatic
+    **Batteries included:** Sensible defaults and helpful features such as automatic
     CSS injection for MathJax and KaTeX make it easy to get started with
     SvelTeX.
 
@@ -67,7 +67,7 @@ preprocessor can take over.
 -   <PhTextAlignLeft :size="28" weight="duotone"/>
 
     **SvelTeX language support:** A TextMate grammar, a tree-sitter grammar,
-    and a dedicated [language server](language-server) — bundled with
+    and a dedicated [language server](editor-integration) — bundled with
     the [VS Code extension] and shipped as a Zed extension too — give
     `.sveltex` files first-class syntax highlighting, hover, completion,
     diagnostics, and frontmatter intellisense in any LSP-aware editor.
@@ -114,7 +114,9 @@ preprocessor can take over.
 </div>
 
 [^1]:
-    Lines of code in `src` directory, excluding `src/data` directory. This count
-    excludes comments, blank lines, and markdown.
+    Counted by `cloc` over the `@nvl/sveltex` package's `src` directory
+    (excluding `src/data`): the summed code lines of every language except
+    Markdown — which, being a code count, omits comments and blank lines —
+    rounded up to the nearest thousand.
 
 [VS Code extension]: https://marketplace.visualstudio.com/items?itemName=sveltex-preprocessor.sveltex

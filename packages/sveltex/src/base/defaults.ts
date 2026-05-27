@@ -55,6 +55,9 @@ import {
 /**
  * Get the default configuration for a given math backend.
  *
+ * @typeParam T - The math backend.
+ * @typeParam CA - The "CSS approach" (corresponds to `math.css.type`); inferred
+ * from the backend when omitted.
  * @param mathBackend - Math backend.
  * @param ca - "CSS approach" — this corresponds to the `math.css.type` setting.
  * @returns The default configuration for the given math backend and CSS
@@ -345,6 +348,7 @@ export function getDefaultTexConfig(): FullTexConfiguration {
 /**
  * Get the default configuration for a given code backend.
  *
+ * @typeParam C - The code backend.
  * @param codeBackend - The code backend.
  * @returns The default configuration for the given code backend.
  */
@@ -488,6 +492,9 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
 /**
  * Get the default SvelTeX configuration options for the given backends.
  *
+ * @typeParam MD - The Markdown backend.
+ * @typeParam C - The Code backend.
+ * @typeParam MT - The Math backend.
  * @param markdownBackend - The Markdown backend.
  * @param codeBackend - The Code backend.
  * @param mathBackend - The Math backend.
@@ -528,6 +535,7 @@ export function getDefaultSveltexConfig<
  * `options`, and so on. Useful for callers that need to inspect or
  * extend the defaults programmatically.
  *
+ * @typeParam M - The Markdown backend.
  * @param m - The markdown backend whose defaults to fetch.
  * @returns A fresh, deeply-mutable copy of the defaults — mutating it
  * does not affect subsequent calls.
@@ -636,6 +644,7 @@ type DefaultVerbEnvConfig<T extends VerbatimType> = T extends 'tex'
 /**
  * Get the default configuration for a given verbatim environment type.
  *
+ * @typeParam T - The verbatim environment type.
  * @param type - Verbatim environment type.
  * @returns The default configuration for the given verbatim environment type.
  */

@@ -23,7 +23,7 @@ import type {
 /**
  * Supported math backends.
  */
-export type MathBackend = 'katex' | 'mathjax' | 'custom' | 'none';
+export type MathBackend = 'mathjax' | 'katex' | 'custom' | 'none';
 
 /**
  * Type of the configuration object used to configure the math processor.
@@ -67,10 +67,7 @@ interface SveltexKatexConfig {
                * -   `'hybrid'`: Self-host the CSS, but use a CDN for the fonts.
                * -   `'none'`: Don't manage CSS for MathJax.
                *
-               * @defaultValue
-               * ```ts
-               * 'cdn'
-               * ```
+               * @defaultValue `'cdn'`
                */
               type?: 'cdn' | 'hybrid' | 'none' | undefined;
           } & (CdnConfiguration | HybridCssConfiguration | NoneConfiguration))
@@ -93,10 +90,7 @@ export type MathjaxFont =
 
 export interface SveltexMathjaxConfig {
     /**
-     * @defaultValue
-     * ```ts
-     * 'chtml'
-     * ```
+     * @defaultValue `'chtml'`
      */
     outputFormat?: 'svg' | 'chtml' | undefined;
 
@@ -117,10 +111,7 @@ export interface SveltexMathjaxConfig {
                * - `'hybrid'`: Self-host the CSS, but use a CDN for the fonts.
                * - `'none'`: Don't manage CSS for MathJax.
                *
-               * @defaultValue
-               * ```ts
-               * 'hybrid'
-               * ```
+               * @defaultValue `'hybrid'`
                */
               type?: 'hybrid' | 'none' | undefined;
           } & (HybridCssConfiguration | NoneConfiguration))
@@ -159,10 +150,7 @@ export interface SveltexMathjaxConfig {
      *
      * @experimental
      *
-     * @defaultValue
-     * ```ts
-     * 'newcm'
-     * ```
+     * @defaultValue `'newcm'`
      */
     font?: MathjaxFont | undefined;
 }
@@ -233,10 +221,7 @@ export interface WithDelims {
                    *     example: `$$\text{Let $x = 2$}$$`. Note, however, that
                    *     `\n$$\n123\n$$\n` will be rendered as display math.
                    *
-                   * @defaultValue
-                   * ```
-                   * true
-                   * ```
+                   * @defaultValue `true`
                    */
                   singleDollar?: boolean | undefined;
 
@@ -245,10 +230,7 @@ export interface WithDelims {
                    * regular text (`false`). If it _is_ interpreted as math, it
                    * will always be interpreted as inline math.
                    *
-                   * @defaultValue
-                   * ```
-                   * true
-                   * ```
+                   * @defaultValue `true`
                    */
                   escapedParentheses?: boolean | undefined;
               };
@@ -263,10 +245,7 @@ export interface WithDelims {
                          * or regular text (`false`). If it _is_ interpreted as
                          * math, it will always be interpreted as display math.
                          *
-                         * @defaultValue
-                         * ```
-                         * true
-                         * ```
+                         * @defaultValue `true`
                          */
                         escapedSquareBrackets?: boolean | undefined;
                     }

@@ -38,11 +38,22 @@ const SERVER_BIN = join(
     'server.js',
 );
 
+/** Live verbatim tag list pushed to the client via `sveltex/resolvedTags`. */
+interface ResolvedTags {
+    verbatimTags: string[];
+    latexTags: string[];
+    escapeTags: string[];
+    codeTags: string[];
+    noopTags: string[];
+}
+
 /** A spawned SvelTeX language server and its stdio LSP connection. */
 interface Spawned {
     connection: ProtocolConnection;
     child: ChildProcess;
     initializeResult: InitializeResult;
+    /** Resolves with the first `sveltex/resolvedTags` notification. */
+    firstResolvedTags: Promise<ResolvedTags>;
 }
 
 /**
@@ -80,6 +91,16 @@ async function spawn(): Promise<Spawned> {
     // the narrower `ProtocolConnection` view — the runtime object is a
     // `MessageConnection`, so this cast is sound.
     const star = connection as unknown as MessageConnection;
+    // Capture the first `sveltex/resolvedTags` notification before the
+    // catch-all swallows everything — method-specific handlers in
+    // vscode-jsonrpc take precedence over the catch-all.
+    let resolveFirstTags: (tags: ResolvedTags) => void;
+    const firstResolvedTags = new Promise<ResolvedTags>((resolve) => {
+        resolveFirstTags = resolve;
+    });
+    star.onNotification('sveltex/resolvedTags', (params: unknown) => {
+        resolveFirstTags(params as ResolvedTags);
+    });
     star.onNotification(() => undefined);
     star.onRequest(() => null);
     connection.listen();
@@ -93,7 +114,7 @@ async function spawn(): Promise<Spawned> {
         },
     );
     await connection.sendNotification('initialized', {});
-    return { connection, child, initializeResult };
+    return { connection, child, initializeResult, firstResolvedTags };
 }
 
 /** Resolves after `ms` milliseconds. */
@@ -250,6 +271,45 @@ describe('SvelTeX language server (spawned over stdio)', () => {
             expect(items(outcome).map((i) => i.label)).not.toContain('\\alpha');
         }
     });
+
+    it('pushes `sveltex/resolvedTags` after `initialized`', async () => {
+        // Race the notification against a timeout: receiving it proves the
+        // server pushes its tag list to the client. The values match the
+        // built-in defaults (no SvelTeX config was loaded — rootUri is null).
+        const tags = await Promise.race([
+            server.firstResolvedTags,
+            delay(2_000).then(() => null),
+        ]);
+        expect(tags).not.toBeNull();
+        expect(tags?.verbatimTags).toEqual(
+            expect.arrayContaining(['tex', 'verbatim']),
+        );
+        expect(tags?.latexTags).toEqual(expect.arrayContaining(['tex']));
+        // The other three type-keyed lists arrive even with no config —
+        // populated from `defaultConfigSnapshot()`. `escapeTags` has the
+        // standard plain-bucket defaults; `codeTags` / `noopTags` are
+        // empty until the user opts in via `sveltex.config.js`.
+        expect(tags?.escapeTags).toEqual(
+            expect.arrayContaining(['verb', 'verbatim']),
+        );
+        expect(tags?.codeTags).toEqual([]);
+        expect(tags?.noopTags).toEqual([]);
+    });
+
+    it('advertises a semantic-tokens provider for non-VS-Code clients', () => {
+        // The spawn helper does not pass `initializationOptions.client`, so
+        // the server defaults to non-VS-Code mode and advertises the
+        // provider. VS Code (covered by the IPC describe below, with a
+        // separate spawn that sets `client: 'vscode'`) does not get it.
+        const provider =
+            server.initializeResult.capabilities.semanticTokensProvider;
+        expect(provider).toBeDefined();
+        if (!provider || !('legend' in provider)) {
+            throw new Error('semantic-tokens provider missing legend');
+        }
+        expect(provider.legend.tokenTypes).toContain('string');
+        expect(provider.full).toBeTruthy();
+    });
 });
 
 describe('SvelTeX language server — Node IPC transport', () => {
@@ -271,6 +331,13 @@ describe('SvelTeX language server — Node IPC transport', () => {
             new IPCMessageWriter(child),
         );
         const star = connection as unknown as MessageConnection;
+        let resolveFirstTags: (tags: ResolvedTags) => void;
+        const firstResolvedTags = new Promise<ResolvedTags>((resolve) => {
+            resolveFirstTags = resolve;
+        });
+        star.onNotification('sveltex/resolvedTags', (params: unknown) => {
+            resolveFirstTags(params as ResolvedTags);
+        });
         star.onNotification(() => undefined);
         star.onRequest(() => null);
         connection.listen();
@@ -281,10 +348,15 @@ describe('SvelTeX language server — Node IPC transport', () => {
                 rootUri: null,
                 workspaceFolders: null,
                 capabilities: {},
+                // Mirror the VS Code extension's actual initialize payload —
+                // `client: 'vscode'` opts out of features that would step on
+                // its TextMate regeneration (e.g. semantic tokens for custom
+                // escape/code verbatim bodies).
+                initializationOptions: { client: 'vscode' },
             },
         );
         await connection.sendNotification('initialized', {});
-        server = { connection, child, initializeResult };
+        server = { connection, child, initializeResult, firstResolvedTags };
     });
 
     afterAll(async () => {
@@ -295,6 +367,16 @@ describe('SvelTeX language server — Node IPC transport', () => {
         expect(server.initializeResult.serverInfo?.name).toBe(
             'sveltex-language-server',
         );
+    });
+
+    it("does NOT advertise semantic tokens when client === 'vscode'", () => {
+        // VS Code regenerates its TM grammar from `sveltex/resolvedTags`,
+        // so it doesn't want semantic tokens overlaying that work.
+        // `initializationOptions.client: 'vscode'` (set in this describe's
+        // beforeAll) is the signal the server reads.
+        expect(
+            server.initializeResult.capabilities.semanticTokensProvider,
+        ).toBeUndefined();
     });
 
     it('answers math completion over the IPC transport', async () => {

@@ -57,10 +57,7 @@ interface ConversionOptions {
      *   [`node-poppler`](https://www.npmjs.com/package/node-poppler) package.
      *   Poppler produces high-quality — if sometimes rather large — SVGs.
      *
-     * @defaultValue
-     * ```ts
-     * 'dvisvgm'
-     * ```
+     * @defaultValue `'dvisvgm'`
      *
      * @remarks
      * ⚠ **Warning**: For the `'poppler'` option to work, you should install the
@@ -72,7 +69,7 @@ interface ConversionOptions {
      * ```sh
      *     pnpm add -D node-poppler # if using PNPM
      *     bun add -D node-poppler # if using Bun
-     *     npm add -D node-popple # if using NPM
+     *     npm add -D node-poppler # if using NPM
      *     yarn add -D node-poppler # if using Yarn
      * ```
      * Furthermore, depending on your operating system, you may need to
@@ -95,7 +92,7 @@ interface ConversionOptions {
      *
      * ---
      *
-     * #### LINKS
+     * #### Links
      *
      * `dvisvgm`:
      * - Website: https://dvisvgm.de/
@@ -166,10 +163,7 @@ interface ConversionOptions {
      * `src`, or at least a directory from which Svelte components can be
      * imported via `import Example from 'outputDirectory/example.svelte'`.
      *
-     * @defaultValue
-     * ```ts
-     * 'src/sveltex'
-     * ```
+     * @defaultValue `'src/sveltex'`
      *
      * @remarks
      * Each SVG component will be written to
@@ -187,10 +181,7 @@ interface ConversionOptions {
     /**
      * Override the DVI/PDF/XDV to SVG conversion command for this component.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      *
      * @remarks
      * ⚠ **Warning**: Make sure that the command generates an SVG file at
@@ -235,10 +226,7 @@ export interface CompilationOptions {
      *   - `xelatex -no-pdf` to output XDV.
      *   - `xelatex` to output PDF.
      *
-     * @defaultValue
-     * ```ts
-     * 'pdflatex'
-     * ```
+     * @defaultValue `'pdflatex'`
      *
      * @remarks
      * Despite its name, `pdflatex` can indeed also output DVI files.
@@ -270,10 +258,7 @@ export interface CompilationOptions {
      *   filetype, you can set this property to `'pdf'`, which dvisvgm or
      *   Poppler can then convert to an SVG.
      *
-     * @defaultValue
-     * ```ts
-     * 'dvi'
-     * ```
+     * @defaultValue `'dvi'`
      *
      * @remarks This option is only relevant when
      * {@link ConversionOptions.converter | `conversion.converter`} is set to
@@ -309,10 +294,7 @@ export interface CompilationOptions {
     /**
      * Override the compilation command for this component.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      *
      * @remarks
      * ⚠ **Warning**: Make sure that the command either generates a DVI/XDV (if
@@ -347,10 +329,7 @@ export interface CompilationOptions {
      * work if this setting is set to `true`, meaning that OTF font support may
      * be limited.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     saferLua?: boolean | undefined;
 
@@ -366,10 +345,7 @@ export interface CompilationOptions {
      * If `true`, shell escape is enabled without restrictions. Use this option
      * with caution, and only if you trust the TeX code you are compiling.
      *
-     * @defaultValue
-     * ```ts
-     * false
-     * ```
+     * @defaultValue `false`
      */
     shellEscape?: 'restricted' | boolean | undefined;
 }
@@ -417,10 +393,7 @@ interface OptimizationOptions {
      * Try to make the SVG use `currentColor` as its default color by replacing
      * all occurrences of the given color in the SVG code with `'currentColor'`.
      *
-     * @defaultValue
-     * ```ts
-     * '#000'
-     * ```
+     * @defaultValue `'#000'`
      *
      * @remarks
      * Set this property to `null` to disable this feature.
@@ -448,10 +421,7 @@ interface OptimizationOptions {
     /**
      * Override the SVG optimization function for this component.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      *
      * @remarks
      * ⚠ **Warning**: The following properties will be useless if
@@ -460,7 +430,7 @@ interface OptimizationOptions {
      * - {@link svgo | `svgo`}.
      *
      * ---
-     * #### FUNCTION PARAMETERS
+     * #### Function parameters
      *
      * @param svg - The SVG code to optimize.
      * @param tc - The TeX component whose output SVG code is being optimized.
@@ -521,10 +491,7 @@ interface DebugOptions {
      * to the console, and the {@link ignoreLogMessages | `ignoreLogMessages`}
      * property will be ignored.
      *
-     * @defaultValue
-     * ```ts
-     * 'box'
-     * ```
+     * @defaultValue `'box'`
      */
     verbosity?:
         | ('all' | _TexLogSeverity | 'none' | undefined)
@@ -546,10 +513,7 @@ interface DebugOptions {
                * If `'all'` is selected, the entire log generated by LaTeX will
                * be printed to the console.
                *
-               * @defaultValue
-               * ```ts
-               * 'box'
-               * ```
+               * @defaultValue `'box'`
                */
               onFailure?: 'all' | _TexLogSeverity | 'none' | undefined;
 
@@ -570,10 +534,7 @@ interface DebugOptions {
                * If `'all'` is selected, the entire log generated by LaTeX will
                * be printed to the console.
                *
-               * @defaultValue
-               * ```ts
-               * 'box'
-               * ```
+               * @defaultValue `'box'`
                */
               onSuccess?: 'all' | _TexLogSeverity | 'none' | undefined;
           };

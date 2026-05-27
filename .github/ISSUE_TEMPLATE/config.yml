@@ -1,0 +1,22 @@
+---
+# Blank issues skip the templates entirely, which is rarely what someone
+# actually wants — every concrete report fits one of the forms below, and
+# anything that doesn't fit belongs in Discussions instead.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/nvlang/sveltex/discussions
+    about: >-
+      Usage questions, design feedback, "is this a bug?" — start a discussion
+      rather than filing an issue.
+
+  - name: Report a security vulnerability (privately)
+    url: https://github.com/nvlang/sveltex/security/advisories/new
+    about: >-
+      Do not file security issues publicly. Open a private advisory — see
+      SECURITY.md for details.
+
+  - name: SvelTeX documentation
+    url: https://sveltex.dev/docs
+    about: Full documentation for SvelTeX, the backends, and the editor tooling.

@@ -151,6 +151,16 @@ takes two arguments:
 
 In turn, it returns a promise which resolves to a Svelte preprocessor.
 
+::: tip Why two arguments?
+
+Splitting the backend choices from the configuration is what makes the config
+_type-aware_. The backends you pick in the first argument set the generic types
+that drive IntelliSense for the second argument, so your editor offers exactly
+the options each chosen backend supports — and flags the ones it doesn't.
+Merging everything into one object would throw that inference away.
+
+:::
+
 For example:
 
 ```js twoslash
@@ -203,34 +213,45 @@ If you prefer, you can also just use the `sveltex` function directly in your
 [`verbatim`]: verbatim
 [`frontmatter`]: markdown#disabling-frontmatter-processing
 
-### Inspecting defaults programmatically
+## Troubleshooting
 
-If you're building tooling around SvelTeX — a config wizard, a custom
-preprocessor that extends SvelTeX, or anything that needs to know what
-the implicit defaults actually are — you can ask for them directly:
+A few common first-run snags:
 
-```ts twoslash
-import {
-    getDefaultSveltexConfig,
-    getDefaultCodeConfig,
-    getDefaultMarkdownConfig,
-    getDefaultMathConfig,
-    getDefaultTexConfig,
-    getDefaultVerbEnvConfig,
-    getTexPresetDefaults,
-    getDefaultCacheDirectory,
-} from '@nvl/sveltex';
+-   **The preprocessor seems to do nothing, or Svelte errors that it isn't a
+    valid preprocessor.** `sveltex(...)` is **async** — it returns a _promise_
+    that resolves to the preprocessor, not the preprocessor itself. `await` it
+    (top-level `await` works in both `sveltex.config.js` and
+    `svelte.config.js`):
 
-// The full default config for a `unified` / `shiki` / `katex` combo.
-const defaults = getDefaultSveltexConfig('unified', 'shiki', 'katex');
+    ```js
+    export default await sveltex(/* … */); // ✅ awaited
+    ```
 
-// Just the math slice, with the `'hybrid'` CSS approach.
-const mathDefaults = getDefaultMathConfig('mathjax', 'hybrid');
+-   **Backend options appear to be ignored, or TypeScript complains about the
+    configuration.** `sveltex` takes **two** arguments — the backend choices
+    first, then the configuration — not a single merged object:
 
-// The bundled `tikz` preset's defaults.
-const tikz = getTexPresetDefaults('tikz');
-```
+    ```js
+    // ✅ two arguments
+    await sveltex(
+        { markdownBackend: 'unified', codeBackend: 'shiki' },
+        { code: { shiki: { theme: 'github-dark' } } },
+    );
 
-Each helper returns a freshly-cloned object — mutating it has no effect
-on subsequent calls.
+    // ❌ one object — the backend options silently won't apply
+    await sveltex({
+        markdownBackend: 'unified',
+        code: { shiki: { theme: 'github-dark' } },
+    });
+    ```
+
+    The split is deliberate — it's what makes the configuration fully typed for
+    your chosen backends (see [Setup](#setup) above).
+
+-   **A peer dependency is missing.** SvelTeX names the exact packages it needs
+    for the backends you picked on the first build — install those and re-run.
+
+-   **`.sveltex` files aren't being processed.** Check that `extensions` in
+    `svelte.config.js` includes `'.sveltex'` and that the preprocessor is
+    actually in the `preprocess` array.
 

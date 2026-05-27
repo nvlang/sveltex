@@ -52,7 +52,15 @@
     // The Zed editor integration. Its `grammars/` is gitignored and holds a
     // vendored, dependency-less copy of the packages; excluded so the
     // `**/scripts` glob does not sweep that copy into the monorepo type-check.
-    "editors"
+    "editors",
+    // `vscode-sveltex` is a CommonJS VS Code extension (bundled by esbuild; see
+    // its `scripts/build.ts`). Its `src/` type-checks fine under this config,
+    // but its test files and `vitest.config.ts` are ESM-authored and rely on
+    // Vitest's bundler-style resolution and `import.meta`, which this config's
+    // Node16 + `verbatimModuleSyntax` settings cannot compile. ESLint still
+    // type-aware-lints them (via `allowDefaultProject`) and Vitest runs them.
+    "packages/vscode-sveltex/tests",
+    "packages/vscode-sveltex/vitest.config.ts"
   ],
   "include": [
     "*.config.js",

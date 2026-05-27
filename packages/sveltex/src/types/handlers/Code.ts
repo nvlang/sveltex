@@ -32,10 +32,7 @@ interface CommonCodeConfiguration {
      * of the code it contains. If a string is provided, a class will be added
      * and the provided string will be used as the prefix for the class name.
      *
-     * @defaultValue
-     * ```ts
-     * 'language-'
-     * ```
+     * @defaultValue `'language-'`
      *
      * @example
      * ```html
@@ -136,10 +133,7 @@ interface CommonCodeConfiguration {
      * `<pre><code>example\n</code></pre>` render identically. Defaults to
      * `true` for the sake of CommonMark compliance.
      *
-     * @defaultValue
-     * ```ts
-     * true
-     * ```
+     * @defaultValue `true`
      */
     appendNewline?: boolean | undefined;
 }
@@ -224,10 +218,7 @@ interface StarryNightConfig {
      * first entry of the array may be `'all'` or `'common'` to
      * extend the respective sets of languages.
      *
-     * @defaultValue
-     * ```ts
-     * 'common'
-     * ```
+     * @defaultValue `'common'`
      */
     languages?:
         | (StarryNightLanguage | import('@wooorm/starry-night').Grammar)[]
@@ -246,10 +237,7 @@ interface StarryNightConfig {
     /**
      * Default language.
      *
-     * @defaultValue
-     * ```ts
-     * null
-     * ```
+     * @defaultValue `null`
      */
     lang?: StarryNightLanguage | null | undefined;
 
@@ -368,8 +356,7 @@ interface ShikiConfig {
 export type CodeBackendWithCss = 'highlight.js' | 'starry-night';
 
 /**
- * Resolved configuration the {@link CodeHandler | `CodeHandler`} is
- * constructed with.
+ * Resolved configuration the `CodeHandler` is constructed with.
  *
  * @typeParam B - Code backend.
  */

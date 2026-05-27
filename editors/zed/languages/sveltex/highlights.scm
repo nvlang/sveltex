@@ -29,3 +29,40 @@
 ; The body of a `<verb>` / `<verbatim>` environment is intentionally literal
 ; (SvelTeX escapes rather than renders it) and carries no injection.
 (plain_verbatim_body) @text.literal
+
+; ── Plain HTML / Svelte element tags ───────────────────────────────────────
+;
+; `<div>`, `</div>`, `<br/>`, … carved out of the Markdown stream. The injected
+; `svelte` grammar provides the precise highlighting; these are fallbacks.
+(html_open_tag ["<" ">"] @punctuation.bracket)
+(html_self_closing_tag ["<" "/>"] @punctuation.bracket)
+(html_close_tag ["</" ">"] @punctuation.bracket)
+(html_open_tag (tag_name) @tag)
+(html_self_closing_tag (tag_name) @tag)
+(html_close_tag (tag_name) @tag)
+(element_attributes) @attribute
+
+; ── Svelte mustache + block tags ─────────────────────────────────────────
+
+; The bare `{` / `}` of a `{ … }` mustache expression.
+(svelte_expression ["{" "}"] @punctuation.bracket)
+
+; All block-tag delimiters (`{@const`, `{#if`, `{:else}`, `{/each}`, ...)
+; are aliased to `svelte_block_tag` in the grammar, so one capture covers
+; the whole family. `@keyword` lights them up consistently with Zed's
+; built-in Svelte highlighting of the same constructs.
+(svelte_block_tag) @keyword
+
+; `{#each ... as ...}` head fields: the `as` keyword and the binding /
+; index identifiers (Svelte-side parameter patterns, not JS references).
+(svelte_each_as) @keyword
+(svelte_each_binding) @variable.parameter
+(svelte_each_index) @variable.parameter
+
+; `{#snippet name(...)}` — the snippet's declared name (a function
+; identifier, conceptually).
+(svelte_snippet_name) @function
+
+; `{#await promise then|catch binding}` shorthand — keyword + binding.
+(svelte_await_keyword) @keyword
+(svelte_await_binding) @variable.parameter

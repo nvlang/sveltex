@@ -21,9 +21,11 @@ on:
       - packages/sveltex/**
   workflow_dispatch:
 
+# Top-level token is read-only; the one job that actually needs to dispatch
+# the docs workflow widens its own scope below. Scorecard's
+# Token-Permissions check prefers per-job grants over top-level writes.
 permissions:
   contents: read
-  actions: write # to dispatch the "Deploy docs to GitHub Pages" workflow
 
 # One check at a time, so a burst of pushes can't race on the cached figures.
 concurrency:
@@ -34,10 +36,21 @@ jobs:
   redeploy-if-changed:
     name: Redeploy the docs if a rounded figure moved
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: write # to dispatch the "Deploy docs to GitHub Pages" workflow
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      # Audit egress -- this job holds `actions: write` and dispatches
+      # `docs.yml` via `gh workflow run`. Parity with other write-permission
+      # workflows in this repo.
+      - uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         name: Install pnpm
 
       - name: Install Node.js

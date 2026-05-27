@@ -189,6 +189,15 @@ following:
 
 
 
+## Disabled CommonMark constructs
+
+Beyond the HTML handling above, SvelTeX disables **indented code blocks** and
+**autolinks** in its Markdown parsing (via `micromark-extension-mdx-md`), so
+four-space-indented prose stays a paragraph and bare `<url>` autolinks are left
+untouched. See [Escaping](/docs/implementation/escaping) for the extension
+wiring, and [Markdown › CommonMark differences](/docs/markdown#commonmark-differences)
+for the authoring-facing summary.
+
 ## Directives
 
 Markdown directives are great. They're also somewhat tricky for us, since they

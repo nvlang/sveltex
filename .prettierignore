@@ -21,4 +21,5 @@ e2e
 # DSL, generated C, `.scm` query files, Rust); they are not formatted by the
 # monorepo's Prettier config.
 packages/tree-sitter-sveltex
+packages/tree-sitter-markdown-sveltex
 editors
