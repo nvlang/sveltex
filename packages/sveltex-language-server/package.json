@@ -1,6 +1,6 @@
 {
   "name": "@nvl/sveltex-language-server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Language Server Protocol implementation for SvelTeX (Svelte + Markdown + LaTeX)",
   "type": "module",
   "license": "MIT",

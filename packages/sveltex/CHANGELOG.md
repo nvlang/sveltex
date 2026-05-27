@@ -1,5 +1,34 @@
 # @nvl/sveltex
 
+## 0.5.1
+
+### Patch Changes
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`9a2095d`](https://github.com/nvlang/sveltex/commit/9a2095d6d0a53f0883d80ae84ec02d475d0dc6ea)
+  Thanks [@nvlang](https://github.com/nvlang)! - Refresh dependencies. The
+  peer/runtime-facing changes are both in `@nvl/sveltex`: the `svelte` floor
+  (`^5.55.7` → `^5.55.9`) and the optional `katex` peer range, widened to
+  `^0.16 || ^0.17` (the test suite now runs against katex `0.17`). Everything
+  else is a dev-dependency bump (`katex`, `markdown-it`, `knip`, `tsdown`, …).
+  (`@nvl/sveltex-language-server`, `@nvl/tree-sitter-sveltex`,
+  `@nvl/tree-sitter-markdown-sveltex`, and `vscode-sveltex` got the same refresh
+  and ride their other changesets.)
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`15ef830`](https://github.com/nvlang/sveltex/commit/15ef830fb6b832c28fd6b6dbcf2c892899b72994)
+  Thanks [@nvlang](https://github.com/nvlang)! - Polish the TSDoc across the
+  public type surface — these comments ship in the `.d.ts` files, so they drive
+  editor IntelliSense (and now the generated API reference on the docs site). No
+  runtime behavior changes.
+    - The `getDefault*` helpers now document their type parameters.
+    - `@defaultValue` tags with a simple literal value (`true`, `'src/sveltex'`,
+      `[]`, …) are written inline rather than as a fenced block.
+    - `MathBackend`'s union is reordered so `'mathjax'` comes first.
+    - Fixed a broken `verbatim` link, a dropped second `@remarks` block on the
+      micromark `options`, an unresolvable `{@link CodeHandler}`, and a
+      `node-poppler` typo.
+
 ## 0.5.0
 
 ### BREAKING CHANGES
@@ -63,12 +92,11 @@
 
 ### Patch Changes
 
-- Modernized SvelTeX's element-detecting regexes.
-  Fixes [#25](https://github.com/nvlang/sveltex/issues/25).
+- Modernized SvelTeX's element-detecting regexes. Fixes
+  [#25](https://github.com/nvlang/sveltex/issues/25).
 
 - **`hast-util-to-html` reclassified** from a peer dependency to a runtime
   dependency. Downstream consumers no longer need to install it themselves.
-  
 - [`33b8d16`](https://github.com/nvlang/sveltex/commit/33b8d167966e6148df72e55b4b761e7587ae9149)
   Thanks [@nvlang](https://github.com/nvlang)! - Fix `charset` frontmatter
   handling to emit the HTML-correct `<meta charset="…">` instead of the invalid
