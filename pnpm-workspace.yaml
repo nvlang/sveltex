@@ -21,6 +21,20 @@ patchedDependencies:
 overrides:
   svelte: ^5.55.8
 
+  # `@arethetypeswrong/core@0.18.2` declares `fflate: ^0.8.2`, but pnpm
+  # resolves that to 0.8.3 — and fflate 0.8.3 changed `Gunzip`'s streaming
+  # callback to emit trailing empty chunks. attw's tarball extractor only
+  # captures the *last* callback chunk:
+  #
+  #     let unzipped;
+  #     new Gunzip((chunk) => (unzipped = chunk)).push(tarball, true);
+  #
+  # so under 0.8.3 it ends up with an empty `unzipped` and crashes with
+  # "Cannot read properties of undefined (reading 'filename')". Pin its
+  # transitive fflate to 0.8.2 until upstream attw accumulates chunks
+  # (or fflate restores the prior callback semantics).
+  '@arethetypeswrong/core>fflate': 0.8.2
+
 # pnpm 11 restricts `.npmrc` to auth/registry settings; everything else
 # (such as the publish-branch guard) now lives here.
 publishBranch: main
