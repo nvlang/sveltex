@@ -1,5 +1,107 @@
 # @nvl/sveltex-language-server
 
+## 0.3.0
+
+### Minor Changes
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`c9b5a85`](https://github.com/nvlang/sveltex/commit/c9b5a8525960baa76fa734bc291ebc9f8121fc3a)
+  Thanks [@nvlang](https://github.com/nvlang)! - Two related fixes for custom
+  verbatim envs:
+
+    **`noop`-typed envs are now visible to `svelte-language-server`.** Per the
+    SvelTeX docs, `type: 'noop'` "passes the body to Svelte unchanged", so the
+    body should travel into the virtual `.svelte` document the LSP hands to
+    `svelte-language-server`. Previously the LSP classified all verbatim regions
+    as kind `'verbatim'`, which is blanked from the virtual document — Svelte
+    never saw `<MyNoop>` bodies. Now the body is delegated (kind `'svelte'`)
+    while the wrapper tags stay blanked, so the proxy sees the body without
+    tripping over the SvelTeX wrapper tags (which are rewritten at build time
+    and aren't real Svelte components).
+
+    **Custom `escape`- and `code`-typed envs get flat semantic-token coloring in
+    non-VS-Code clients.** A scoped `textDocument/ semanticTokens/full` provider
+    emits one `string` token per body line of a custom escape- or code-typed
+    verbatim region (e.g. `<MyEscape>`, `<MyCode>`). Tex- and noop-typed envs
+    and the standard hardcoded `tex|latex|tikz|verb|verbatim` are skipped —
+    those are handled by the editor grammars directly (TM regen in VS Code,
+    native tree-sitter captures in Zed). The provider is advertised only when
+    the client's `initializationOptions.client` is anything other than
+    `'vscode'`; VS Code stays on the TM-only path so its grammar regeneration
+    isn't overridden by semantic tokens.
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`22b6dce`](https://github.com/nvlang/sveltex/commit/22b6dce8754179638b0b85b866882f35ee022133)
+  Thanks [@nvlang](https://github.com/nvlang)! - The VS Code extension's
+  TextMate grammar is now driven entirely by the user's `sveltex.config.js` /
+  `svelte.config.js` — the `sveltex.latexTags` / `sveltex.escapeTags` extension
+  settings are gone. The language server reports the live verbatim tag list to
+  the client via a new `sveltex/resolvedTags` notification (sent on
+  `initialized` and after every config reload), keyed by type:
+    - `latexTags` (`type: 'tex'`) — body highlighted as LaTeX via
+      `text.tex.latex`.
+    - `escapeTags` (`type: 'escape'`) — body highlighted as plain literal text
+      via `markup.fenced_code.block.markdown`.
+    - `codeTags` (`type: 'code'`) — body highlighted the same as `escape` (both
+      look like literal text in the editor; the build-time backend decides what
+      to actually do with it).
+    - `noopTags` (`type: 'noop'`) — body handed to `source.svelte` (noop bodies
+      pass through unchanged to the Svelte compiler, so they should look like
+      ordinary Svelte markup in the editor).
+
+    A user who adds `MyTex: { type: 'tex' }` / `MyEscape: { type: 'escape' }` /
+    `MyCode: { type: 'code' }` / `MyNoop: { type: 'noop' }` to their config now
+    gets the appropriate editor highlighting for each — no other configuration
+    step needed. A window reload may be required once after first declaring a
+    new tag for VS Code to pick up the regenerated grammar.
+
+    Bug fix in passing: the existing single-line `<verb>…</verb>` /
+    `<verbatim>…</verbatim>` TextMate match incorrectly used the LaTeX tag-name
+    alternation; same-line plain verbatim envs weren't highlighted as fenced
+    code. Fixed.
+
+### Patch Changes
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`8637310`](https://github.com/nvlang/sveltex/commit/86373104bb1da7e98879701fcdcd78c68aa2661d)
+  Thanks [@nvlang](https://github.com/nvlang)! - Region-detection and reload
+  improvements:
+    - **Recognise verbatim `aliases`.** The resolved verbatim-tag set now
+      includes each environment's `aliases`, not just the record keys — so an
+      aliased env (e.g. `<tikz>` for a `tex`-typed `Tex`) is correctly detected
+      as a verbatim region (its body blanked, and `tex` types forwarded to
+      TexLab) instead of being mis-delegated to `svelte-language-server` as
+      markup.
+    - **Watch the config's dependency graph.** A live config reload now also
+      fires when a file the `svelte.config.*` statically imports changes (a
+      separate `sveltex.config.js`, a shared helper module), via a server-side
+      watcher — which also brings live reload to clients (Zed, standalone) that
+      register no file watcher of their own.
+    - **Don't resurrect closed documents during reload.** The config-reload
+      resync now re-checks each document's liveness around its async proxy
+      close/open, so a document the editor closes mid-reload is no longer
+      re-opened in the Svelte proxy as a phantom virtual document with stale
+      diagnostics.
+
+- [#34](https://github.com/nvlang/sveltex/pull/34)
+  [`24d8ff7`](https://github.com/nvlang/sveltex/commit/24d8ff73a75f70a1f8b87c66e269bbcfcfce8da8)
+  Thanks [@nvlang](https://github.com/nvlang)! - Two robustness fixes surfaced
+  while bringing the server to full coverage:
+    - **Go-to-definition no longer returns a stale origin range.** When a
+      `LocationLink`'s `originSelectionRange` could not be mapped back to the
+      source, it leaked through in virtual-document coordinates; it is now
+      dropped.
+    - **`LspProxy.start()` no longer hangs when the child dies mid-handshake.**
+      A child language server that crashes or exits during `initialize` now
+      rejects startup (and tears the proxy down to a clean not-running state)
+      instead of hanging on a response that will never arrive.
+
+- Updated dependencies
+  [[`9a2095d`](https://github.com/nvlang/sveltex/commit/9a2095d6d0a53f0883d80ae84ec02d475d0dc6ea),
+  [`15ef830`](https://github.com/nvlang/sveltex/commit/15ef830fb6b832c28fd6b6dbcf2c892899b72994)]:
+    - @nvl/sveltex@0.5.1
+    - @nvl/sveltex-math-language-server@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

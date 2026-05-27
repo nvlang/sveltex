@@ -1,6 +1,6 @@
 {
   "name": "@nvl/sv-sveltex",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Community sv add-on for SvelTeX (Svelte + Markdown + LaTeX)",
   "type": "module",
   "license": "MIT",

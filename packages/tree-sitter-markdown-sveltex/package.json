@@ -1,6 +1,6 @@
 {
   "name": "@nvl/tree-sitter-markdown-sveltex",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "SvelTeX fork of the tree-sitter Markdown grammar (indented code blocks disabled; underscore emphasis ending in a digit fixed)",
   "repository": "github:nvlang/sveltex",
   "author": "MDeiml (https://github.com/MDeiml)",

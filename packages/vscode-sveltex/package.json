@@ -2,7 +2,7 @@
   "name": "vscode-sveltex",
   "displayName": "SvelTeX",
   "description": "Svelte + Markdown + LaTeX",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "homepage": "https://sveltex.dev/",
   "keywords": [
     "sveltex",
