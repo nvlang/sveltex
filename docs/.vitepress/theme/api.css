@@ -1,20 +1,21 @@
 /* ───────────────────────────────────────────────────────────────────────
    API reference styling (pages get `pageClass: api-doc`).
 
-   Monaspace: the per-role aliases below name Neon (identifiers), Argon (type
-   signatures / code), Xenon (inline prose code) and Krypton (tag labels), but
-   only Argon is declared in monaspace.css, so today they all resolve to Argon.
-   Argon's italics are Radon (handwriting), so italic code tokens (comments)
-   read as a slanted script. Top-level props are headings (name + inline type +
-   right-aligned source); nested props are hover-glow cards whose name is a
-   permalink.
+   The four `--api-mono-*` aliases are kept for semantic grouping — names
+   (identifiers), types (signatures / code), prose (inline prose code) and
+   tags (small uppercase labels). All four point at the site monospace
+   family (`--vp-font-family-mono`, currently Cascadia Code); the aliases
+   are kept so we can re-introduce per-role mono families later without
+   touching every callsite. Top-level props are headings (name + inline
+   type + right-aligned source); nested props are hover-glow cards whose
+   name is a permalink.
    ──────────────────────────────────────────────────────────────────────── */
 
 :root {
-    --api-mono-name: 'Monaspace Neon', var(--vp-font-family-mono);
-    --api-mono-type: 'Monaspace Argon', var(--vp-font-family-mono);
-    --api-mono-prose: 'Monaspace Xenon', var(--vp-font-family-mono);
-    --api-mono-tag: 'Monaspace Krypton', var(--vp-font-family-mono);
+    --api-mono-name: var(--vp-font-family-mono);
+    --api-mono-type: var(--vp-font-family-mono);
+    --api-mono-prose: var(--vp-font-family-mono);
+    --api-mono-tag: var(--vp-font-family-mono);
 }
 
 .api-doc h1 {
@@ -210,8 +211,8 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
    The TSDoc section markers ("Example", "Parameters", "Returns", "See", …)
    come through as `h4`. At VitePress's default (18 px / 600) they read as
    *competing* with the prop's `h3` heading (20 px / 600). Restyle them as
-   tight uppercase labels in the Krypton family — same key as `.api-tag` so
-   they sit visually below the prop heading and above the body. The
+   tight uppercase labels in the mono tag family — same key as `.api-tag`
+   so they sit visually below the prop heading and above the body. The
    header-anchor is already hidden on api pages by the `.api-doc .vp-doc
    .header-anchor` rule near the top of this file. */
 .api-doc .vp-doc h4 {
@@ -227,7 +228,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     color: var(--vp-c-text-2);
 }
 
-/* ── tag labels (Krypton) ──────────────────────────────────────────────── */
+/* ── tag labels (mono, uppercase) ──────────────────────────────────────── */
 
 .api-tag {
     font-family: var(--api-mono-tag);
@@ -497,7 +498,7 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-top: 0;
 }
 
-/* ── inline prose code → Xenon (slab) ──────────────────────────────────── */
+/* ── inline prose code → api-prose mono family ─────────────────────────── */
 
 .api-doc .api-field__doc :not(pre) > code,
 .api-doc .vp-doc p :not(pre) > code,
