@@ -206,6 +206,27 @@ html.dark .api-doc code.api-type span[style*='#E6EDF3'] {
     margin-bottom: 0.5rem;
 }
 
+/* ── api-page h4 (TSDoc section labels) → small uppercase labels ────────
+   The TSDoc section markers ("Example", "Parameters", "Returns", "See", …)
+   come through as `h4`. At VitePress's default (18 px / 600) they read as
+   *competing* with the prop's `h3` heading (20 px / 600). Restyle them as
+   tight uppercase labels in the Krypton family — same key as `.api-tag` so
+   they sit visually below the prop heading and above the body. The
+   header-anchor is already hidden on api pages by the `.api-doc .vp-doc
+   .header-anchor` rule near the top of this file. */
+.api-doc .vp-doc h4 {
+    margin-top: 1.4rem;
+    margin-bottom: 0.35rem;
+    padding-top: 0;
+    border-top: 0;
+    font-family: var(--api-mono-tag);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--vp-c-text-2);
+}
+
 /* ── tag labels (Krypton) ──────────────────────────────────────────────── */
 
 .api-tag {
