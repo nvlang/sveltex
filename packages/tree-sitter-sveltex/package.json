@@ -3,6 +3,10 @@
   "version": "0.3.0",
   "description": "Tree-sitter grammar for SvelTeX (.sveltex) documents",
   "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "author": {
     "name": "N. V. Lang",
     "email": "npm@nvlang.dev",
