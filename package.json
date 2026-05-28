@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "vendor:update": "tsx scripts/vendor.ts",
     "ci:version": "changeset version && pnpm exec tsx scripts/update-jsr-versions.ts && pnpm install --no-frozen-lockfile && pnpm exec prettier --write 'packages/*/package.json' 'packages/*/jsr.json'",
-    "ci:publish": "pnpm --filter=\\!./packages/vscode-sveltex publish --provenance --access public --no-git-checks && pnpm --filter \"@nvl/sveltex\" exec deno publish --unstable-sloppy-imports --allow-dirty && changeset tag"
+    "ci:publish": "pnpm --filter=\\!./packages/vscode-sveltex publish --provenance --access public --no-git-checks && pnpm --filter \"@nvl/sveltex\" exec deno publish --unstable-sloppy-imports --allow-dirty && changeset tag && git tag --points-at HEAD | sed 's/^/🦋  New tag: /'"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
