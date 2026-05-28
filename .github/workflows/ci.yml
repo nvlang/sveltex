@@ -200,14 +200,18 @@ jobs:
           directory: packages/sveltex/coverage/
           flags: sveltex
 
-      - name: Upload coverage reports for `packages/sveltex-language-server` to Codecov
+      - name:
+          Upload coverage reports for `packages/sveltex-language-server` to
+          Codecov
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/sveltex-language-server/coverage/
           flags: sveltex-language-server
 
-      - name: Upload coverage reports for `packages/sveltex-math-language-server` to Codecov
+      - name:
+          Upload coverage reports for `packages/sveltex-math-language-server` to
+          Codecov
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -441,7 +445,7 @@ jobs:
       # `pull-requests: write` and `workflows: write` permissions, and
       # mints a short-lived installation token per run. App credentials
       # are stored as repository secrets:
-      #   - `RELEASE_APP_ID`          -- the App's numeric ID
+      #   - `RELEASE_APP_CLIENT_ID`   -- the App's client ID
       #   - `RELEASE_APP_PRIVATE_KEY` -- the App's .pem private key
       # Replaces the previous `secrets.RELEASE_PAT` flow, which required
       # rotating the PAT every time it expired.
@@ -449,7 +453,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.RELEASE_APP_ID }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
