@@ -14,6 +14,7 @@ import {
     isDefined,
     isString,
 } from '../../../../src/typeGuards/utils.js';
+import { getVersion } from '../../../../src/utils/env.js';
 
 describe.concurrent('Sveltex', () => {
     beforeAll(async () => {
@@ -519,7 +520,15 @@ describe('Sveltex.markup()', () => {
                     await preprocessor_.markup({ content: input, filename })
                 )?.code;
             };
-            expect(await preprocess_(test.input)).toContain(test.expected);
+            // The CDN link is pinned to the installed starry-night version
+            // (not `@latest`), so resolve it the same way the handler does.
+            const v = (await getVersion('@wooorm/starry-night')) ?? 'latest';
+            expect(await preprocess_(test.input)).toContain(
+                test.expected.replace(
+                    '@wooorm/starry-night@latest',
+                    `@wooorm/starry-night@${v}`,
+                ),
+            );
         });
     });
 

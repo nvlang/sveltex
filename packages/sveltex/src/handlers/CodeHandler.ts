@@ -220,7 +220,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             typeAssert(
                 is<FullCodeTheme<'starry-night', 'cdn' | 'self-hosted'>>(theme),
             );
-            v = 'latest';
+            // Pin to the installed version (like highlight.js / KaTeX) so the
+            // CDN `<link>` can't drift out of sync with the rendered classes.
+            v = (await getVersion('@wooorm/starry-night')) ?? 'latest';
             const { name, mode, cdn } = theme;
             resourceName = `${name === 'default' ? '' : `${name}-`}${mode}.css`;
             const resource = `style/${resourceName}`;
