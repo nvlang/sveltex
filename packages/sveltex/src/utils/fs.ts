@@ -8,17 +8,21 @@ import {
     writeFileSync,
     mkdir,
     mkdirSync,
+    readdir,
     readFile,
     rename,
+    rm,
     writeFile,
     dirname,
 } from '../deps.js';
 
 export const fs = {
     existsSync,
+    readdir,
     readFile,
     readFileSync,
     rename,
+    rm,
     mkdir,
     mkdirSync,
     writeFile,

@@ -108,4 +108,14 @@ describe('utils/diagnosers/codeConfiguration', () => {
             },
         );
     });
+
+    it('warns about an options block from another backend', () => {
+        // A leftover `shiki: {…}` block while the backend is 'highlight.js'
+        // would be silently ignored; it must produce a warning instead.
+        const res = diagnoseCodeConfiguration('highlight.js', {
+            shiki: { themes: { light: 'github-light' } },
+        });
+        expect(res.errors).toBe(0);
+        expect(res.warnings).toBe(1);
+    });
 });

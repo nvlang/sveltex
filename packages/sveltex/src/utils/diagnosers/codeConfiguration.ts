@@ -35,6 +35,7 @@ import {
 
 // External dependencies
 import { nodeAssert } from '../../deps.js';
+import { getDefaultCodeConfig } from '../../base/defaults.js';
 
 export function diagnoseCodeConfiguration(
     backend: CodeBackend,
@@ -112,6 +113,14 @@ export function diagnoseCodeConfiguration(
             );
         }
     }
+    // Warn about options that don't belong to the selected backend (e.g. a
+    // leftover `shiki: {…}` block when `codeBackend` is 'highlight.js'), which
+    // would otherwise be silently ignored. `theme` is validated above, so it's
+    // always allowed here regardless of backend.
+    d.noteUnexpectedProperties([
+        ...Object.keys(getDefaultCodeConfig(backend)),
+        'theme',
+    ]);
     d.printProblems();
     return d.stats;
 }

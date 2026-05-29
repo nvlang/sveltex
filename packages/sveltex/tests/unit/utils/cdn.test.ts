@@ -2,8 +2,17 @@ import {
     fetchWithTimeout,
     cdnLink,
     fancyWrite,
+    pruneStaleSelfHostedCss,
 } from '../../../src/utils/cdn.js';
 import { spy } from '../fixtures.js';
+import {
+    mkdir as nodeMkdir,
+    readdir as nodeReaddir,
+    rm as nodeRm,
+    writeFile as nodeWriteFile,
+} from 'node:fs/promises';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import {
     describe,
     it,
@@ -143,6 +152,45 @@ describe('utils/cdn', () => {
             //     expect.stringContaining('04369612-2311-41d0-8486-bcfe70e086a6'),
             // );
             writeFileEnsureDir.mockRestore();
+        });
+    });
+
+    describe('pruneStaleSelfHostedCss', () => {
+        it('removes only stale SvelTeX stylesheets, keeping the active one', async () => {
+            await spy('log');
+            const dir = `tmp/tests/${randomUUID()}/sveltex`;
+            await nodeMkdir(dir, { recursive: true });
+            await Promise.all([
+                nodeWriteFile(join(dir, 'mathjax@4.1.1.chtml.css'), 'x'),
+                nodeWriteFile(join(dir, 'katex@0.16.0.min.css'), 'x'),
+                nodeWriteFile(join(dir, 'katex@0.17.0.min.css'), 'x'),
+                nodeWriteFile(join(dir, 'notes.txt'), 'x'),
+                nodeWriteFile(join(dir, 'custom.css'), 'x'),
+            ]);
+            await pruneStaleSelfHostedCss(
+                dir,
+                ['mathjax', 'katex'],
+                ['katex@0.17.0.min.css'],
+            );
+            const remaining = (await nodeReaddir(dir)).sort();
+            // The other-version/other-backend SvelTeX files are gone; the
+            // active file, a non-CSS file, and a non-SvelTeX CSS file remain.
+            expect(remaining).toEqual([
+                'custom.css',
+                'katex@0.17.0.min.css',
+                'notes.txt',
+            ]);
+            await nodeRm(dir, { recursive: true, force: true });
+        });
+
+        it('does nothing when the directory does not exist', async () => {
+            await expect(
+                pruneStaleSelfHostedCss(
+                    `tmp/tests/${randomUUID()}/missing`,
+                    ['mathjax'],
+                    [],
+                ),
+            ).resolves.toBeUndefined();
         });
     });
 });

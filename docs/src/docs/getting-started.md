@@ -250,6 +250,30 @@ If you prefer, you can also just use the `sveltex` function directly in your
 [`verbatim`]: verbatim
 [`frontmatter`]: markdown#disabling-frontmatter-processing
 
+## Switching backends
+
+Changing a backend later (say MathJax → KaTeX, or Shiki → highlight.js) is just
+a matter of editing the backend choice in `sveltex.config.js`. A few things to
+clean up afterwards, though:
+
+-   **Dependencies.** Install the new backend's peer dependencies and uninstall
+    the old ones. Because the backends are _optional_ peer dependencies,
+    `npm uninstall <pkg>` (or the pnpm/Yarn equivalent) may leave the package on
+    disk and in your lockfile — run `npm prune` afterwards to remove it for
+    good. SvelTeX warns on the next build if a peer dependency is missing.
+
+-   **Stale config.** Options that belong to a different backend are ignored,
+    and SvelTeX warns about them at build time (e.g. a leftover
+    `code: { shiki: { … } }` block while `codeBackend` is `'highlight.js'`).
+    Remove them to keep the config honest.
+
+-   **Self-hosted CSS.** SvelTeX removes self-hosted stylesheets from other
+    backends/versions in `static/sveltex/` automatically when it next manages
+    CSS, so a `mathjax@….css` won't keep shipping after you move to KaTeX. The
+    one case it can't clean up for you is switching a backend's `css.type` to
+    `'none'` (or removing the backend entirely), since nothing runs to manage
+    that directory — delete the leftover file under `static/sveltex/` yourself.
+
 ## Troubleshooting
 
 A few common first-run snags:

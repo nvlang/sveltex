@@ -17,7 +17,12 @@ import { getDefaultCodeConfig } from '../base/defaults.js';
 import { Handler, deepClone } from './Handler.js';
 import { isCodeBackendWithCss } from '../typeGuards/code.js';
 import { isArray, isObject, isString } from '../typeGuards/utils.js';
-import { cdnLink, fancyFetch, fancyWrite } from '../utils/cdn.js';
+import {
+    cdnLink,
+    fancyFetch,
+    fancyWrite,
+    pruneStaleSelfHostedCss,
+} from '../utils/cdn.js';
 import { log } from '../utils/debug.js';
 import { diagnoseCodeConfiguration } from '../utils/diagnosers/codeConfiguration.js';
 import {
@@ -241,6 +246,20 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             const cdns = isArray(cdn) ? cdn : [cdn];
             links = cdns.map((c) => cdnLink(pkg, resource, v, c));
         }
+
+        // Drop stale code stylesheets from earlier builds or a previous code
+        // backend (e.g. a leftover `starry-night@….css` after switching to
+        // highlight.js) so they stop shipping. The active file, if self-hosted,
+        // is kept.
+        await pruneStaleSelfHostedCss(
+            theme.type === 'cdn'
+                ? join('static', 'sveltex')
+                : join(theme.staticDir, theme.dir),
+            ['highlight.js', 'starry-night'],
+            theme.type === 'cdn'
+                ? []
+                : [`${this.backend}@${v}.${resourceName}`],
+        );
 
         if (theme.type === 'cdn') {
             if (links[0]) {

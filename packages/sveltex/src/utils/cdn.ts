@@ -10,6 +10,7 @@ import { cdnPrefixes } from '../data/cdn.js';
 import { isArray } from '../typeGuards/utils.js';
 import { log, prettifyError, runWithSpinner } from './debug.js';
 import { fs } from './fs.js';
+import { join } from '../deps.js';
 
 export function cdnLink(
     pkg: StringLiteralUnion<
@@ -47,6 +48,48 @@ export async function fancyWrite(
         },
         [timeout],
     );
+}
+
+/**
+ * Remove stale self-hosted stylesheets SvelTeX previously wrote for a backend
+ * family. When the active backend, its version, or its output format changes,
+ * the old `<prefix>@<version>…css` file in `dir` would otherwise linger and
+ * keep shipping in the build (it has nothing to overwrite it, since the new
+ * backend may use a CDN and write nothing).
+ *
+ * Only files SvelTeX itself names are touched: a name must start with one of
+ * the given `prefixes` followed by `@` and end in `.css`. Anything in `keep`
+ * (the currently-active stylesheet(s)) is preserved.
+ *
+ * @param dir - Directory the stylesheets live in (e.g. `static/sveltex`).
+ * @param prefixes - Backend prefixes the calling handler owns — e.g.
+ * `['mathjax', 'katex']` for math, `['highlight.js', 'starry-night']` for code.
+ * @param keep - Basenames to preserve (the active stylesheet, if self-hosted).
+ */
+export async function pruneStaleSelfHostedCss(
+    dir: string,
+    prefixes: string[],
+    keep: string[],
+): Promise<void> {
+    let entries: string[];
+    try {
+        entries = await fs.readdir(dir);
+    } catch {
+        // The directory doesn't exist yet (nothing self-hosted) or can't be
+        // read — either way there's nothing to prune.
+        return;
+    }
+    const stale = entries.filter(
+        (name) =>
+            name.endsWith('.css') &&
+            !keep.includes(name) &&
+            prefixes.some((p) => name.startsWith(`${p}@`)),
+    );
+    for (const name of stale) {
+        const path = join(dir, name);
+        await fs.rm(path);
+        log('info', `Removed stale self-hosted stylesheet "${path}".`);
+    }
 }
 
 export async function fancyFetch(

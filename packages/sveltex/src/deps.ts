@@ -7,7 +7,15 @@ export { default as nodeAssert } from 'node:assert';
 export { spawn, type SpawnOptionsWithoutStdio } from 'node:child_process';
 export { createHash, type BinaryToTextEncoding } from 'node:crypto';
 export { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-export { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+export {
+    mkdir,
+    readdir,
+    readFile,
+    rename,
+    rm,
+    stat,
+    writeFile,
+} from 'node:fs/promises';
 export { homedir } from 'node:os';
 export {
     basename,
