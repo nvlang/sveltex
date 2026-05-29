@@ -349,7 +349,7 @@ export class Sveltex<
         content: string,
         filename: string,
         onStage?: (name: string, output: string) => void,
-    ): Promise<Processed | undefined> {
+    ): Promise<Processed> {
         const markdownHandler = this._markdownHandler;
         const codeHandler = this._codeHandler;
         const mathHandler = this._mathHandler;
@@ -552,12 +552,17 @@ export class Sveltex<
                 ].map((path) => resolve(path)),
             };
         } catch (err) {
-            // Re-throw so the failure surfaces as a build error for this file
-            // rather than silently falling back to the unprocessed source.
-            // Returning here would make Svelte emit the original markup
-            // verbatim — shipping raw Markdown and undefined components (e.g.
-            // a literal `<TeX>` tag → `ReferenceError` at runtime).
-            throw err instanceof Error ? err : new Error(prettifyError(err));
+            // Surface the failure as a build error for this file, tagged with
+            // its name, rather than silently falling back to the unprocessed
+            // source. Returning here would make Svelte emit the original
+            // markup verbatim — shipping raw Markdown and undefined components
+            // (e.g. a literal `<TeX>` tag → `ReferenceError` at runtime). The
+            // original error (which may carry actionable guidance) is kept as
+            // the `cause`.
+            throw new Error(
+                `Error preprocessing ${filename}:\n${prettifyError(err)}`,
+                { cause: err },
+            );
         }
     }
 
@@ -592,7 +597,7 @@ export class Sveltex<
                     stages.push({ name, output });
                 },
             );
-            return { code: result?.code ?? '', stages };
+            return { code: result.code, stages };
         } catch (err) {
             // `trace` powers tooling such as the pipeline playground, where a
             // malformed document should surface the stages collected so far
