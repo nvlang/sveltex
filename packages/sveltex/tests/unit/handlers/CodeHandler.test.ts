@@ -1014,6 +1014,23 @@ describe('CodeHandler edge cases', () => {
         });
     });
 
+    describe('shiki tabindex (a11y)', () => {
+        test('omits tabindex on <pre> by default', async () => {
+            // Avoids Svelte's `a11y_no_noninteractive_tabindex` warning.
+            const handler = await CodeHandler.create('shiki');
+            const output = await handler.process('let a = 1;', { lang: 'js' });
+            expect(output.processed).toContain('<pre');
+            expect(output.processed).not.toContain('tabindex');
+        });
+        test('keeps tabindex when the user opts back in', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                shiki: { tabindex: 0 },
+            });
+            const output = await handler.process('let a = 1;', { lang: 'js' });
+            expect(output.processed).toContain('tabindex="0"');
+        });
+    });
+
     describe('shiki inline code without a language', () => {
         test('no language class is added when language is undefined', async () => {
             const handler = await CodeHandler.create('shiki', {

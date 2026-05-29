@@ -416,7 +416,11 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                         ),
                 );
             },
-            shiki: {},
+            // Shiki adds `tabindex="0"` to the `<pre>` by default, which trips
+            // Svelte's `a11y_no_noninteractive_tabindex` warning on every
+            // build. Default it off; users who want keyboard-scrollable code
+            // blocks can set `code.shiki.tabindex` back to `0`.
+            shiki: { tabindex: false },
             transformers: { post: [], pre: [] },
         };
         return config as unknown as FullCodeConfiguration<C>;
