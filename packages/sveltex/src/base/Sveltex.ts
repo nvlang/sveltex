@@ -552,8 +552,12 @@ export class Sveltex<
                 ].map((path) => resolve(path)),
             };
         } catch (err) {
-            log('error', prettifyError(err));
-            return;
+            // Re-throw so the failure surfaces as a build error for this file
+            // rather than silently falling back to the unprocessed source.
+            // Returning here would make Svelte emit the original markup
+            // verbatim — shipping raw Markdown and undefined components (e.g.
+            // a literal `<TeX>` tag → `ReferenceError` at runtime).
+            throw err instanceof Error ? err : new Error(prettifyError(err));
         }
     }
 
@@ -580,13 +584,22 @@ export class Sveltex<
         stages: { name: string; output: string }[];
     }> {
         const stages: { name: string; output: string }[] = [];
-        const result = await this._markup(content, filename, (name, output) => {
-            stages.push({ name, output });
-        });
-        if (result === undefined) {
+        try {
+            const result = await this._markup(
+                content,
+                filename,
+                (name, output) => {
+                    stages.push({ name, output });
+                },
+            );
+            return { code: result?.code ?? '', stages };
+        } catch (err) {
+            // `trace` powers tooling such as the pipeline playground, where a
+            // malformed document should surface the stages collected so far
+            // rather than abort. (The preprocessor path re-throws instead.)
+            log('error', prettifyError(err));
             return { code: '', stages };
         }
-        return { code: result.code, stages };
     }
 
     /**

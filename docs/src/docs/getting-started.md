@@ -1,6 +1,36 @@
 
 # Getting Started
 
+## System prerequisites
+
+SvelTeX runs on **Node.js 22 or later**. Beyond that, what you need depends on
+which features you use:
+
+-   **Markdown, syntax highlighting, and math (`$…$` and `$$…$$`) work out of
+    the box.** Math is rendered in pure JavaScript by MathJax or KaTeX, so it
+    needs **no external tools** — only the npm packages for the backends you
+    pick (which SvelTeX names for you on the first build).
+
+-   **The [`<TeX>`](tex) component needs a local TeX distribution.** It compiles
+    LaTeX to SVG by shelling out to real binaries, so for it — and _only_ for it
+    — the following must be installed and on your `PATH`:
+
+    -   a **TeX distribution** — [TeX Live](https://tug.org/texlive/),
+        [MiKTeX](https://miktex.org/), or [MacTeX](https://tug.org/mactex/) —
+        providing a LaTeX engine (`pdflatex`, `lualatex`, or `xelatex`);
+    -   a **DVI/PDF-to-SVG converter** — [dvisvgm](https://dvisvgm.de/) (shipped
+        with TeX Live and MiKTeX) or [Poppler](https://poppler.freedesktop.org/)'s
+        `pdftocairo`.
+
+    If a required binary is missing, SvelTeX fails the build for that file with
+    a message naming the tool and linking back here — it never silently ships a
+    broken page.
+
+::: tip Verify your TeX setup
+Only needed if you plan to use the `<TeX>` component: run `pdflatex --version`
+and `dvisvgm --version`. If both print version information, you're ready to go.
+:::
+
 ## Creating a new project
 
 SvelTeX is distributed as a community add-on for the official Svelte CLI

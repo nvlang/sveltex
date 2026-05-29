@@ -25,10 +25,12 @@ import type { VerbEnvConfigTex } from '../../../src/types/handlers/Verbatim.js';
 import type { CliInstruction } from '../../../src/types/utils/CliInstruction.js';
 import {
     TexComponent,
+    TexDependencyError,
     enactPresets,
     extendedPreamble,
     parseLatexLog,
     printLogProblems,
+    texDependencyError,
 } from '../../../src/utils/TexComponent.js';
 import { fs, pathExists } from '../../../src/utils/fs.js';
 import { mergeConfigs } from '../../../src/utils/merge.js';
@@ -212,6 +214,131 @@ describe('compile(): self-closing component', () => {
             'Cannot compile a self-closing TeX component',
         );
     });
+});
+
+describe('compile(): full-document content', () => {
+    fixture();
+    it.each([
+        ['\\documentclass{article}\n\\begin{document}\nx\n\\end{document}'],
+        ['\\begin{document}\nx\n\\end{document}'],
+    ])('should throw a body-only error for %s', async (tex) => {
+        const ath = await TexHandler.create();
+        const tc = TexComponent.create({
+            filename: 'file.sveltex',
+            texHandler: ath,
+            attributes: { ref: 'ref' },
+            ref: 'ref',
+            tex,
+            config: defaultConfig,
+            tag: 'tex',
+        });
+        await expect(tc.compile()).rejects.toThrow(
+            /must be the LaTeX document body only/u,
+        );
+    });
+});
+
+describe('texDependencyError()', () => {
+    it('names the binary and links to the docs on ENOENT', () => {
+        const err = texDependencyError(
+            'pdflatex',
+            Object.assign(new Error('spawn pdflatex ENOENT'), {
+                code: 'ENOENT',
+            }),
+        );
+        expect(err).toBeInstanceOf(TexDependencyError);
+        expect(err.message).toContain('pdflatex');
+        expect(err.message).toContain('PATH');
+        expect(err.message).toContain('sveltex.dev/docs/getting-started');
+    });
+    it('reports the underlying message for non-ENOENT errors', () => {
+        const err = texDependencyError(
+            'dvisvgm',
+            Object.assign(new Error('boom'), { code: 'EACCES' }),
+        );
+        expect(err).toBeInstanceOf(TexDependencyError);
+        expect(err.message).toContain('dvisvgm');
+        expect(err.message).toContain('boom');
+    });
+});
+
+describe('compile(): missing system dependency', () => {
+    fixture();
+    it('throws TexDependencyError when the TeX engine cannot be spawned', async () => {
+        const id = uuid();
+        const ath = await TexHandler.create({
+            caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+            conversion: { outputDirectory: `tmp/tests/${id}/output` },
+        });
+        const { spawnCliInstruction } = await spy(
+            ['writeFile', 'spawnCliInstruction', 'log'],
+            false,
+        );
+        spawnCliInstruction.mockResolvedValueOnce({
+            code: null,
+            stdout: '',
+            stderr: '',
+            error: Object.assign(new Error('spawn pdflatex ENOENT'), {
+                code: 'ENOENT',
+            }),
+        });
+        const tc = TexComponent.create({
+            filename: 'file.sveltex',
+            texHandler: ath,
+            attributes: { ref: 'ref' },
+            ref: 'ref',
+            tex: '\\LaTeX',
+            config: defaultConfig,
+            tag: 'tex',
+        });
+        await expect(tc.compile()).rejects.toBeInstanceOf(TexDependencyError);
+    });
+
+    it(
+        'throws TexDependencyError when the converter cannot be spawned',
+        { timeout: 30e3 },
+        async () => {
+            const id = uuid();
+            const ref = 'ref';
+            const ath = await TexHandler.create({
+                caching: { cacheDirectory: `tmp/tests/${id}/cache` },
+                conversion: { outputDirectory: `tmp/tests/${id}/output` },
+            });
+            const { spawnCliInstruction, readFile } = await spy(
+                ['writeFile', 'spawnCliInstruction', 'readFile', 'log'],
+                false,
+            );
+            readFile.mockResolvedValueOnce('test-pdf');
+            spawnCliInstruction.mockImplementation(
+                async (instr: CliInstruction) => {
+                    if (instr.command === 'dvisvgm') {
+                        return {
+                            code: null,
+                            stdout: '',
+                            stderr: '',
+                            error: Object.assign(
+                                new Error('spawn dvisvgm ENOENT'),
+                                { code: 'ENOENT' },
+                            ),
+                        };
+                    }
+                    return realSpawnCliInstruction(instr);
+                },
+            );
+            const tc = TexComponent.create({
+                filename: 'file.sveltex',
+                texHandler: ath,
+                attributes: { ref },
+                ref,
+                tex: '\\LaTeX',
+                config: defaultConfig,
+                tag: 'tex',
+            });
+            await expect(tc.compile()).rejects.toBeInstanceOf(
+                TexDependencyError,
+            );
+        },
+    );
 });
 
 // TODO: the problem has to do with verbosity prop in all likelihood

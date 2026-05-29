@@ -108,6 +108,16 @@ Curly braces { won't } be parsed by Svelte here.
 </Verbatim>
 ```
 
+::: warning A `tex` body is the document body only
+The content between a `tex` environment's tags is the LaTeX **document body** —
+exactly what you would write between `\begin{document}` and `\end{document}`.
+SvelTeX supplies the `\documentclass`, the preamble, and the `document`
+environment itself; configure those with the `documentClass` and `preamble`
+options shown above. Putting a `\documentclass` or `\begin{document}` in the
+body would nest one document inside another, so SvelTeX rejects it with a clear
+error rather than emitting invalid LaTeX.
+:::
+
 ### Common options
 
 These apply to every verbatim type:

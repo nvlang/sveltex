@@ -1,28 +1,20 @@
 import { missingDeps } from '../../../../src/utils/env.js';
 import { sveltex } from '../../../../src/base/Sveltex.js';
-import {
-    afterAll,
-    beforeAll,
-    describe,
-    expect,
-    it,
-    test,
-    vi,
-    type MockInstance,
-} from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, test, vi } from 'vitest';
 import { spy } from '../../fixtures.js';
 import { cartesianProduct } from '../../utils.js';
 
 describe('Sveltex.markup()', () => {
-    let log: MockInstance;
     beforeAll(async () => {
-        const mocks = await spy(['writeFile', 'log', 'mkdir'], true);
-        log = mocks.log;
+        await spy(['writeFile', 'log', 'mkdir'], true);
     });
     afterAll(() => {
         vi.restoreAllMocks();
     });
-    it('catches processor errors', async () => {
+    it('re-throws processor errors instead of emitting unprocessed source', async () => {
+        // A swallowed error would make Svelte fall back to the original
+        // markup — shipping raw Markdown and undefined components. The
+        // preprocessor must reject so the build fails loudly instead.
         vi.doMock(
             'micromark',
             async (orig: () => Promise<typeof import('micromark')>) => {
@@ -35,16 +27,12 @@ describe('Sveltex.markup()', () => {
             },
         );
         const preprocessor = await sveltex({ markdownBackend: 'micromark' });
-        expect(
-            (
-                await preprocessor.markup({
-                    content: '*something*',
-                    filename: 'test.sveltex',
-                })
-            )?.code,
-        ).toBeUndefined();
-        expect(log).toHaveBeenCalledTimes(1);
-        expect(log.mock.calls[0]?.[0]).toEqual('error');
+        await expect(
+            preprocessor.markup({
+                content: '*something*',
+                filename: 'test.sveltex',
+            }),
+        ).rejects.toThrow('example error');
         vi.restoreAllMocks();
     });
 });

@@ -25,6 +25,14 @@
 **Note:** See the [docs] for more information.<br>
 **Note**: This package is [ESM-only].
 
+> [!IMPORTANT]
+> Markdown, syntax highlighting and math (`$…$`, `$$…$$`) need **no external
+> tools** — only the npm packages for the backends you pick. The `<TeX>`
+> component is the exception: it compiles LaTeX with a local **TeX
+> distribution** (TeX Live, MiKTeX or MacTeX) plus **dvisvgm** or **Poppler**,
+> which must be on your `PATH`. If one is missing, SvelTeX fails that file's
+> build with a message naming the tool. See [System prerequisites] for details.
+
 ### Adding SvelTeX to a project
 
 The quickest way is the [`@nvl/sv-sveltex`] community add-on for the [Svelte CLI]
@@ -133,6 +141,7 @@ libraries. Some notable examples are MathJax and TikZ.
 
 
 [docs]: https://sveltex.dev/docs
+[System prerequisites]: https://sveltex.dev/docs/getting-started#system-prerequisites
 [ESM-only]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
 [Svelte CLI]: https://svelte.dev/docs/cli/overview
 [`@nvl/sv-sveltex`]: https://www.npmjs.com/package/@nvl/sv-sveltex
