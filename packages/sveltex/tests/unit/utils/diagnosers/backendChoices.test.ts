@@ -81,4 +81,60 @@ describe('utils/diagnosers/backendChoices', () => {
             expect(log).toHaveBeenCalledTimes(errors + warnings);
         },
     );
+
+    it('hints at the two-argument form when a configuration key is misplaced', () => {
+        const res = diagnoseBackendChoices({
+            markdownBackend: 'unified',
+            code: { shiki: {} },
+        } as unknown as BackendChoices<
+            MarkdownBackend,
+            CodeBackend,
+            MathBackend
+        >);
+        expect(res).toEqual({ errors: 0, warnings: 1, problems: 1 });
+        expect(log).toHaveBeenCalledWith(
+            'warn',
+            expect.stringContaining('second argument'),
+        );
+        expect(log).toHaveBeenCalledWith(
+            'warn',
+            expect.stringContaining('is a configuration option'),
+        );
+    });
+
+    it('uses plural phrasing when several configuration keys are misplaced', () => {
+        diagnoseBackendChoices({
+            code: {},
+            math: {},
+        } as unknown as BackendChoices<
+            MarkdownBackend,
+            CodeBackend,
+            MathBackend
+        >);
+        expect(log).toHaveBeenCalledWith(
+            'warn',
+            expect.stringContaining('are configuration options'),
+        );
+    });
+
+    it('does not add the two-argument hint for unrelated extraneous keys', () => {
+        const res = diagnoseBackendChoices({
+            markdownBackend: 'unified',
+            foo: 1,
+        } as unknown as BackendChoices<
+            MarkdownBackend,
+            CodeBackend,
+            MathBackend
+        >);
+        expect(res).toEqual({ errors: 0, warnings: 1, problems: 1 });
+        expect(log).toHaveBeenCalledWith(
+            'warn',
+            expect.not.stringContaining('second argument'),
+        );
+        // The generic "extraneous keys" warning must still fire.
+        expect(log).toHaveBeenCalledWith(
+            'warn',
+            expect.stringContaining('Extraneous keys detected'),
+        );
+    });
 });
