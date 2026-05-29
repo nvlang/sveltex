@@ -73,7 +73,8 @@ import { sveltex } from '@nvl/sveltex';
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
     preprocess: [
-        vitePreprocess(), // (optional)
+        // SvelTeX must come before other markup preprocessors (e.g.
+        // vitePreprocess), which would otherwise choke on raw LaTeX.
         await sveltex({
             markdownBackend: 'unified',
             codeBackend: 'shiki',
@@ -81,6 +82,7 @@ const config = {
         }, {
             // Options
         }),
+        vitePreprocess(), // (optional)
     ],
     extensions: ['.svelte', '.sveltex'],
 };

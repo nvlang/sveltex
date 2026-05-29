@@ -252,12 +252,13 @@ export default defineAddon({
                     fallback: js.object.create({}),
                 });
 
-                // `preprocess` — coerce to an array, then append the SvelTeX
-                // preprocessor instance. The property may already exist as a
-                // single (non-array) preprocessor, so the runtime type guard
-                // is required even though the fallback is an array. Reading
-                // `.value` off the property node (rather than `js.object
-                // .property`'s fallback-narrowed return) keeps the type wide.
+                // `preprocess` — coerce to an array, then insert the SvelTeX
+                // preprocessor at the *front*. The property may already exist
+                // as a single (non-array) preprocessor, so the runtime type
+                // guard is required even though the fallback is an array.
+                // Reading `.value` off the property node (rather than `js
+                // .object.property`'s fallback-narrowed return) keeps the type
+                // wide.
                 const preprocessProp = js.object.propertyNode(exportDefault, {
                     name: 'preprocess',
                     fallback: js.array.create(),
@@ -275,7 +276,11 @@ export default defineAddon({
                         preprocess: preprocessArray,
                     });
                 }
-                js.array.append(
+                // SvelTeX must run before any other markup preprocessor:
+                // it turns `.sveltex` (Markdown + LaTeX) into valid Svelte,
+                // whereas e.g. `vitePreprocess` chokes on raw LaTeX
+                // backslashes if it sees the file first.
+                js.array.prepend(
                     preprocessArray,
                     js.common.parseExpression('sveltexPreprocessor'),
                 );

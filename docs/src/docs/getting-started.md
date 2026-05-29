@@ -218,8 +218,8 @@ import sveltexPreprocessor from './sveltex.config.js';
 const config = {
     // ...
     preprocess: [
-        vitePreprocess(), // (optional)
         sveltexPreprocessor,
+        vitePreprocess(), // (optional)
         // ...
     ],
     extensions: ['.svelte', '.sveltex'],
@@ -228,6 +228,13 @@ const config = {
 
 export default config;
 ```
+
+::: warning Order matters
+List `sveltexPreprocessor` **before** any other markup preprocessor (such as
+`vitePreprocess`). SvelTeX turns a `.sveltex` file's Markdown and LaTeX into
+valid Svelte; a preprocessor that runs first would instead see raw LaTeX
+backslashes and fail. (The `sv` add-on wires this up correctly for you.)
+:::
 
 If you prefer, you can also just use the `sveltex` function directly in your
 `svelte.config.js`. Just remember to `await` it.
