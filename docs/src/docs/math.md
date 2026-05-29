@@ -220,9 +220,9 @@ the generated CSS still ships:
 !static/sveltex/
 ```
 
-SvelTeX names each file `<backend>@<version>.…css` and removes stylesheets from
-other backends/versions automatically when you switch — see
-[Switching backends](getting-started#switching-backends).
+SvelTeX names each file `<backend>@<version>.…css` and warns about stylesheets
+from other backends/versions when you switch, so you can remove the ones that
+no longer apply — see [Switching backends](getting-started#switching-backends).
 :::
 
 
@@ -252,9 +252,10 @@ for all of its pages anyway.
 ::: tip
 
 The self-hosted stylesheet is named after the backend, version, and output
-format (e.g. `mathjax@4.1.2.chtml.css`), and SvelTeX removes stale ones
-automatically — so switching the output format (or the math backend, or
-bumping a version) won't leave an old stylesheet behind to ship.
+format (e.g. `mathjax@4.1.2.chtml.css`). When you switch the output format (or
+the math backend, or bump a version), the previous file lingers in
+`static/sveltex/`; SvelTeX warns about it at build time so you can delete it
+(it doesn't remove it for you — that directory is yours).
 
 :::
 

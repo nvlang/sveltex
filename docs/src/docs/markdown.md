@@ -162,6 +162,13 @@ Because the defaults differ, **switching backends can change your output** — a
 footnote, for instance, renders only under unified. Pick a backend that covers
 the features you rely on, or add the missing plugins yourself.
 
+::: warning Footnotes across multiple `.sveltex` files
+GFM footnote IDs (`user-content-fn-1`, …) are numbered per file, not per page.
+If two `.sveltex` components that both use footnotes render on the same page,
+their footnote IDs collide. Keep footnotes to one component per page, or
+disambiguate the references yourself.
+:::
+
 ## Configuration
 
 For every available option and its type, see the

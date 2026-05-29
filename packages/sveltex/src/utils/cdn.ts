@@ -51,22 +51,23 @@ export async function fancyWrite(
 }
 
 /**
- * Remove stale self-hosted stylesheets SvelTeX previously wrote for a backend
- * family. When the active backend, its version, or its output format changes,
- * the old `<prefix>@<version>…css` file in `dir` would otherwise linger and
- * keep shipping in the build (it has nothing to overwrite it, since the new
- * backend may use a CDN and write nothing).
+ * Warn about stale self-hosted stylesheets in `dir`. When the active backend,
+ * its version, or its output format changes, a `<prefix>@<version>…css` file
+ * SvelTeX wrote for a previous configuration lingers and keeps shipping in the
+ * build. SvelTeX flags these but does **not** delete them: `static/sveltex/`
+ * is checked into the user's repo, and auto-removing files there (which can't
+ * be reliably told apart from ones the user placed) would be too aggressive.
  *
- * Only files SvelTeX itself names are touched: a name must start with one of
- * the given `prefixes` followed by `@` and end in `.css`. Anything in `keep`
- * (the currently-active stylesheet(s)) is preserved.
+ * Only files matching SvelTeX's own naming are considered: a name must start
+ * with one of the given `prefixes` followed by `@` and end in `.css`. Anything
+ * in `keep` (the currently-active stylesheet) is ignored.
  *
  * @param dir - Directory the stylesheets live in (e.g. `static/sveltex`).
  * @param prefixes - Backend prefixes the calling handler owns — e.g.
  * `['mathjax', 'katex']` for math, `['highlight.js', 'starry-night']` for code.
- * @param keep - Basenames to preserve (the active stylesheet, if self-hosted).
+ * @param keep - Basenames to ignore (the active stylesheet, if self-hosted).
  */
-export async function pruneStaleSelfHostedCss(
+export async function warnAboutStaleSelfHostedCss(
     dir: string,
     prefixes: string[],
     keep: string[],
@@ -76,7 +77,7 @@ export async function pruneStaleSelfHostedCss(
         entries = await fs.readdir(dir);
     } catch {
         // The directory doesn't exist yet (nothing self-hosted) or can't be
-        // read — either way there's nothing to prune.
+        // read — either way there's nothing to flag.
         return;
     }
     const stale = entries.filter(
@@ -86,9 +87,12 @@ export async function pruneStaleSelfHostedCss(
             prefixes.some((p) => name.startsWith(`${p}@`)),
     );
     for (const name of stale) {
-        const path = join(dir, name);
-        await fs.rm(path);
-        log('info', `Removed stale self-hosted stylesheet "${path}".`);
+        log(
+            'warn',
+            `Stale stylesheet "${join(dir, name)}" doesn't match the active ` +
+                `configuration and will still ship. If SvelTeX generated it ` +
+                `for a previous backend/version, delete it.`,
+        );
     }
 }
 

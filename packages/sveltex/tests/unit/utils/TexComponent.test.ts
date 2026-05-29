@@ -351,21 +351,8 @@ describe('compile(): catches errors', () => {
         vi.restoreAllMocks();
     });
 
-    // TODO: figure out why this test has to be the first one in this describe
-    // block.
     it('DVI/PDF → SVG (poppler) (unknown error)', async () => {
         vi.restoreAllMocks();
-        vi.doMock(
-            'node-poppler',
-            async (orig: () => Promise<typeof import('node-poppler')>) => {
-                return {
-                    ...(await orig()),
-                    Poppler: vi.fn().mockImplementation(() => {
-                        throw new Error('031bbd43-4445-4976-bd3a-e46147f5bb3d');
-                    }),
-                };
-            },
-        );
         const { log } = await spy(['log']);
         const id = uuid();
         const ref = 'ref';
@@ -374,6 +361,15 @@ describe('compile(): catches errors', () => {
             conversion: { outputDirectory: `tmp/tests/${id}/output` },
             debug: { verbosity: 'all' },
         });
+        // Inject a Poppler whose `pdfToCairo` throws, exercising the
+        // conversion error path. Mocking the `node-poppler` *module* instead
+        // would leak through the import cache into the real poppler tests
+        // later in this file (`doUnmock` doesn't evict an imported module).
+        texHandler.poppler = {
+            pdfToCairo: () => {
+                throw new Error('031bbd43-4445-4976-bd3a-e46147f5bb3d');
+            },
+        } as unknown as NonNullable<TexHandler['poppler']>;
         await texHandler.process('$x$', {
             attributes: { ref },
             filename: `file-${ref}.sveltex`,
@@ -389,7 +385,6 @@ describe('compile(): catches errors', () => {
             { severity: 'error', style: 'dim' },
             expect.stringContaining('031bbd43-4445-4976-bd3a-e46147f5bb3d'),
         );
-        vi.doUnmock('node-poppler');
     });
 
     it.each([

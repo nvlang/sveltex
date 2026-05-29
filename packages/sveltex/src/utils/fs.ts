@@ -11,7 +11,6 @@ import {
     readdir,
     readFile,
     rename,
-    rm,
     writeFile,
     dirname,
 } from '../deps.js';
@@ -22,7 +21,6 @@ export const fs = {
     readFile,
     readFileSync,
     rename,
-    rm,
     mkdir,
     mkdirSync,
     writeFile,

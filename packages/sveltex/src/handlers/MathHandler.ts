@@ -19,7 +19,7 @@ import {
     cdnLink,
     fancyFetch,
     fancyWrite,
-    pruneStaleSelfHostedCss,
+    warnAboutStaleSelfHostedCss,
 } from '../utils/cdn.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '../utils/css.js';
 import { getVersion, missingDeps } from '../utils/env.js';
@@ -430,7 +430,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 // math backend (e.g. a leftover `mathjax@….css` after switching
                 // to KaTeX) so they stop shipping. The active file, if
                 // self-hosted, is kept.
-                await pruneStaleSelfHostedCss(
+                await warnAboutStaleSelfHostedCss(
                     type === 'hybrid'
                         ? join(cssConfig.staticDir, cssConfig.dir)
                         : join('static', 'sveltex'),
@@ -678,7 +678,7 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 // `mathjax@<old>.chtml.css` left behind by a version or
                 // output-format change, or a `katex@….css` from a previous
                 // backend) so they stop shipping. The active file is kept.
-                await pruneStaleSelfHostedCss(
+                await warnAboutStaleSelfHostedCss(
                     type === 'none'
                         ? join('static', 'sveltex')
                         : join(config.css.staticDir, config.css.dir),

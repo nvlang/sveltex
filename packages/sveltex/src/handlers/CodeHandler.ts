@@ -21,7 +21,7 @@ import {
     cdnLink,
     fancyFetch,
     fancyWrite,
-    pruneStaleSelfHostedCss,
+    warnAboutStaleSelfHostedCss,
 } from '../utils/cdn.js';
 import { log } from '../utils/debug.js';
 import { diagnoseCodeConfiguration } from '../utils/diagnosers/codeConfiguration.js';
@@ -251,7 +251,7 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
         // backend (e.g. a leftover `starry-night@….css` after switching to
         // highlight.js) so they stop shipping. The active file, if self-hosted,
         // is kept.
-        await pruneStaleSelfHostedCss(
+        await warnAboutStaleSelfHostedCss(
             theme.type === 'cdn'
                 ? join('static', 'sveltex')
                 : join(theme.staticDir, theme.dir),

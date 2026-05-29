@@ -282,12 +282,12 @@ clean up afterwards, though:
     `code: { shiki: { … } }` block while `codeBackend` is `'highlight.js'`).
     Remove them to keep the config honest.
 
--   **Self-hosted CSS.** SvelTeX removes self-hosted stylesheets from other
-    backends/versions in `static/sveltex/` automatically when it next manages
-    CSS, so a `mathjax@….css` won't keep shipping after you move to KaTeX. The
-    one case it can't clean up for you is switching a backend's `css.type` to
-    `'none'` (or removing the backend entirely), since nothing runs to manage
-    that directory — delete the leftover file under `static/sveltex/` yourself.
+-   **Self-hosted CSS.** A stylesheet SvelTeX self-hosted for a previous
+    backend/version (e.g. `static/sveltex/mathjax@….css` after moving to KaTeX)
+    keeps shipping until you remove it. SvelTeX warns about such stale files at
+    build time but doesn't delete them — `static/sveltex/` is checked into your
+    repo, so removing files there is left to you. Delete the flagged file (or
+    the whole directory if you've stopped self-hosting).
 
 ## Troubleshooting
 

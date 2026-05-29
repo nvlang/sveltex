@@ -2,7 +2,7 @@ import {
     fetchWithTimeout,
     cdnLink,
     fancyWrite,
-    pruneStaleSelfHostedCss,
+    warnAboutStaleSelfHostedCss,
 } from '../../../src/utils/cdn.js';
 import { spy } from '../fixtures.js';
 import {
@@ -155,9 +155,9 @@ describe('utils/cdn', () => {
         });
     });
 
-    describe('pruneStaleSelfHostedCss', () => {
-        it('removes only stale SvelTeX stylesheets, keeping the active one', async () => {
-            await spy('log');
+    describe('warnAboutStaleSelfHostedCss', () => {
+        it('warns about stale SvelTeX stylesheets, ignoring the active and non-SvelTeX files', async () => {
+            const log = await spy('log');
             const dir = `tmp/tests/${randomUUID()}/sveltex`;
             await nodeMkdir(dir, { recursive: true });
             await Promise.all([
@@ -167,25 +167,29 @@ describe('utils/cdn', () => {
                 nodeWriteFile(join(dir, 'notes.txt'), 'x'),
                 nodeWriteFile(join(dir, 'custom.css'), 'x'),
             ]);
-            await pruneStaleSelfHostedCss(
+            await warnAboutStaleSelfHostedCss(
                 dir,
                 ['mathjax', 'katex'],
                 ['katex@0.17.0.min.css'],
             );
-            const remaining = (await nodeReaddir(dir)).sort();
-            // The other-version/other-backend SvelTeX files are gone; the
-            // active file, a non-CSS file, and a non-SvelTeX CSS file remain.
-            expect(remaining).toEqual([
-                'custom.css',
-                'katex@0.17.0.min.css',
-                'notes.txt',
-            ]);
+            // Nothing is deleted: warning only.
+            expect((await nodeReaddir(dir)).length).toBe(5);
+            // Warns about the two stale SvelTeX files, not the active file,
+            // the non-CSS file, or the non-SvelTeX CSS file.
+            const warned = log.mock.calls
+                .filter((c) => c[0] === 'warn')
+                .map((c) => String(c[1]));
+            expect(warned).toHaveLength(2);
+            expect(warned.join('\n')).toContain('mathjax@4.1.1.chtml.css');
+            expect(warned.join('\n')).toContain('katex@0.16.0.min.css');
+            expect(warned.join('\n')).not.toContain('katex@0.17.0.min.css');
+            expect(warned.join('\n')).not.toContain('custom.css');
             await nodeRm(dir, { recursive: true, force: true });
         });
 
         it('does nothing when the directory does not exist', async () => {
             await expect(
-                pruneStaleSelfHostedCss(
+                warnAboutStaleSelfHostedCss(
                     `tmp/tests/${randomUUID()}/missing`,
                     ['mathjax'],
                     [],

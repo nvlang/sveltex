@@ -607,9 +607,12 @@ export class TexComponent {
         const name: string = propIsString
             ? documentClass
             : (documentClass.name ?? 'standalone');
+        // Copy, don't alias: this getter must not mutate the (often shared)
+        // configuration object. Aliasing previously let `unshift` leak the
+        // `dvisvgm` option back into the config.
         const options: string[] = propIsString
             ? []
-            : (documentClass.options ?? []);
+            : [...(documentClass.options ?? [])];
         if (
             texConfig.compilation.intermediateFiletype === 'dvi' &&
             !options.includes('dvisvgm')
@@ -645,6 +648,9 @@ export class TexComponent {
         // `\begin{document}`/`\end{document}` itself. A user-supplied
         // `\documentclass` or `\begin{document}` would be nested inside ours,
         // producing invalid LaTeX, so fail early with a clear message instead.
+        // (This is a deliberately simple scan: it doesn't skip LaTeX comments
+        // or verbatim blocks, so the rare body that mentions `\documentclass`
+        // there is rejected too — an acceptable trade-off for a clear error.)
         if (
             /\\documentclass|\\begin\s*\{\s*document\s*\}/u.test(
                 this.texDocumentBodyWithCssVars,

@@ -343,7 +343,9 @@ export class Sveltex<
      * @param filename - The (real or synthetic) filename of the document.
      * @param onStage - Optional callback invoked with each significant
      * intermediate pipeline output, used by `trace`.
-     * @returns The preprocessed content, or `undefined` if an error occurred.
+     * @returns The preprocessed content.
+     * @throws If processing fails — callers surface this as a build error
+     * rather than emitting the unprocessed source.
      */
     private async _markup(
         content: string,
