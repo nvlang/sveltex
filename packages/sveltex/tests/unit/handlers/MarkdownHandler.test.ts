@@ -574,6 +574,20 @@ describe('MarkdownHandler.process edge cases', () => {
         ).processed;
         expect(loose).toContain('<em>a</em>');
     });
+
+    test('marked leaves <URL> autolinks as text instead of corrupt links', async () => {
+        // SvelTeX disables autolinks globally (`<…>` clashes with Svelte
+        // component syntax). marked must not fall back to its GFM bare-URL
+        // tokenizer, which used to emit `href="…%3E"` for `<https://…>`.
+        const handler = await MarkdownHandler.create('marked');
+        const out = (
+            await handler.process('See <https://example.com> here.', {
+                filename: 'test.sveltex',
+            })
+        ).processed;
+        expect(out).not.toContain('%3E');
+        expect(out).not.toContain('href=');
+    });
 });
 
 /* -------------------------------------------------------------------------- */

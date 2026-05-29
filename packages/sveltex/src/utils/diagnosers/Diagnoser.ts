@@ -173,11 +173,16 @@ export class Diagnoser {
     ) {
         let passed: boolean;
         const subject = this.subject;
+        // Resolve the actual value so the error message can report it. For a
+        // nested key (e.g. `css.type`), `subject[prop]` is always `undefined`;
+        // we must walk the path with `getProperty` instead.
+        let actual: unknown;
         if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-            const propValue = getProperty<unknown>(subject, prop, undefined);
-            passed = typeGuard(propValue);
+            actual = getProperty<unknown>(subject, prop, undefined);
+            passed = typeGuard(actual);
         } else {
+            actual = subject[prop as keyof typeof subject];
             passed =
                 isPresentAndDefined(subject, prop) &&
                 ifPresentAndDefined(subject, prop, typeGuard);
@@ -185,7 +190,7 @@ export class Diagnoser {
         if (!passed) {
             this.problems.push({
                 severity,
-                message: `Expected "${String(prop)}" to be ${expect}. ${insteadGot(subject[prop as keyof typeof subject], expectType)}`,
+                message: `Expected "${String(prop)}" to be ${expect}. ${insteadGot(actual, expectType)}`,
             });
         }
     }
@@ -214,17 +219,22 @@ export class Diagnoser {
     ) {
         let passed: boolean;
         const subject = this.subject;
+        // Resolve the actual value so the error message can report it. For a
+        // nested key (e.g. `css.type`), `subject[prop]` is always `undefined`;
+        // we must walk the path with `getProperty` instead.
+        let actual: unknown;
         if (isString(prop) && (prop.includes('.') || prop.includes('['))) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-            const propValue = getProperty<unknown>(subject, prop, undefined);
-            passed = !isDefined(propValue) || typeGuard(propValue);
+            actual = getProperty<unknown>(subject, prop, undefined);
+            passed = !isDefined(actual) || typeGuard(actual);
         } else {
+            actual = subject[prop as keyof typeof subject];
             passed = ifPresentAndDefined(subject, prop, typeGuard);
         }
         if (!passed) {
             this.problems.push({
                 severity,
-                message: `Expected "${String(prop)}" to be ${expect}. ${insteadGot(subject[prop as keyof typeof subject], expectType)}`,
+                message: `Expected "${String(prop)}" to be ${expect}. ${insteadGot(actual, expectType)}`,
             });
         }
     }
