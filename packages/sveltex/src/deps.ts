@@ -140,6 +140,18 @@ export {
     type Extension as MicromarkExtension,
 } from 'micromark-extension-mdx-md';
 export type { TokenTypeMap as MicromarkTokenTypeMap } from 'micromark-util-types';
+
+// GFM extensions (tables, strikethrough, task lists, footnotes), wired up
+// individually so we can leave out GFM's autolink-literal — autolinks clash
+// with Svelte component syntax and SvelTeX disables them everywhere.
+export { gfmTable as micromarkGfmTable } from 'micromark-extension-gfm-table';
+export { gfmStrikethrough as micromarkGfmStrikethrough } from 'micromark-extension-gfm-strikethrough';
+export { gfmTaskListItem as micromarkGfmTaskListItem } from 'micromark-extension-gfm-task-list-item';
+export { gfmFootnote as micromarkGfmFootnote } from 'micromark-extension-gfm-footnote';
+export { gfmTableFromMarkdown as mdastGfmTableFromMarkdown } from 'mdast-util-gfm-table';
+export { gfmStrikethroughFromMarkdown as mdastGfmStrikethroughFromMarkdown } from 'mdast-util-gfm-strikethrough';
+export { gfmTaskListItemFromMarkdown as mdastGfmTaskListItemFromMarkdown } from 'mdast-util-gfm-task-list-item';
+export { gfmFootnoteFromMarkdown as mdastGfmFootnoteFromMarkdown } from 'mdast-util-gfm-footnote';
 export { default as ora, type Ora } from 'ora';
 export { default as pc } from 'picocolors';
 export type { Colors } from 'picocolors/types.js';

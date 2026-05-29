@@ -389,13 +389,21 @@ describe.each([
             { markdown: configuration },
         );
         const log = await spy('log');
-        for (const [input, expected, logged] of samples) {
-            const output = (
-                await processor.markup({
+        for (const [input, expected, extra] of samples) {
+            const run = async () =>
+                processor.markup({
                     filename: generateId() + '.sveltex',
                     content: input,
-                })
-            )?.code;
+                });
+            // A 3rd sample element with no expected output means a plugin
+            // threw: the build must fail loudly rather than swallow the error
+            // and emit the unprocessed source. Paired with expected output it
+            // is instead a non-fatal message the processor logs.
+            if (extra !== undefined && expected === undefined) {
+                await expect(run()).rejects.toThrow(extra);
+                continue;
+            }
+            const output = (await run())?.code;
             if (isArray(expected)) {
                 for (const e of expected) {
                     expect(output).toMatch(e);
@@ -405,10 +413,10 @@ describe.each([
             } else {
                 expect(output).toMatch(expected);
             }
-            if (logged) {
+            if (extra !== undefined) {
                 expect(log).toHaveBeenCalledWith(
                     expect.any(String),
-                    expect.stringMatching(logged),
+                    expect.stringMatching(extra),
                 );
             }
         }
@@ -573,6 +581,37 @@ describe('MarkdownHandler.process edge cases', () => {
             })
         ).processed;
         expect(loose).toContain('<em>a</em>');
+    });
+
+    test('unified enables GFM (tables, strikethrough, task lists, footnotes) by default', async () => {
+        const handler = await MarkdownHandler.create('unified');
+        const cases: [string, RegExp][] = [
+            ['| a | b |\n| - | - |\n| 1 | 2 |', /<table>/u],
+            ['~~strike~~', /<del>strike<\/del>/u],
+            ['- [x] done', /<input type="checkbox"[^>]*checked/u],
+            ['Foot[^1].\n\n[^1]: note', /<section[^>]*data-footnotes/u],
+        ];
+        for (const [input, expected] of cases) {
+            const out = (
+                await handler.process(input, { filename: 'test.sveltex' })
+            ).processed;
+            expect(out).toMatch(expected);
+        }
+    });
+
+    test('unified leaves autolinks (GFM included) as text, not links', async () => {
+        // GFM's autolink-literal extension is intentionally left out, and
+        // CommonMark autolinks are disabled, so neither `<URL>` nor a bare URL
+        // becomes a link (and there is no `…%3E` corruption).
+        const handler = await MarkdownHandler.create('unified');
+        const out = (
+            await handler.process(
+                'Angle <https://example.com> and bare https://example.com',
+                { filename: 'test.sveltex' },
+            )
+        ).processed;
+        expect(out).not.toContain('%3E');
+        expect(out).not.toContain('<a ');
     });
 
     test('marked leaves <URL> autolinks as text instead of corrupt links', async () => {
