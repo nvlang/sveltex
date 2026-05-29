@@ -75,19 +75,24 @@ function defaultOptions(overrides: Partial<Options> = {}): Options {
 function runAddon({
     options = {},
     seed = {},
+    packageManager = 'pnpm',
 }: {
     options?: Partial<Options>;
     seed?: Record<string, string>;
+    packageManager?: string;
 } = {}): FakeSv {
     const fake = makeSv(seed);
     const arg = {
         sv: fake.sv,
         options: defaultOptions(options),
         cwd: '/project',
-        // Only `file.getRelative` and `file.svelteConfig` are read by `run`.
+        packageManager,
+        // Only `file.getRelative`, `file.svelteConfig`, and `file.findUp` are
+        // read by `run`.
         file: {
             svelteConfig: 'svelte.config.js',
             getRelative: ({ to }: { from?: string; to: string }) => `./${to}`,
+            findUp: (name: string) => name,
         },
         directory: { kitRoutes: 'src/routes' },
     } as unknown as RunArg;
@@ -195,6 +200,18 @@ describe('run: dependencies', () => {
         expect(devDeps['@mathjax/src']).toBe('^4.0.0');
     });
 
+    it('pre-approves the core-js-pure build script for pnpm projects', () => {
+        const { files } = runAddon({ packageManager: 'pnpm' });
+        const workspace = files.get('pnpm-workspace.yaml');
+        expect(workspace).toBeDefined();
+        expect(workspace).toContain('core-js-pure');
+    });
+
+    it('does not touch pnpm-workspace.yaml for non-pnpm projects', () => {
+        const { files } = runAddon({ packageManager: 'npm' });
+        expect(files.has('pnpm-workspace.yaml')).toBe(false);
+    });
+
     it('adds no backend peer deps when every backend is "none"', () => {
         const { devDeps } = runAddon({
             options: {
@@ -234,6 +251,16 @@ describe('run: sveltex.config.js', () => {
         // The shiki branch injects concrete themes.
         expect(config).toContain('github-light-default');
         expect(config).toContain('github-dark-default');
+    });
+
+    it('leaves the <TeX> verbatim block commented out by default', () => {
+        // <TeX> needs a local TeX distribution, so the block ships as
+        // commented-out guidance rather than silently enabled.
+        const { files } = runAddon();
+        const config = readFile(files, 'sveltex.config.js');
+        expect(config).toContain('// TeX: {');
+        // Not active (no uncommented `TeX: {`).
+        expect(config).not.toMatch(/\n\s*TeX: \{/u);
     });
 
     it('writes the generic code block when the backend is not shiki', () => {

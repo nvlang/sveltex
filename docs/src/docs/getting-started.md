@@ -119,6 +119,21 @@ backend needs the `unified`, `remark-parse`, `remark-rehype`, and
 SvelTeX will tell you exactly which packages are missing the first time you run
 a build.
 
+::: info pnpm users
+
+`@nvl/sveltex` depends (transitively, via `xregexp`) on `core-js-pure`, whose
+install script pnpm blocks by default — so `pnpm install` may fail with
+`ERR_PNPM_IGNORED_BUILDS`. Approve it once and re-install:
+
+```yaml [pnpm-workspace.yaml]
+allowBuilds: # pnpm < 11: onlyBuiltDependencies (a list)
+    core-js-pure: true
+```
+
+The `sv` add-on does this for you automatically.
+
+:::
+
 ::: info MathJax backend
 
 If you pick `mathjax` as your math backend, you need the

@@ -200,6 +200,38 @@ to install separately; the parent server spawns it on demand based on
 your project's `mathBackend`. Useful as a standalone server too (for
 editors that want math features in plain `.tex` / `.md` files).
 
+## Linting and formatting `.sveltex` files
+
+Prettier and ESLint don't recognise the `.sveltex` extension out of the box, so
+`prettier --check '*.sveltex'` reports *"No parser could be inferred"* and ESLint
+skips the files (*"File ignored because no matching configuration"*). This is
+harmless locally, but bites CI that lints `.sveltex` explicitly. Treat
+`.sveltex` like `.svelte`:
+
+-   **Prettier** — with [`prettier-plugin-svelte`](https://github.com/sveltejs/prettier-plugin-svelte)
+    installed, add an override mapping `*.sveltex` to the `svelte` parser:
+
+    ```json [.prettierrc]
+    {
+        "plugins": ["prettier-plugin-svelte"],
+        "overrides": [
+            { "files": "*.svelte", "options": { "parser": "svelte" } },
+            { "files": "*.sveltex", "options": { "parser": "svelte" } }
+        ]
+    }
+    ```
+
+-   **ESLint** — include `**/*.sveltex` wherever your config targets Svelte
+    files, so [`eslint-plugin-svelte`](https://github.com/sveltejs/eslint-plugin-svelte)
+    processes them:
+
+    ```js [eslint.config.js]
+    {
+        files: ['**/*.svelte', '**/*.svelte.{js,ts}', '**/*.sveltex'],
+        // …svelte language options / rules
+    }
+    ```
+
 ## Troubleshooting
 
 -   **The server doesn't start.** Check the editor's LSP / output
