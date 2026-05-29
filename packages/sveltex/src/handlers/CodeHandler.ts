@@ -23,6 +23,7 @@ import {
     fancyWrite,
     warnAboutStaleSelfHostedCss,
 } from '../utils/cdn.js';
+import { applyCodeBlockA11y } from '../utils/a11y.js';
 import { log } from '../utils/debug.js';
 import { diagnoseCodeConfiguration } from '../utils/diagnosers/codeConfiguration.js';
 import {
@@ -393,6 +394,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 processed = inline
                     ? `<code${attr}>${processed}</code>`
                     : `<pre><code${attr}>${processed}</code></pre>`;
+                if (!inline) {
+                    // `lang` here is already resolved through `langAlias`.
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
                 return processed;
             };
             return new CodeHandler<Backend>({
@@ -590,6 +599,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 processed = inline
                     ? `<code${attr}>${processed}</code>`
                     : `<pre><code${attr}>${processed}</code></pre>`;
+                if (!inline) {
+                    // `lang` here is already resolved through `langAlias`.
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
                 return processed;
             };
             return new CodeHandler<Backend>({
@@ -652,6 +669,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 )
                     ?.toLowerCase()
                     .replaceAll(' ', '-');
+                // Capture the resolved tag before the `lang = 'text'` fallbacks
+                // below, so the a11y label reflects the author's actual tag.
+                const a11yTag = lang;
                 let langUndefined: boolean = false;
                 let langUnknown: string | undefined = undefined;
                 if (!lang) {
@@ -767,6 +787,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         }
                     }
                 }
+                if (!inline) {
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        config.a11y,
+                        a11yTag,
+                    );
+                }
                 return processed;
             };
             const configuration = mergeConfigs(
@@ -812,6 +839,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 escaped = inline
                     ? `<code${attr}>${escaped}</code>`
                     : `<pre><code${attr}>${escaped}</code></pre>`;
+                if (!inline) {
+                    escaped = applyCodeBlockA11y(
+                        escaped,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
 
                 return escaped;
             };

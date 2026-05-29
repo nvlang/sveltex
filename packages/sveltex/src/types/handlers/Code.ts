@@ -26,6 +26,56 @@ export type CodeBackend =
     | 'escape'
     | 'none';
 
+/**
+ * ARIA role applied to the scrollable `<pre>` of a **block** code listing so
+ * screen readers can announce it. `'figure'` (the default) is the role WAI-ARIA
+ * lists for code snippets and is **not** a landmark — unlike `'region'`, it
+ * won't flood the landmark menu on a page with many code blocks. `'group'` is a
+ * lighter alternative. See {@link CommonCodeConfiguration.a11y | `a11y`}.
+ */
+export type CodeBlockA11yRole = 'figure' | 'region' | 'group';
+
+/**
+ * Builds the accessible name (`aria-label`) for a **block** code listing.
+ *
+ * @param info - `name` is the human-readable language name (e.g. `'TypeScript'`
+ * for a `ts` block), resolved through your `langAlias` and
+ * [`@nvl/tag-to-code-lang`](https://npmjs.com/package/@nvl/tag-to-code-lang), or
+ * `undefined` for a plain (languageless) block; `tag` is the resolved language
+ * tag (or `undefined`).
+ * @returns The `<pre>`'s `aria-label`.
+ */
+export type CodeBlockA11yLabel = (info: {
+    name: string | undefined;
+    tag: string | undefined;
+}) => string;
+
+/**
+ * Fine-grained accessibility settings for **block** code listings — the object
+ * form of {@link CommonCodeConfiguration.a11y | `a11y`}.
+ */
+export interface CodeBlockA11yConfiguration {
+    /**
+     * ARIA role for the scrollable `<pre>`, or `false` to add none.
+     *
+     * @defaultValue `'figure'`
+     */
+    role?: CodeBlockA11yRole | false | undefined;
+
+    /**
+     * Accessible name (`aria-label`) for the `<pre>`, as a function of the
+     * code's language — or `false` to add none. The default names the language
+     * and marks it a code block (e.g. `'TypeScript code block'`, or
+     * `'Code block'` for a plain block); override it to localize or reword.
+     *
+     * @defaultValue
+     * ```ts
+     * ({ name }) => (name ? `${name} code block` : 'Code block')
+     * ```
+     */
+    label?: CodeBlockA11yLabel | false | undefined;
+}
+
 interface CommonCodeConfiguration {
     /**
      * Whether to add a class to the `<code>` tag with the name of the language
@@ -51,6 +101,31 @@ interface CommonCodeConfiguration {
      *   whatever handler it forwards the content to).
      */
     transformers?: Transformers<CodeProcessOptionsBase> | undefined;
+
+    /**
+     * Accessibility treatment for **block** code listings (fenced code blocks
+     * and `code`-type verbatim environments — never inline code spans).
+     *
+     * A code block scrolls horizontally when a line is wider than its
+     * container, and [WCAG 2.1.1 Keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html)
+     * requires that scrolling be keyboard-operable. SvelTeX therefore makes the
+     * `<pre>` focusable (`tabindex="0"`) and gives it a role and accessible name
+     * so screen readers announce it. Svelte's compiler flags `tabindex` on a
+     * non-interactive element with a false-positive
+     * `a11y_no_noninteractive_tabindex` warning, so SvelTeX emits a scoped
+     * `<!-- svelte-ignore -->` immediately before the generated `<pre>` — the
+     * warning is silenced there only, never for your own markup.
+     *
+     * - `true` _(default)_: `tabindex="0"`, `role="figure"`, and a
+     *   language-aware `aria-label`, plus the scoped `svelte-ignore`.
+     * - `false`: no accessibility attributes are added at all.
+     * - an object: keep the keyboard-focusability, but customize the
+     *   {@link CodeBlockA11yConfiguration.role | `role`} and/or
+     *   {@link CodeBlockA11yConfiguration.label | `label`}.
+     *
+     * @defaultValue `true`
+     */
+    a11y?: boolean | CodeBlockA11yConfiguration | undefined;
 
     /**
      * Sveltex supports inline code highlighting, provided that the inline code

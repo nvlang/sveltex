@@ -150,6 +150,9 @@ const preprocessor = await sveltex(
         mathBackend: 'none',
     },
     {
+        // a11y is covered by dedicated tests; disable it here so the code-block
+        // assertions in this file match the bare rendered output.
+        code: { a11y: false },
         verbatim: {
             Verbatim: { type: 'escape' },
         },
@@ -468,6 +471,31 @@ describe('Sveltex.markup()', () => {
         });
     });
 
+    describe('code block accessibility (end-to-end)', () => {
+        it('adds the a11y treatment to fenced code blocks through the full pipeline', async () => {
+            const sp = await sveltex(
+                {
+                    markdownBackend: 'unified',
+                    codeBackend: 'shiki',
+                    mathBackend: 'none',
+                },
+                {},
+            );
+            const code = (
+                await sp.markup({
+                    content: '```ts\nconst x = 1;\n```',
+                    filename: 'test.sveltex',
+                })
+            )?.code;
+            expect(code).toContain(
+                '<!-- svelte-ignore a11y_no_noninteractive_tabindex -->',
+            );
+            expect(code).toContain('tabindex="0"');
+            expect(code).toContain('role="figure"');
+            expect(code).toContain('aria-label="TypeScript code block"');
+        });
+    });
+
     describe('works with code blocks', () => {
         it('starry night should work with this', async () => {
             const preprocessor_ = await sveltex(
@@ -476,7 +504,7 @@ describe('Sveltex.markup()', () => {
                     codeBackend: 'starry-night',
                     mathBackend: 'none',
                 },
-                { code: { languages: 'common' } },
+                { code: { languages: 'common', a11y: false } },
             );
             expect(
                 (
@@ -510,7 +538,7 @@ describe('Sveltex.markup()', () => {
                     codeBackend: 'starry-night',
                     mathBackend: 'none',
                 },
-                { code: { languages: 'common' } },
+                { code: { languages: 'common', a11y: false } },
             );
             const preprocess_ = async (
                 input: string,
@@ -579,6 +607,7 @@ describe('Sveltex.markup()', () => {
                     codeBackend: 'highlight.js',
                 },
                 {
+                    code: { a11y: false },
                     verbatim: {
                         Verbatim: {
                             type: 'escape',

@@ -201,6 +201,58 @@ export default await sveltex({ codeBackend: 'none' }, {
 :::
 
 
+## Accessibility
+
+By default, SvelTeX makes every **block** code listing keyboard-accessible. A
+code block can scroll horizontally when a line is wider than its container, and
+[WCAG 2.1.1 Keyboard][wcag-keyboard] requires that scrolling be operable by
+keyboard — so SvelTeX gives each `<pre>`:
+
+-   **`tabindex="0"`** — lets keyboard users focus the block and scroll it with
+    the arrow keys;
+-   **`role="figure"`** — the role [WAI-ARIA lists for code snippets][aria-figure];
+    unlike `role="region"` it isn't a landmark, so a page full of code blocks
+    doesn't flood the landmark menu;
+-   **a language-aware `aria-label`** — e.g. `"TypeScript code block"` (or
+    `"Code block"` for a plain one), so screen readers announce the focused
+    region. The language name is resolved through your
+    [`langAlias`](#configuration) and
+    [`@nvl/tag-to-code-lang`](https://www.npmjs.com/package/@nvl/tag-to-code-lang).
+
+Because Svelte's compiler raises a false-positive
+`a11y_no_noninteractive_tabindex` warning for `tabindex` on a non-interactive
+element, SvelTeX also emits a `<!-- svelte-ignore a11y_no_noninteractive_tabindex -->`
+immediately before each generated `<pre>` — **scoped to that element**, so the
+rule still catches issues in your own markup. Inline code spans are left
+untouched.
+
+Tune or disable it all with the `code.a11y` option (see the
+[`CodeConfiguration`](/api/interfaces/CodeConfiguration) API reference):
+
+```ts
+// sveltex.config.js
+import { sveltex } from '@nvl/sveltex';
+
+export default await sveltex(
+    { codeBackend: 'shiki' },
+    {
+        code: {
+            // `true` (default) → tabindex + role="figure" + a language-aware
+            // aria-label + the scoped svelte-ignore. `false` → add nothing.
+            a11y: {
+                // 'figure' (default) | 'region' | 'group' | false
+                role: 'group',
+                // Localize or reword the accessible name; `false` omits it.
+                label: ({ name }) => (name ? `${name} code` : 'Code'),
+            },
+        },
+    },
+);
+```
+
+[wcag-keyboard]: https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html
+[aria-figure]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/figure_role
+
 ::: details What about Prism?
 
 [Prism](https://github.com/PrismJS/prism/) is not supported as a backend for

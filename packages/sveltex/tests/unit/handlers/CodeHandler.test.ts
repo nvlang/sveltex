@@ -157,7 +157,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                     const handler = await CodeHandler.create(backend, {});
                     const output = await handler.process(input, opts);
                     expect(output.processed).toMatch(
-                        /^<pre[^>]*?><code[^>]*?>.*<\/code[^>]*?><\/pre[^>]*?>/su,
+                        /^(?:<!-- svelte-ignore[^>]*-->\n)?<pre[^>]*?><code[^>]*?>.*<\/code[^>]*?><\/pre[^>]*?>/su,
                     );
                 });
             }
@@ -409,6 +409,10 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 const handler = await CodeHandler.create(
                                     backend,
                                     {
+                                        // a11y is exercised separately; keep it
+                                        // off here so the <pre> class assertion
+                                        // matches from the start of the string.
+                                        a11y: false,
                                         shiki: { theme },
                                     },
                                 );
@@ -456,6 +460,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 const handler = await CodeHandler.create(
                                     backend,
                                     {
+                                        a11y: false,
                                         shiki: {
                                             themes: {
                                                 light,
@@ -585,6 +590,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                         [false, "doesn't append \\n"],
                     ])('%o → %s', async (appendNewline) => {
                         const handler = await CodeHandler.create(backend, {
+                            a11y: false,
                             appendNewline,
                             ...(backend === 'starry-night' ||
                             backend === 'highlight.js'
@@ -611,6 +617,7 @@ describe.each(codeBackends)('CodeHandler<%o>', (backend) => {
                                 const handler = await CodeHandler.create(
                                     backend,
                                     {
+                                        a11y: false,
                                         appendNewline,
                                         ...(backend === 'starry-night' ||
                                         backend === 'highlight.js'
@@ -820,7 +827,9 @@ describe('fixtures', () => {
         test.each(tests)('%o', async (configuration, samples) => {
             const processor = await sveltex(
                 { codeBackend },
-                { code: configuration },
+                // a11y is covered separately; disable it here so these fixture
+                // assertions match the bare rendered output.
+                { code: { ...(configuration ?? {}), a11y: false } },
             );
             for (const [input, expected] of samples) {
                 const output = (
@@ -988,6 +997,7 @@ describe('CodeHandler edge cases', () => {
     describe('shiki theme objects without a name', () => {
         test('single theme object without a name', async () => {
             const handler = await CodeHandler.create('shiki', {
+                a11y: false,
                 shiki: { theme: { settings: [], bg: '#fff', fg: '#000' } },
             });
             const output = await handler.process('let a = 1;', { lang: 'js' });
@@ -999,6 +1009,7 @@ describe('CodeHandler edge cases', () => {
 
         test('themes map containing a theme object without a name', async () => {
             const handler = await CodeHandler.create('shiki', {
+                a11y: false,
                 shiki: {
                     themes: {
                         light: { settings: [], bg: '#fff', fg: '#000' },
@@ -1014,20 +1025,75 @@ describe('CodeHandler edge cases', () => {
         });
     });
 
-    describe('shiki tabindex (a11y)', () => {
-        test('omits tabindex on <pre> by default', async () => {
-            // Avoids Svelte's `a11y_no_noninteractive_tabindex` warning.
+    describe('shiki block a11y (default on)', () => {
+        test('adds tabindex, role=figure, a language-aware aria-label, and a scoped svelte-ignore by default', async () => {
             const handler = await CodeHandler.create('shiki');
-            const output = await handler.process('let a = 1;', { lang: 'js' });
-            expect(output.processed).toContain('<pre');
-            expect(output.processed).not.toContain('tabindex');
-        });
-        test('keeps tabindex when the user opts back in', async () => {
-            const handler = await CodeHandler.create('shiki', {
-                shiki: { tabindex: 0 },
+            const output = await handler.process('const x = 1;', {
+                lang: 'ts',
+                inline: false,
             });
-            const output = await handler.process('let a = 1;', { lang: 'js' });
             expect(output.processed).toContain('tabindex="0"');
+            expect(output.processed).toContain('role="figure"');
+            expect(output.processed).toContain(
+                'aria-label="TypeScript code block"',
+            );
+            expect(output.processed).toContain(
+                '<!-- svelte-ignore a11y_no_noninteractive_tabindex -->',
+            );
+        });
+        test('uses a generic label for a plain (languageless) block', async () => {
+            const handler = await CodeHandler.create('shiki');
+            const output = await handler.process('plain text', {
+                inline: false,
+            });
+            expect(output.processed).toContain('aria-label="Code block"');
+        });
+        test('leaves inline code untouched', async () => {
+            const handler = await CodeHandler.create('shiki');
+            const output = await handler.process('const x = 1;', {
+                lang: 'ts',
+                inline: true,
+            });
+            expect(output.processed).not.toContain('tabindex');
+            expect(output.processed).not.toContain('svelte-ignore');
+            expect(output.processed).not.toContain('role=');
+        });
+        test('a11y:false adds no attributes or comment', async () => {
+            const handler = await CodeHandler.create('shiki', { a11y: false });
+            const output = await handler.process('const x = 1;', {
+                lang: 'ts',
+                inline: false,
+            });
+            expect(output.processed).not.toContain('tabindex');
+            expect(output.processed).not.toContain('role=');
+            expect(output.processed).not.toContain('aria-label');
+            expect(output.processed).not.toContain('svelte-ignore');
+        });
+        test('honors a custom role and label', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                a11y: {
+                    role: 'region',
+                    label: ({ name }) => `${name ?? 'Code'} sample`,
+                },
+            });
+            const output = await handler.process('const x = 1;', {
+                lang: 'ts',
+                inline: false,
+            });
+            expect(output.processed).toContain('role="region"');
+            expect(output.processed).toContain('aria-label="TypeScript sample"');
+        });
+        test('resolves the aria-label language through langAlias', async () => {
+            const handler = await CodeHandler.create('shiki', {
+                langAlias: { mylang: 'typescript' },
+            });
+            const output = await handler.process('const x = 1;', {
+                lang: 'mylang',
+                inline: false,
+            });
+            expect(output.processed).toContain(
+                'aria-label="TypeScript code block"',
+            );
         });
     });
 
@@ -1077,9 +1143,21 @@ describe('CodeHandler edge cases', () => {
         });
     });
 
+    describe('none backend', () => {
+        test('can be created without a configuration argument', async () => {
+            // Exercises the `userConfig ?? {}` default in the `none` branch.
+            const handler = await CodeHandler.create('none');
+            const output = await handler.process('let a = 1;', {
+                inline: false,
+            });
+            expect(output.processed).toBe('let a = 1;');
+        });
+    });
+
     describe('escape backend with escaping disabled', () => {
         test('escape.html and escape.braces both false: passthrough', async () => {
             const handler = await CodeHandler.create('escape', {
+                a11y: false,
                 escape: { html: false, braces: false },
                 appendNewline: false,
             });

@@ -32,6 +32,7 @@ export { isRegExp } from 'node:util/types';
 export { deepmergeCustom } from 'deepmerge-ts';
 export { default as findCacheDirectory } from 'find-cache-directory';
 export { Glob } from 'glob';
+export { isCodeTag, tagToCodeLang } from '@nvl/tag-to-code-lang';
 import { escape as htmlEscape } from 'html-escaper';
 /**
  * `escapeHtml` is exported as an explicitly typed `const` rather than a bare

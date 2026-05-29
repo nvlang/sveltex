@@ -117,6 +117,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
+    "@nvl/tag-to-code-lang": "^1.1.2",
     "@types/html-escaper": "^3.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",
