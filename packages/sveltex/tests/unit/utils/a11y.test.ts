@@ -109,6 +109,12 @@ describe('utils/a11y', () => {
                 'aria-label="a &quot;b&quot; &lt;c&gt; &amp; d"',
             );
         });
+        it('treats `$` in the label literally, not as a replacement pattern', () => {
+            // Built with slices rather than `String#replace`, so `$&` / `$1`
+            // must survive verbatim (only the `&` is HTML-escaped).
+            const out = addBlockCodeA11y(block, 'figure', '$5 $& $1');
+            expect(out).toContain('aria-label="$5 $&amp; $1"');
+        });
         it('does not duplicate attributes already present, but still adds the comment', () => {
             const pre =
                 '<pre tabindex="0" role="region" aria-label="keep"><code>x</code></pre>';
