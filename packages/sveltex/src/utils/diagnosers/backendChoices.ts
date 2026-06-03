@@ -121,7 +121,7 @@ export function diagnoseBackendChoices(
         const misplacedConfigKeys = extraneousKeys.filter((key) =>
             (configurationKeys as readonly string[]).includes(key),
         );
-        let message = `Extraneous keys detected: "${extraneousKeys.join('", ')}". Supported keys: "${backendKeys.join('", ')}".`;
+        let message = `Extraneous keys detected: "${extraneousKeys.join('", "')}". Supported keys: "${backendKeys.join('", "')}".`;
         if (misplacedConfigKeys.length > 0) {
             const plural = misplacedConfigKeys.length > 1;
             message +=
