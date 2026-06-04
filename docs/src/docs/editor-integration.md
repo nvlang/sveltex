@@ -202,35 +202,34 @@ editors that want math features in plain `.tex` / `.md` files).
 
 ## Linting and formatting `.sveltex` files
 
-Prettier and ESLint don't recognise the `.sveltex` extension out of the box, so
-`prettier --check '*.sveltex'` reports *"No parser could be inferred"* and ESLint
-skips the files (*"File ignored because no matching configuration"*). This is
-harmless locally, but bites CI that lints `.sveltex` explicitly. Treat
-`.sveltex` like `.svelte`:
+Don't point Prettier or ESLint at `.sveltex` files. A `.sveltex` file is **not
+valid Svelte**: it interleaves Markdown, math (`$…$`), and
+[verbatim](verbatim) regions — `<tex>`, `<Code>`, escaped blocks — whose
+contents aren't Svelte and only resolve once SvelTeX has preprocessed the file.
+Tools built on the Svelte parser
+([`prettier-plugin-svelte`](https://github.com/sveltejs/prettier-plugin-svelte),
+[`eslint-plugin-svelte`](https://github.com/sveltejs/eslint-plugin-svelte)) parse
+the _raw_ file as Svelte, so they:
 
--   **Prettier** — with [`prettier-plugin-svelte`](https://github.com/sveltejs/prettier-plugin-svelte)
-    installed, add an override mapping `*.sveltex` to the `svelte` parser:
+-   **report false errors** — raw LaTeX in a `<tex>` block, a `{…}` that SvelTeX
+    escapes, or deliberately Svelte-invalid markup inside a verbatim region all
+    look like Svelte syntax (or a11y) errors to them, even though SvelTeX never
+    passes that content to the Svelte compiler; and
+-   **can corrupt the file on format** — Prettier reflows the Markdown and
+    rewrites the verbatim/LaTeX content, altering whitespace the document
+    depends on.
 
-    ```json [.prettierrc]
-    {
-        "plugins": ["prettier-plugin-svelte"],
-        "overrides": [
-            { "files": "*.svelte", "options": { "parser": "svelte" } },
-            { "files": "*.sveltex", "options": { "parser": "svelte" } }
-        ]
-    }
-    ```
+By default neither tool touches `.sveltex` — Prettier reports _"No parser could
+be inferred"_ and ESLint skips the file — which is the behaviour you want. So
+**don't** add a `*.sveltex` → `svelte` Prettier override or pull `.sveltex` into
+an `eslint-plugin-svelte` glob. If your config uses broad globs that would catch
+them, exclude `.sveltex` instead (e.g. in `.prettierignore`, or ESLint's
+`ignores`).
 
--   **ESLint** — include `**/*.sveltex` wherever your config targets Svelte
-    files, so [`eslint-plugin-svelte`](https://github.com/sveltejs/eslint-plugin-svelte)
-    processes them:
-
-    ```js [eslint.config.js]
-    {
-        files: ['**/*.svelte', '**/*.svelte.{js,ts}', '**/*.sveltex'],
-        // …svelte language options / rules
-    }
-    ```
+For editor feedback on `.sveltex` files, use the SvelTeX
+[language server](#setup): it understands the regions and applies
+Svelte/TypeScript diagnostics, hover, and completion only where the content
+really is Svelte.
 
 ## Troubleshooting
 

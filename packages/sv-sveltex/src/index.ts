@@ -356,9 +356,10 @@ export default defineAddon({
             );
         }
         steps.push(
-            'To lint and format `.sveltex` files, register them with Prettier ' +
-                '(map `*.sveltex` to the `svelte` parser) and ESLint (add ' +
-                '`**/*.sveltex` to the Svelte files glob). See ' +
+            'For editor support in `.sveltex` files (syntax highlighting, ' +
+                'diagnostics, hover, completion), install the SvelTeX editor ' +
+                'extension. Avoid pointing Prettier or ESLint at `.sveltex` ' +
+                'files; they are not valid Svelte. See ' +
                 'https://sveltex.dev/docs/editor-integration.',
         );
         steps.push(

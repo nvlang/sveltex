@@ -10,5 +10,7 @@ Smoother onboarding and a less surprising default config:
 - Ship the `<TeX>` verbatim block commented out by default — it needs a local
   TeX distribution, so it's now opt-in instead of a silent system-tool
   dependency.
-- Add next-steps guidance for enabling `<TeX>` and for registering `.sveltex`
-  with Prettier and ESLint.
+- Add next-steps guidance for enabling `<TeX>` and for getting `.sveltex`
+  editor support (via the SvelTeX extension / language server, rather than
+  Prettier or ESLint, which can't parse a `.sveltex` file's non-Svelte
+  regions).
