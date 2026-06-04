@@ -283,14 +283,14 @@ The supported fonts are `newcm`, `asana`, `bonum`, `dejavu`, `fira`, `modern`,
 `pagella`, `schola`, `stix2`, `termes`, and `tex`; each corresponds to a
 `@mathjax/mathjax-<font>-font` package.
 
-::: warning CHTML output only
+::: tip Changing the font needs no cleanup
 
-The CHTML stylesheet depends on the font, but its filename encodes only the
-backend, version, and output format — not the font — so switching to a different
-font (with the same version and format) reuses the existing
-`static/sveltex/mathjax@….chtml.css`. Delete that file to force a refresh. (SVG
-output embeds its glyphs in each diagram, so its stylesheet is font-independent
-and isn't affected.)
+Unlike a version, output-format, or backend switch, changing `math.font` leaves
+no stale stylesheet behind. SVG output bakes its glyphs into each diagram, so its
+stylesheet is font-independent to begin with. For CHTML output — where the
+stylesheet _does_ depend on the font — SvelTeX rewrites
+`static/sveltex/mathjax@….chtml.css` in place on every build, so the new font is
+picked up automatically. Either way, there's nothing to delete.
 
 :::
 
