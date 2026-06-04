@@ -219,11 +219,12 @@ keyboard — so SvelTeX gives each `<pre>`:
     [`langAlias`](#configuration) and
     [`@nvl/tag-to-code-lang`](https://www.npmjs.com/package/@nvl/tag-to-code-lang).
 
-Because Svelte's compiler raises a false-positive
-`a11y_no_noninteractive_tabindex` warning for `tabindex` on a non-interactive
-element, SvelTeX also emits a `<!-- svelte-ignore a11y_no_noninteractive_tabindex -->`
-immediately before each generated `<pre>` — **scoped to that element**, so the
-rule still catches issues in your own markup. Inline code spans are left
+Svelte's compiler flags `tabindex` on a non-interactive element with the
+`a11y_no_noninteractive_tabindex` warning — usually a sound check, but a false
+positive for a scrollable region that's deliberately made keyboard-focusable.
+SvelTeX therefore emits a `<!-- svelte-ignore a11y_no_noninteractive_tabindex -->`
+immediately before each generated `<pre>`, **scoped to that element** so the
+rule keeps catching genuine cases in your own markup. Inline code spans are left
 untouched.
 
 Tune or disable it all with the `code.a11y` option (see the
@@ -241,7 +242,7 @@ export default await sveltex(
             // aria-label + the scoped svelte-ignore. `false` → add nothing.
             a11y: {
                 // 'figure' (default) | 'region' | 'group' | false
-                role: 'group',
+                role: 'figure',
                 // Localize or reword the accessible name; `false` omits it.
                 label: ({ name }) => (name ? `${name} code` : 'Code'),
             },

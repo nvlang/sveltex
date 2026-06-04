@@ -213,8 +213,9 @@ the _raw_ file as Svelte, so they:
 
 -   **report false errors** — raw LaTeX in a `<tex>` block, a `{…}` that SvelTeX
     escapes, or deliberately Svelte-invalid markup inside a verbatim region all
-    look like Svelte syntax (or a11y) errors to them, even though SvelTeX never
-    passes that content to the Svelte compiler; and
+    look like Svelte syntax (or a11y) errors to them, even though SvelTeX
+    processes that content itself rather than handing it to the Svelte compiler
+    as Svelte; and
 -   **can corrupt the file on format** — Prettier reflows the Markdown and
     rewrites the verbatim/LaTeX content, altering whitespace the document
     depends on.

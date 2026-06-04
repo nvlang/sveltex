@@ -23,8 +23,8 @@ which features you use:
         `pdftocairo`.
 
     If a required binary is missing, SvelTeX fails the build for that file with
-    a message naming the tool and linking back here — it never silently ships a
-    broken page.
+    a message naming the tool and linking back here, so the problem surfaces at
+    build time rather than as a broken page.
 
 ::: tip Verify your TeX setup
 Only needed if you plan to use the `<TeX>` component: run `pdflatex --version`
