@@ -1,7 +1,10 @@
 // File description: Diagnoser for `BackendChoices` type.
 
 // Types
-import type { BackendChoices } from '../../types/SveltexConfiguration.js';
+import type {
+    BackendChoices,
+    SveltexConfiguration,
+} from '../../types/SveltexConfiguration.js';
 import type { TexBackend } from '../../types/handlers/Tex.js';
 import type { CodeBackend } from '../../types/handlers/Code.js';
 import type { MarkdownBackend } from '../../types/handlers/Markdown.js';
@@ -55,6 +58,29 @@ typeAssert<
     Equals<(typeof backendChoices)[number][0], (typeof backendKeys)[number]>
 >();
 
+// Keys that belong in the *second* argument to `sveltex()` (the
+// configuration). Used to turn the generic "extraneous keys" warning into an
+// actionable hint when one of these turns up among the backend choices — the
+// classic mistake of merging both `sveltex()` arguments into a single object.
+const configurationKeys = [
+    'markdown',
+    'code',
+    'math',
+    'tex',
+    'verbatim',
+    'extensions',
+    'frontmatter',
+] as const;
+
+// Ensure the list stays exhaustive: if a configuration key is added or
+// renamed, this assertion fails until `configurationKeys` is updated.
+typeAssert<
+    Equals<
+        (typeof configurationKeys)[number],
+        keyof SveltexConfiguration<MarkdownBackend, CodeBackend, MathBackend>
+    >
+>();
+
 /**
  * Diagnose whether a given object is a valid
  * {@link BackendChoices | `BackendChoices`} object.
@@ -88,10 +114,31 @@ export function diagnoseBackendChoices(
         (key) => !backendKeys.includes(key as (typeof backendKeys)[number]),
     );
     if (extraneousKeys.length > 0) {
-        d.addProblem(
-            `Extraneous keys detected: "${extraneousKeys.join('", ')}". Supported keys: "${backendKeys.join('", ')}".`,
-            'warn',
+        // If any extraneous key is actually a configuration option, the user
+        // most likely merged the two `sveltex()` arguments into one object —
+        // the most common setup mistake — so point them at the two-argument
+        // form instead of just listing the offending keys.
+        const misplacedConfigKeys = extraneousKeys.filter((key) =>
+            (configurationKeys as readonly string[]).includes(key),
         );
+        let message = `Extraneous keys detected: "${extraneousKeys.join('", "')}". Supported keys: "${backendKeys.join('", "')}".`;
+        if (misplacedConfigKeys.length > 0) {
+            const plural = misplacedConfigKeys.length > 1;
+            message +=
+                ` "${misplacedConfigKeys.join('", "')}" ${
+                    plural
+                        ? 'are configuration options'
+                        : 'is a configuration option'
+                }, not ${plural ? 'backend choices' : 'a backend choice'}: ` +
+                '`sveltex()` takes the backend choices first and the ' +
+                `configuration second, so ${
+                    plural ? 'they belong' : 'it belongs'
+                } in the second argument, e.g. ` +
+                '`sveltex({ … }, { ' +
+                misplacedConfigKeys.map((k) => `${k}: …`).join(', ') +
+                ' })`.';
+        }
+        d.addProblem(message, 'warn');
     }
     d.printProblems();
     return d.stats;

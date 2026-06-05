@@ -7,7 +7,14 @@ export { default as nodeAssert } from 'node:assert';
 export { spawn, type SpawnOptionsWithoutStdio } from 'node:child_process';
 export { createHash, type BinaryToTextEncoding } from 'node:crypto';
 export { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-export { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+export {
+    mkdir,
+    readdir,
+    readFile,
+    rename,
+    stat,
+    writeFile,
+} from 'node:fs/promises';
 export { homedir } from 'node:os';
 export {
     basename,
@@ -25,6 +32,7 @@ export { isRegExp } from 'node:util/types';
 export { deepmergeCustom } from 'deepmerge-ts';
 export { default as findCacheDirectory } from 'find-cache-directory';
 export { Glob } from 'glob';
+export { isCodeTag, tagToCodeLang } from '@nvl/tag-to-code-lang';
 import { escape as htmlEscape } from 'html-escaper';
 /**
  * `escapeHtml` is exported as an explicitly typed `const` rather than a bare
@@ -140,6 +148,18 @@ export {
     type Extension as MicromarkExtension,
 } from 'micromark-extension-mdx-md';
 export type { TokenTypeMap as MicromarkTokenTypeMap } from 'micromark-util-types';
+
+// GFM extensions (tables, strikethrough, task lists, footnotes), wired up
+// individually so we can leave out GFM's autolink-literal — autolinks clash
+// with Svelte component syntax and SvelTeX disables them everywhere.
+export { gfmTable as micromarkGfmTable } from 'micromark-extension-gfm-table';
+export { gfmStrikethrough as micromarkGfmStrikethrough } from 'micromark-extension-gfm-strikethrough';
+export { gfmTaskListItem as micromarkGfmTaskListItem } from 'micromark-extension-gfm-task-list-item';
+export { gfmFootnote as micromarkGfmFootnote } from 'micromark-extension-gfm-footnote';
+export { gfmTableFromMarkdown as mdastGfmTableFromMarkdown } from 'mdast-util-gfm-table';
+export { gfmStrikethroughFromMarkdown as mdastGfmStrikethroughFromMarkdown } from 'mdast-util-gfm-strikethrough';
+export { gfmTaskListItemFromMarkdown as mdastGfmTaskListItemFromMarkdown } from 'mdast-util-gfm-task-list-item';
+export { gfmFootnoteFromMarkdown as mdastGfmFootnoteFromMarkdown } from 'mdast-util-gfm-footnote';
 export { default as ora, type Ora } from 'ora';
 export { default as pc } from 'picocolors';
 export type { Colors } from 'picocolors/types.js';

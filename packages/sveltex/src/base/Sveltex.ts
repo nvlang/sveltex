@@ -343,13 +343,15 @@ export class Sveltex<
      * @param filename - The (real or synthetic) filename of the document.
      * @param onStage - Optional callback invoked with each significant
      * intermediate pipeline output, used by `trace`.
-     * @returns The preprocessed content, or `undefined` if an error occurred.
+     * @returns The preprocessed content.
+     * @throws If processing fails — callers surface this as a build error
+     * rather than emitting the unprocessed source.
      */
     private async _markup(
         content: string,
         filename: string,
         onStage?: (name: string, output: string) => void,
-    ): Promise<Processed | undefined> {
+    ): Promise<Processed> {
         const markdownHandler = this._markdownHandler;
         const codeHandler = this._codeHandler;
         const mathHandler = this._mathHandler;
@@ -552,8 +554,17 @@ export class Sveltex<
                 ].map((path) => resolve(path)),
             };
         } catch (err) {
-            log('error', prettifyError(err));
-            return;
+            // Surface the failure as a build error for this file, tagged with
+            // its name, rather than silently falling back to the unprocessed
+            // source. Returning here would make Svelte emit the original
+            // markup verbatim — shipping raw Markdown and undefined components
+            // (e.g. a literal `<TeX>` tag → `ReferenceError` at runtime). The
+            // original error (which may carry actionable guidance) is kept as
+            // the `cause`.
+            throw new Error(
+                `Error preprocessing ${filename}:\n${prettifyError(err)}`,
+                { cause: err },
+            );
         }
     }
 
@@ -580,13 +591,22 @@ export class Sveltex<
         stages: { name: string; output: string }[];
     }> {
         const stages: { name: string; output: string }[] = [];
-        const result = await this._markup(content, filename, (name, output) => {
-            stages.push({ name, output });
-        });
-        if (result === undefined) {
+        try {
+            const result = await this._markup(
+                content,
+                filename,
+                (name, output) => {
+                    stages.push({ name, output });
+                },
+            );
+            return { code: result.code, stages };
+        } catch (err) {
+            // `trace` powers tooling such as the pipeline playground, where a
+            // malformed document should surface the stages collected so far
+            // rather than abort. (The preprocessor path re-throws instead.)
+            log('error', prettifyError(err));
             return { code: '', stages };
         }
-        return { code: result.code, stages };
     }
 
     /**

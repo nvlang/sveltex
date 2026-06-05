@@ -17,7 +17,13 @@ import { getDefaultCodeConfig } from '../base/defaults.js';
 import { Handler, deepClone } from './Handler.js';
 import { isCodeBackendWithCss } from '../typeGuards/code.js';
 import { isArray, isObject, isString } from '../typeGuards/utils.js';
-import { cdnLink, fancyFetch, fancyWrite } from '../utils/cdn.js';
+import {
+    cdnLink,
+    fancyFetch,
+    fancyWrite,
+    warnAboutStaleSelfHostedCss,
+} from '../utils/cdn.js';
+import { applyCodeBlockA11y } from '../utils/a11y.js';
 import { log } from '../utils/debug.js';
 import { diagnoseCodeConfiguration } from '../utils/diagnosers/codeConfiguration.js';
 import {
@@ -220,7 +226,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             typeAssert(
                 is<FullCodeTheme<'starry-night', 'cdn' | 'self-hosted'>>(theme),
             );
-            v = 'latest';
+            // Pin to the installed version (like highlight.js / KaTeX) so the
+            // CDN `<link>` can't drift out of sync with the rendered classes.
+            v = (await getVersion('@wooorm/starry-night')) ?? 'latest';
             const { name, mode, cdn } = theme;
             resourceName = `${name === 'default' ? '' : `${name}-`}${mode}.css`;
             const resource = `style/${resourceName}`;
@@ -239,6 +247,20 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
             const cdns = isArray(cdn) ? cdn : [cdn];
             links = cdns.map((c) => cdnLink(pkg, resource, v, c));
         }
+
+        // Drop stale code stylesheets from earlier builds or a previous code
+        // backend (e.g. a leftover `starry-night@….css` after switching to
+        // highlight.js) so they stop shipping. The active file, if self-hosted,
+        // is kept.
+        await warnAboutStaleSelfHostedCss(
+            theme.type === 'cdn'
+                ? join('static', 'sveltex')
+                : join(theme.staticDir, theme.dir),
+            ['highlight.js', 'starry-night'],
+            theme.type === 'cdn'
+                ? []
+                : [`${this.backend}@${v}.${resourceName}`],
+        );
 
         if (theme.type === 'cdn') {
             if (links[0]) {
@@ -372,6 +394,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 processed = inline
                     ? `<code${attr}>${processed}</code>`
                     : `<pre><code${attr}>${processed}</code></pre>`;
+                if (!inline) {
+                    // `lang` here is already resolved through `langAlias`.
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
                 return processed;
             };
             return new CodeHandler<Backend>({
@@ -569,6 +599,14 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 processed = inline
                     ? `<code${attr}>${processed}</code>`
                     : `<pre><code${attr}>${processed}</code></pre>`;
+                if (!inline) {
+                    // `lang` here is already resolved through `langAlias`.
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
                 return processed;
             };
             return new CodeHandler<Backend>({
@@ -631,6 +669,9 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 )
                     ?.toLowerCase()
                     .replaceAll(' ', '-');
+                // Capture the resolved tag before the `lang = 'text'` fallbacks
+                // below, so the a11y label reflects the author's actual tag.
+                const a11yTag = lang;
                 let langUndefined: boolean = false;
                 let langUnknown: string | undefined = undefined;
                 if (!lang) {
@@ -746,6 +787,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                         }
                     }
                 }
+                if (!inline) {
+                    processed = applyCodeBlockA11y(
+                        processed,
+                        config.a11y,
+                        a11yTag,
+                    );
+                }
                 return processed;
             };
             const configuration = mergeConfigs(
@@ -791,6 +839,13 @@ export class CodeHandler<B extends CodeBackend> extends Handler<
                 escaped = inline
                     ? `<code${attr}>${escaped}</code>`
                     : `<pre><code${attr}>${escaped}</code></pre>`;
+                if (!inline) {
+                    escaped = applyCodeBlockA11y(
+                        escaped,
+                        configuration.a11y,
+                        lang,
+                    );
+                }
 
                 return escaped;
             };

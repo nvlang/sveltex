@@ -16,6 +16,9 @@ import { spy } from '../fixtures.js';
 const sveltexPreprocessor = await sveltex(
     { codeBackend: 'highlight.js' },
     {
+        // a11y is covered by dedicated tests; disable it here so these
+        // verbatim-rendering assertions match the bare code output.
+        code: { a11y: false },
         verbatim: {
             Code: {
                 type: 'code',
@@ -249,6 +252,7 @@ describe('VerbatimHandler', () => {
                         await sveltex(
                             { codeBackend: 'starry-night' },
                             {
+                                code: { a11y: false },
                                 verbatim: {
                                     Code: {
                                         type: 'code',

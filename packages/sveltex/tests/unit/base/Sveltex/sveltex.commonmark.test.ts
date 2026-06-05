@@ -363,6 +363,12 @@ function normalizeHtml(html: string, backend?: MarkdownBackend) {
         .replaceAll('&#x26;', '&amp;')
         .replaceAll('&#x22;', '&quot;')
         .replaceAll('&quot;', '"')
+        // Strip SvelTeX's code-block a11y treatment (svelte-ignore comment plus
+        // the tabindex / role / aria-label it adds) now that quotes are
+        // normalized to `"`; CommonMark compliance is about Markdown structure,
+        // not the accessibility wrapper.
+        .replace(/<!--\s*svelte-ignore[^>]*?-->/gu, '')
+        .replaceAll(/ (?:tabindex|role|aria-label)="[^"]*"/gu, '')
         .replaceAll('%C2', '"')
         .replaceAll('%C3%A4', '&auml;')
         // normalize self-closing components

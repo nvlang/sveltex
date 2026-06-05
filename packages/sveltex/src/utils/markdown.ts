@@ -8,6 +8,14 @@ import {
     hastFromHtml,
     is,
     MagicString,
+    micromarkGfmFootnote,
+    micromarkGfmStrikethrough,
+    micromarkGfmTable,
+    micromarkGfmTaskListItem,
+    mdastGfmFootnoteFromMarkdown,
+    mdastGfmStrikethroughFromMarkdown,
+    mdastGfmTableFromMarkdown,
+    mdastGfmTaskListItemFromMarkdown,
     nodeAssert,
     typeAssert,
     type HastElement,
@@ -46,6 +54,38 @@ export const micromarkDisableIndentedCodeAndAutolinks: object = {
         ],
     },
 };
+
+/**
+ * `remark` plugin enabling the GFM extensions SvelTeX turns on by default for
+ * the `unified` backend: tables, strikethrough, task lists, and footnotes.
+ *
+ * @remarks
+ * GFM's autolink-literal extension is deliberately left out. Autolinks (and
+ * bare-URL linking) clash with Svelte component syntax — `<https://…>` reads
+ * like a tag — so SvelTeX disables them everywhere (see
+ * {@link micromarkDisableIndentedCodeAndAutolinks}); enabling them here would
+ * both contradict that and re-introduce the `href="…%3E"` corruption that
+ * comes from the literal tokenizer swallowing a trailing `>`.
+ */
+export function remarkGfm(this: import('unified').Processor): void {
+    const data = this.data();
+    const micromarkExtensions =
+        data.micromarkExtensions ?? (data.micromarkExtensions = []);
+    const fromMarkdownExtensions =
+        data.fromMarkdownExtensions ?? (data.fromMarkdownExtensions = []);
+    micromarkExtensions.push(
+        micromarkGfmTable(),
+        micromarkGfmStrikethrough(),
+        micromarkGfmTaskListItem(),
+        micromarkGfmFootnote(),
+    );
+    fromMarkdownExtensions.push(
+        mdastGfmTableFromMarkdown(),
+        mdastGfmStrikethroughFromMarkdown(),
+        mdastGfmTaskListItemFromMarkdown(),
+        mdastGfmFootnoteFromMarkdown(),
+    );
+}
 
 export function adjustHtmlSpacing(
     document: string,

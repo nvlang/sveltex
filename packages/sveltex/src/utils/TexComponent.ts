@@ -63,6 +63,54 @@ import {
 } from '../deps.js';
 
 /**
+ * Documentation anchor describing the system tools (a TeX distribution plus
+ * dvisvgm or Poppler) that the `<TeX>` component needs.
+ */
+const texPrerequisitesUrl =
+    'https://sveltex.dev/docs/getting-started#system-prerequisites';
+
+/**
+ * Error thrown when a system tool required to compile a `<TeX>` component (a
+ * TeX engine such as `pdflatex`, or a converter such as `dvisvgm`) cannot be
+ * found on the `PATH` or otherwise fails to spawn. It carries an actionable
+ * message and is re-thrown out of {@link TexComponent.compile | `compile`} so
+ * the build fails with clear guidance instead of crashing or silently
+ * dropping the component.
+ */
+export class TexDependencyError extends Error {
+    public override readonly name = 'TexDependencyError';
+}
+
+/**
+ * Builds a {@link TexDependencyError | `TexDependencyError`} for a child
+ * process that failed to spawn while compiling a `<TeX>` component. An `ENOENT`
+ * spawn error means the binary isn't installed / on the `PATH`, so the message
+ * names the missing command and links to the prerequisites docs.
+ *
+ * @param command - The command that failed to spawn (e.g. `'pdflatex'`).
+ * @param error - The spawn error reported by Node.
+ */
+export function texDependencyError(command: string, error: Error): Error {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        return new TexDependencyError(
+            `SvelTeX failed to run "${command}" while compiling a <TeX> ` +
+                `component: ${error.message}`,
+        );
+    }
+    return new TexDependencyError(
+        `SvelTeX could not find "${command}" on your PATH while compiling a ` +
+            `<TeX> component.\n\n` +
+            `The <TeX> component compiles LaTeX with a local TeX distribution ` +
+            `(e.g. TeX Live or MiKTeX) and converts the output with dvisvgm or ` +
+            `Poppler, so "${command}" must be installed and on your PATH. ` +
+            `Installation instructions: ${texPrerequisitesUrl}\n\n` +
+            `Only the <TeX> component needs these tools — math written with ` +
+            `$…$ or $$…$$ is rendered by MathJax/KaTeX and needs no TeX ` +
+            `installation.`,
+    );
+}
+
+/**
  * A "SvelTeX component" — i.e., a component which can be used in SvelTeX files
  * — whose contents will be rendered using a TeX engine, after which the entire
  * component gets replaced by a Svelte component which imports the rendered SVG.
@@ -559,9 +607,12 @@ export class TexComponent {
         const name: string = propIsString
             ? documentClass
             : (documentClass.name ?? 'standalone');
+        // Copy, don't alias: this getter must not mutate the (often shared)
+        // configuration object. Aliasing previously let `unshift` leak the
+        // `dvisvgm` option back into the config.
         const options: string[] = propIsString
             ? []
-            : (documentClass.options ?? []);
+            : [...(documentClass.options ?? [])];
         if (
             texConfig.compilation.intermediateFiletype === 'dvi' &&
             !options.includes('dvisvgm')
@@ -589,6 +640,29 @@ export class TexComponent {
         if (this.texDocumentBodyWithCssVars === undefined) {
             throw new Error(
                 'Cannot compile a self-closing TeX component (i.e., one without any content).',
+            );
+        }
+
+        // The content of a <TeX> component is the document *body* only;
+        // SvelTeX supplies the `\documentclass`, preamble, and
+        // `\begin{document}`/`\end{document}` itself. A user-supplied
+        // `\documentclass` or `\begin{document}` would be nested inside ours,
+        // producing invalid LaTeX, so fail early with a clear message instead.
+        // (This is a deliberately simple scan: it doesn't skip LaTeX comments
+        // or verbatim blocks, so the rare body that mentions `\documentclass`
+        // there is rejected too — an acceptable trade-off for a clear error.)
+        if (
+            /\\documentclass|\\begin\s*\{\s*document\s*\}/u.test(
+                this.texDocumentBodyWithCssVars,
+            )
+        ) {
+            throw new Error(
+                `The content of a <TeX> component must be the LaTeX document ` +
+                    `body only (what goes between \\begin{document} and ` +
+                    `\\end{document}); it must not contain \\documentclass or ` +
+                    `\\begin{document}. Set the document class and preamble via ` +
+                    `the component's "documentClass" and "preamble" options ` +
+                    `instead. See https://sveltex.dev/docs/tex for details.`,
             );
         }
 
@@ -700,6 +774,18 @@ export class TexComponent {
             // Compile the TeX file
             const compilation = await spawnCliInstruction(compileCmd);
 
+            // The TeX engine couldn't be spawned at all (e.g. `pdflatex` not
+            // on the PATH). Fail with actionable guidance rather than parsing
+            // a non-existent log or silently dropping the component.
+            if (compilation.error) {
+                spinnerTex.fail(
+                    pc.red(
+                        `${keyPath}: TeX → ${formatPretty} with ${enginePretty} failed: ${compilation.error.message}`,
+                    ),
+                );
+                throw texDependencyError(compileCmd.command, compilation.error);
+            }
+
             const texLines = compilableTexContent.split(/\r\n?|\n/u);
             const leadingWhitespaceInner =
                 /^\s+/u.exec(this.texDocumentBodyWithCssVars)?.[0] ?? '';
@@ -781,6 +867,10 @@ export class TexComponent {
                 );
             }
         } catch (err: unknown) {
+            // A missing-dependency error is actionable on its own; propagate
+            // it so the build fails with clear guidance.
+            if (err instanceof TexDependencyError) throw err;
+
             // Stop spinner and replace with "failure message"
             spinnerTex.fail(
                 pc.red(
@@ -854,6 +944,7 @@ export class TexComponent {
                 code: number | null;
                 stderr: string;
                 stdout: string;
+                error?: Error;
             };
             let errorMessage: string | undefined = undefined;
 
@@ -881,6 +972,20 @@ export class TexComponent {
 
                 // Convert the DVI/PDF/XDV to an SVG
                 conversion = await spawnCliInstruction(convertCmd);
+
+                // The converter couldn't be spawned at all (e.g. `dvisvgm`
+                // not on the PATH). Fail with actionable guidance.
+                if (conversion.error) {
+                    spinnerSvg.fail(
+                        pc.red(
+                            `${keyPath}: ${formatPretty} → SVG with ${converter} failed: ${conversion.error.message}`,
+                        ),
+                    );
+                    throw texDependencyError(
+                        convertCmd.command,
+                        conversion.error,
+                    );
+                }
 
                 if (conversion.code !== 0) {
                     // Get string representation of the conversion command that
@@ -934,6 +1039,10 @@ export class TexComponent {
                 ),
             );
         } catch (err: unknown) {
+            // A missing-dependency error is actionable on its own; propagate
+            // it so the build fails with clear guidance.
+            if (err instanceof TexDependencyError) throw err;
+
             spinnerSvg.fail(
                 pc.red(
                     `${keyPath}: ${formatPretty} → SVG failed after ${timeToString(timeSince(startSvg))}` +

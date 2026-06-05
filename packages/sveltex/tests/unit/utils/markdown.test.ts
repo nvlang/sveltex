@@ -1,5 +1,13 @@
-import { adjustHtmlSpacing, isImported } from '../../../src/utils/markdown.js';
+import {
+    adjustHtmlSpacing,
+    isImported,
+    remarkGfm,
+} from '../../../src/utils/markdown.js';
 import { describe, it, expect } from 'vitest';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
 
 describe('adjustHtmlSpacing', () => {
     it.each([
@@ -96,6 +104,20 @@ describe('adjustHtmlSpacing with component info', () => {
                 'ID',
             ),
         ).toBe('<ExampleID>text</ExampleID>');
+    });
+});
+
+describe('remarkGfm', () => {
+    it('enables GFM standalone (initializing the extension arrays itself)', async () => {
+        // Used outside SvelTeX's pipeline, `data.micromarkExtensions` isn't
+        // pre-seeded, so the plugin must create it before pushing.
+        const file = await unified()
+            .use(remarkParse)
+            .use(remarkGfm)
+            .use(remarkRehype)
+            .use(rehypeStringify)
+            .process('| a | b |\n| - | - |\n| 1 | 2 |');
+        expect(String(file)).toContain('<table>');
     });
 });
 

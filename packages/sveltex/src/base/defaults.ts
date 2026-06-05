@@ -392,6 +392,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
     };
     if (codeBackend === 'shiki') {
         const config: FullCodeConfiguration<'shiki'> = {
+            a11y: true,
             addLanguageClass: 'language-',
             appendNewline: true,
             inlineMeta,
@@ -416,12 +417,18 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
                         ),
                 );
             },
-            shiki: {},
+            // Leave Shiki's own `tabindex` off: keyboard-scrollability (plus a
+            // role, an aria-label, and the scoped svelte-ignore that keeps
+            // Svelte's `a11y_no_noninteractive_tabindex` warning quiet) is
+            // applied uniformly across all backends via the `code.a11y` option,
+            // so letting Shiki add its own would only duplicate the attribute.
+            shiki: { tabindex: false },
             transformers: { post: [], pre: [] },
         };
         return config as unknown as FullCodeConfiguration<C>;
     } else if (codeBackend === 'highlight.js') {
         const config: FullCodeConfiguration<'highlight.js'> = {
+            a11y: true,
             addLanguageClass: 'language-',
             appendNewline: true,
             'highlight.js': {},
@@ -446,6 +453,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         return config as unknown as FullCodeConfiguration<C>;
     } else if (codeBackend === 'escape') {
         const config: FullCodeConfiguration<'escape'> = {
+            a11y: true,
             addLanguageClass: 'language-',
             appendNewline: true,
             escape: { braces: true, html: true },
@@ -455,6 +463,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
         return config as unknown as FullCodeConfiguration<C>;
     } else if (codeBackend === 'starry-night') {
         const config: FullCodeConfiguration<'starry-night'> = {
+            a11y: true,
             addLanguageClass: 'language-',
             appendNewline: true,
             inlineMeta,
@@ -481,6 +490,7 @@ export function getDefaultCodeConfig<C extends CodeBackend>(
     }
 
     const config: FullCodeConfiguration<'none'> = {
+        a11y: true,
         addLanguageClass: false,
         appendNewline: true,
         inlineMeta,

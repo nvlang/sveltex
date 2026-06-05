@@ -19,6 +19,7 @@ import {
     adjustHtmlSpacing,
     micromarkDisableIndentedCodeAndAutolinks,
     remarkDisableIndentedCodeBlocksAndAutolinks,
+    remarkGfm,
 } from '../utils/markdown.js';
 import { getDefaultMarkdownConfig } from '../base/defaults.js';
 import { log } from '../utils/debug.js';
@@ -177,8 +178,17 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
             // `process` function to process markdown content.
             const processor: MarkdownProcessor<'marked'> = new marked.Marked({
                 tokenizer: {
-                    // Disable autolinks
+                    // Disable autolinks (`<https://…>`): the angle brackets
+                    // collide with Svelte component syntax, so SvelTeX leaves
+                    // them alone globally.
                     autolink: () => undefined,
+                    // Disable GFM bare-URL linking too. Otherwise, with
+                    // `autolink` off, marked's `url` tokenizer matches the
+                    // inner `https://…>` of an `<https://…>` autolink — trailing
+                    // `>` included — and emits a corrupt `href="…%3E"`. Leaving
+                    // it off also keeps marked consistent with the other
+                    // backends, none of which autolink bare URLs by default.
+                    url: () => undefined,
                     // Disable indented code blocks (NB: fenced code blocks have
                     // a separate tokenizer, named "fences").
                     code: () => undefined,
@@ -349,6 +359,11 @@ export class MarkdownHandler<B extends MarkdownBackend> extends Handler<
             const processor: MarkdownProcessor<'unified'> = unified()
                 .use(remarkParse)
                 .use(remarkDisableIndentedCodeBlocksAndAutolinks)
+                // GFM (tables, strikethrough, task lists, footnotes) on by
+                // default, so the recommended backend matches what users
+                // expect. User `remarkPlugins` run afterwards and can still
+                // adjust the tree.
+                .use(remarkGfm)
                 .use(configuration.remarkPlugins)
                 // @ts-expect-error https://github.com/remarkjs/remark-retext/issues/17#issuecomment-2170802405
                 .use(remarkRetext, unified().use(configuration.retextPlugins))

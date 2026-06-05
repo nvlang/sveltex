@@ -200,6 +200,38 @@ to install separately; the parent server spawns it on demand based on
 your project's `mathBackend`. Useful as a standalone server too (for
 editors that want math features in plain `.tex` / `.md` files).
 
+## Linting and formatting `.sveltex` files
+
+Don't point Prettier or ESLint at `.sveltex` files. A `.sveltex` file is **not
+valid Svelte**: it interleaves Markdown, math (`$…$`), and
+[verbatim](verbatim) regions — `<tex>`, `<Code>`, escaped blocks — whose
+contents aren't Svelte and only resolve once SvelTeX has preprocessed the file.
+Tools built on the Svelte parser
+([`prettier-plugin-svelte`](https://github.com/sveltejs/prettier-plugin-svelte),
+[`eslint-plugin-svelte`](https://github.com/sveltejs/eslint-plugin-svelte)) parse
+the _raw_ file as Svelte, so they:
+
+-   **report false errors** — raw LaTeX in a `<tex>` block, a `{…}` that SvelTeX
+    escapes, or deliberately Svelte-invalid markup inside a verbatim region all
+    look like Svelte syntax (or a11y) errors to them, even though SvelTeX
+    processes that content itself rather than handing it to the Svelte compiler
+    as Svelte; and
+-   **can corrupt the file on format** — Prettier reflows the Markdown and
+    rewrites the verbatim/LaTeX content, altering whitespace the document
+    depends on.
+
+By default neither tool touches `.sveltex` — Prettier reports _"No parser could
+be inferred"_ and ESLint skips the file — which is the behaviour you want. So
+**don't** add a `*.sveltex` → `svelte` Prettier override or pull `.sveltex` into
+an `eslint-plugin-svelte` glob. If your config uses broad globs that would catch
+them, exclude `.sveltex` instead (e.g. in `.prettierignore`, or ESLint's
+`ignores`).
+
+For editor feedback on `.sveltex` files, use the SvelTeX
+[language server](#setup): it understands the regions and applies
+Svelte/TypeScript diagnostics, hover, and completion only where the content
+really is Svelte.
+
 ## Troubleshooting
 
 -   **The server doesn't start.** Check the editor's LSP / output

@@ -127,7 +127,7 @@ describe('Diagnoser', () => {
         expect(log).toHaveBeenNthCalledWith(
             1,
             'error',
-            '- Expected "a.b.c" to be 123. Instead, got undefined.',
+            '- Expected "a.b.c" to be 123. Instead, got a string.',
         );
     });
 
@@ -142,7 +142,7 @@ describe('Diagnoser', () => {
         expect(log).toHaveBeenNthCalledWith(
             1,
             { severity: 'error', style: null },
-            '- Expected "a.b.c" to be 123. Instead, got undefined.',
+            '- Expected "a.b.c" to be 123. Instead, got a string.',
         );
     });
 
@@ -170,7 +170,7 @@ describe('Diagnoser', () => {
         expect(log).toHaveBeenNthCalledWith(
             1,
             'error',
-            'prefix Expected "a.b.c" to be 123. Instead, got undefined.',
+            'prefix Expected "a.b.c" to be 123. Instead, got a string.',
         );
     });
 

@@ -15,7 +15,12 @@ import type { MathjaxOptions } from '../types/utils/MathjaxOptions.js';
 import { getDefaultMathConfig } from '../base/defaults.js';
 import { Handler } from './Handler.js';
 import { isArray } from '../typeGuards/utils.js';
-import { cdnLink, fancyFetch, fancyWrite } from '../utils/cdn.js';
+import {
+    cdnLink,
+    fancyFetch,
+    fancyWrite,
+    warnAboutStaleSelfHostedCss,
+} from '../utils/cdn.js';
 import { escapeCssColorVars, unescapeCssColorVars } from '../utils/css.js';
 import { getVersion, missingDeps } from '../utils/env.js';
 import { escapeBraces } from '../utils/escape.js';
@@ -419,14 +424,26 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 const cssConfig = configuration.css;
                 const { type } = cssConfig;
 
+                const v = (await getVersion('katex')) ?? 'latest';
+
+                // Drop stale math stylesheets from earlier builds or a previous
+                // math backend (e.g. a leftover `mathjax@….css` after switching
+                // to KaTeX) so they stop shipping. The active file, if
+                // self-hosted, is kept.
+                await warnAboutStaleSelfHostedCss(
+                    type === 'hybrid'
+                        ? join(cssConfig.staticDir, cssConfig.dir)
+                        : join('static', 'sveltex'),
+                    ['mathjax', 'katex'],
+                    type === 'hybrid' ? [`katex@${v}.min.css`] : [],
+                );
+
                 if (type === 'none') return;
 
                 // If this branch is reached, we know that `type` is either
                 // 'cdn' or 'hybrid'.
 
                 const { cdn } = cssConfig;
-
-                const v = (await getVersion('katex')) ?? 'latest';
 
                 const cdns = isArray(cdn) ? cdn : [cdn];
                 const links = cdns.map((c) =>
@@ -656,6 +673,18 @@ export class MathHandler<B extends MathBackend> extends Handler<
                 mathHandler: MathHandler<'mathjax'>,
             ) => Promise<void> = async (mathHandler) => {
                 const type = config.css.type;
+
+                // Drop stale math stylesheets from earlier builds (e.g. an
+                // `mathjax@<old>.chtml.css` left behind by a version or
+                // output-format change, or a `katex@….css` from a previous
+                // backend) so they stop shipping. The active file is kept.
+                await warnAboutStaleSelfHostedCss(
+                    type === 'none'
+                        ? join('static', 'sveltex')
+                        : join(config.css.staticDir, config.css.dir),
+                    ['mathjax', 'katex'],
+                    type === 'none' ? [] : [`mathjax@${version}.${fmt}.css`],
+                );
 
                 // With MathJax, there's no CSS available from CDNs (as far as I
                 // could tell). For SVG output, I don't know why, but for CHTML

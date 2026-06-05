@@ -143,6 +143,27 @@ describe('spawnCliInstruction', () => {
             expect(stderrWrite).not.toHaveBeenCalled();
         });
 
+        it('resolves with the spawn error instead of crashing on ENOENT', async () => {
+            const proc = fakeProcess();
+            vi.spyOn(deps, 'spawn').mockReturnValue(
+                proc as unknown as ReturnType<typeof deps.spawn>,
+            );
+
+            const promise = spawnCliInstruction({ command: 'pdflatex' });
+            const enoent = Object.assign(new Error('spawn pdflatex ENOENT'), {
+                code: 'ENOENT',
+            });
+            // Without an `error` listener this event would crash the process.
+            proc.emit('error', enoent);
+
+            await expect(promise).resolves.toEqual({
+                code: null,
+                stdout: '',
+                stderr: '',
+                error: enoent,
+            });
+        });
+
         it('ignores chunks that are neither strings nor Uint8Arrays', async () => {
             const proc = fakeProcess();
             vi.spyOn(deps, 'spawn').mockReturnValue(

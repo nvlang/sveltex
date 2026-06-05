@@ -75,19 +75,24 @@ function defaultOptions(overrides: Partial<Options> = {}): Options {
 function runAddon({
     options = {},
     seed = {},
+    packageManager = 'pnpm',
 }: {
     options?: Partial<Options>;
     seed?: Record<string, string>;
+    packageManager?: string;
 } = {}): FakeSv {
     const fake = makeSv(seed);
     const arg = {
         sv: fake.sv,
         options: defaultOptions(options),
         cwd: '/project',
-        // Only `file.getRelative` and `file.svelteConfig` are read by `run`.
+        packageManager,
+        // Only `file.getRelative`, `file.svelteConfig`, and `file.findUp` are
+        // read by `run`.
         file: {
             svelteConfig: 'svelte.config.js',
             getRelative: ({ to }: { from?: string; to: string }) => `./${to}`,
+            findUp: (name: string) => name,
         },
         directory: { kitRoutes: 'src/routes' },
     } as unknown as RunArg;
@@ -104,6 +109,23 @@ function readFile(files: Map<string, string>, path: string): string {
         throw new Error(`expected file to have been written: ${path}`);
     }
     return content;
+}
+
+/**
+ * Assert that the SvelTeX preprocessor is listed *before* `vitePreprocess` in
+ * the generated `preprocess` array. SvelTeX must turn `.sveltex` into valid
+ * Svelte before any other markup preprocessor runs. The slice from
+ * `preprocess:` skips the `import sveltexPreprocessor …` line at the top.
+ */
+function expectPreprocessOrder(svelteConfig: string): void {
+    const fromPreprocess = svelteConfig.slice(
+        svelteConfig.indexOf('preprocess:'),
+    );
+    const svIdx = fromPreprocess.indexOf('sveltexPreprocessor');
+    const viteIdx = fromPreprocess.indexOf('vitePreprocess');
+    expect(svIdx).toBeGreaterThanOrEqual(0);
+    expect(viteIdx).toBeGreaterThanOrEqual(0);
+    expect(svIdx).toBeLessThan(viteIdx);
 }
 
 /**
@@ -178,6 +200,18 @@ describe('run: dependencies', () => {
         expect(devDeps['@mathjax/src']).toBe('^4.0.0');
     });
 
+    it('pre-approves the core-js-pure build script for pnpm projects', () => {
+        const { files } = runAddon({ packageManager: 'pnpm' });
+        const workspace = files.get('pnpm-workspace.yaml');
+        expect(workspace).toBeDefined();
+        expect(workspace).toContain('core-js-pure');
+    });
+
+    it('does not touch pnpm-workspace.yaml for non-pnpm projects', () => {
+        const { files } = runAddon({ packageManager: 'npm' });
+        expect(files.has('pnpm-workspace.yaml')).toBe(false);
+    });
+
     it('adds no backend peer deps when every backend is "none"', () => {
         const { devDeps } = runAddon({
             options: {
@@ -219,8 +253,20 @@ describe('run: sveltex.config.js', () => {
         expect(config).toContain('github-dark-default');
     });
 
+    it('leaves the <TeX> verbatim block commented out by default', () => {
+        // <TeX> needs a local TeX distribution, so the block ships as
+        // commented-out guidance rather than silently enabled.
+        const { files } = runAddon();
+        const config = readFile(files, 'sveltex.config.js');
+        expect(config).toContain('// TeX: {');
+        // Not active (no uncommented `TeX: {`).
+        expect(config).not.toMatch(/\n\s*TeX: \{/u);
+    });
+
     it('writes the generic code block when the backend is not shiki', () => {
-        const { files } = runAddon({ options: { codeBackend: 'highlight.js' } });
+        const { files } = runAddon({
+            options: { codeBackend: 'highlight.js' },
+        });
         const config = readFile(files, 'sveltex.config.js');
         expect(config).toContain("codeBackend: 'highlight.js'");
         expect(config).toContain('// Code options');
@@ -256,9 +302,7 @@ describe('run: svelte.config.js wiring', () => {
     }
 
     it('adds preprocess + extensions arrays to a bare config', () => {
-        const out = svelteConfigAfter(
-            'export default {};\n',
-        );
+        const out = svelteConfigAfter('export default {};\n');
         expect(out).toContain('sveltexPreprocessor');
         expect(out).toContain('sveltex.config');
         expect(out).toContain('preprocess');
@@ -266,7 +310,7 @@ describe('run: svelte.config.js wiring', () => {
         expect(out).toContain("'.sveltex'");
     });
 
-    it('appends to existing array-valued preprocess/extensions', () => {
+    it('prepends to existing array-valued preprocess/extensions', () => {
         const seed = [
             "import vitePreprocess from 'foo';",
             'export default {',
@@ -276,9 +320,10 @@ describe('run: svelte.config.js wiring', () => {
             '',
         ].join('\n');
         const out = svelteConfigAfter(seed);
-        // Existing entry preserved, new one appended.
+        // Existing entry preserved, SvelTeX inserted *before* it so it runs
+        // first (otherwise vitePreprocess chokes on raw LaTeX backslashes).
         expect(out).toContain('vitePreprocess()');
-        expect(out).toContain('sveltexPreprocessor');
+        expectPreprocessOrder(out);
         // `.svelte` already present -> append is idempotent (still one).
         expect(out.match(/'\.svelte'/gu)).toHaveLength(1);
         expect(out).toContain("'.sveltex'");
@@ -297,9 +342,9 @@ describe('run: svelte.config.js wiring', () => {
             '',
         ].join('\n');
         const out = svelteConfigAfter(seed);
-        expect(out).toContain('vitePreprocessor'.replace('vite', 'sveltex'));
-        expect(out).toContain('sveltexPreprocessor');
-        // The original single preprocessor is wrapped, not dropped.
+        expectPreprocessOrder(out);
+        // The original single preprocessor is wrapped, not dropped, and
+        // SvelTeX is inserted ahead of it.
         expect(out).toContain('vitePreprocess()');
         // The identifier `exts` is wrapped into a fresh array alongside the
         // appended string literals.

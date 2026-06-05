@@ -240,6 +240,10 @@ export default defineConfig({
                     items: [
                         { text: 'Overview', link: '/' },
                         { text: 'Getting Started', link: '/getting-started' },
+                        {
+                            text: 'Coming from mdsvex or MDX',
+                            link: '/coming-from-mdsvex-or-mdx',
+                        },
                         { text: 'Playground', link: '/playground' },
                         { text: 'Acknowledgments', link: '/acknowledgments' },
                     ],

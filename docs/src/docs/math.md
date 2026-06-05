@@ -186,6 +186,43 @@ export default await sveltex({
 
 :::
 
+### CSS delivery: CDN vs. self-hosted
+
+The `math.css.type` option decides where the stylesheet comes from:
+
+| `type`     | What SvelTeX does                                                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `'cdn'`    | Injects a `<link>` to the stylesheet on a CDN (jsdelivr by default), pinned to the **installed** version. Nothing is written to disk. |
+| `'hybrid'` | Fetches the stylesheet **at build time** and self-hosts it under `static/sveltex/`, falling back to a CDN `<link>` if the fetch fails. |
+| `'none'`   | Emits no stylesheet — you provide the CSS yourself.                                                                                 |
+
+The default is `'hybrid'` for MathJax and `'cdn'` for KaTeX.
+
+::: warning Offline or CSP-restricted builds
+With the default `type: 'cdn'`, the stylesheet — and, for CHTML output, the
+fonts — load from a third-party CDN at runtime. Set `type: 'hybrid'` to
+self-host the stylesheet instead; note that CHTML still fetches its fonts from
+the CDN (SVG output has none, since its glyphs are embedded).
+:::
+
+::: tip `static/sveltex/` is generated
+With `'hybrid'`, the stylesheet is written under `static/sveltex/` at build
+time, so it has to reach production one of two ways: commit that directory, or
+make sure your deploy runs the build (which regenerates it). If you commit it
+and your `.gitignore` excludes `static/`, add an exception so the generated CSS
+isn't ignored:
+
+```gitignore
+# keep SvelTeX's generated stylesheets
+!static/sveltex/
+```
+
+SvelTeX names each file `<backend>@<version>.…css` and warns about stylesheets
+that no longer match your configuration when you switch backends or bump a
+version, so you can delete the stale ones — see
+[Switching backends](getting-started#switching-backends).
+:::
+
 
 ## Output format <Badge type="tip" text="mathjax" />
 
@@ -210,10 +247,13 @@ output format throughout — you can't mix `svg` and `chtml` within the same
 build. This is fine for any SvelteKit build, since a project picks one format
 for all of its pages anyway.
 
-::: warning
+::: tip
 
-You'll have to delete the previously generated MathJax CSS file if you change
-the output format, otherwise the change won't take effect.
+The self-hosted stylesheet is named after the backend, version, and output
+format (e.g. `mathjax@4.1.2.chtml.css`). When you switch the output format (or
+the math backend, or bump a version), the previous file lingers in
+`static/sveltex/`; SvelTeX warns about it at build time so you can delete it
+(it doesn't remove it for you — that directory is yours).
 
 :::
 
@@ -243,10 +283,14 @@ The supported fonts are `newcm`, `asana`, `bonum`, `dejavu`, `fira`, `modern`,
 `pagella`, `schola`, `stix2`, `termes`, and `tex`; each corresponds to a
 `@mathjax/mathjax-<font>-font` package.
 
-::: warning
+::: tip Changing the font needs no cleanup
 
-You'll have to delete the previously generated MathJax CSS file if you change
-the font, otherwise the change won't take effect.
+Unlike a version, output-format, or backend switch, changing `math.font` leaves
+no stale stylesheet behind. SVG output bakes its glyphs into each diagram, so its
+stylesheet is font-independent to begin with. For CHTML output — where the
+stylesheet _does_ depend on the font — SvelTeX rewrites
+`static/sveltex/mathjax@….chtml.css` in place on every build, so the new font is
+picked up automatically. Either way, there's nothing to delete.
 
 :::
 

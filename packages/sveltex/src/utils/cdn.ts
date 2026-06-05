@@ -10,6 +10,7 @@ import { cdnPrefixes } from '../data/cdn.js';
 import { isArray } from '../typeGuards/utils.js';
 import { log, prettifyError, runWithSpinner } from './debug.js';
 import { fs } from './fs.js';
+import { join } from '../deps.js';
 
 export function cdnLink(
     pkg: StringLiteralUnion<
@@ -47,6 +48,52 @@ export async function fancyWrite(
         },
         [timeout],
     );
+}
+
+/**
+ * Warn about stale self-hosted stylesheets in `dir`. When the active backend,
+ * its version, or its output format changes, a `<prefix>@<version>…css` file
+ * SvelTeX wrote for a previous configuration lingers and keeps shipping in the
+ * build. SvelTeX flags these but does **not** delete them: `static/sveltex/`
+ * is checked into the user's repo, and auto-removing files there (which can't
+ * be reliably told apart from ones the user placed) would be too aggressive.
+ *
+ * Only files matching SvelTeX's own naming are considered: a name must start
+ * with one of the given `prefixes` followed by `@` and end in `.css`. Anything
+ * in `keep` (the currently-active stylesheet) is ignored.
+ *
+ * @param dir - Directory the stylesheets live in (e.g. `static/sveltex`).
+ * @param prefixes - Backend prefixes the calling handler owns — e.g.
+ * `['mathjax', 'katex']` for math, `['highlight.js', 'starry-night']` for code.
+ * @param keep - Basenames to ignore (the active stylesheet, if self-hosted).
+ */
+export async function warnAboutStaleSelfHostedCss(
+    dir: string,
+    prefixes: string[],
+    keep: string[],
+): Promise<void> {
+    let entries: string[];
+    try {
+        entries = await fs.readdir(dir);
+    } catch {
+        // The directory doesn't exist yet (nothing self-hosted) or can't be
+        // read — either way there's nothing to flag.
+        return;
+    }
+    const stale = entries.filter(
+        (name) =>
+            name.endsWith('.css') &&
+            !keep.includes(name) &&
+            prefixes.some((p) => name.startsWith(`${p}@`)),
+    );
+    for (const name of stale) {
+        log(
+            'warn',
+            `Stale stylesheet "${join(dir, name)}" doesn't match the active ` +
+                `configuration and will still ship. If SvelTeX generated it ` +
+                `for a previous backend/version, delete it.`,
+        );
+    }
 }
 
 export async function fancyFetch(

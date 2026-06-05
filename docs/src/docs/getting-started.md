@@ -1,6 +1,36 @@
 
 # Getting Started
 
+## System prerequisites
+
+SvelTeX runs on **Node.js 22 or later**. Beyond that, what you need depends on
+which features you use:
+
+-   **Markdown, syntax highlighting, and math (`$…$` and `$$…$$`) work out of
+    the box.** Math is rendered in pure JavaScript by MathJax or KaTeX, so it
+    needs **no external tools** — only the npm packages for the backends you
+    pick (which SvelTeX names for you on the first build).
+
+-   **The [`<TeX>`](tex) component needs a local TeX distribution.** It compiles
+    LaTeX to SVG by shelling out to real binaries, so for it — and _only_ for it
+    — the following must be installed and on your `PATH`:
+
+    -   a **TeX distribution** — [TeX Live](https://tug.org/texlive/),
+        [MiKTeX](https://miktex.org/), or [MacTeX](https://tug.org/mactex/) —
+        providing a LaTeX engine (`pdflatex`, `lualatex`, or `xelatex`);
+    -   a **DVI/PDF-to-SVG converter** — [dvisvgm](https://dvisvgm.de/) (shipped
+        with TeX Live and MiKTeX) or [Poppler](https://poppler.freedesktop.org/)'s
+        `pdftocairo`.
+
+    If a required binary is missing, SvelTeX fails the build for that file with
+    a message naming the tool and linking back here, so the problem surfaces at
+    build time rather than as a broken page.
+
+::: tip Verify your TeX setup
+Only needed if you plan to use the `<TeX>` component: run `pdflatex --version`
+and `dvisvgm --version`. If both print version information, you're ready to go.
+:::
+
 ## Creating a new project
 
 SvelTeX is distributed as a community add-on for the official Svelte CLI
@@ -88,6 +118,21 @@ backend needs the `unified`, `remark-parse`, `remark-rehype`, and
 `rehype-stringify` packages, the `shiki` code backend needs `shiki`, and so on.
 SvelTeX will tell you exactly which packages are missing the first time you run
 a build.
+
+::: info pnpm users
+
+`@nvl/sveltex` depends (transitively, via `xregexp`) on `core-js-pure`, whose
+install script pnpm blocks by default — so `pnpm install` may fail with
+`ERR_PNPM_IGNORED_BUILDS`. Approve it once and re-install:
+
+```yaml [pnpm-workspace.yaml]
+allowBuilds: # pnpm < 11: onlyBuiltDependencies (a list)
+    core-js-pure: true
+```
+
+The `sv` add-on does this for you automatically.
+
+:::
 
 ::: info MathJax backend
 
@@ -188,8 +233,8 @@ import sveltexPreprocessor from './sveltex.config.js';
 const config = {
     // ...
     preprocess: [
-        vitePreprocess(), // (optional)
         sveltexPreprocessor,
+        vitePreprocess(), // (optional)
         // ...
     ],
     extensions: ['.svelte', '.sveltex'],
@@ -198,6 +243,13 @@ const config = {
 
 export default config;
 ```
+
+::: warning Order matters
+List `sveltexPreprocessor` **before** any other markup preprocessor (such as
+`vitePreprocess`). SvelTeX turns a `.sveltex` file's Markdown and LaTeX into
+valid Svelte; a preprocessor that runs first would instead see raw LaTeX
+backslashes and fail. (The `sv` add-on wires this up correctly for you.)
+:::
 
 If you prefer, you can also just use the `sveltex` function directly in your
 `svelte.config.js`. Just remember to `await` it.
@@ -212,6 +264,30 @@ If you prefer, you can also just use the `sveltex` function directly in your
 [`tex`]: tex
 [`verbatim`]: verbatim
 [`frontmatter`]: markdown#disabling-frontmatter-processing
+
+## Switching backends
+
+Changing a backend later (say MathJax → KaTeX, or Shiki → highlight.js) is just
+a matter of editing the backend choice in `sveltex.config.js`. A few things to
+clean up afterwards, though:
+
+-   **Dependencies.** Install the new backend's peer dependencies and uninstall
+    the old ones. Because the backends are _optional_ peer dependencies,
+    `npm uninstall <pkg>` (or the pnpm/Yarn equivalent) may leave the package on
+    disk and in your lockfile — run `npm prune` afterwards to remove it for
+    good. SvelTeX warns on the next build if a peer dependency is missing.
+
+-   **Stale config.** Options that belong to a different backend are ignored,
+    and SvelTeX warns about them at build time (e.g. a leftover
+    `code: { shiki: { … } }` block while `codeBackend` is `'highlight.js'`).
+    Remove them to keep the config honest.
+
+-   **Self-hosted CSS.** A stylesheet SvelTeX self-hosted for a previous
+    backend/version (e.g. `static/sveltex/mathjax@….css` after moving to KaTeX)
+    keeps shipping until you remove it. SvelTeX warns about such stale files at
+    build time but doesn't delete them — `static/sveltex/` is checked into your
+    repo, so removing files there is left to you. Delete the flagged file (or
+    the whole directory if you've stopped self-hosting).
 
 ## Troubleshooting
 

@@ -1,5 +1,5 @@
 import { defineAddon, defineAddonOptions } from 'sv';
-import { transforms, type AstTypes } from '@sveltejs/sv-utils';
+import { pnpm, transforms, type AstTypes } from '@sveltejs/sv-utils';
 
 /**
  * Peer dependencies pulled in by each backend choice. Versions are taken from
@@ -128,13 +128,18 @@ ${codeOptions}
             // Default LaTeX options
         },
         verbatim: {
-            // Content inside <TeX ref="...">...</TeX> will be compiled by the
-            // local TeX distribution. For example, you can try the following:
-            // "<TeX ref="example">\\LaTeX</TeX>". Note that the "ref" attribute
-            // is mandatory.
-            TeX: {
-                type: 'tex',
-            },
+            // The <TeX> component compiles LaTeX to SVG with a *local TeX
+            // distribution* (TeX Live / MiKTeX, plus dvisvgm or Poppler). It's
+            // left disabled by default so your build doesn't depend on system
+            // tools you might not have installed — math via $…$ needs none of
+            // this. To enable it, install a TeX distribution (see
+            // https://sveltex.dev/docs/getting-started#system-prerequisites)
+            // and uncomment the block below; then use e.g.
+            // "<TeX ref="example">\\LaTeX</TeX>" ("ref" is mandatory).
+            //
+            // TeX: {
+            //     type: 'tex',
+            // },
         },
     },
 );
@@ -186,7 +191,7 @@ export default defineAddon({
         if (!isKit) unsupported('Requires SvelteKit');
     },
 
-    run: ({ sv, options, file, directory }) => {
+    run: ({ sv, options, file, directory, packageManager }) => {
         const { markdownBackend, codeBackend, mathBackend, demoRoute } =
             options;
 
@@ -201,6 +206,19 @@ export default defineAddon({
         };
         for (const [name, range] of Object.entries(backendDeps)) {
             sv.devDependency(name, range);
+        }
+
+        // `@nvl/sveltex` pulls in `core-js-pure` (via `xregexp`), whose install
+        // script pnpm blocks by default — leaving `pnpm install` to fail with
+        // `ERR_PNPM_IGNORED_BUILDS`, or the scaffold to write a `set this to
+        // true or false` placeholder into `pnpm-workspace.yaml`. Pre-approve it
+        // for pnpm projects so onboarding stays clean (mirrors how the official
+        // add-ons handle their native build-script dependencies).
+        if (packageManager === 'pnpm') {
+            sv.file(
+                file.findUp('pnpm-workspace.yaml'),
+                pnpm.allowBuilds('core-js-pure'),
+            );
         }
 
         // --- sveltex.config.js -----------------------------------------------
@@ -252,12 +270,13 @@ export default defineAddon({
                     fallback: js.object.create({}),
                 });
 
-                // `preprocess` — coerce to an array, then append the SvelTeX
-                // preprocessor instance. The property may already exist as a
-                // single (non-array) preprocessor, so the runtime type guard
-                // is required even though the fallback is an array. Reading
-                // `.value` off the property node (rather than `js.object
-                // .property`'s fallback-narrowed return) keeps the type wide.
+                // `preprocess` — coerce to an array, then insert the SvelTeX
+                // preprocessor at the *front*. The property may already exist
+                // as a single (non-array) preprocessor, so the runtime type
+                // guard is required even though the fallback is an array.
+                // Reading `.value` off the property node (rather than `js
+                // .object.property`'s fallback-narrowed return) keeps the type
+                // wide.
                 const preprocessProp = js.object.propertyNode(exportDefault, {
                     name: 'preprocess',
                     fallback: js.array.create(),
@@ -275,7 +294,11 @@ export default defineAddon({
                         preprocess: preprocessArray,
                     });
                 }
-                js.array.append(
+                // SvelTeX must run before any other markup preprocessor:
+                // it turns `.sveltex` (Markdown + LaTeX) into valid Svelte,
+                // whereas e.g. `vitePreprocess` chokes on raw LaTeX
+                // backslashes if it sees the file first.
+                js.array.prepend(
                     preprocessArray,
                     js.common.parseExpression('sveltexPreprocessor'),
                 );
@@ -332,6 +355,18 @@ export default defineAddon({
                 'Visit the `/sveltex-demo` route to see the SvelTeX demo page.',
             );
         }
+        steps.push(
+            'For editor support in `.sveltex` files (syntax highlighting, ' +
+                'diagnostics, hover, completion), install the SvelTeX editor ' +
+                'extension. Avoid pointing Prettier or ESLint at `.sveltex` ' +
+                'files; they are not valid Svelte. See ' +
+                'https://sveltex.dev/docs/editor-integration.',
+        );
+        steps.push(
+            'The `<TeX>` component (LaTeX → SVG) is commented out in ' +
+                '`sveltex.config.js` by default; enabling it needs a local TeX ' +
+                'distribution (see the System prerequisites docs).',
+        );
         steps.push(
             'See https://sveltex.dev for documentation and configuration options.',
         );

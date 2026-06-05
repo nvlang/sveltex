@@ -8,6 +8,7 @@ import {
     writeFileSync,
     mkdir,
     mkdirSync,
+    readdir,
     readFile,
     rename,
     writeFile,
@@ -16,6 +17,7 @@ import {
 
 export const fs = {
     existsSync,
+    readdir,
     readFile,
     readFileSync,
     rename,

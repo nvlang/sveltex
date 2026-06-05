@@ -71,9 +71,10 @@ the same approach [MDX](https://mdxjs.com) takes:
 -   **Indented code blocks are disabled.** Four-space-indented prose stays a
     paragraph (its inline markup still rendered) instead of becoming a code
     block. Use a fenced code block (```` ``` ````) for code.
--   **Autolinks are disabled.** Write an explicit
-    `[label](https://example.com)` rather than a bare
-    `<https://example.com>`.
+-   **Autolinks are disabled** — both the `<https://example.com>` form and
+    bare URLs (GFM autolink-literals). Write an explicit
+    `[label](https://example.com)` instead. This keeps `<…>` from clashing with
+    Svelte component syntax, and applies to every backend.
 
 Raw HTML is *not* disabled but handled specially — see
 [Markdown implementation](/docs/implementation/markdown). The bundled editor
@@ -136,6 +137,37 @@ In order of recommendation:
     and it lags behind the other two in terms of
     [CommonMark](https://spec.commonmark.org/current/) and
     [GFM](https://github.github.com/gfm/) compliance.
+
+### Feature support
+
+Every backend renders CommonMark, fenced code blocks, and math (`$…$` / `$$…$$`,
+which SvelTeX handles itself regardless of backend). They differ in which
+[GFM](https://github.github.com/gfm/) extensions they enable **by default**:
+
+| Feature                   | unified | `markdown-it` | `marked` | `micromark` |
+| ------------------------- | :-----: | :-----------: | :------: | :---------: |
+| Tables                    |   ✅    |      ✅       |   ✅     |     —       |
+| Strikethrough (`~~…~~`)   |   ✅    |      ✅       |   ✅     |     —       |
+| Task lists (`- [x]`)      |   ✅    |      —        |   ✅     |     —       |
+| Footnotes (`[^1]`)        |   ✅    |      —        |   —      |     —       |
+| Math (`$…$`)              |   ✅    |      ✅       |   ✅     |     ✅      |
+
+SvelTeX turns on GFM tables, strikethrough, task lists, and footnotes for the
+**unified** backend itself (GFM autolink-literals are deliberately left out —
+see [CommonMark differences](#commonmark-differences) above). For the other
+backends, install the relevant plugin/extension and register it through the
+[configuration](#configuration) if you need a feature this table doesn't show.
+
+Because the defaults differ, **switching backends can change your output** — a
+footnote, for instance, renders only under unified. Pick a backend that covers
+the features you rely on, or add the missing plugins yourself.
+
+::: warning Footnotes across multiple `.sveltex` files
+GFM footnote IDs (`user-content-fn-1`, …) are numbered per file, not per page.
+If two `.sveltex` components that both use footnotes render on the same page,
+their footnote IDs collide. Keep footnotes to one component per page, or
+disambiguate the references yourself.
+:::
 
 ## Configuration
 
