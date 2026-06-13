@@ -162,7 +162,7 @@
     "@types/node": "^20.19.41",
     "@types/vscode": "^1.120.0",
     "@vitest/coverage-v8": "^4.1.7",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "js-yaml": "^4.1.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
