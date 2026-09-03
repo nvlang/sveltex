@@ -76,7 +76,7 @@
   "devDependencies": {
     "@nvl/tree-sitter-markdown-sveltex": "workspace:*",
     "@types/js-yaml": "^4.0.9",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.3.1",
     "tree-sitter": "0.25.0",
     "tree-sitter-cli": "^0.26.9",
     "vscode-oniguruma": "^2.0.1",
