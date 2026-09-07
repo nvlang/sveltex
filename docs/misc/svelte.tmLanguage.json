@@ -702,7 +702,7 @@
       ]
     },
     "special-tags-block-end": {
-      "begin": "({)\\s*(/([a-z]*))",
+      "begin": "({)\\s*(/(?![/*])([a-z]*))",
       "end": "(})",
       "name": "meta.special.$3.svelte meta.special.end.svelte",
       "beginCaptures": {
